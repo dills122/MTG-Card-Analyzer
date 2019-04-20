@@ -1,0 +1,30 @@
+{
+  "name": "mtg-card-analyzer",
+  "version": "0.0.1",
+  "description": "a mtg ocr app for documenting a collection",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mtg",
+    "ocr",
+    "collector"
+  ],
+  "author": "Dylan Steele",
+  "license": "MIT",
+  "dependencies": {
+    "joi": "^14.3.1",
+    "mtgsdk": "^0.4.2",
+    "mysql": "^2.17.1",
+    "pixelmatch": "^4.0.2",
+    "request": "^2.88.0",
+    "tesseract.js": "^1.0.14",
+    "yargs": "^13.2.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.1.4",
+    "sinon": "^7.3.2"
+  }
+}
