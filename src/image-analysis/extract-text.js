@@ -26,7 +26,7 @@ function ScanImage(imgBuffer, cb) {
         }).finally(resultOrError => {
             let cleanedString = cleanString(resultOrError.text);
             console.log(`Extracted text: ${resultOrError.text}`);
-            console.log(`Extracted text: ${cleanedString}`);
+            console.log(`Extracted cleaned text: ${cleanedString}`);
             return cb(cleanedString, dependencies.Tesseract);
         });
 }
