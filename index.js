@@ -12,10 +12,10 @@
     } = require('./src/image-processing/index');
     const testFiles = [
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\Artunement.jpg',
-        'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\MeletisCharlatan.jpg',
+        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\MeletisCharlatan.jpg',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\MindstrabThrull.jpeg',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\QueenMarchesa.png',
-        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\PlatinumAngel.jpg',
+        'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\PlatinumAngel.jpg',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\AdantoVanguard.png'
     ];
 
