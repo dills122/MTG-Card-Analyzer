@@ -10,12 +10,15 @@
     const {
         resize
     } = require('./src/image-processing/index');
+    const {
+        MatchType
+    } = require('./src/fuzzy-matching/index');
     const testFiles = [
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\Artunement.jpg',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\MeletisCharlatan.jpg',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\MindstrabThrull.jpeg',
-        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\QueenMarchesa.png',
-        'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\PlatinumAngel.jpg',
+        'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\QueenMarchesa.png',
+        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\PlatinumAngel.jpg',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\AdantoVanguard.png'
     ];
 
@@ -26,8 +29,10 @@
                 textExtraction.ScanImage(imgBuffer, (name, instance) => {
                     console.log(name);
                     resize.GetImageSnippet(item,'type').then((imgBuffer) => {
-                        textExtraction.ScanImage(imgBuffer, (name, instance) => {
-                            console.log(name);
+                        textExtraction.ScanImage(imgBuffer, (type, instance) => {
+                            let matches = MatchType(type);
+                            console.log(type);
+                            console.log(matches);
                             instance.terminate();
                         });
                     }).catch(err => {});
