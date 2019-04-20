@@ -16,13 +16,16 @@
   "dependencies": {
     "app-root-path": "^2.2.1",
     "fuzzyset.js": "0.0.8",
+    "image-size": "^0.7.3",
     "joi": "^14.3.1",
+    "lodash": "^4.17.11",
     "mtgsdk": "^0.4.2",
     "mysql": "^2.17.1",
     "pixelmatch": "^4.0.2",
     "request": "^2.88.0",
     "sharp": "^0.22.0",
     "tesseract.js": "^1.0.14",
+    "uuid": "^3.3.2",
     "yargs": "^13.2.2"
   },
   "devDependencies": {
