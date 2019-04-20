@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const sharp = require('sharp');
+const uuid = require('uuid/v4');
 const {
     GetImageDimensions
 } = require('./util');
@@ -9,13 +10,13 @@ const {
 
 const constants = {
     name: {
-        heightPercent: .12,
-        widthPercent: .80,
+        heightPercent: .10,
+        widthPercent: .78,
     },
     type: {
         topPercent: .55,
-        heightPercent: .12,
-        widthPercent: .82,
+        heightPercent: .10,
+        widthPercent: .80,
     },
     borderPercent: .035
 };
@@ -26,6 +27,8 @@ async function GetImageSnippet(imgPath, type) {
     let imgBuffer = sharp(imgPath)
         .extract(alteredDimensions)
         .toBuffer();
+        //Used to generate the images on the ReadMe
+        // .toFile(`${uuid()}.${imgPath.split('.')[1] || 'jpg'}`);
     return imgBuffer;
 }
 

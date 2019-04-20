@@ -2,6 +2,39 @@
 
 A collectors dream application, that gives you the ability to take pictures of your cards and have them instantly be recognized and added to your collection. This app will scan each image uploaded attempt to grab the name of the card and analyze the set image in an attempt to match it with a given set.
 
+## Example
+
+Here is a test extraction:
+
+### Original Card
+
+<p align="center">
+  <img width="500" height="696" src=".\src\test-images\PlatinumAngel.jpg" alt="Logo Image">
+</p>
+
+### Name Extraction
+
+Extracted Text: `g Platinum Angel`
+
+Cleaned Extracted Text: `gPlatinumAngel`
+
+<p align="center">
+  <img width="500" height="100" src=".\src\test-images\test-extractions\8170e28d-ba4a-4918-8246-0a6c7840a330.jpg" alt="Logo Image">
+</p>
+
+### Type Extraction
+
+Extracted Text: `E Artifact Creature —- Angel`
+
+Cleaned Extracted Text: `EArtifactCreatureAngel`
+
+<p align="center">
+  <img width="500" height="100" src=".\src\test-images\test-extractions\05b80ec8-f988-4422-989c-62b45fe9aa78.jpg" alt="Logo Image">
+</p>
+
+
+More examples are available [here](https://github.com/dills122/mtg-card-analyzer/tree/master/src/test-images)
+
 ## Road Map
 
 ### Version 0.1.0
