@@ -9,17 +9,18 @@ const {
 } = require('../util');
 
 const dependencies = {
-    Tesseract : require('tesseract.js')
+    Tesseract: require('tesseract.js')
 };
 
 const access = promisify(fs.access);
 
 function ScanImage(imgBuffer, cb) {
     dependencies.Tesseract.recognize(imgBuffer)
-        .progress(message => console.log(JSON.stringify(message, null, 4)))
-        .catch((err) => {
+        .progress(message => {
+            console.log(JSON.stringify(message, null, 4))
+        }).catch((err) => {
             console.log(err);
-            return cb(err, dependencies.Tesseract);
+            return cb(err, null, dependencies.Tesseract);
         })
         .then((result) => {
 
@@ -27,7 +28,7 @@ function ScanImage(imgBuffer, cb) {
             let cleanedString = cleanString(resultOrError.text);
             console.log(`Extracted text: ${resultOrError.text}`);
             console.log(`Extracted cleaned text: ${cleanedString}`);
-            return cb(cleanedString, dependencies.Tesseract);
+            return cb(null, cleanedString, dependencies.Tesseract);
         });
 }
 
