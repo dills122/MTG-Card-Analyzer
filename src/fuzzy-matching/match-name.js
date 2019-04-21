@@ -4,7 +4,9 @@ const {
     GetBulkNames
 } = require('../db-local/index');
 
-const GetNames = promisify(GetBulkNames);
+const dependencies = {
+    GetNames : promisify(GetBulkNames)
+};
 
 function FilterNames(names) {
     return names.map((record) => {
@@ -13,12 +15,13 @@ function FilterNames(names) {
 }
 
 async function Match(cleanText, dirtyText = '') {
-    let names = await GetNames();
+    let names = await dependencies.GetNames();
     let filteredNames = FilterNames(names);
     let fuzzy = FuzzySet(filteredNames);
     return fuzzy.get(cleanText);
 }
 
 module.exports = {
-    Match
+    Match,
+    dependencies
 };
