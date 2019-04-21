@@ -6,8 +6,6 @@ const {
     Match,
     dependencies
 } = require('../../src/fuzzy-matching/match-name');
-const db = require('../../src/db-local/index');
-
 
 describe('FuzzyMatching::', () => {
     let sandbox = {};
