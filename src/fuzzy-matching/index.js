@@ -1,3 +1,4 @@
 module.exports = {
-    MatchType: require('./match-type').MatchType
+    MatchType: require('./match-type').MatchType,
+    MatchName: require('./match-name').Match
 };
