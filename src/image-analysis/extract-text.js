@@ -22,7 +22,7 @@ function ScanImage(imgBuffer, cb) {
             console.log(err);
             return cb(err, null, dependencies.Tesseract);
         })
-        .then((result) => {
+        .then(() => {
 
         }).finally(resultOrError => {
             let cleanedString = cleanString(resultOrError.text);
