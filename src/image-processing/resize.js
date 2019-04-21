@@ -14,9 +14,9 @@ const constants = {
         widthPercent: .78,
     },
     type: {
-        topPercent: .55,
-        heightPercent: .10,
-        widthPercent: .80,
+        topPercent: .555,
+        heightPercent: .08,
+        widthPercent: .78,
     },
     borderPercent: .035
 };
