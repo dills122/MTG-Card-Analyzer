@@ -29,7 +29,7 @@ Extracted Text: `E Artifact Creature —- Angel`
 Cleaned Extracted Text: `EArtifactCreatureAngel`
 
 <p align="center">
-  <img width="500" height="100" src=".\src\test-images\test-extractions\05b80ec8-f988-4422-989c-62b45fe9aa78.jpg" alt="Logo Image">
+  <img width="500" height="100" src=".\src\test-images\test-extractions\2312b662-a0e7-4589-bba9-62d990a6726f.jpg" alt="Logo Image">
 </p>
 
 
