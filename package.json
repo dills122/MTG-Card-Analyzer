@@ -1,6 +1,6 @@
 {
   "name": "mtg-card-analyzer",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "a mtg ocr app for documenting a collection",
   "main": "index.js",
   "scripts": {
@@ -21,8 +21,10 @@
     "lodash": "^4.17.11",
     "mtgsdk": "^0.4.2",
     "mysql": "^2.17.1",
+    "nedb": "^1.8.0",
     "pixelmatch": "^4.0.2",
     "request": "^2.88.0",
+    "request-promise-native": "^1.0.7",
     "sharp": "^0.22.0",
     "tesseract.js": "^1.0.14",
     "uuid": "^3.3.2",
