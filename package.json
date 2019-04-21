@@ -4,7 +4,7 @@
   "description": "a mtg ocr app for documenting a collection",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha \"./test/**/*.spec.js\""
   },
   "keywords": [
     "mtg",

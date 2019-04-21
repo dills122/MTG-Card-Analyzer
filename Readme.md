@@ -1,5 +1,8 @@
 # MTG Card Analyzer
 
+[![Build Status](https://travis-ci.org/dills122/MTG-Card-Analyzer.svg?branch=master)](https://travis-ci.org/dills122/MTG-Card-Analyzer)
+[![CodeFactor](https://www.codefactor.io/repository/github/dills122/mtg-card-analyzer/badge)](https://www.codefactor.io/repository/github/dills122/mtg-card-analyzer)
+
 A collectors dream application, that gives you the ability to take pictures of your cards and have them instantly be recognized and added to your collection. This app will scan each image uploaded attempt to grab the name of the card and analyze the set image in an attempt to match it with a given set.
 
 ## Example
