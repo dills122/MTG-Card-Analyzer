@@ -17,11 +17,14 @@
 
     const testFiles = [
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\Artunement.jpg',
-        'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\MeletisCharlatan.jpg',
+        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\MeletisCharlatan.jpg',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\MindstrabThrull.jpeg',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\QueenMarchesa.png',
         // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\PlatinumAngel.jpg',
-        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\AdantoVanguard.png'
+        'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\AdantoVanguard.png',
+        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\AngelOfSanctions.png',
+        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\AvariciousDragon.jpg',
+        // 'E:\\GitHub\\mtg-card-analyzer\\src\\test-images\\Spellseeker.png'
     ];
     if (argv._.length === 1) {
         testFiles.forEach((item, index) => {
