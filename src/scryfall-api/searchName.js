@@ -58,5 +58,5 @@ async function SearchList(exact) {
 module.exports = {
     SearchByNameExact,
     SearchByNameFuzzy,
-    Search
+    SearchList
 }
