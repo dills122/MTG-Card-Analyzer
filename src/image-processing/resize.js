@@ -27,9 +27,15 @@ async function GetImageSnippet(imgPath, type) {
     let imgBuffer = sharp(imgPath)
         .extract(alteredDimensions)
         .toBuffer();
-        //Used to generate the images on the ReadMe
-        // .toFile(`${uuid()}.${imgPath.split('.')[1] || 'jpg'}`);
     return imgBuffer;
+}
+
+async function GetImageSnippetFile(imgPath, type) {
+    let dimensions = await GetImageDimensions(imgPath);
+    let alteredDimensions = GetAlteredDimensions(dimensions, type);
+    return await sharp(imgPath)
+        .extract(alteredDimensions)
+        .toFile(`${uuid()}.${imgPath.split('.'[1]) || '.jpg'}`);
 }
 
 function GetAlteredDimensions(dimensions, type) {
@@ -53,5 +59,6 @@ function GetAlteredDimensions(dimensions, type) {
 }
 
 module.exports = {
-    GetImageSnippet
+    GetImageSnippet,
+    GetImageSnippetFile
 }
