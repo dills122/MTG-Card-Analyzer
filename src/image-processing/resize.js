@@ -31,11 +31,13 @@ async function GetImageSnippet(imgPath, type) {
 }
 
 async function GetImageSnippetFile(imgPath, type) {
+    let path = `${uuid()}.${imgPath.split('.')[1] || '.jpg'}`;
     let dimensions = await GetImageDimensions(imgPath);
     let alteredDimensions = GetAlteredDimensions(dimensions, type);
-    return await sharp(imgPath)
+    await sharp(imgPath)
         .extract(alteredDimensions)
-        .toFile(`${uuid()}.${imgPath.split('.'[1]) || '.jpg'}`);
+        .toFile(path);
+    return path;
 }
 
 function GetAlteredDimensions(dimensions, type) {
