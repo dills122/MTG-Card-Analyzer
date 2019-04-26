@@ -14,7 +14,7 @@ function CheckForCreatureType(cleanText) {
     let percentage = 0;
     let isCreature = subStrs.some((subName) => {
         let result = fuzzy.get(subName) || [];
-        if(result.length > 0) {
+        if (result.length > 0) {
             percentage = result[0][0] || 0;
             return true;
         }
@@ -25,21 +25,24 @@ function CheckForCreatureType(cleanText) {
     ] : [];
 }
 
-function CheckForBaseType(cleanText) {
-    let fuzzy = FuzzySet(cardTypes);
-    if(!cleanText.match(/[\s]/g)) {
-        return fuzzy.get(cleanText);
-    }
-    let subStrs = cleanText.split(' ') || [];
-    let results = [];
-    subStrs.forEach((subName) => {
-        let result = fuzzy.get(subName);
-        if(result) {
-            let tmp = results.concat(result);
-            results = tmp;
+function CheckForBaseType(cleanText = "") {
+    if (cleanText) {
+        let fuzzy = FuzzySet(cardTypes);
+        if (!cleanText.match(/[\s]/g)) {
+            return fuzzy.get(cleanText) || [];
         }
-    });
-    return results || [];
+        let subStrs = cleanText.split(' ') || [];
+        let results = [];
+        subStrs.forEach((subName) => {
+            let result = fuzzy.get(subName);
+            if (result) {
+                let tmp = results.concat(result);
+                results = tmp;
+            }
+        });
+        return results;
+    }
+    return [];
 }
 
 module.exports = {
