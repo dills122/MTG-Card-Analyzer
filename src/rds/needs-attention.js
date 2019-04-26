@@ -5,7 +5,7 @@ const {
 function InsertEntity(record) {
     let connection = CreateConnection().connect();
 
-    let query = connection.query('INSERT INTO Card_Catalog SET ?', record, (error, results, fields) => {
+    let query = connection.query('INSERT INTO Card_NEED_ATTN SET ?', record, (error, results, fields) => {
         if(error) throw error;
     });
 }
