@@ -1,5 +1,5 @@
 const {
-    LocalCardDb
+    db
 } = require('./db');
 const {
     GetCardNames
@@ -8,7 +8,7 @@ const {
 async function ExecuteBulkInsert() {
     let names = await GetCardNames();
     names.forEach((name) => {
-        LocalCardDb.insert({
+        db.insert({
             name
         }, (err, doc) => {
             if (!err) {
