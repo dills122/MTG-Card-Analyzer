@@ -10,6 +10,17 @@ function InsertEntity(record) {
     });
 }
 
+function GetQuantity(name, set, cb) {
+    let connection = CreateConnection().connect();
+    let query = connection.query('SELECT quantity FROM Card_Catalog WHERE name=? AND set=?', [name, set], (error, results, fields) => {
+        if(error) {
+            return cb(error);
+        }
+        return cb(results);
+    });
+}
+
 module.exports = {
-    InsertEntity
+    InsertEntity,
+    GetQuantity
 }
