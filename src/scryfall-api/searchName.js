@@ -47,9 +47,9 @@ async function SearchList(exact) {
             if(Object.keys(cardInfo).length === 0) {
                 return [await SearchByNameFuzzy(fuzzy)];
             }
-            return cardInfo;
+            return cardInfo.data;
         }
-        return {};
+        return [];
     } catch (err) {
         console.log(err);
     }
