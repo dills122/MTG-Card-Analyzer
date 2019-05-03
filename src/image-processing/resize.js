@@ -10,13 +10,13 @@ const {
 
 const constants = {
     name: {
-        heightPercent: .10,
+        heightPercent: .09,
         widthPercent: .78,
     },
     type: {
         topPercent: .555,
-        heightPercent: .08,
-        widthPercent: .78,
+        heightPercent: .075,
+        widthPercent: .725,
     },
     borderPercent: .035
 };
@@ -26,6 +26,11 @@ async function GetImageSnippet(imgPath, type) {
     let alteredDimensions = GetAlteredDimensions(dimensions, type);
     let imgBuffer = sharp(imgPath)
         .extract(alteredDimensions)
+        .greyscale()
+        .sharpen()
+        .blur(.8)
+        .gamma()
+        .normalise()
         .toBuffer();
     return imgBuffer;
 }
@@ -33,15 +38,23 @@ async function GetImageSnippet(imgPath, type) {
 async function GetImageSnippetFile(imgPath, type) {
     let path = `${uuid()}.${imgPath.split('.')[1] || '.jpg'}`;
     let dimensions = await GetImageDimensions(imgPath);
-    let alteredDimensions = GetAlteredDimensions(dimensions, type);
-    await sharp(imgPath)
-        .extract(alteredDimensions)
-        .toFile(path);
-    return path;
+    if (dimensions.width >= 360 && dimensions.height >= 500) {
+        let alteredDimensions = GetAlteredDimensions(dimensions, type);
+        await sharp(imgPath)
+            .extract(alteredDimensions)
+            .greyscale()
+            .sharpen()
+            .blur(.8)
+            .gamma()
+            .normalise()
+            .toFile(path);
+        return path;
+    }
+    throw "Image is to small";
 }
 
 function GetAlteredDimensions(dimensions, type) {
-    if(type === 'name') {
+    if (type === 'name') {
         return {
             width: _.round(dimensions.width * constants.name.widthPercent),
             height: _.round(dimensions.height * constants.name.heightPercent),
