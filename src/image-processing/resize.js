@@ -31,7 +31,7 @@ async function GetImageSnippet(imgPath, type) {
         let imgBuffer = await img.getBufferAsync("image/jpeg");
         return imgBuffer;
     }
-    throw "Image is to small";
+    throw new Error("Image is to small");
 }
 
 async function GetImageSnippetFile(imgPath, type) {
@@ -48,7 +48,7 @@ async function GetImageSnippetFile(imgPath, type) {
         await img.writeAsync(path);
         return path;
     }
-    throw "Image is to small";
+    throw new Error("Image is to small");
 }
 
 function GetAlteredDimensions(dimensions, type) {
