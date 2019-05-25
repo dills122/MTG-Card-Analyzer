@@ -8,6 +8,9 @@ module.exports = {
         extractedText: Joi.string().max(100).required(),
         dirtyExtractedText: Joi.string().max(100).required(),
         nameImage: Joi.string().min(1).required(),
-        typeImage: Joi.string().min(3).optional()
+        typeImage: Joi.string().min(3).optional(),
+        artImage: Joi.string().min(3).optional(),
+        flavorImage: Joi.string().min(3).optional(),
+        possibleSets: Joi.string().min(3).required()
     })
 };

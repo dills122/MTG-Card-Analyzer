@@ -1,18 +1,18 @@
 const _ = require('lodash');
 const Joi = require('@hapi/joi');
-const schema = require('./schemas/needs-attention.schema').schema;
-const {
-    NDAttn
-} = require('../rds/index');
+const schema = require('./schemas/transaction.schema').schema;
+// const {
+//     Transaction
+// } = require('../rds/index');
 const dependencies = {
 
 };
 
-function NeedsAttention(params) {
-    _.bindAll(this, Object.keys(NeedsAttention.prototype));
+function Transaction(params) {
+    _.bindAll(this, Object.keys(Transaction.prototype));
 }
 
-NeedsAttention.prototype.initiate = function(obj) {
+Transaction.prototype.initiate = function(obj) {
     if(_.isNull(obj)) {
         return {
             error: "Object null"
@@ -25,19 +25,19 @@ NeedsAttention.prototype.initiate = function(obj) {
     return isValid;
 };
 
-NeedsAttention.prototype.CheckSchema = function() {
+Transaction.prototype.CheckSchema = function() {
     return !!!Joi.validate(this.data, schema).error;
 }
 
-NeedsAttention.prototype.Insert = function() {
+Transaction.prototype.Insert = function() {
     if(this.CheckSchema && !_.isNull(this.data)) {
-        NDAttn.InsertEntity(this.data);
+        // Transaction.InsertEntity(this.data);
     }
 }
 
 module.exports = {
     create:function(params) {
-        return new NeedsAttention(params);
+        return new Transaction(params);
     },
     dependencies
 };

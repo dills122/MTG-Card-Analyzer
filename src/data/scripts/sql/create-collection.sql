@@ -5,6 +5,8 @@ CREATE TABLE Card_Catalog (
     CardName varchar(50) NOT NULL,
     CardType varchar(25) NOT NULL,
     CardSet varchar(20) NOT NULL,
+    Quantity int NOT NULL,
+    EstValue DECIMAL NOT NULL,
     Automated BIT,
     MagicID int,
     ImageUrl varchar(150) NOT NULL,
