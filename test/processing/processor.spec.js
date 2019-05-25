@@ -13,7 +13,7 @@ describe("Processor::", () => {
     });
     describe("ProcessImage::", () => {
         it("Should process single image", (done) => {
-            const filePath = path.join(appRoot.toString(),'src\\test-images\\PlatinumAngel.jpg');
+            const filePath = path.join(appRoot.toString(),'src/test-images/PlatinumAngel.jpg');
             let imgProcessor = processor.create({
                 filePath: filePath
             });
@@ -27,7 +27,7 @@ describe("Processor::", () => {
             });
         }).timeout(5000);
         it("Should throw to small error", (done) => {
-            const filePath = path.join(appRoot.toString(),'src\\test-images\\test-extractions\\93e73461-807b-4590-9171-c3759a2576e9.jpg');
+            const filePath = path.join(appRoot.toString(),'src/test-images/test-extractions/93e73461-807b-4590-9171-c3759a2576e9.jpg');
             let imgProcessor = processor.create({
                 filePath: filePath
             });
