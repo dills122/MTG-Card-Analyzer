@@ -2,7 +2,6 @@
     const argv = require('yargs')
         .usage('Usage $0 <cmd> [options]')
         .command('scan <filepath>', 'scan a card')
-        .command('demo <filepath>', 'scan a card')
         .help()
         .argv;
     const {
@@ -22,9 +21,6 @@
     const {
         Processor
     } = require('./src/processor/index');
-    const {
-        ProcessCard
-    } = require('./src/processor/demo-processor');
 
     const isAccessible = promisify(fs.access);
 
@@ -74,13 +70,6 @@
                                 if (err) console.log(err)
                             });
                         });
-                    }
-                });
-                break;
-            case 'demo':
-                isAccessible(argv.filepath).then((isUnavailable) => {
-                    if (!isUnavailable) {
-                        ProcessCard(argv.filepath);
                     }
                 });
                 break;
