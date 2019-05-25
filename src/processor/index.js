@@ -1,3 +1,3 @@
 module.exports = {
-    ScanSingleImage: require('./single-processor').ProcessCard
+    Processor: require('./processor'),  
 };

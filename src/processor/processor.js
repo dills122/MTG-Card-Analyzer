@@ -12,6 +12,9 @@ const {
 const {
     promisify,
 } = require('util');
+const {
+    WriteToFile
+} = require('../file-io');
 
 const dependencies = {
     MatchName
@@ -30,6 +33,14 @@ SingleProcessor.prototype.execute = function(callback) {
             return callback(err);
         }
         return callback(null);
+    });
+}
+
+SingleProcessor.prototype.generateOutput = function(callback) {
+    this._processOutputFile().then((filePath) => {
+        return callback(null, filePath);
+    }).catch((err) => {
+        return callback(err);
     });
 }
 
@@ -71,6 +82,20 @@ SingleProcessor.prototype._processTypeImage = async function(path) {
         console.log(err);
     }
     return '';
+}
+
+SingleProcessor.prototype._processOutputFile = async function() {
+    let [namePercent, nameMatch] = this.nameMatches[0];
+    let [typePercent, typeMatch] = this.typeMatches[0];
+    let obj = {
+        "path": this.filePath,
+        "created": new Date().toDateString(),
+        "name-percentage": namePercent,
+        "name-string": nameMatch,
+        "type-percentage": typePercent,
+        "type-string":typeMatch
+    }
+    return await WriteToFile(obj);
 }
 
 module.exports = {
