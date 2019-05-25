@@ -43,7 +43,7 @@
                     console.log(`Checking Image ${item} at index ${index}`);
                     resize.GetImageSnippet(item, 'name').then((imgBuffer) => {
                         textExtraction.ScanImage(imgBuffer, (name, instance) => {
-                            MatchName(name).then((matches) => {
+                            MatchName.Match(name).then((matches) => {
                                 console.log(matches);
                             }).catch(err => console.log(err));
                             resize.GetImageSnippet(item, 'type').then((imgBuffer) => {

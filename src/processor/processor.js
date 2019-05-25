@@ -13,6 +13,10 @@ const {
     promisify,
 } = require('util');
 
+const dependencies = {
+    MatchName
+}
+
 const Scan = promisify(textExtraction.ScanImage);
 
 function SingleProcessor(params) {
@@ -32,7 +36,7 @@ SingleProcessor.prototype.execute = function(callback) {
 SingleProcessor.prototype._processCard = function(path, callback) {
     this._processNameImage(path).then((name) => {
         this.name = name;
-        return MatchName(this.name);
+        return dependencies.MatchName.Match(this.name);
     }).then((nameMatches) => {
         this.nameMatches = nameMatches;
         console.log(this.nameMatches);
@@ -72,5 +76,6 @@ SingleProcessor.prototype._processTypeImage = async function(path) {
 module.exports = {
     create: function(params) {
         return new SingleProcessor(params);
-    }
+    },
+    dependencies
 }

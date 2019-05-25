@@ -16,7 +16,7 @@ const Scan = promisify(textExtraction.ScanImage);
 
 function ProcessCard(path) {
     ProcessNameImage(path).then((name) => {
-        return MatchName(name);
+        return MatchName.Match(name);
     }).then((nameMatches) => {
         console.log(nameMatches);
         return ProcessTypeImage(path);
