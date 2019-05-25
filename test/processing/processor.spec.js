@@ -23,7 +23,7 @@ describe("Processor::", () => {
                 chai.assert.deepEqual(imgProcessor.nameMatches[0][1], 'Platinum Angel');
                 chai.assert.isAbove(imgProcessor.typeMatches[0][0], .75);
                 chai.assert.deepEqual(imgProcessor.typeMatches[0][1], 'Creature');
-                done();
+                done(err);
             });
         }).timeout(5000);
         it("Should throw to small error", (done) => {
