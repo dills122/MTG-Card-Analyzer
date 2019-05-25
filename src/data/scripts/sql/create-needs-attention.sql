@@ -7,6 +7,13 @@ CREATE TABLE Card_NEED_ATTN (
     DirtyExtractedText varchar(100),
     NameImage TEXT,
     TypeImage TEXT,
+    ArtImage TEXT,
+    FlavorImage TEXT,
+    PossibleSets varchar(50),
     Automated BIT,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME ON UPDATE CURRENT_TIMESTAMP,
+    CreatedBy varchar(25) NOT NULL,
+    UpdatedBy varchar(25) NOT NULL,
     PRIMARY KEY (ItemID)
 );
