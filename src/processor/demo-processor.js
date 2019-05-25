@@ -16,7 +16,7 @@ const Scan = promisify(textExtraction.ScanImage);
 
 function ProcessCard(path) {
     ProcessNameImage(path).then((name) => {
-        return MatchName.Match(name);
+        return MatchName(name);
     }).then((nameMatches) => {
         console.log(nameMatches);
         return ProcessTypeImage(path);
@@ -32,8 +32,8 @@ function ProcessCard(path) {
 
 async function ProcessNameImage(path) {
     try {
-        let imgBuffer = await resize.GetImageSnippet(path, 'name');
-        return await Scan(imgBuffer);
+        let snippetPath = await resize.GetImageSnippetFile(path, 'name');
+        return await Scan(snippetPath);
     } catch (err) {
         console.log(err);
     }
@@ -42,8 +42,8 @@ async function ProcessNameImage(path) {
 
 async function ProcessTypeImage(path) {
     try {
-        let imgBuffer = await resize.GetImageSnippet(path, 'type');
-        return await Scan(imgBuffer);
+        let snippetPath = await resize.GetImageSnippetFile(path, 'type');
+        return await Scan(snippetPath);
     } catch (err) {
         console.log(err);
     }

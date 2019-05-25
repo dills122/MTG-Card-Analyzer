@@ -15,7 +15,7 @@ const constants = {
         heightPercent: .075,
         widthPercent: .725,
     },
-    borderPercent: .035
+    borderPercent: .0435
 };
 
 async function GetImageSnippet(imgPath, type) {
@@ -25,8 +25,8 @@ async function GetImageSnippet(imgPath, type) {
         let img = await jimp.read(imgPath);
         img.crop(alteredDimensions.left, alteredDimensions.top, alteredDimensions.width, alteredDimensions.height)
             .greyscale()
-            .brightness(.225)
-            .contrast(.725)
+            .contrast(.730)
+            .brightness(.235)
             .blur(1);
         let imgBuffer = await img.getBufferAsync("image/jpeg");
         return imgBuffer;
@@ -42,8 +42,8 @@ async function GetImageSnippetFile(imgPath, type) {
         let img = await jimp.read(imgPath);
         img.crop(alteredDimensions.left, alteredDimensions.top, alteredDimensions.width, alteredDimensions.height)
             .greyscale()
-            .brightness(.225)
-            .contrast(.725)
+            .contrast(.730)
+            .brightness(.235)
             .blur(1);
         await img.writeAsync(path);
         return path;
