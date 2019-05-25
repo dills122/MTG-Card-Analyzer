@@ -32,8 +32,8 @@ function ProcessCard(path) {
 
 async function ProcessNameImage(path) {
     try {
-        let imgBuffer = await resize.GetImageSnippet(path, 'name');
-        return await Scan(imgBuffer);
+        let snippetPath = await resize.GetImageSnippetFile(path, 'name');
+        return await Scan(snippetPath);
     } catch (err) {
         console.log(err);
     }
@@ -42,8 +42,8 @@ async function ProcessNameImage(path) {
 
 async function ProcessTypeImage(path) {
     try {
-        let imgBuffer = await resize.GetImageSnippet(path, 'type');
-        return await Scan(imgBuffer);
+        let snippetPath = await resize.GetImageSnippetFile(path, 'type');
+        return await Scan(snippetPath);
     } catch (err) {
         console.log(err);
     }

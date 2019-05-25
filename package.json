@@ -1,6 +1,6 @@
 {
   "name": "mtg-card-analyzer",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "description": "a mtg ocr app for documenting a collection",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,7 @@
     "app-root-path": "^2.2.1",
     "fuzzyset.js": "0.0.8",
     "image-size": "^0.7.3",
+    "jimp": "^0.6.4",
     "joi": "^14.3.1",
     "lodash": "^4.17.11",
     "mtgsdk": "^0.4.2",
@@ -25,7 +26,6 @@
     "pixelmatch": "^4.0.2",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
-    "sharp": "^0.22.0",
     "tesseract.js": "^1.0.14",
     "uuid": "^3.3.2",
     "yargs": "^13.2.2"

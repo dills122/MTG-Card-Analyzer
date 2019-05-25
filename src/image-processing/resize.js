@@ -1,38 +1,37 @@
 const _ = require('lodash');
-const sharp = require('sharp');
+const jimp = require('jimp');
 const uuid = require('uuid/v4');
 const {
     GetImageDimensions
 } = require('./util');
-const {
-    Write
-} = require('../file-io');
 
 const constants = {
     name: {
-        heightPercent: .09,
-        widthPercent: .78,
+        heightPercent: .0825,
+        widthPercent: .755,
     },
     type: {
         topPercent: .555,
         heightPercent: .075,
         widthPercent: .725,
     },
-    borderPercent: .035
+    borderPercent: .0435
 };
 
 async function GetImageSnippet(imgPath, type) {
     let dimensions = await GetImageDimensions(imgPath);
-    let alteredDimensions = GetAlteredDimensions(dimensions, type);
-    let imgBuffer = sharp(imgPath)
-        .extract(alteredDimensions)
-        .greyscale()
-        .sharpen()
-        .blur(.8)
-        .gamma()
-        .normalise()
-        .toBuffer();
-    return imgBuffer;
+    if (dimensions.width >= 360 && dimensions.height >= 500) {
+        let alteredDimensions = GetAlteredDimensions(dimensions, type);
+        let img = await jimp.read(imgPath);
+        img.crop(alteredDimensions.left, alteredDimensions.top, alteredDimensions.width, alteredDimensions.height)
+            .greyscale()
+            .contrast(.730)
+            .brightness(.235)
+            .blur(1);
+        let imgBuffer = await img.getBufferAsync("image/jpeg");
+        return imgBuffer;
+    }
+    throw new Error("Image is to small");
 }
 
 async function GetImageSnippetFile(imgPath, type) {
@@ -40,17 +39,16 @@ async function GetImageSnippetFile(imgPath, type) {
     let dimensions = await GetImageDimensions(imgPath);
     if (dimensions.width >= 360 && dimensions.height >= 500) {
         let alteredDimensions = GetAlteredDimensions(dimensions, type);
-        await sharp(imgPath)
-            .extract(alteredDimensions)
+        let img = await jimp.read(imgPath);
+        img.crop(alteredDimensions.left, alteredDimensions.top, alteredDimensions.width, alteredDimensions.height)
             .greyscale()
-            .sharpen()
-            .blur(.8)
-            .gamma()
-            .normalise()
-            .toFile(path);
+            .contrast(.730)
+            .brightness(.235)
+            .blur(1);
+        await img.writeAsync(path);
         return path;
     }
-    throw "Image is to small";
+    throw new Error("Image is to small");
 }
 
 function GetAlteredDimensions(dimensions, type) {

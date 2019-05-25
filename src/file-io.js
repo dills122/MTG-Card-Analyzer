@@ -9,6 +9,11 @@ async function Write(imgBuffer, imgPath) {
     return await writeFile(editedImgPath, imgBuffer);
 }
 
+async function WriteToFile(contents, path ='') {
+    return await writeFile(path || `${uuid()}.json`,JSON.stringify(contents));
+}
+
 module.exports = {
-    Write
+    Write,
+    WriteToFile
 }

@@ -19,7 +19,7 @@
         MatchName
     } = require('./src/fuzzy-matching/index');
     const {
-        ScanSingleImage
+        Processor
     } = require('./src/processor/index');
 
     const isAccessible = promisify(fs.access);
@@ -43,7 +43,7 @@
                     console.log(`Checking Image ${item} at index ${index}`);
                     resize.GetImageSnippet(item, 'name').then((imgBuffer) => {
                         textExtraction.ScanImage(imgBuffer, (name, instance) => {
-                            MatchName(name).then((matches) => {
+                            MatchName.Match(name).then((matches) => {
                                 console.log(matches);
                             }).catch(err => console.log(err));
                             resize.GetImageSnippet(item, 'type').then((imgBuffer) => {
@@ -61,7 +61,15 @@
             case 'scan':
                 isAccessible(argv.filepath).then((isUnavailable) => {
                     if (!isUnavailable) {
-                        ScanSingleImage(argv.filepath);
+                        let processor = Processor.create({
+                            filePath: argv.filepath
+                        });
+                        processor.execute((err) => {
+                            if (err) console.log(err);
+                            processor.generateOutput((err) => {
+                                if (err) console.log(err)
+                            });
+                        });
                     }
                 });
                 break;
