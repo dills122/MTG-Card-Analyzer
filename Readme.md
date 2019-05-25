@@ -30,7 +30,7 @@ Cleaned Extracted Text: `gPlatinumAngel`
 #### After Pre-Processing
 
 <p align="center">
-  <img width="500" height="100" src=".\src\test-images\test-extractions\93e73461-807b-4590-9171-c3759a2576e9.jpg" alt="Logo Image">
+  <img width="500" height="100" src=".\src\test-images\test-extractions\24b0e728-dd4b-487d-aefa-26e707566130.jpg" alt="Logo Image">
 </p>
 
 ### Type Extraction
@@ -48,7 +48,7 @@ Cleaned Extracted Text: `EArtifactCreatureAngel`
 #### After Pre-Processing
 
 <p align="center">
-  <img width="500" height="100" src=".\src\test-images\test-extractions\25017b70-d5f0-4521-bb7d-e15c3d103b42.jpg" alt="Logo Image">
+  <img width="500" height="100" src=".\src\test-images\test-extractions\19c600f5-28ae-4599-81ee-9df8058ce8df.jpg" alt="Logo Image">
 </p>
 
 
