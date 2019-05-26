@@ -6,6 +6,8 @@ CREATE TABLE Image_Results (
     SetName varchar(50) NOT NULL,
     ArtImage TEXT NOT NULL,
     FlavorImage TEXT NOT NULL,
+    ArtImageHash varchar(64) NOT NULL,
+    FlavorImageHash varchar(64) NOT NULL,
     ArtMatchPercent DOUBLE,
     FlavorMatchPercent DOUBLE,
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
