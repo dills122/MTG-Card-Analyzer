@@ -1,4 +1,4 @@
-USING 'mtg-tracker';
+use MtgCardCatalog;
 
 CREATE TABLE Card_NEED_ATTN (
     ItemID int NOT NULL AUTO_INCREMENT,

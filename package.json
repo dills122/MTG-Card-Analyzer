@@ -17,6 +17,7 @@
     "@hapi/joi": "^15.0.3",
     "app-root-path": "^2.2.1",
     "fuzzyset.js": "0.0.8",
+    "image-hash": "^3.3.7",
     "image-size": "^0.7.3",
     "jimp": "^0.6.4",
     "lodash": "^4.17.11",
@@ -26,7 +27,8 @@
     "pixelmatch": "^4.0.2",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
-    "tesseract.js": "^1.0.14",
+    "string-similarity": "^3.0.0",
+    "tesseract.js": "^1.0.19",
     "uuid": "^3.3.2",
     "yargs": "^13.2.2"
   },

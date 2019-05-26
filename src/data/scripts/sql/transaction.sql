@@ -1,4 +1,4 @@
-USING 'mtg-tracker';
+use MtgCardCatalog;
 
 CREATE TABLE Transactions (
     TransactionID int NOT NULL AUTO_INCREMENT,

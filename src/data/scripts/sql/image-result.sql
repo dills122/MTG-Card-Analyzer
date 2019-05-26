@@ -1,4 +1,4 @@
-USING 'mtg-tracker';
+use MtgCardCatalog;
 
 CREATE TABLE Image_Results (
     ImageHashID int NOT NULL AUTO_INCREMENT,

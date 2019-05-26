@@ -3,20 +3,29 @@ const {
 } = require('./connection');
 
 function InsertEntity(record) {
-    let connection = CreateConnection().connect();
-
-    let query = connection.query('INSERT INTO Card_Catalog SET ?', record, (error, results, fields) => {
-        if(error) throw error;
+    let connection = CreateConnection();
+    connection.connect((err) => {
+        connection.query('INSERT INTO Card_Catalog SET ?', record, (error, results, fields) => {
+            if (error) {
+                console.log(error);
+            }
+            return connection.end();
+        });
     });
 }
 
 function GetQuantity(name, set, cb) {
-    let connection = CreateConnection().connect();
-    let query = connection.query('SELECT quantity FROM Card_Catalog WHERE name=? AND set=?', [name, set], (error, results, fields) => {
-        if(error) {
-            return cb(error);
-        }
-        return cb(results);
+    let connection = CreateConnection();
+    connection.connect((err) => {
+        connection.query('SELECT Quantity FROM Card_Catalog WHERE CardName=? AND CardSet=?', [name, set], (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                connection.end();
+                return cb(error);
+            }
+            connection.end();
+            return cb(null, results ? results : 0);
+        });
     });
 }
 

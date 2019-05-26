@@ -1,10 +1,10 @@
-USING 'mtg-tracker';
+use MtgCardCatalog;
 
 CREATE TABLE Card_Catalog (
     CardID int NOT NULL AUTO_INCREMENT,
     CardName varchar(50) NOT NULL,
     CardType varchar(25) NOT NULL,
-    CardSet varchar(20) NOT NULL,
+    CardSet varchar(50) NOT NULL,
     Quantity int NOT NULL,
     EstValue DECIMAL NOT NULL,
     Automated BIT,

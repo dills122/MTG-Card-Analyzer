@@ -2,7 +2,7 @@ const mysql = require('mysql');
 const secureConfig = require('../../secure.config');
 
 module.exports = {
-    CreateConnection() {
+    CreateConnection: function() {
         return mysql.createConnection({
             host: secureConfig.rds.host,
             user: secureConfig.rds.user,

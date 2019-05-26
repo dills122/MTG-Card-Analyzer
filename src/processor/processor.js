@@ -15,6 +15,9 @@ const {
 const {
     WriteToFile
 } = require('../file-io');
+const {
+    ProcessResults
+} = require('../export-results/index');
 
 const dependencies = {
     MatchName
@@ -27,16 +30,16 @@ function SingleProcessor(params) {
     this.filePath = params.filePath;
 }
 
-SingleProcessor.prototype.execute = function(callback) {
+SingleProcessor.prototype.execute = function (callback) {
     this._processCard(this.filePath, (err) => {
-        if(err) {
+        if (err) {
             return callback(err);
         }
         return callback(null);
     });
 }
 
-SingleProcessor.prototype.generateOutput = function(callback) {
+SingleProcessor.prototype.generateOutput = function (callback) {
     this._processOutputFile().then((filePath) => {
         return callback(null, filePath);
     }).catch((err) => {
@@ -44,7 +47,7 @@ SingleProcessor.prototype.generateOutput = function(callback) {
     });
 }
 
-SingleProcessor.prototype._processCard = function(path, callback) {
+SingleProcessor.prototype._processCard = function (path, callback) {
     this._processNameImage(path).then((name) => {
         this.name = name;
         return dependencies.MatchName.Match(this.name);
@@ -55,6 +58,8 @@ SingleProcessor.prototype._processCard = function(path, callback) {
     }).then((type) => {
         this.typeMatches = MatchType(type);
         console.log(this.typeMatches);
+        return this._processResults();
+    }).then((cards) => {
         textExtraction.ShutDown();
         return callback(null);
     }).catch((err) => {
@@ -64,7 +69,7 @@ SingleProcessor.prototype._processCard = function(path, callback) {
     });
 }
 
-SingleProcessor.prototype._processNameImage = async function(path) {
+SingleProcessor.prototype._processNameImage = async function (path) {
     try {
         let imgBuffer = await resize.GetImageSnippet(path, 'name');
         return await Scan(imgBuffer);
@@ -74,7 +79,7 @@ SingleProcessor.prototype._processNameImage = async function(path) {
     return '';
 }
 
-SingleProcessor.prototype._processTypeImage = async function(path) {
+SingleProcessor.prototype._processTypeImage = async function (path) {
     try {
         let imgBuffer = await resize.GetImageSnippet(path, 'type');
         return await Scan(imgBuffer);
@@ -84,7 +89,21 @@ SingleProcessor.prototype._processTypeImage = async function(path) {
     return '';
 }
 
-SingleProcessor.prototype._processOutputFile = async function() {
+SingleProcessor.prototype._processResults = async function () {
+    if (this.nameMatches && this.typeMatches) {
+
+        let [namePercent, nameMatch] = this.nameMatches[0];
+        let [typePercent, typeMatch] = this.typeMatches[0];
+        let resultsProcessor = ProcessResults.create({
+            name: nameMatch
+            //Need to add file path
+        });
+        resultsProcessor.execute();
+    }
+    return [];
+}
+
+SingleProcessor.prototype._processOutputFile = async function () {
     let [namePercent, nameMatch] = this.nameMatches[0];
     let [typePercent, typeMatch] = this.typeMatches[0];
     let obj = {
@@ -93,13 +112,13 @@ SingleProcessor.prototype._processOutputFile = async function() {
         "name-percentage": namePercent,
         "name-string": nameMatch,
         "type-percentage": typePercent,
-        "type-string":typeMatch
+        "type-string": typeMatch
     }
     return await WriteToFile(obj);
 }
 
 module.exports = {
-    create: function(params) {
+    create: function (params) {
         return new SingleProcessor(params);
     },
     dependencies
