@@ -17,19 +17,19 @@ function CompareHash(hashOne, hashTwo) {
     let HashLength = hashOne.length;
     let twoBitMatches = 0;
     let fourBitMatches = 0;
+    let hashTwoArry = hashTwo.split('');
+    let hashOneArry = hashOne.split('');
     hashOne.split('').forEach((c, index) => {
-        hashTwo.split('').forEach((cTwo, indexTwo) => {
-            if (index >= 2 && indexTwo >= 2) {
-                let hashOneDoubleStr = hashOne.slice(c - 2, c);
-                let hashTwoDoubleStr = hashTwo.slice(cTwo - 2, cTwo);
-                twoBitMatches = hashOneDoubleStr === hashTwoDoubleStr ? twoBitMatches = +1 : twoBitMatches;
-                if (index >= 4 && indexTwo >= 4) {
-                    let hashOneQuadStr = hashOne.slice(c - 4, c);
-                    let hashTwoQuadStr = hashTwo.slice(cTwo - 4, cTwo);
-                    fourBitMatches = hashOneQuadStr === hashTwoQuadStr ? fourBitMatches = +1 : fourBitMatches;
-                }
-            }
-        });
+        if(index % 2 === 0) {
+            let hashOneDoubleStr = hashOne.slice(index - 2, index);
+            let hashTwoDoubleStr = hashTwo.slice(index - 2, index);
+            twoBitMatches += hashOneDoubleStr === hashTwoDoubleStr ? 1 : 0;
+        }
+        if(index % 4 === 0) {
+            let hashOneQuadStr = hashOne.slice(index - 4, index);
+            let hashTwoQuadStr = hashTwo.slice(index - 4, index);
+            fourBitMatches += hashOneQuadStr === hashTwoQuadStr ? 1: 0;
+        }
     });
     return {
         twoBitMatches: _.round(twoBitMatches / (HashLength / 2), 2),
