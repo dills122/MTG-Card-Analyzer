@@ -2,7 +2,6 @@ const {
     imageHash
 } = require('image-hash');
 const stringSimilarity = require('string-similarity');
-const request = require('request-promise-native');
 
 function HashImage(imgUrl, cb) {
     imageHash(imgUrl, 16, true, (error, data) => {

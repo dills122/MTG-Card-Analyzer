@@ -1,7 +1,6 @@
 const fs = require('fs');
 const {
     promisify,
-    inspect
 } = require('util');
 
 const {
@@ -11,8 +10,6 @@ const {
 const dependencies = {
     Tesseract: require('tesseract.js')
 };
-
-const access = promisify(fs.access);
 
 function ScanImage(imgBuffer, cb) {
     dependencies.Tesseract.recognize(imgBuffer)
