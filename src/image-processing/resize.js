@@ -18,6 +18,16 @@ const constants = {
         heightPercent: .075,
         widthPercent: .725,
     },
+    art: {
+        topPercent: .1122,
+        heightPercent: .4455,
+        widthPercent: .8557,
+    },
+    flavor: {
+        topPercent: .6127,
+        heightPercent: .2927,
+        widthPercent: .8557
+    },
     borderPercent: .0435
 };
 
@@ -85,6 +95,20 @@ function GetAlteredDimensions(dimensions, type) {
             height: _.round(dimensions.height * constants.type.heightPercent),
             left: _.round(dimensions.width * constants.borderPercent),
             top: _.round(dimensions.height * constants.type.topPercent)
+        };
+    } else if( type === 'art') {
+        return {
+            width: _.round(dimensions.width * constants.art.widthPercent),
+            height: _.round(dimensions.height * constants.art.heightPercent),
+            left: _.round(dimensions.width * constants.borderPercent),
+            top: _.round(dimensions.height * constants.art.topPercent)
+        };
+    } else if( type === 'flavor') {
+        return {
+            width: _.round(dimensions.width * constants.flavor.widthPercent),
+            height: _.round(dimensions.height * constants.flavor.heightPercent),
+            left: _.round(dimensions.width * constants.borderPercent),
+            top: _.round(dimensions.height * constants.flavor.topPercent)
         };
     } else {
         return {};
