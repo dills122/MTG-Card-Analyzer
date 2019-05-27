@@ -5,7 +5,7 @@ module.exports = {
     schema: Joi.object().keys({
         cardId: Joi.number(),
         cardName: Joi.string().min(3).max(50).required(),
-        cardType: Joi.string().min(3).max(25).required(),
+        cardType: Joi.string().min(3).max(50).required(),
         cardSet: Joi.string().min(3).max(50).required(),
         quantity: Joi.number().min(1).required(),
         estValue: Joi.number().optional(),

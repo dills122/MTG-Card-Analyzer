@@ -4,6 +4,9 @@ const uuid = require('uuid/v4');
 const {
     GetImageDimensions
 } = require('./util');
+const {
+    CreateDirectory
+} = require('../file-io');
 
 const constants = {
     name: {
@@ -51,6 +54,23 @@ async function GetImageSnippetFile(imgPath, type) {
     throw new Error("Image is to small");
 }
 
+async function GetImageSnippetTmpFile(imgPath, directory, type) {
+    let path = `${directory}\\${uuid()}.${imgPath.split('.')[1] || '.jpg'}`;
+    let dimensions = await GetImageDimensions(imgPath);
+    if (dimensions.width >= 360 && dimensions.height >= 500) {
+        let alteredDimensions = GetAlteredDimensions(dimensions, type);
+        let img = await jimp.read(imgPath);
+        img.crop(alteredDimensions.left, alteredDimensions.top, alteredDimensions.width, alteredDimensions.height)
+            .greyscale()
+            .contrast(.730)
+            .brightness(.235)
+            .blur(1);
+        await img.writeAsync(path);
+        return path;
+    }
+    throw new Error("Image is to small");
+}
+
 function GetAlteredDimensions(dimensions, type) {
     if (type === 'name') {
         return {
@@ -73,5 +93,6 @@ function GetAlteredDimensions(dimensions, type) {
 
 module.exports = {
     GetImageSnippet,
-    GetImageSnippetFile
+    GetImageSnippetFile,
+    GetImageSnippetTmpFile
 }

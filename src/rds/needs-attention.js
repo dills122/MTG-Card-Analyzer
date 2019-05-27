@@ -2,14 +2,16 @@ const {
     CreateConnection
 } = require('./connection');
 
-function InsertEntity(record) {
+function InsertEntity(record, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
         connection.query('INSERT INTO Card_NEED_ATTN SET ?', record, (error, results, fields) => {
             if(error) {
                 console.log(error);
+                cb(error);
             }
-            return connection.end();
+            connection.end();
+            return cb(null, results);
         });
     });
 }

@@ -40,8 +40,9 @@ async function SearchByNameFuzzy(exact, fuzzy= '') {
 }
 
 async function SearchList(exact) {
+    let name = exact.replace(/ /g, '%20');
     try {
-        let response = await request(`${apiConfig.templates.cardListExact}${exact}`);
+        let response = await request(`${apiConfig.templates.cardListExact}${name}&unique=prints`);
         if (response) {
             let cardInfo = JSON.parse(response) || {};
             if(Object.keys(cardInfo).length === 0) {
