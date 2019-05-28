@@ -14,7 +14,6 @@ const {
 } = require('util');
 const {
     WriteToFile,
-    WriteTmp,
     DeleteFiles,
     CreateDirectory
 } = require('../file-io');
@@ -36,6 +35,8 @@ function SingleProcessor(params) {
     _.bindAll(this, Object.keys(SingleProcessor.prototype));
     this.filePath = params.filePath;
     this.imagePaths = {};
+    this.extractedText = {};
+    this.matches = {};
 }
 
 SingleProcessor.prototype.execute = function (callback) {
@@ -47,35 +48,22 @@ SingleProcessor.prototype.execute = function (callback) {
     });
 }
 
-SingleProcessor.prototype.generateOutput = function (callback) {
-    this._processOutputFile().then((filePath) => {
-        return callback(null, filePath);
-    }).catch((err) => {
-        return callback(err);
-    });
-}
-
 SingleProcessor.prototype._processCard = function (path, callback) {
     CreateDirectory().then((directory) => {
-        if (directory) {
-            this.directory = directory;
+        console.log(`Created Directory: ${directory}`);
+        this.directory = directory;
+        return this._processImageFiles(path);
+    }).then((paths) => {
+        if (!paths) {
+            throw new Error('No Image paths to process');
         }
-        return this._processNameImage(path);
-    }).then((names) => {
-        this.name = names.cleanText;
-        this.dirtyName = names.dirtyText;
-        return dependencies.MatchName.Match(this.name);
-    }).then((nameMatches) => {
-        this.nameMatches = nameMatches;
-        console.log(this.nameMatches);
-        return this._processTypeImage(path);
-    }).then((types) => {
-        this.type = types.cleanText;
-        this.dirtyType = types.dirtyText;
-        this.typeMatches = MatchType(this.type);
-        console.log(this.typeMatches);
+        console.log(`Imaged Pre-Processed: ${paths}`);
+        return this._processFuzzyMatches();
+    }).then(() => {
+        console.log(`Fuzzy Matches Processed: ${this.matches}`);
         return this._processResults();
-    }).then((cards) => {
+    }).then(() => {
+        console.log(`Results Processed: Inserted in DB`);
         textExtraction.ShutDown();
         DeleteFiles(this.imagePaths);
         return callback(null);
@@ -86,33 +74,72 @@ SingleProcessor.prototype._processCard = function (path, callback) {
     });
 }
 
+SingleProcessor.prototype.generateOutput = function (callback) {
+    this._processOutputFile().then((filePath) => {
+        return callback(null, filePath);
+    }).catch((err) => {
+        return callback(err);
+    });
+}
+
+SingleProcessor.prototype._processImageFiles = async function (path) {
+    await this._processArtImage(path);
+    await this._processFlavorImage(path);
+    await this._processNameImage(path);
+    await this._processTypeImage(path);
+    return this.imagePaths;
+}
+
+SingleProcessor.prototype._processFuzzyMatches = async function () {
+    this.matches.nameMatches = await dependencies.MatchName.Match(this.extractedText.nameImage.cleanText);
+    this.matches.typeMatches = MatchType(this.extractedText.typeImage.cleanText);
+}
+
 SingleProcessor.prototype._processNameImage = async function (path) {
     try {
         let imgPath = await resize.GetImageSnippetTmpFile(path, this.directory, 'name');
         this.imagePaths.nameImage = imgPath;
-        return await Scan(imgPath);
+        this.extractedText.nameImage = await Scan(imgPath);
     } catch (err) {
         console.log(err);
     }
-    return '';
 }
 
 SingleProcessor.prototype._processTypeImage = async function (path) {
     try {
-        let imgPath = await resize.GetImageSnippetTmpFile(path,this.directory, 'type');
+        let imgPath = await resize.GetImageSnippetTmpFile(path, this.directory, 'type');
         this.imagePaths.typeImage = imgPath;
-        return await Scan(imgPath);
+        this.extractedText.typeImage = await Scan(imgPath);
     } catch (err) {
         console.log(err);
     }
-    return '';
+}
+
+SingleProcessor.prototype._processArtImage = async function (path) {
+    try {
+        let imgPath = await resize.GetImageSnippetTmpFile(path, this.directory, 'art');
+        this.imagePaths.artImage = imgPath;
+        return imgPath;
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+SingleProcessor.prototype._processFlavorImage = async function (path) {
+    try {
+        let imgPath = await resize.GetImageSnippetTmpFile(path, this.directory, 'flavor');
+        this.imagePaths.flavorImage = imgPath;
+        return imgPath;
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 SingleProcessor.prototype._processResults = async function () {
-    if (this.nameMatches && this.typeMatches) {
+    if (!_.isEmpty(this.matches)) {
 
-        let [namePercent, nameMatch] = this.nameMatches[0];
-        // let [typePercent, typeMatch] = this.typeMatches[0];
+        let [namePercent, nameMatch] = this.matches.nameMatches[0];
+        // let [typePercent, typeMatch] = this.matches.typeMatches[0];
         let resultsProcessor = ProcessResults.create({
             name: nameMatch,
             filePath: this.filePath
@@ -131,8 +158,8 @@ SingleProcessor.prototype._processResults = async function () {
 }
 
 SingleProcessor.prototype._processOutputFile = async function () {
-    let [namePercent, nameMatch] = this.nameMatches[0];
-    let [typePercent, typeMatch] = this.typeMatches[0];
+    let [namePercent, nameMatch] = this.matches.nameMatches[0];
+    let [typePercent, typeMatch] = this.matches.typeMatches[0];
     let obj = {
         "path": this.filePath,
         "created": new Date().toDateString(),
@@ -145,37 +172,35 @@ SingleProcessor.prototype._processOutputFile = async function () {
 }
 
 SingleProcessor.prototype._processNeedsAtn = function (sets) {
-    // let base64Images = this._getBase64Images()
-    let base64Images = {};
-    let nameMatch = this.nameMatches[0] || [];
-    let name = nameMatch[1] || '';
-    let model = NeedsAttention.create({});
-    let isValid = model.initiate({
-        cardName: name,
-        extractedText: this.name,
-        dirtyExtractedText: this.dirtyName,
-        nameImage: base64Images.nameImage || 'VGhpcyBpcyBhIGZha2Ugc3RyaW5nIQ==', //Filler Base64 till error is fixed
-        typeImage: base64Images.typeImage || 'VGhpcyBpcyBhIGZha2Ugc3RyaW5nIQ==',
-        artImage: base64Images.artImage || 'VGhpcyBpcyBhIGZha2Ugc3RyaW5nIQ==',
-        flavorImage: base64Images.flavorImage || 'VGhpcyBpcyBhIGZha2Ugc3RyaW5nIQ==',
-        possibleSets: sets.join(',')
+    this._getBase64Images().then((base64Images) => {
+        // let base64Images = {};
+        console.log(base64Images);
+        let nameMatch = this.matches.nameMatches[0] || [];
+        let name = nameMatch[1] || '';
+        let model = NeedsAttention.create({});
+        let isValid = model.initiate({
+            cardName: name,
+            extractedText: this.extractedText.nameImage.cleanText,
+            dirtyExtractedText: this.extractedText.nameImage.dirtyText,
+            nameImage: base64Images.nameImage || 'VGhpcyBpcyBhIGZha2Ugc3RyaW5nIQ==', //Filler Base64 till error is fixed
+            typeImage: base64Images.typeImage || 'VGhpcyBpcyBhIGZha2Ugc3RyaW5nIQ==',
+            artImage: base64Images.artImage || 'VGhpcyBpcyBhIGZha2Ugc3RyaW5nIQ==',
+            flavorImage: base64Images.flavorImage || 'VGhpcyBpcyBhIGZha2Ugc3RyaW5nIQ==',
+            possibleSets: sets.join(',')
+        });
+        if (isValid) {
+            model.Insert();
+        } else {
+            console.log('Error processing Needs Attention');
+        }
+    }).catch((error) => {
+        console.log('_processNeedsAtn');
+        console.log(error);
     });
-    if (isValid) {
-        // model.Insert();
-    } else {
-        console.log('Error processing Needs Attention');
-    }
 };
 
-SingleProcessor.prototype._getBase64Images = function () {
-    let base64Results = Base64.StringfyImagesNDAtn({
-        //Need figure way out to have tmp image for hashing
-        flavorImage: this.imagePaths.flavorPath,
-        artImage: this.imagePaths.artPath,
-        typeImage: this.imagePaths.typePath,
-        nameImage: this.imagePaths.namePath
-    });
-    return base64Results;
+SingleProcessor.prototype._getBase64Images = async function () {
+    return await Base64.StringfyImagesNDAtn(this.imagePaths);
 }
 
 module.exports = {
