@@ -24,7 +24,11 @@ function GetQuantity(name, set, cb) {
                 return cb(error);
             }
             connection.end();
-            return cb(null, results ? results : 0);
+            if(results.length === 0) {
+                return cb(null, 0);
+            }
+            let result = results[0] || {};
+            return cb(null, result ? result.Quantity : 0);
         });
     });
 }

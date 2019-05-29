@@ -38,31 +38,31 @@ ProcessResults.prototype.execute = async function (filePath) {
                 error: 'No results found'
             };
         }
+        console.log('process-results::execute: Cards Found, Finding Best Match');
         if (cards.length === 1) {
-            console.log('Only One Card Found');
+            console.log(`process-results::execute: One Card Found ${JSON.stringify(cards)}`)
             await this._gatherResults(cards[0]);
             return {};
         }
-        //Issue with the hashing
-        // if (cards.length > 1) {
-        //     let result = await this._compareImageHashResults(cards, filePath);
-        //     console.log('More than One set');
-        //     if (result.error) {
-        //         return {
-        //             sets: result.sets
-        //         };
-        //     }
-        //     if (result.value) {
-        //         console.log('value found');
-        //         console.log(result.value);
-        //         await this._gatherResults(result.value);
-        //         return {};
-        //     }
-        // }
-        if(cards.length > 1) {
-            return {
-                sets: _.map(cards, obj => obj.set_name)
-            };
+        if (cards.length > 1) {
+            let result = await this._compareImageHashResults(cards, filePath);
+            if (result.error) {
+                return {
+                    error: result.error
+                };
+            }
+            if(result.sets) {
+                console.log(`process-results::execute: More Than One Match Found ${JSON.stringify(result.sets)}`)
+                return {
+                    sets: result.sets
+                };
+            }
+            if (result.value) {
+                let card = _.find(cards, {set_name: result.value.setName});
+                console.log(`process-results::execute::BestMatches One Card Found ${JSON.stringify(card)}`)
+                await this._gatherResults(card);
+                return {};
+            }
         }
         return {
             error: 'Couldn\'t find any cards'
@@ -88,44 +88,56 @@ ProcessResults.prototype._compareImageHashResults = async function (results, loc
             let setName = imageUrls[i].setName;
             let remoteImageHash = await HashImage(url);
             let comparisonResults = Hash.CompareHash(localImageHash, remoteImageHash);
-            if (!_.isNull(comparisonResults)) {
+            if (!_.isEmpty(comparisonResults)) {
                 comparisonResultsList.push(Object.assign(comparisonResults, {
                     setName
                 }));
             }
         }
 
-        let bestMatches = _.filter(comparisonResultsList, function (val) {
-            return val.twoBitMatches >= .75 &&
-                val.fourBitMatches >= .70 &&
-                val.stringCompare >= .70;
+        let bestMatches = _.filter(comparisonResultsList, function (match) {
+            return match.twoBitMatches >= .75 &&
+                match.fourBitMatches >= .70 &&
+                match.stringCompare >= .70;
         });
-        console.log(bestMatches);
         if (bestMatches.length > 1) {
-            //TODO when more than one good match is found
-            console.log('More than One Best Matches');
-            return bestMatches[0];
+            let exactMatches = _.filter(bestMatches, function (match) {
+                return match.twoBitMatches >= 1 &&
+                match.fourBitMatches >= 1 &&
+                match.stringCompare >= 1;
+            });
+            if(exactMatches > 1) {
+                console.log(`process-results::_compareImageHashResults: More Than One Exact Match Found ${JSON.stringify(exactMatches)}`)
+                return {
+                    sets: _.map(exactMatches, (match) => match.setName)
+                }
+            }
+            if(exactMatches === 1) {
+                console.log(`process-results::_compareImageHashResults: Exact Match Found ${JSON.stringify(exactMatches)}`)
+                return exactMatches[0];
+            }
+            return {
+                sets: _.map(exactMatches, (match) => match.setName)
+            };
         } else if (bestMatches.length === 1) {
             return {
                 value: bestMatches[0]
             };
         } else {
             return {
-                error: "No best results found",
                 sets: _.map(imageUrls, obj => obj.setName)
             }
         }
     } catch (error) {
-        console.log('Error Error read all about it');
         console.log(error);
     }
 };
 
 ProcessResults.prototype._gatherResults = async function (object) {
     try {
-        let quantity = 1;
+        let quantity = await GetQty(object.name, object.set_name);
         console.log(`QTY *** ${quantity}`);
-        let qty = quantity.length === 0 ? 1 : quantity[0];
+        let qty = quantity === 0 ? 1 : quantity;
         let model = CardCollection.create({});
         let isValid = model.initiate({
             cardName: object.name,
@@ -137,6 +149,7 @@ ProcessResults.prototype._gatherResults = async function (object) {
             magicId: object.tcgplayer_id,
             imageUrl: object.image_uris.normal,
         });
+        //TODO Add Update when QTY > 1
         if (isValid) {
             console.log('Inserting record');
             model.Insert();

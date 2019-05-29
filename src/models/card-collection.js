@@ -18,10 +18,12 @@ CardCollection.prototype.initiate = function(obj) {
             error: "Object null"
         };
     }
-    let isValid = !!!Joi.validate(obj, schema).error;
+    let validation = Joi.validate(obj, schema).error;
+    let isValid = !!!validation;
     if(isValid) {
         this.data = obj;
     }
+    console.log(validation);
     return isValid;
 };
 

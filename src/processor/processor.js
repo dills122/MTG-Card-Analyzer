@@ -60,7 +60,7 @@ SingleProcessor.prototype._processCard = function (path, callback) {
         console.log(`Imaged Pre-Processed: ${paths}`);
         return this._processFuzzyMatches();
     }).then(() => {
-        console.log(`Fuzzy Matches Processed: ${this.matches}`);
+        console.log(`Fuzzy Matches Processed: ${JSON.stringify(this.matches,null,4)}`);
         return this._processResults();
     }).then(() => {
         console.log(`Results Processed: Inserted in DB`);
@@ -145,7 +145,6 @@ SingleProcessor.prototype._processResults = async function () {
             filePath: this.filePath
         });
         let results = await resultsProcessor.execute(this.filePath);
-        console.log(results);
         if (results.error) {
             return results.error;
         }
@@ -172,9 +171,8 @@ SingleProcessor.prototype._processOutputFile = async function () {
 }
 
 SingleProcessor.prototype._processNeedsAtn = function (sets) {
+    console.log(`Processing Needs Atn: ${sets}`);
     this._getBase64Images().then((base64Images) => {
-        // let base64Images = {};
-        console.log(base64Images);
         let nameMatch = this.matches.nameMatches[0] || [];
         let name = nameMatch[1] || '';
         let model = NeedsAttention.create({});
