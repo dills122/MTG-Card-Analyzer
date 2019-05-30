@@ -1,4 +1,6 @@
-const {promisify} = require('util');
+const {
+    promisify
+} = require('util');
 
 var sizeOf = promisify(require('image-size'));
 

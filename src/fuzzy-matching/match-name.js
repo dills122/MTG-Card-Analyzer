@@ -11,7 +11,7 @@ const dependencies = {
 function FilterNames(names) {
     return names.map((record) => {
         return record.name;
-    })
+    });
 }
 
 async function Match(cleanText, dirtyText = '') {

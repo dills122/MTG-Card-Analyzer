@@ -60,6 +60,7 @@ typings/
 # next.js build output
 .next
 
-package-lock.json
+secure.config.js
 
+package-lock.json
 yarn.lock
