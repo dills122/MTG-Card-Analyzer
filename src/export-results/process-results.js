@@ -46,15 +46,10 @@ ProcessResults.prototype.execute = async function (filePath) {
         }
         if (cards.length > 1) {
             let result = await this._compareImageHashResults(cards, filePath);
+            console.log(result);
             if (result.error) {
                 return {
                     error: result.error
-                };
-            }
-            if(result.sets) {
-                console.log(`process-results::execute: More Than One Match Found ${JSON.stringify(result.sets)}`)
-                return {
-                    sets: result.sets
                 };
             }
             if (result.value) {
@@ -62,6 +57,12 @@ ProcessResults.prototype.execute = async function (filePath) {
                 console.log(`process-results::execute::BestMatches One Card Found ${JSON.stringify(card)}`)
                 await this._gatherResults(card);
                 return {};
+            }
+            if(result.sets) {
+                console.log(`process-results::execute: More Than One Match Found ${JSON.stringify(result.sets)}`)
+                return {
+                    sets: result.sets
+                };
             }
         }
         return {
@@ -113,11 +114,14 @@ ProcessResults.prototype._compareImageHashResults = async function (results, loc
                 }
             }
             if(exactMatches === 1) {
-                console.log(`process-results::_compareImageHashResults: Exact Match Found ${JSON.stringify(exactMatches)}`)
-                return exactMatches[0];
+                console.log(`process-results::_compareImageHashResults: Exact Match Found ${JSON.stringify(exactMatches)}`);
+                return {
+                    value: exactMatches[0]
+                }
             }
+            console.log(`process-results::_compareImageHashResults: No Exact Match Found ${JSON.stringify(exactMatches)}`)
             return {
-                sets: _.map(exactMatches, (match) => match.setName)
+                sets: _.map(bestMatches, (match) => match.setName)
             };
         } else if (bestMatches.length === 1) {
             return {
