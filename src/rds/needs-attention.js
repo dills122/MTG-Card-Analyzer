@@ -5,7 +5,10 @@ const {
 function InsertEntity(record, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        connection.query('INSERT INTO Card_NEED_ATTN SET ?', record, (error, results, fields) => {
+        if(err) {
+            return cb(err);
+        }
+        connection.query('INSERT INTO Card_NEED_ATTN SET ?', record, (error, results) => {
             if(error) {
                 console.log(error);
                 cb(error);

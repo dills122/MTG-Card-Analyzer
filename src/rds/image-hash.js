@@ -5,7 +5,10 @@ const {
 function InsertEntity(record) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        connection.query('INSERT INTO Image_Results SET ?', record, (error, results, fields) => {
+        if(err) {
+            return cb(err);
+        }
+        connection.query('INSERT INTO Image_Results SET ?', record, (error) => {
             if (error) {
                 console.log(error);
             }
@@ -17,7 +20,10 @@ function InsertEntity(record) {
 function GetHashes(name, set, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        connection.query('SELECT ArtImage as artImage, FlavorImage as flavorImage, ArtImageHash as artImageHash, FlavorImageHash as flavorImageHash, FlavorMatchPercent as flavorMatchPercent, ArtMatchPercent as artMatchPercent FROM Image_Results WHERE Name=? AND SetName=?', [name, set], (error, results, fields) => {
+        if(err) {
+            return cb(err);
+        }
+        connection.query('SELECT ArtImage as artImage, FlavorImage as flavorImage, ArtImageHash as artImageHash, FlavorImageHash as flavorImageHash, FlavorMatchPercent as flavorMatchPercent, ArtMatchPercent as artMatchPercent FROM Image_Results WHERE Name=? AND SetName=?', [name, set], (error, results) => {
             if (error) {
                 console.log(error);
                 connection.end();

@@ -8,7 +8,7 @@ const dependencies = {
 
 };
 
-function NeedsAttention(params) {
+function NeedsAttention() {
     _.bindAll(this, Object.keys(NeedsAttention.prototype));
 }
 

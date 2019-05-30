@@ -5,7 +5,10 @@ const {
 function InsertEntity(record) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        connection.query('INSERT INTO Card_Catalog SET ?', record, (error, results, fields) => {
+        if(err) {
+            return cb(err);
+        }
+        connection.query('INSERT INTO Card_Catalog SET ?', record, (error) => {
             if (error) {
                 console.log(error);
             }
@@ -17,13 +20,17 @@ function InsertEntity(record) {
 function GetQuantity(name, set, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        connection.query('SELECT Quantity FROM Card_Catalog WHERE CardName=? AND CardSet=?', [name, set], (error, results, fields) => {
+        if(err) {
+            return cb(err);
+        }
+        connection.query('SELECT Quantity FROM Card_Catalog WHERE CardName=? AND CardSet=?', [name, set], (error, results) => {
             if (error) {
                 console.log(error);
                 connection.end();
                 return cb(error);
             }
             connection.end();
+
             if(results.length === 0) {
                 return cb(null, 0);
             }

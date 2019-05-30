@@ -1,8 +1,3 @@
-const fs = require('fs');
-const {
-    promisify,
-} = require('util');
-
 const {
     cleanString
 } = require('../util');
