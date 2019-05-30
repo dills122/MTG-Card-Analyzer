@@ -19,7 +19,7 @@ CardCollection.prototype.initiate = function(obj) {
         };
     }
     let validation = Joi.validate(obj, schema).error;
-    let isValid = !!!validation;
+    let isValid = !validation;
     if(isValid) {
         this.data = obj;
     }
@@ -28,7 +28,7 @@ CardCollection.prototype.initiate = function(obj) {
 };
 
 CardCollection.prototype.CheckSchema = function() {
-    return !!!Joi.validate(this.data, schema).error;
+    return !Joi.validate(this.data, schema).error;
 }
 
 CardCollection.prototype.Insert = function() {
