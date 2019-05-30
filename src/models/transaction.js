@@ -18,7 +18,7 @@ Transaction.prototype.initiate = function(obj) {
             error: "Object null"
         };
     }
-    let isValid = !!!Joi.validate(obj, schema).error;
+    let isValid = !Joi.validate(obj, schema).error;
     if(isValid) {
         this.data = obj;
     }
@@ -26,7 +26,7 @@ Transaction.prototype.initiate = function(obj) {
 };
 
 Transaction.prototype.CheckSchema = function() {
-    return !!!Joi.validate(this.data, schema).error;
+    return !Joi.validate(this.data, schema).error;
 }
 
 Transaction.prototype.Insert = function() {
