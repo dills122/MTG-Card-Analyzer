@@ -1,11 +1,13 @@
 const FuzzySet = require('fuzzyset.js');
-const {promisify} = require('util');
+const {
+    promisify
+} = require('util');
 const {
     GetBulkNames
 } = require('../db-local/index');
 
 const dependencies = {
-    GetNames : promisify(GetBulkNames)
+    GetNames: promisify(GetBulkNames)
 };
 
 function FilterNames(names) {
