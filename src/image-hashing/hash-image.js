@@ -8,6 +8,7 @@ const {
 } = require('../rds/index');
 
 function HashImage(imgUrl, cb) {
+    console.log(`hash-image::HashImage:: Hashing Image ${imgUrl}`);
     imageHash(imgUrl, 16, true, (error, data) => {
         if (error) {
             return cb(error);
@@ -17,6 +18,7 @@ function HashImage(imgUrl, cb) {
 }
 
 function CompareHash(hashOne, hashTwo) {
+    console.log(`hash-image::CompareHash:: Comparing Hashes ${hashOne} ${hashTwo}`);
     let HashLength = hashOne.length;
     let twoBitMatches = 0;
     let fourBitMatches = 0;
@@ -32,13 +34,15 @@ function CompareHash(hashOne, hashTwo) {
             fourBitMatches += hashOneQuadStr === hashTwoQuadStr ? 1 : 0;
         }
     });
-    return {
+    let comparisonResults = {
         twoBitMatches: _.round(twoBitMatches / (HashLength / 2), 2),
         fourBitMatches: _.round(fourBitMatches / (HashLength / 4), 2),
         stringCompare: _.round(stringSimilarity.compareTwoStrings(hashOne, hashTwo), 2)
     };
+    console.log(`hash-image::CompareHash:: Hash Comparison Results ${comparisonResults}`);
+    return comparisonResults;
 }
-
+//TODO Need to re-evaluate this method
 function GetDBHashes(name, set, cb) {
     return ImageResults.GetHashes(name, set, cb);
 }

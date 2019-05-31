@@ -4,13 +4,10 @@ const uuid = require('uuid/v4');
 const {
     GetImageDimensions
 } = require('./util');
-const {
-    CreateDirectory
-} = require('../file-io');
 
 const constants = {
     name: {
-        heightPercent: .0825,
+        heightPercent: .0585,
         widthPercent: .755,
     },
     type: {
@@ -28,7 +25,7 @@ const constants = {
         heightPercent: .2927,
         widthPercent: .8557
     },
-    borderPercent: .0435
+    borderPercent: .0535
 };
 
 async function GetImageSnippet(imgPath, type) {
@@ -63,7 +60,7 @@ async function GetImageSnippetFile(imgPath, type) {
     }
     throw new Error("Image is to small");
 }
-
+//TODO Art and Flavor shouldn't be greyscale
 async function GetImageSnippetTmpFile(imgPath, directory, type) {
     let path = `${directory}\\${uuid()}.${imgPath.split('.')[1] || '.jpg'}`;
     let dimensions = await GetImageDimensions(imgPath);

@@ -7,6 +7,7 @@ const dependencies = {
 };
 
 function ScanImage(imgBuffer, cb) {
+    console.log(`extract-text::ScanImage:: Scanning Card ${Buffer.isBuffer(imgBuffer)? 'Image Buffer' : imgBuffer}`);
     dependencies.Tesseract.recognize(imgBuffer)
         .progress(message => {
             console.log(JSON.stringify(message, null, 4))

@@ -5,14 +5,21 @@ const {
 function InsertEntity(record) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        if(err) {
+        if (err) {
             return cb(err);
         }
-        connection.query('INSERT INTO Image_Results SET ?', record, (error) => {
+        GetHashes(record.Name, record.SetName, (error, hashes) => {
             if (error) {
                 console.log(error);
             }
-            return connection.end();
+            if (hashes.length === 0) {
+                connection.query('INSERT INTO Image_Results SET ?', record, (error) => {
+                    if (error) {
+                        console.log(error);
+                    }
+                    return connection.end();
+                });
+            }
         });
     });
 }
@@ -20,7 +27,7 @@ function InsertEntity(record) {
 function GetHashes(name, set, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        if(err) {
+        if (err) {
             return cb(err);
         }
         connection.query('SELECT ArtImage as artImage, FlavorImage as flavorImage, ArtImageHash as artImageHash, FlavorImageHash as flavorImageHash, FlavorMatchPercent as flavorMatchPercent, ArtMatchPercent as artMatchPercent FROM Image_Results WHERE Name=? AND SetName=?', [name, set], (error, results) => {

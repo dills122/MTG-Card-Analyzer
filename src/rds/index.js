@@ -3,5 +3,6 @@ module.exports = {
     Collection: require('./collection'),
     NDAttn: require('./needs-attention'),
     Transaction: require('./transaction'),
-    ImageResults: require('./image-hash')
+    ImageResults: require('./image-hash'),
+    CardHashes: require('./card-hash')
 };

@@ -13,7 +13,7 @@ async function StringfyImagesNDAtn(imagePaths) {
             typeImage,
             nameImage
         };
-        console.log(`base64-img::StringfyImagesNDAtn : ${JSON.stringify(base64Images, null, 4)}`);
+        console.log(`base64-img::StringfyImagesNDAtn : ${Object.keys(base64Images)}`);
         return base64Images;
     } catch (error) {
         console.log(error);
