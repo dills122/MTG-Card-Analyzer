@@ -76,7 +76,7 @@ Navigate to the repo's directory, you will need to setup a few things first
 
 #### Secure Config Schema
 
-```json
+```
     rds: {
         host: '...',
         database: '...',
