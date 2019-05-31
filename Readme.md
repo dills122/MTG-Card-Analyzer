@@ -70,36 +70,24 @@ Navigate to the repo's directory, you will need to setup a few things first
 * Run this script to seed your local name dictionary
   * `node .\src\db-local\bulk-insert.js`
 * Optional, to setup the test files navigate to `index.js` to edit the test file array
+* Create an RDS instance in AWS or any other mySql db provider
+  * Create a `secure.config.js` with your mySql credentials (Schema below)
+  * All sql scripts are located in `src\data\scripts\sql`, run all the table create scripts
+
+#### Secure Config Schema
+
+```json
+    rds: {
+        host: '...',
+        database: '...',
+        user: '...',
+        password: '...'
+    }
+```
 
 ### Current Commands
 
 * `fake` : this is just a test command to run a image listed in the test file array in `index.js`
 * `scan <filePath>` : this command scans a single image and outputs the results to the terminal
 
-Test files are provided at `src\test-images`
-
-## Road Map
-
-### Version 0.1.0
-
-* RDS database setup for tracking collection
-* OCR for card name working ✔️
-* MTG Api integration (will be less accurate without set matching) (Currently only bulk name insert)
-* Basic UI for viewing records (moving to separate app)
-* Basic Admin functionality (strech goal) 🔼
-
-***Needs improved after 0.1.0***
-
-### Version 0.2.0
-
-* Set recognition (through pixel matching)
-* Set recognition (shortlist of sets to match on)
-* Gather image collection of all set images
-* Improved UI
-
-
-### Version 0.3.0 ?
-
-* Improved UI Admin/User
-* Price scraping or api
-* Price tracking cron jobs (seperate app, cloud)
+Test images are provided at `src\test-images`
