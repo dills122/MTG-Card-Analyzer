@@ -38,7 +38,7 @@ function CompareHash(hashOne, hashTwo) {
         stringCompare: _.round(stringSimilarity.compareTwoStrings(hashOne, hashTwo), 2)
     };
 }
-
+//TODO Need to re-evaluate this method
 function GetDBHashes(name, set, cb) {
     return ImageResults.GetHashes(name, set, cb);
 }
