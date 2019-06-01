@@ -1,6 +1,5 @@
 const base64Img = require('image-to-base64');
 
-
 async function StringfyImagesNDAtn(imagePaths) {
     try {
         let flavorImage = await base64Img(imagePaths.flavorImage);

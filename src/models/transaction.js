@@ -4,11 +4,8 @@ const schema = require('./schemas/transaction.schema').schema;
 // const {
 //     Transaction
 // } = require('../rds/index');
-const dependencies = {
 
-};
-
-function Transaction(params) {
+function Transaction() {
     _.bindAll(this, Object.keys(Transaction.prototype));
 }
 
@@ -39,5 +36,4 @@ module.exports = {
     create:function(params) {
         return new Transaction(params);
     },
-    dependencies
 };

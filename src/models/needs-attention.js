@@ -4,9 +4,6 @@ const schema = require('./schemas/needs-attention.schema').schema;
 const {
     NDAttn
 } = require('../rds/index');
-const dependencies = {
-
-};
 
 function NeedsAttention() {
     _.bindAll(this, Object.keys(NeedsAttention.prototype));
@@ -38,6 +35,5 @@ NeedsAttention.prototype.Insert = function () {
 module.exports = {
     create: function (params) {
         return new NeedsAttention(params);
-    },
-    dependencies
+    }
 };
