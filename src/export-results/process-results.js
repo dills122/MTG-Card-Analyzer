@@ -2,17 +2,13 @@ const _ = require('lodash');
 const Search = require('../scryfall-api/index').Search;
 const CardCollection = require('../models/card-collection');
 const {
-    Collection,
-    CardHashes
+    Collection
 } = require('../rds/index');
-const {
-    Hash
-} = require('../image-hashing/index');
 const {
     promisify
 } = require('util');
+const ProcessHashes = require('./process-hashes');
 
-const HashImage = promisify(Hash.HashImage);
 const GetQty = promisify(Collection.GetQuantity);
 
 
@@ -24,7 +20,6 @@ function ProcessResults(params) {
         };
     }
     this.name = params.name;
-    this.CheckDbHashes = promisify(this._compareDbHashes);
 }
 
 ProcessResults.prototype.execute = async function (filePath) {
@@ -47,8 +42,12 @@ ProcessResults.prototype.execute = async function (filePath) {
             return {};
         }
         if (cards.length > 1) {
-            let localImageHash = await HashImage(filePath);
-            let dbResults = await this.CheckDbHashes(localImageHash);
+            let processHashes = ProcessHashes.create({
+                name: this.name,
+                localCardPath: filePath,
+                cards: cards
+            });
+            let dbResults = await processHashes.compareDbHashes();
             if (dbResults.value) {
                 let card = _.find(cards, {
                     set_name: dbResults.value.setName
@@ -57,7 +56,7 @@ ProcessResults.prototype.execute = async function (filePath) {
                 await this._gatherResults(card);
                 return {};
             }
-            let result = await this._compareImageHashResults(cards, localImageHash);
+            let result = await this._compareImageHashResults(cards, filePath);
             console.log(result);
             if (result.error) {
                 return {
@@ -87,16 +86,14 @@ ProcessResults.prototype.execute = async function (filePath) {
     }
 };
 //Need to convert image hash comparison to use the art and flavor image areas for comparison
-ProcessResults.prototype._compareImageHashResults = async function (results, localImageHash) {
+ProcessResults.prototype._compareImageHashResults = async function (results, filePath) {
     try {
-        let imageUrls = _.map(results, function (card) {
-            return {
-                imgUrl: card.image_uris.normal || card.image_uris.large,
-                setName: card.set_name
-            }
+        let processHashes = ProcessHashes.create({
+            name: this.name,
+            localCardPath: filePath, //Is Card File Path at the moment
+            cards: results
         });
-
-        let bestMatches = await this._getCardHashCompareResults(imageUrls, localImageHash);
+        let bestMatches = await processHashes.compareRemoteImages();
 
         if (bestMatches.length > 1) {
             let exactMatches = _.filter(bestMatches, function (match) {
@@ -137,64 +134,6 @@ ProcessResults.prototype._compareImageHashResults = async function (results, loc
     }
 };
 
-ProcessResults.prototype._getCardHashCompareResults = async function (cards, localImageHash) {
-    let comparisonResultsList = [];
-    for (let i = 0; i < cards.length; i++) {
-        let url = cards[i].imgUrl;
-        let setName = cards[i].setName;
-        let remoteImageHash = await HashImage(url);
-        this._insertCardHash(remoteImageHash, setName);
-        let comparisonResults = Hash.CompareHash(localImageHash, remoteImageHash);
-        if (!_.isEmpty(comparisonResults)) {
-            comparisonResultsList.push(Object.assign(comparisonResults, {
-                setName
-            }));
-        }
-    }
-
-    let bestMatches = _.filter(comparisonResultsList, function (match) {
-        return match.twoBitMatches >= .75 &&
-            match.fourBitMatches >= .70 &&
-            match.stringCompare >= .70;
-    });
-    return bestMatches;
-}
-
-ProcessResults.prototype._compareDbHashes = function (localHash, cb) {
-    console.log(`process-results::_compareDbHashes: Compare DB Hashes`);
-    CardHashes.GetHashes(this.name, (error, hashes) => {
-        if (error) {
-            return cb(error);
-        }
-        let matches = [];
-        hashes.forEach((dbHash) => {
-            let compareResults = Hash.CompareHash(localHash, dbHash.cardHash);
-            let isMatch = compareResults.twoBitMatches > .92 &&
-                compareResults.fourBitMatches > .92 &&
-                compareResults.stringCompare > .92;
-            if (isMatch) {
-                matches.push(Object.assign(compareResults, {
-                    setName: dbHash.setName
-                }));
-            }
-        });
-        if (matches.length === 0) {
-            console.log(`process-results::_compareDbHashes: No DB Hash Match Found ${this.name}`);
-            return cb(null, {
-                error: 'No Matches Found'
-            })
-        }
-        if (matches.length > 1) {
-            return cb(null, {
-                sets: _.map(matches, result => result.setName)
-            });
-        }
-        return cb(null, {
-            value: matches[0]
-        });
-    });
-};
-
 ProcessResults.prototype._gatherResults = async function (object) {
     try {
         let quantity = await GetQty(object.name, object.set_name);
@@ -223,14 +162,6 @@ ProcessResults.prototype._gatherResults = async function (object) {
         console.log('Error');
         console.log(e);
     }
-};
-
-ProcessResults.prototype._insertCardHash = function (hash, setName) {
-    CardHashes.InsertEntity({
-        Name: this.name,
-        SetName: setName,
-        CardHash: hash
-    });
 };
 
 module.exports = {

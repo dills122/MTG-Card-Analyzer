@@ -4,9 +4,6 @@ const schema = require('./schemas/card-collection.schema').schema;
 const {
     Collection
 } = require('../rds/index');
-const dependencies = {
-
-};
 
 function CardCollection(params) {
     _.bindAll(this, Object.keys(CardCollection.prototype));
@@ -40,6 +37,5 @@ CardCollection.prototype.Insert = function() {
 module.exports = {
     create:function(params) {
         return new CardCollection(params);
-    },
-    dependencies
+    }
 };

@@ -3,9 +3,6 @@ const {
     imageHash
 } = require('image-hash');
 const stringSimilarity = require('string-similarity');
-const {
-    ImageResults
-} = require('../rds/index');
 
 function HashImage(imgUrl, cb) {
     console.log(`hash-image::HashImage:: Hashing Image ${imgUrl}`);
@@ -42,54 +39,8 @@ function CompareHash(hashOne, hashTwo) {
     console.log(`hash-image::CompareHash:: Hash Comparison Results ${comparisonResults}`);
     return comparisonResults;
 }
-//TODO Need to re-evaluate this method
-function GetDBHashes(name, set, cb) {
-    return ImageResults.GetHashes(name, set, cb);
-}
-
-function CompareDBHashes(name, set, localHashes, cb) {
-    GetDBHashes(name, set, (err, hashes) => {
-        if (err) {
-            return cb(err);
-        }
-        if (!hashes) {
-            return cb(null, {});
-        }
-        let isMatched = hashes.some((hashObj) => {
-            let artHash = hashObj.artImageHash || '';
-            let flavorHash = hashObj.flavorImageHash || '';
-            let artHashComparison = CompareHash(artHash, localHashes.artHash);
-            let flavorHashComparison = CompareHash(flavorHash, localHashes.flavorHash);
-            return CompareDBHashResults(artHashComparison, hashObj.artMatchPercent) && CompareDBHashResults(flavorHashComparison, hashObj.flavorMatchPercent);
-        });
-        return cb(null, isMatched);
-    });
-}
-
-function CompareDBHashResults(hashResults, dbAvgMatchPercent) {
-    const differenceTolerance = 5;
-    let {
-        twoBitMatches,
-        fourBitMatches,
-        stringCompare
-    } = hashResults;
-    let hashAvgs = _.round((twoBitMatches + fourBitMatches + stringCompare) / 3, 2);
-    let percentAvgDiff = _.round(getPercentageChange(hashAvgs, dbAvgMatchPercent));
-    if (percentAvgDiff <= differenceTolerance) {
-        return true;
-    }
-    return false;
-}
-
-function getPercentageChange(oldNumber, newNumber) {
-    var decreaseValue = oldNumber - newNumber;
-
-    return abs((decreaseValue / oldNumber) * 100);
-}
 
 module.exports = {
-    HashImage,
     CompareHash,
-    GetDBHashes,
-    CompareDBHashes
+    HashImage
 };

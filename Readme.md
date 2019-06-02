@@ -66,10 +66,8 @@ Install dependencies
 
 Navigate to the repo's directory, you will need to setup a few things first
 
-* create a `secure.config.js` to connect to your own RDS instance, or ignore this step
 * Run this script to seed your local name dictionary
   * `node .\src\db-local\bulk-insert.js`
-* Optional, to setup the test files navigate to `index.js` to edit the test file array
 * Create an RDS instance in AWS or any other mySql db provider
   * Create a `secure.config.js` with your mySql credentials (Schema below)
   * All sql scripts are located in `src\data\scripts\sql`, run all the table create scripts
@@ -87,7 +85,6 @@ Navigate to the repo's directory, you will need to setup a few things first
 
 ### Current Commands
 
-* `fake` : this is just a test command to run a image listed in the test file array in `index.js`
 * `scan <filePath>` : this command scans a single image and outputs the results to the terminal
 
 Test images are provided at `src\test-images`

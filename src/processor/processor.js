@@ -14,7 +14,6 @@ const {
 } = require('util');
 const {
     WriteToFile,
-    DeleteFiles,
     CreateDirectory
 } = require('../file-io');
 const {
@@ -65,7 +64,6 @@ SingleProcessor.prototype._processCard = function (path, callback) {
     }).then(() => {
         console.log(`Results Processed: Inserted in DB`);
         textExtraction.ShutDown();
-        DeleteFiles(this.imagePaths);
         return callback(null);
     }).catch((err) => {
         console.log(err);
@@ -150,7 +148,7 @@ SingleProcessor.prototype._processResults = async function () {
         }
         if (results.sets) {
             console.log('No Match Found Storing in Needs Atn');
-            return this._processNeedsAtn(results.sets);
+            return await this._processNeedsAtn(results.sets);
         }
     }
     return [];
@@ -170,9 +168,11 @@ SingleProcessor.prototype._processOutputFile = async function () {
     return await WriteToFile(obj);
 }
 
-SingleProcessor.prototype._processNeedsAtn = function (sets) {
+SingleProcessor.prototype._processNeedsAtn = async function (sets) {
     console.log(`Processing Needs Atn: ${sets}`);
-    this._getBase64Images().then((base64Images) => {
+    try {
+
+        let base64Images = await this._getBase64Images();
         let nameMatch = this.matches.nameMatches[0] || [];
         let name = nameMatch[1] || '';
         let model = NeedsAttention.create({});
@@ -191,10 +191,10 @@ SingleProcessor.prototype._processNeedsAtn = function (sets) {
         } else {
             console.log('Error processing Needs Attention');
         }
-    }).catch((error) => {
-        console.log('_processNeedsAtn');
+    } catch (error) {
+        console.log('Error Processing Needs Atn Record');
         console.log(error);
-    });
+    }
 };
 
 SingleProcessor.prototype._getBase64Images = async function () {
