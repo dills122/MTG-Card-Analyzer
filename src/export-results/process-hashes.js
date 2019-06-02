@@ -25,7 +25,6 @@ const config = {
     }
 };
 
-
 function ProcessHashes(params) {
     _.bindAll(this, Object.keys(ProcessHashes.prototype));
     if (!params.localCardPath && !params.cards && !params.name) {
@@ -75,7 +74,6 @@ ProcessHashes.prototype.compareDbHashes = async function () {
         };
     }
 };
-
 
 ProcessHashes.prototype.compareRemoteImages = async function () {
     try {
