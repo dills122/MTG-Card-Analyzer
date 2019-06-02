@@ -74,6 +74,8 @@ Navigate to the repo's directory, you will need to setup a few things first
 
 #### Secure Config Schema
 
+A template is avaliable [here](./secure.config.template.js)
+
 ```
     rds: {
         host: '...',
