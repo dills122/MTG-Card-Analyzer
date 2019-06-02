@@ -1,11 +1,14 @@
 const base64Img = require('image-to-base64');
+const dependencies = {
+    base64Img
+}
 
 async function StringfyImagesNDAtn(imagePaths) {
     try {
-        let flavorImage = await base64Img(imagePaths.flavorImage);
-        let artImage = await base64Img(imagePaths.artImage);
-        let typeImage = await base64Img(imagePaths.typeImage);
-        let nameImage = await base64Img(imagePaths.nameImage);
+        let flavorImage = await dependencies.base64Img(imagePaths.flavorImage);
+        let artImage = await dependencies.base64Img(imagePaths.artImage);
+        let typeImage = await dependencies.base64Img(imagePaths.typeImage);
+        let nameImage = await dependencies.base64Img(imagePaths.nameImage);
         let base64Images = {
             flavorImage,
             artImage,
@@ -21,5 +24,6 @@ async function StringfyImagesNDAtn(imagePaths) {
 }
 
 module.exports = {
-    StringfyImagesNDAtn
+    StringfyImagesNDAtn,
+    dependencies
 }
