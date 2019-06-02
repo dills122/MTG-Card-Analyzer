@@ -3,13 +3,16 @@ const expect = chai.expect;
 const sinon = require('sinon');
 const assert = require('assert');
 const {
-    Match,
+    CreateMatchName,
     dependencies
 } = require('../../src/fuzzy-matching/match-name');
 
 describe('FuzzyMatching::', () => {
     let sandbox = {};
     let stubs = {};
+    let MatchName = CreateMatchName();
+    let Match = MatchName.Match;
+
     beforeEach(() => {
         sandbox = sinon.createSandbox();
         stubs.BulkNamesStub = sandbox.stub(dependencies, "GetNames").returns([{
