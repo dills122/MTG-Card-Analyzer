@@ -1,8 +1,6 @@
 const Hashing = require('../../src/image-hashing/hash-image');
 const chai = require('chai');
-const expect = chai.expect;
 const sinon = require('sinon');
-const assert = require('assert');
 
 describe('Hashing::', () => {
     const url = 'https://img.scryfall.com/cards/normal/en/shm/53.jpg?1517813031';
