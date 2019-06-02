@@ -25,7 +25,7 @@ const {
 const NeedsAttention = require('../models/needs-attention');
 
 const dependencies = {
-    MatchName
+    MatchName: MatchName.create()
 }
 
 const Scan = promisify(textExtraction.ScanImage);
