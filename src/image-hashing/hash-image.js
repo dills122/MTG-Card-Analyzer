@@ -1,12 +1,15 @@
 const _ = require('lodash');
+const stringSimilarity = require('string-similarity');
 const {
     imageHash
 } = require('image-hash');
-const stringSimilarity = require('string-similarity');
+const dependencies = {
+    imageHash
+};
 
 function HashImage(imgUrl, cb) {
     console.log(`hash-image::HashImage:: Hashing Image ${imgUrl}`);
-    imageHash(imgUrl, 16, true, (error, data) => {
+    dependencies.imageHash(imgUrl, 16, true, (error, data) => {
         if (error) {
             return cb(error);
         }
@@ -42,5 +45,6 @@ function CompareHash(hashOne, hashTwo) {
 
 module.exports = {
     CompareHash,
-    HashImage
+    HashImage,
+    dependencies
 };
