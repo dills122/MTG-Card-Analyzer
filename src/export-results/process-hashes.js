@@ -35,6 +35,7 @@ function ProcessHashes(params) {
     this.localCardPath = params.localCardPath;
     this.cards = params.cards;
     this.name = params.name;
+    this.queryingEnabled = params.queryingEnabled;
 }
 
 ProcessHashes.prototype.compareDbHashes = async function () {
@@ -110,11 +111,13 @@ ProcessHashes.prototype.compareRemoteImages = async function () {
 }
 
 ProcessHashes.prototype._insertCardHash = function (hash, setName) {
-    CardHashes.InsertEntity({
-        Name: this.name,
-        SetName: setName,
-        CardHash: hash
-    });
+    if (this.queryingEnabled) {
+        CardHashes.InsertEntity({
+            Name: this.name,
+            SetName: setName,
+            CardHash: hash
+        });
+    }
 };
 
 module.exports = {

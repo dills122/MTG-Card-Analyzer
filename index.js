@@ -1,7 +1,11 @@
 (() => {
     const argv = require('yargs')
         .usage('Usage $0 <cmd> [options]')
-        .command('scan <filepath>', 'scan a card')
+        .command('scan <filepath>', 'scan a card', (yargs) => {
+            yargs.option('q', {
+                alias: 'query'
+            })
+        })
         .help()
         .argv;
     const {
@@ -21,7 +25,8 @@
                 isAccessible(argv.filepath).then((isUnavailable) => {
                     if (!isUnavailable) {
                         let processor = Processor.create({
-                            filePath: argv.filepath
+                            filePath: argv.filepath,
+                            queryingEnabled: !!!argv.q
                         });
                         processor.execute((err) => {
                             if (err) console.log(err);
