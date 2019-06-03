@@ -20,6 +20,8 @@ function ProcessResults(params) {
         };
     }
     this.name = params.name;
+    this.filePath = params.filePath;
+    this.queryingEnabled = params.queryingEnabled;
 }
 
 ProcessResults.prototype.execute = async function (filePath) {
@@ -45,7 +47,8 @@ ProcessResults.prototype.execute = async function (filePath) {
             let processHashes = ProcessHashes.create({
                 name: this.name,
                 localCardPath: filePath,
-                cards: cards
+                cards: cards,
+                queryingEnabled: this.queryingEnabled
             });
             let dbResults = await processHashes.compareDbHashes();
             if (dbResults.value) {
@@ -91,7 +94,8 @@ ProcessResults.prototype._compareImageHashResults = async function (results, fil
         let processHashes = ProcessHashes.create({
             name: this.name,
             localCardPath: filePath, //Is Card File Path at the moment
-            cards: results
+            cards: results,
+            queryingEnabled: this.queryingEnabled
         });
         let bestMatches = await processHashes.compareRemoteImages();
 
@@ -123,7 +127,7 @@ ProcessResults.prototype._compareImageHashResults = async function (results, fil
                 value: bestMatches[0]
             };
         } else {
-            let sets = _.map(imageUrls, obj => obj.setName);
+            let sets = _.map(results, obj => obj.set_name);
             console.log(`process-results::_compareImageHashResults: No Exact or Best Match Found ${JSON.stringify(sets)}`);
             return {
                 sets
@@ -151,11 +155,13 @@ ProcessResults.prototype._gatherResults = async function (object) {
         });
         //TODO Add Update when QTY > 1
         if (isValid) {
-            console.log(`process-results::_gatherResults: Inserting Card in Card_Catalog ${model.data}`);
-            if (model.data.quantity > 1) {
-                //Update
-            } else {
-                model.Insert();
+            if (this.queryingEnabled) {
+                console.log(`process-results::_gatherResults: Inserting Card in Card_Catalog ${model.data}`);
+                if (model.data.quantity > 1) {
+                    //Update
+                } else {
+                    model.Insert();
+                }
             }
         }
     } catch (e) {

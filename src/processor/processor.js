@@ -33,6 +33,7 @@ const Scan = promisify(textExtraction.ScanImage);
 function SingleProcessor(params) {
     _.bindAll(this, Object.keys(SingleProcessor.prototype));
     this.filePath = params.filePath;
+    this.queryingEnabled = params.queryingEnabled;
     this.imagePaths = {};
     this.extractedText = {};
     this.matches = {};
@@ -135,12 +136,13 @@ SingleProcessor.prototype._processFlavorImage = async function (path) {
 
 SingleProcessor.prototype._processResults = async function () {
     if (!_.isEmpty(this.matches)) {
-
+        //TODO
         let [namePercent, nameMatch] = this.matches.nameMatches[0];
         // let [typePercent, typeMatch] = this.matches.typeMatches[0];
         let resultsProcessor = ProcessResults.create({
             name: nameMatch,
-            filePath: this.filePath
+            filePath: this.filePath,
+            queryingEnabled: this.queryingEnabled
         });
         let results = await resultsProcessor.execute(this.filePath);
         if (results.error) {
@@ -171,7 +173,6 @@ SingleProcessor.prototype._processOutputFile = async function () {
 SingleProcessor.prototype._processNeedsAtn = async function (sets) {
     console.log(`Processing Needs Atn: ${sets}`);
     try {
-
         let base64Images = await this._getBase64Images();
         let nameMatch = this.matches.nameMatches[0] || [];
         let name = nameMatch[1] || '';
@@ -187,7 +188,9 @@ SingleProcessor.prototype._processNeedsAtn = async function (sets) {
             possibleSets: sets.join(',')
         });
         if (isValid) {
-            model.Insert();
+            if (this.queryingEnabled) {
+                model.Insert();
+            }
         } else {
             console.log('Error processing Needs Attention');
         }

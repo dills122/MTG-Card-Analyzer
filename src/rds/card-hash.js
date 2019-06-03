@@ -10,7 +10,7 @@ function InsertEntity(record) {
         }
         connection.query('INSERT INTO Card_Hashes SET ?', record, (error) => {
             if (error) {
-                console.log(error);
+                //console.log(error);
             }
             return connection.end();
         });
