@@ -10,7 +10,7 @@ function InsertEntity(record) {
         }
         connection.query('INSERT INTO Card_Hashes SET ?', record, (error) => {
             if (error) {
-                //console.log(error);
+                // console.log(error);
             }
             return connection.end();
         });
@@ -23,7 +23,7 @@ function GetHashes(name, cb) {
         if(err) {
             return cb(err);
         }
-        connection.query('SELECT CardHash as cardHash, SetName as setName FROM Card_Hashes WHERE Name=?', [name], (error, results) => {
+        connection.query('SELECT CardHash as cardHash, SetName as setName, IsFoil as isFoil, IsPromo as isPromo FROM Card_Hashes WHERE Name=?', [name], (error, results) => {
             if (error) {
                 console.log(error);
                 connection.end();
