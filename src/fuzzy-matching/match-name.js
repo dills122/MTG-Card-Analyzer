@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const FuzzySet = require('fuzzyset.js');
 const {
     promisify
@@ -10,20 +11,26 @@ const dependencies = {
     GetNames: promisify(GetBulkNames)
 };
 
-function FilterNames(names) {
+function MatchName(params) {
+    _.bindAll(this, Object.keys(MatchName.prototype));
+}
+
+MatchName.prototype._filterNames = function (names) {
     return names.map((record) => {
         return record.name;
     });
 }
 
-async function Match(cleanText, dirtyText = '') {
+MatchName.prototype.Match = async function (cleanText, dirtyText = '') {
     let names = await dependencies.GetNames();
-    let filteredNames = FilterNames(names);
+    let filteredNames = this._filterNames(names);
     let fuzzy = FuzzySet(filteredNames);
     return fuzzy.get(cleanText);
 }
 
 module.exports = {
-    Match,
+    create: function (params) {
+        return new MatchName(params);
+    },
     dependencies
 };
