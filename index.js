@@ -1,13 +1,5 @@
 (() => {
-    const argv = require('yargs')
-        .usage('Usage $0 <cmd> [options]')
-        .command('scan <filepath>', 'scan a card', (yargs) => {
-            yargs.option('q', {
-                alias: 'query'
-            })
-        })
-        .help()
-        .argv;
+    const meow = require('meow');
     const {
         promisify
     } = require('util');
@@ -18,15 +10,37 @@
 
     const isAccessible = promisify(fs.access);
 
-    if (argv._.length === 1) {
-        let cmd = argv._[0];
+    const cli = meow(`
+        Usage
+        $ scan <filePath>
+
+        Options
+        --query, -q  Disable Db Modification
+
+        Examples
+        $ scan .\\img-path --query
+    `, {
+        flags: {
+            query : {
+                type: 'boolean',
+                alias: 'r',
+                default: true
+            }
+        }
+    });
+
+    let cmd = cli.input[0] || '';
+    let filePath = cli.input[1] || '';
+    let flags = cli.flags;
+    
+    if (cli.input.length > 0) {
         switch (cmd) {
             case 'scan':
-                isAccessible(argv.filepath).then((isUnavailable) => {
+                isAccessible(filePath).then((isUnavailable) => {
                     if (!isUnavailable) {
                         let processor = Processor.create({
-                            filePath: argv.filepath,
-                            queryingEnabled: !!!argv.q
+                            filePath: filePath,
+                            queryingEnabled: !!flags.q || flags.query
                         });
                         processor.execute((err) => {
                             if (err) console.log(err);
