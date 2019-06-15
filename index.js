@@ -21,10 +21,15 @@
         $ scan .\\img-path --query
     `, {
         flags: {
-            query : {
+            query: {
                 type: 'boolean',
                 alias: 'r',
                 default: true
+            },
+            file: {
+                type: 'boolean',
+                alias: 'f',
+                default: false
             }
         }
     });
@@ -38,15 +43,18 @@
             case 'scan':
                 isAccessible(filePath).then((isUnavailable) => {
                     if (!isUnavailable) {
+                        let fileOutputEnabled = !!flags.f || flags.file;
                         let processor = Processor.create({
                             filePath: filePath,
                             queryingEnabled: !!flags.q || flags.query
                         });
                         processor.execute((err) => {
                             if (err) console.log(err);
-                            processor.generateOutput((err) => {
-                                if (err) console.log(err)
-                            });
+                            if (fileOutputEnabled) {
+                                processor.generateOutput((err) => {
+                                    if (err) console.log(err)
+                                });
+                            }
                         });
                     }
                 });
