@@ -88,5 +88,17 @@ A template is avaliable [here](./secure.config.template.js)
 ### Current Commands
 
 * `scan <filePath>` : this command scans a single image and outputs the results to the terminal
+  * flags:
+    * `query`  or `q`: for disabling database manipulation (default `true`)
+    * `file`   or `f`: for processing an output file (default `false`)
 
 Test images are provided at `src\test-images`
+
+
+### Packages Under the Hood
+
+* `fuzzyset.js`
+* `image-hash`
+* `jimp`
+* `string-similarity`
+* `tesseract.js`
