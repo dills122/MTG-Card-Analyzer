@@ -63,7 +63,7 @@ SingleProcessor.prototype._processCard = function (path, callback) {
         console.log(`Fuzzy Matches Processed: ${JSON.stringify(this.matches,null,4)}`);
         return this._processResults();
     }).then(() => {
-        console.log(`Results Processed: Inserted in DB`);
+        console.log(`Results Processed: Finished`);
         textExtraction.ShutDown();
         return callback(null);
     }).catch((err) => {
