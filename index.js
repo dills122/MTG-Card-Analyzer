@@ -15,7 +15,7 @@
         $ scan <filePath>
 
         Options
-        --query, -q  Disable Db Modification
+        --query, -q  Disable Db Modification (true default)
 
         Examples
         $ scan .\\img-path --query
@@ -32,7 +32,7 @@
     let cmd = cli.input[0] || '';
     let filePath = cli.input[1] || '';
     let flags = cli.flags;
-    
+
     if (cli.input.length > 0) {
         switch (cmd) {
             case 'scan':
