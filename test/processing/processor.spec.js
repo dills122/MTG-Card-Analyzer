@@ -1,141 +1,75 @@
-//Tests needs work after finalizing processor design, stubs are not working correctly
+const chai = require('chai');
+const sinon = require('sinon');
+const proxyquire = require('proxyquire');
+const assert = require('chai').assert;
 
-// const chai = require('chai');
-// const assert = require('assert');
-// const sinon = require('sinon');
-// const processor = require('../../src/processor/index');
-// const ProcessResults = require('../../src/export-results/index').ProcessResults.ProcessResults;
-// const path = require('path');
-// const appRoot = require('app-root-path');
-// const Collection = require('../../src/rds/collection');
+describe.only('Processor::', () => {
+    let stubs = {};
+    let sandbox = sinon.createSandbox();
+    let filePath = '.\\src\\test-images\\AngelOfSanctions.png';
+    let name = 'Name';
+    beforeEach(() => {
+        stubs.processResultsExecute = sandbox.stub().resolves({});
+        stubs.WriteToFile = sandbox.stub().resolves('file complete');
+        stubs.CreateDirectory = sandbox.stub().resolves('./Fake-dir/');
+        stubs.ScanImage = sandbox.stub().callsFake((imgBuffer, cb) => cb(null, {
+            cleanText: 'This is a string',
+            dirtyText: 'This is 2343 a dirt 3 String'
+        }));
+        stubs.ShutDown = sandbox.stub().callsFake(() => console.log('Shut Down'));
+        stubs.GetImageSnippetTmpFile = sandbox.stub().resolves(filePath);
+        stubs.NeedsAtn = sandbox.stub().resolves();
+        stubs.StringfyImagesNDAtn = sandbox.stub().resolves('0773063f063f36070e070a070f378e7f1f000fff0fff020103f00ffb0f810ff0');
+    });
+    afterEach(() => {
+        sandbox.restore();
+    });
+    it('Process Image file', (done) => {
+        let processor = proxyquire('../../src/processor/processor', {
+            '../export-results/index': {
+                ProcessResults: {
+                    create: () => {
+                        return {
+                            execute: stubs.processResultsExecute
+                        }
+                    }
+                }
+            },
+            '../file-io': {
+                WriteToFile: stubs.WriteToFile,
+                CreateDirectory: stubs.CreateDirectory
+            },
+            '../image-analysis/index': {
+                textExtraction: {
+                    ScanImage: stubs.ScanImage,
+                    ShutDown: stubs.ShutDown
+                }
+            },
+            '../image-processing/index': {
+                resize: {
+                    GetImageSnippetTmpFile: stubs.GetImageSnippetTmpFile
+                }
+            },
+            '../models/needs-attention': {
+                Insert: stubs.NeedsAtn
+            },
+            '../image-hashing/index': {
+                StringfyImagesNDAtn: stubs.StringfyImagesNDAtn
+            }
+        });
+        stubs.MatchName = sandbox.stub(processor.dependencies.MatchName, 'Match').resolves(['.90', 'CardName']);
 
-// describe("Processor::", () => {
-//     let sandbox = {};
-//     let stubs = {}
-//     beforeEach(() => {
-//         sandbox = sinon.createSandbox();
-//         stubs.BulkNamesStub = sinon.stub(processor.dependencies.MatchName.dependencies, "GetNames").returns([{
-//                 name: "Legion's Landing // Adanto, the First Fort"
-//             },
-//             {
-//                 name: "Adanto Vanguard"
-//             },
-//             {
-//                 name: "Shadow of Doubt"
-//             },
-//             {
-//                 name: "Chain Lightning"
-//             },
-//             {
-//                 "name": "Gangrenous Zombies"
-//             },
-//             {
-//                 "name": "Sarkhan Vol"
-//             },
-//             {
-//                 "name": "Darkness"
-//             },
-//             {
-//                 "name": "Commandeer"
-//             },
-//             {
-//                 "name": "Carrion Beetles"
-//             },
-//             {
-//                 "name": "Drag Down"
-//             },
-//             {
-//                 "name": "Swirling Sandstorm"
-//             },
-//             {
-//                 "name": "Diving Griffin"
-//             },
-//             {
-//                 "name": "Copperhoof Vorrac"
-//             },
-//             {
-//                 "name": "Lawless Broker"
-//             },
-//             {
-//                 "name": "Dark Supplicant"
-//             },
-//             {
-//                 "name": "Weldfast Monitor"
-//             },
-//             {
-//                 "name": "Inspiring Roar"
-//             },
-//             {
-//                 "name": "Gavony Unhallowed"
-//             },
-//             {
-//                 "name": "Creeping Renaissance"
-//             },
-//             {
-//                 "name": "Coat of Arms"
-//             },
-//             {
-//                 "name": "Mobilized District"
-//             },
-//             {
-//                 "name": "Emberhorn Minotaur"
-//             },
-//             {
-//                 "name": "Well of Life"
-//             },
-//             {
-//                 "name": "Juvenile Gloomwidow"
-//             },
-//             {
-//                 "name": "Canopy Vista"
-//             },
-//             {
-//                 "name": "Champion of Wits"
-//             },
-//             {
-//                 "name": "Zephyr Falcon"
-//             },
-//             {
-//                 "name": "Sulfurous Blast"
-//             },
-//             {
-//                 "name": "Platinum Angel"
-//             }
-//         ]);
-        
-//         // stubs.InsertEntity = sinon.stub(Collection, "GetQuantity").callArg(2);
-//         stubs.ProcessResultsStub = sinon.stub(ProcessResults.prototype, "_processResults").resolves([]);
-//     });
-//     afterEach(() => {
-//         sinon.restore();
-//     });
-//     describe("ProcessImage::", () => {
-//         it("Should process single image", (done) => {
-//             const filePath = path.join(appRoot.toString(), 'src/test-images/PlatinumAngel.jpg');
-//             let imgProcessor = processor.create({
-//                 filePath: filePath
-//             });
-//             imgProcessor.execute((err) => {
-//                 assert.equal(imgProcessor.filePath, filePath);
-//                 chai.assert.isAbove(imgProcessor.nameMatches[0][0], .65);
-//                 chai.assert.deepEqual(imgProcessor.nameMatches[0][1], 'Platinum Angel');
-//                 chai.assert.isAbove(imgProcessor.typeMatches[0][0], .75);
-//                 chai.assert.deepEqual(imgProcessor.typeMatches[0][1], 'Creature');
-//                 done(err);
-//             });
-//         }).timeout(5000);
-//         it("Should throw to small error", (done) => {
-//             const filePath = path.join(appRoot.toString(), 'src/test-images/test-extractions/93e73461-807b-4590-9171-c3759a2576e9.jpg');
-//             let imgProcessor = processor.create({
-//                 filePath: filePath
-//             });
-//             imgProcessor.execute((err) => {
-//                 //Error throwing not bubbling up
-//                 assert.equal(imgProcessor.filePath, filePath);
-//                 chai.assert.isNull(imgProcessor.nameMatches);
-//                 assert.deepEqual(imgProcessor.typeMatches, []);
-//                 done(err);
-//             });
-//         });
-//     });
-// }).timeout(10000);
+        let processorInst = processor.create({
+            filePath,
+            queryingEnabled: false
+        });
+        processorInst.execute((err) => {
+            assert.isTrue(stubs.processResultsExecute.calledOnce);
+            assert.isTrue(stubs.CreateDirectory.calledOnce);
+            assert.strictEqual(stubs.ScanImage.callCount, 2);
+            assert.strictEqual(stubs.GetImageSnippetTmpFile.callCount, 4);
+            assert.isTrue(stubs.ShutDown.calledOnce);
+            done(err);
+        });
+    }).timeout(10000);
+});
