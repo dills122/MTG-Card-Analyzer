@@ -19,18 +19,22 @@ let GetNames = promisify(GetBulkNames);
 let HashImage = promisify(Hash.HashImage);
 
 async function BackFillImageHashes() {
-    let start = 2501;
-    let stop = 3500;
+    let start = 13501;
+    let stop = 14500;
 
     let names = await GetNames();
     let nameSlice = names.slice(start, stop);
     for (let i = 0; i < nameSlice.length; i++) {
-        if(i % 10 === 0) {
-            await sleep(2000);
+        if(i % 2 === 0) {
+            await sleep(185);
         }
         let name = nameSlice[i].name;
         let cardImages = await GetImageUrls(name);
+        console.log(`Item ${i} Card: ${name}`);
         for (let j = 0; j < cardImages.length; j++) {
+            if(i % 2 === 0) {
+                await sleep(80);
+            }
             let card = cardImages[j];
             let urlNonQueryStr = card.imgUrl.split('?')[0] || '';
             let ext = urlNonQueryStr.split('.').pop() || '';
@@ -42,7 +46,8 @@ async function BackFillImageHashes() {
                         SetName: card.setName,
                         CardHash: imageHash,
                         IsPromo: card.isPromo,
-                        IsFoil: card.isFoil
+                        IsFoil: card.isFoil,
+                        CardUrl: card.imgUrl
                     });
                 } catch (error) {
                     console.log('Error');
