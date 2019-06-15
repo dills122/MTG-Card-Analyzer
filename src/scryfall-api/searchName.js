@@ -2,10 +2,14 @@
 const request = require('request-promise-native');
 const apiConfig = require('./api.config');
 
+const dependencies = {
+    request
+};
+
 //These return a random/newest card if printed across sets
 async function SearchByNameExact(exact, fuzzy= '') {
     try {
-        let response = await request(encodeURI(`${apiConfig.templates.cardNameExact}${exact}`));
+        let response = await dependencies.request(encodeURI(`${apiConfig.templates.cardNameExact}${exact}`));
         if (response) {
             let cardInfo = JSON.parse(response) || {};
             if(Object.keys(cardInfo).length === 0) {
@@ -25,7 +29,7 @@ async function SearchByNameFuzzy(exact, fuzzy= '') {
         return {};
     }
     try {
-        let response = await request(encodeURI(`${apiConfig.templates.fuzzy}${exact}`));
+        let response = await dependencies.request(encodeURI(`${apiConfig.templates.fuzzy}${exact}`));
         if (response) {
             let cardInfo = JSON.parse(response) || {};
             return cardInfo;
@@ -42,11 +46,11 @@ async function SearchByNameFuzzy(exact, fuzzy= '') {
 async function SearchList(exact) {
     let name = exact.replace(/ /g, '%20');
     try {
-        let response = await request(`${apiConfig.templates.cardListExact}${name}&unique=prints`);
+        let response = await dependencies.request(`${apiConfig.templates.cardListExact}${name}&unique=prints`);
         if (response) {
             let cardInfo = JSON.parse(response) || {};
             if(Object.keys(cardInfo).length === 0) {
-                return [await SearchByNameFuzzy(fuzzy)];
+                return [await SearchByNameFuzzy(name)];
             }
             return cardInfo.data;
         }
@@ -59,5 +63,6 @@ async function SearchList(exact) {
 module.exports = {
     SearchByNameExact,
     SearchByNameFuzzy,
-    SearchList
+    SearchList,
+    dependencies
 }

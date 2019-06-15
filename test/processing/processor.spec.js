@@ -3,7 +3,7 @@ const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const assert = require('chai').assert;
 
-describe.only('Processor::', () => {
+describe('Processor::', () => {
     let stubs = {};
     let sandbox = sinon.createSandbox();
     let filePath = '.\\src\\test-images\\AngelOfSanctions.png';
