@@ -1,5 +1,12 @@
 const mysql = require('mysql');
-const secureConfig = require('../../secure.config');
+const {
+    requireF
+} = require('../util');
+const secureConfig = requireF('../secure.config') || {
+    rds: {
+
+    }
+};
 
 module.exports = {
     CreateConnection: function() {

@@ -20,6 +20,7 @@ describe.only('Processor::', () => {
         stubs.GetImageSnippetTmpFile = sandbox.stub().resolves(filePath);
         stubs.NeedsAtn = sandbox.stub().resolves();
         stubs.StringfyImagesNDAtn = sandbox.stub().resolves('0773063f063f36070e070a070f378e7f1f000fff0fff020103f00ffb0f810ff0');
+        stubs.NDAttnInsert = sandbox.stub().callsFake((arg, cb) => cb());
     });
     afterEach(() => {
         sandbox.restore();
@@ -51,7 +52,19 @@ describe.only('Processor::', () => {
                 }
             },
             '../models/needs-attention': {
-                Insert: stubs.NeedsAtn
+                Insert: stubs.NeedsAtn,
+                '../rds/index': {
+                    NDAttn : {
+                        InsertEntity: stubs.NDAttnInsert,
+                        './connection': {
+                            '../../secure.config' : {
+                                rds: {
+                                    
+                                }
+                            }
+                        }
+                    }
+                }
             },
             '../image-hashing/index': {
                 StringfyImagesNDAtn: stubs.StringfyImagesNDAtn
