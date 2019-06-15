@@ -7,6 +7,7 @@ CREATE TABLE Card_Hashes (
     IsFoil BIT NOT NULL,
     IsPromo BIT NOT NULL,
     CardHash varchar(144) NOT NULL,
+    CardUrl varchar(144),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt DATETIME ON UPDATE CURRENT_TIMESTAMP,
     CreatedBy varchar(25) NOT NULL,
