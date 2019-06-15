@@ -14,7 +14,8 @@ const {
 } = require('util');
 const {
     WriteToFile,
-    CreateDirectory
+    CreateDirectory,
+    CleanUpFiles
 } = require('../file-io');
 const {
     ProcessResults
@@ -29,6 +30,7 @@ const dependencies = {
 }
 
 const Scan = promisify(textExtraction.ScanImage);
+const CleanFilesUp = promisify(CleanUpFiles);
 
 function SingleProcessor(params) {
     _.bindAll(this, Object.keys(SingleProcessor.prototype));
@@ -62,6 +64,8 @@ SingleProcessor.prototype._processCard = function (path, callback) {
     }).then(() => {
         console.log(`Fuzzy Matches Processed: ${JSON.stringify(this.matches,null,4)}`);
         return this._processResults();
+    }).then(() => {
+        return this._CleanUpFiles();
     }).then(() => {
         console.log(`Results Processed: Finished`);
         textExtraction.ShutDown();
@@ -203,6 +207,18 @@ SingleProcessor.prototype._processNeedsAtn = async function (sets) {
 SingleProcessor.prototype._getBase64Images = async function () {
     return await Base64.StringfyImagesNDAtn(this.imagePaths);
 }
+
+SingleProcessor.prototype._CleanUpFiles = async function() {
+    try {
+        console.log("_CleanUpFiles:: Beginning Clean Up");
+        await CleanFilesUp(this.directory);
+        console.log("_CleanUpFiles:: Finished Clean Up");
+        return this.directory;
+    } catch(err) {
+        console.log(err);
+        return '';
+    }
+};
 
 module.exports = {
     create: function (params) {

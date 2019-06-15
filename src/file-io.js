@@ -4,6 +4,7 @@ const {
 } = require('util');
 const uuid = require('uuid/v4');
 const tempDirectory = require('temp-dir');
+const rimraf = require('rimraf');
 
 const writeFile = promisify(fs.writeFile);
 const unlinkFile = promisify(fs.unlink);
@@ -23,8 +24,19 @@ async function CreateDirectory() {
     return dirPath;
 }
 
+function CleanUpFiles(directory, callback) {
+    rimraf(directory, (err) => {
+        console.log(`Removed Directory: ${directory}`)
+        if(err) {
+            return callback(err);
+        }
+        return callback();
+    })
+}
+
 module.exports = {
     WriteToFile,
     DeleteFile,
-    CreateDirectory
+    CreateDirectory,
+    CleanUpFiles
 }
