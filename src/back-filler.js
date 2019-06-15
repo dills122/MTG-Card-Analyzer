@@ -19,8 +19,8 @@ let GetNames = promisify(GetBulkNames);
 let HashImage = promisify(Hash.HashImage);
 
 async function BackFillImageHashes() {
-    let start = 13501;
-    let stop = 14500;
+    let start = 18501;
+    let stop = 19350;
 
     let names = await GetNames();
     let nameSlice = names.slice(start, stop);

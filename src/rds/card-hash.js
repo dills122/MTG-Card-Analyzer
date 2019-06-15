@@ -23,7 +23,7 @@ function GetHashes(name, cb) {
         if(err) {
             return cb(err);
         }
-        connection.query('SELECT CardHash as cardHash, SetName as setName, IsFoil as isFoil, IsPromo as isPromo FROM Card_Hashes WHERE Name=?', [name], (error, results) => {
+        connection.query('SELECT CardHash as cardHash, SetName as setName, IsFoil as isFoil, IsPromo as isPromo FROM Card_Hashes WHERE CardName=?', [name], (error, results) => {
             if (error) {
                 console.log(error);
                 connection.end();
