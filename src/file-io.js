@@ -26,7 +26,6 @@ async function CreateDirectory() {
 
 function CleanUpFiles(directory, callback) {
     rimraf(directory, (err) => {
-        console.log(`Removed Directory: ${directory}`)
         if(err) {
             return callback(err);
         }

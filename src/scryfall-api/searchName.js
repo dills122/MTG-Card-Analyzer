@@ -1,7 +1,10 @@
 
 const request = require('request-promise-native');
 const apiConfig = require('./api.config');
-
+const log = require('../logger/log');
+const logger = log.create({
+    isPretty: true
+});
 const dependencies = {
     request
 };
@@ -19,7 +22,7 @@ async function SearchByNameExact(exact, fuzzy= '') {
         }
         return {};
     } catch (err) {
-        console.log(err);
+        logger.error(err);
     }
 }
 
@@ -36,7 +39,7 @@ async function SearchByNameFuzzy(exact, fuzzy= '') {
         }
         return {};
     } catch (err) {
-        console.log(err);
+        ;logger.error(err);
         return {
             err
         };
@@ -56,7 +59,7 @@ async function SearchList(exact) {
         }
         return [];
     } catch (err) {
-        console.log(err);
+        logger.error(err);
     }
 }
 

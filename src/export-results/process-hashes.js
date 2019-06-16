@@ -8,6 +8,7 @@ const {
 const {
     promisify
 } = require('util');
+const logger = require('../logger/log');
 
 const HashImage = promisify(Hash.HashImage);
 const GetHashes = promisify(CardHashes.GetHashes);
@@ -32,6 +33,7 @@ function ProcessHashes(params) {
             error: 'malformed parameters'
         };
     }
+    this.logger = params.logger;
     this.localCardPath = params.localCardPath;
     this.cards = params.cards;
     this.name = params.name;
@@ -39,7 +41,7 @@ function ProcessHashes(params) {
 }
 
 ProcessHashes.prototype.compareDbHashes = async function () {
-    console.log(`process-hashes::compareDbHashes: Compare DB Hashes`);
+    this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
     try {
         let localCardHash = await HashImage(this.localCardPath);
         let hashes = await GetHashes(this.name);
@@ -56,7 +58,7 @@ ProcessHashes.prototype.compareDbHashes = async function () {
             }
         });
         if (matches.length === 0) {
-            console.log(`process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`);
+            this.logger.info(`process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`);
             return {
                 error: 'No Matches Found'
             };
@@ -106,7 +108,7 @@ ProcessHashes.prototype.compareRemoteImages = async function () {
         });
         return bestMatches;
     } catch (error) {
-        console.log(error);
+        this.logger.error(error);
     }
 }
 

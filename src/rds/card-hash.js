@@ -1,6 +1,10 @@
 const {
     CreateConnection
 } = require('./connection');
+const log = require('../logger/log');
+const logger = log.create({
+    isPretty: true
+});
 
 function InsertEntity(record) {
     let connection = CreateConnection();
@@ -25,7 +29,7 @@ function GetHashes(name, cb) {
         }
         connection.query('SELECT CardHash as cardHash, SetName as setName, IsFoil as isFoil, IsPromo as isPromo FROM Card_Hashes WHERE CardName=?', [name], (error, results) => {
             if (error) {
-                console.log(error);
+                logger.error(error);
                 connection.end();
                 return cb(error);
             }

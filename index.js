@@ -30,6 +30,11 @@
                 type: 'boolean',
                 alias: 'f',
                 default: false
+           },
+            pretty: {
+                type: 'boolean',
+                alias: 'p',
+                default: true
             }
         }
     });
@@ -46,7 +51,8 @@
                         let fileOutputEnabled = !!flags.f || flags.file;
                         let processor = Processor.create({
                             filePath: filePath,
-                            queryingEnabled: !!flags.q || flags.query
+                            queryingEnabled: !!flags.q || flags.query,
+                            isPretty: !!flags.p || flags.pretty
                         });
                         processor.execute((err) => {
                             if (err) console.log(err);

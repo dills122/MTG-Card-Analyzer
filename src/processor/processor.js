@@ -24,6 +24,7 @@ const {
     Base64
 } = require('../image-hashing/index');
 const NeedsAttention = require('../models/needs-attention');
+const logger = require('../logger/log');
 
 const dependencies = {
     MatchName: MatchName.create()
@@ -39,6 +40,9 @@ function SingleProcessor(params) {
     this.imagePaths = {};
     this.extractedText = {};
     this.matches = {};
+    this.logger = logger.create({
+        isPretty: params.isPretty
+    });
 }
 
 SingleProcessor.prototype.execute = function (callback) {
@@ -52,26 +56,26 @@ SingleProcessor.prototype.execute = function (callback) {
 
 SingleProcessor.prototype._processCard = function (path, callback) {
     CreateDirectory().then((directory) => {
-        console.log(`Created Directory: ${directory}`);
+        this.logger.info(`Created Directory: ${directory}`);
         this.directory = directory;
         return this._processImageFiles(path);
     }).then((paths) => {
         if (!paths) {
             throw new Error('No Image paths to process');
         }
-        console.log(`Imaged Pre-Processed: ${paths}`);
+        this.logger.info(`Imaged Pre-Processed: ${paths}`);
         return this._processFuzzyMatches();
     }).then(() => {
-        console.log(`Fuzzy Matches Processed: ${JSON.stringify(this.matches,null,4)}`);
+        this.logger.info(`Fuzzy Matches Processed: ${JSON.stringify(this.matches,null,4)}`);
         return this._processResults();
     }).then(() => {
         return this._CleanUpFiles();
     }).then(() => {
-        console.log(`Results Processed: Finished`);
+        this.logger.info(`Results Processed: Finished`);
         textExtraction.ShutDown();
         return callback(null);
     }).catch((err) => {
-        console.log(err);
+        this.logger.error(err);
         textExtraction.ShutDown();
         return callback(err);
     });
@@ -104,7 +108,7 @@ SingleProcessor.prototype._processNameImage = async function (path) {
         this.imagePaths.nameImage = imgPath;
         this.extractedText.nameImage = await Scan(imgPath);
     } catch (err) {
-        console.log(err);
+        this.logger.error(err);
     }
 }
 
@@ -114,7 +118,7 @@ SingleProcessor.prototype._processTypeImage = async function (path) {
         this.imagePaths.typeImage = imgPath;
         this.extractedText.typeImage = await Scan(imgPath);
     } catch (err) {
-        console.log(err);
+        this.logger.error(err);
     }
 }
 
@@ -124,7 +128,7 @@ SingleProcessor.prototype._processArtImage = async function (path) {
         this.imagePaths.artImage = imgPath;
         return imgPath;
     } catch (err) {
-        console.log(err);
+        this.logger.error(err);
     }
 }
 
@@ -134,7 +138,7 @@ SingleProcessor.prototype._processFlavorImage = async function (path) {
         this.imagePaths.flavorImage = imgPath;
         return imgPath;
     } catch (err) {
-        console.log(err);
+        this.logger.error(err);
     }
 }
 
@@ -146,14 +150,15 @@ SingleProcessor.prototype._processResults = async function () {
         let resultsProcessor = ProcessResults.create({
             name: nameMatch,
             filePath: this.filePath,
-            queryingEnabled: this.queryingEnabled
+            queryingEnabled: this.queryingEnabled,
+            logger: this.logger
         });
         let results = await resultsProcessor.execute(this.filePath);
         if (results.error) {
             return results.error;
         }
         if (results.sets) {
-            console.log('No Match Found Storing in Needs Atn');
+            this.logger.warn('No Match Found Storing in Needs Atn');
             return await this._processNeedsAtn(results.sets);
         }
     }
@@ -175,7 +180,7 @@ SingleProcessor.prototype._processOutputFile = async function () {
 }
 
 SingleProcessor.prototype._processNeedsAtn = async function (sets) {
-    console.log(`Processing Needs Atn: ${sets}`);
+    this.logger.info(`Processing Needs Atn: ${sets}`);
     try {
         let base64Images = await this._getBase64Images();
         let nameMatch = this.matches.nameMatches[0] || [];
@@ -196,11 +201,11 @@ SingleProcessor.prototype._processNeedsAtn = async function (sets) {
                 model.Insert();
             }
         } else {
-            console.log('Error processing Needs Attention');
+            this.logger.error('Error processing Needs Attention');
         }
     } catch (error) {
-        console.log('Error Processing Needs Atn Record');
-        console.log(error);
+        this.logger.error('Error Processing Needs Atn Record');
+        this.logger.error(error);
     }
 };
 
@@ -210,12 +215,12 @@ SingleProcessor.prototype._getBase64Images = async function () {
 
 SingleProcessor.prototype._CleanUpFiles = async function() {
     try {
-        console.log("_CleanUpFiles:: Beginning Clean Up");
+        this.logger.info(`_CleanUpFiles:: Beginning Clean Up ${this.directory}`);
         await CleanFilesUp(this.directory);
-        console.log("_CleanUpFiles:: Finished Clean Up");
+        this.logger.info(`_CleanUpFiles:: Finished Clean Up ${this.directory}`);
         return this.directory;
     } catch(err) {
-        console.log(err);
+        this.logger.error(err);
         return '';
     }
 };
