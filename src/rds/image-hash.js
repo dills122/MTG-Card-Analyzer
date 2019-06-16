@@ -1,6 +1,10 @@
 const {
     CreateConnection
 } = require('./connection');
+const log = require('../logger/log');
+const logger = log.create({
+    isPretty: true
+});
 
 function InsertEntity(record) {
     let connection = CreateConnection();
@@ -10,12 +14,12 @@ function InsertEntity(record) {
         }
         GetHashes(record.Name, record.SetName, (error, hashes) => {
             if (error) {
-                console.log(error);
+                logger.error(error);
             }
             if (hashes.length === 0) {
                 connection.query('INSERT INTO Image_Results SET ?', record, (error) => {
                     if (error) {
-                        console.log(error);
+                        logger.error(error);
                     }
                     return connection.end();
                 });
@@ -32,7 +36,7 @@ function GetHashes(name, set, cb) {
         }
         connection.query('SELECT ArtImage as artImage, FlavorImage as flavorImage, ArtImageHash as artImageHash, FlavorImageHash as flavorImageHash, FlavorMatchPercent as flavorMatchPercent, ArtMatchPercent as artMatchPercent FROM Image_Results WHERE Name=? AND SetName=?', [name, set], (error, results) => {
             if (error) {
-                console.log(error);
+                logger.error(error);
                 connection.end();
                 return cb(error);
             }

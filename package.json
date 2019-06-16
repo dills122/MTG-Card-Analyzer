@@ -16,6 +16,7 @@
   "dependencies": {
     "@hapi/joi": "^15.0.3",
     "app-root-path": "^2.2.1",
+    "bunyan": "^1.8.12",
     "fuzzyset.js": "0.0.8",
     "image-hash": "^3.3.7",
     "image-size": "^0.7.3",

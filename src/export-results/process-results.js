@@ -19,6 +19,7 @@ function ProcessResults(params) {
             error: 'malformed parameters'
         };
     }
+    this.logger = params.logger;
     this.name = params.name;
     this.filePath = params.filePath;
     this.queryingEnabled = params.queryingEnabled;
@@ -37,9 +38,9 @@ ProcessResults.prototype.execute = async function (filePath) {
                 error: 'No results found'
             };
         }
-        console.log('process-results::execute: Cards Found, Finding Best Match');
+        this.logger.info('process-results::execute: Cards Found, Finding Best Match');
         if (cards.length === 1) {
-            console.log(`process-results::execute: One Card Found ${JSON.stringify(cards)}`)
+            this.logger.info(`process-results::execute: One Card Found ${JSON.stringify(cards)}`)
             await this._gatherResults(cards[0]);
             return {};
         }
@@ -48,19 +49,19 @@ ProcessResults.prototype.execute = async function (filePath) {
                 name: this.name,
                 localCardPath: filePath,
                 cards: cards,
-                queryingEnabled: this.queryingEnabled
+                queryingEnabled: this.queryingEnabled,
+                logger: this.logger
             });
             let dbResults = await processHashes.compareDbHashes();
             if (dbResults.value) {
                 let card = _.find(cards, {
                     set_name: dbResults.value.setName
                 });
-                console.log(`process-results::execute::DBMatches One Card Found ${JSON.stringify(card)}`)
+                this.logger.info(`process-results::execute::DBMatches One Card Found`, card);
                 await this._gatherResults(card);
                 return {};
             }
             let result = await this._compareImageHashResults(cards, filePath);
-            console.log(result);
             if (result.error) {
                 return {
                     error: result.error
@@ -70,12 +71,12 @@ ProcessResults.prototype.execute = async function (filePath) {
                 let card = _.find(cards, {
                     set_name: result.value.setName
                 });
-                console.log(`process-results::execute::BestMatches One Card Found ${JSON.stringify(card)}`)
+                this.logger.info(`process-results::execute::BestMatches One Card Found`, card);
                 await this._gatherResults(card);
                 return {};
             }
             if (result.sets) {
-                console.log(`process-results::execute: More Than One Match Found ${JSON.stringify(result.sets)}`)
+                this.logger.info(`process-results::execute: More Than One Match Found ${JSON.stringify(result.sets)}`);
                 return {
                     sets: result.sets
                 };
@@ -85,7 +86,7 @@ ProcessResults.prototype.execute = async function (filePath) {
             error: 'Couldn\'t find any cards'
         };
     } catch (error) {
-        console.log(error);
+        this.logger.error(error);
     }
 };
 //Need to convert image hash comparison to use the art and flavor image areas for comparison
@@ -106,35 +107,35 @@ ProcessResults.prototype._compareImageHashResults = async function (results, fil
                     match.stringCompare >= 1;
             });
             if (exactMatches > 1) {
-                console.log(`process-results::_compareImageHashResults: More Than One Exact Match Found ${JSON.stringify(exactMatches)}`)
+                this.logger.info(`process-results::_compareImageHashResults: More Than One Exact Match Found ${JSON.stringify(exactMatches)}`)
                 return {
                     sets: _.map(exactMatches, (match) => match.setName)
                 }
             }
             if (exactMatches === 1) {
-                console.log(`process-results::_compareImageHashResults: Exact Match Found ${JSON.stringify(exactMatches)}`);
+                this.logger.info(`process-results::_compareImageHashResults: Exact Match Found ${JSON.stringify(exactMatches)}`);
                 return {
                     value: exactMatches[0]
                 }
             }
-            console.log(`process-results::_compareImageHashResults: No Exact Match Found ${JSON.stringify(exactMatches)}`);
+            this.logger.info(`process-results::_compareImageHashResults: No Exact Match Found ${JSON.stringify(exactMatches)}`);
             return {
                 sets: _.map(bestMatches, (match) => match.setName)
             };
         } else if (bestMatches.length === 1) {
-            console.log(`process-results::_compareImageHashResults: One Best Match Found ${JSON.stringify(bestMatches)}`);
+            this.logger.info(`process-results::_compareImageHashResults: One Best Match Found ${JSON.stringify(bestMatches)}`);
             return {
                 value: bestMatches[0]
             };
         } else {
             let sets = _.map(results, obj => obj.set_name);
-            console.log(`process-results::_compareImageHashResults: No Exact or Best Match Found ${JSON.stringify(sets)}`);
+            this.logger.info(`process-results::_compareImageHashResults: No Exact or Best Match Found ${JSON.stringify(sets)}`);
             return {
                 sets
             }
         }
     } catch (error) {
-        console.log(error);
+        this.logger.error(error);
     }
 };
 
@@ -156,7 +157,7 @@ ProcessResults.prototype._gatherResults = async function (object) {
         //TODO Add Update when QTY > 1
         if (isValid) {
             if (this.queryingEnabled) {
-                console.log(`process-results::_gatherResults: Inserting Card in Card_Catalog ${model.data}`);
+                this.logger.info(`process-results::_gatherResults: Inserting Card in Card_Catalog`, model.data);
                 if (model.data.quantity > 1) {
                     //Update
                 } else {
@@ -165,8 +166,8 @@ ProcessResults.prototype._gatherResults = async function (object) {
             }
         }
     } catch (e) {
-        console.log('Error');
-        console.log(e);
+        this.logger.error('Error');
+        this.logger.error(e);
     }
 };
 

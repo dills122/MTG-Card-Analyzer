@@ -1,7 +1,12 @@
 const base64Img = require('image-to-base64');
+const log = require('../logger/log');
 const dependencies = {
     base64Img
-}
+};
+
+const logger = log.create({
+    isPretty: true
+});
 
 async function StringfyImagesNDAtn(imagePaths) {
     try {
@@ -15,10 +20,10 @@ async function StringfyImagesNDAtn(imagePaths) {
             typeImage,
             nameImage
         };
-        console.log(`base64-img::StringfyImagesNDAtn : ${Object.keys(base64Images)}`);
+        logger.info(`base64-img::StringfyImagesNDAtn : ${Object.keys(base64Images)}`);
         return base64Images;
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         return error;
     }
 }

@@ -1,26 +1,30 @@
 const {
     cleanString
 } = require('../util');
-
+const log = require('../logger/log');
 const dependencies = {
     Tesseract: require('tesseract.js')
 };
 
+const logger = log.create({
+    isPretty: true
+});
+
 function ScanImage(imgBuffer, cb) {
-    console.log(`extract-text::ScanImage:: Scanning Card ${Buffer.isBuffer(imgBuffer)? 'Image Buffer' : imgBuffer}`);
+    logger.info(`extract-text::ScanImage:: Scanning Card ${Buffer.isBuffer(imgBuffer)? 'Image Buffer' : imgBuffer}`);
     dependencies.Tesseract.recognize(imgBuffer)
         .progress(message => {
-            console.log(JSON.stringify(message, null, 4))
+            logger.info(JSON.stringify(message, null, 4))
         }).catch((err) => {
-            console.log(err);
+            logger.error(err);
             return cb(err, null, dependencies.Tesseract);
         })
         .then(() => {
 
         }).finally(resultOrError => {
             let cleanedString = cleanString(resultOrError.text);
-            console.log(`Extracted text: ${resultOrError.text}`);
-            console.log(`Extracted cleaned text: ${cleanedString}`);
+            (`Extracted text: ${resultOrError.text}`);
+            logger.info(`Extracted cleaned text: ${cleanedString}`);
             return cb(null, {
                 cleanText: cleanedString,
                 dirtyText: resultOrError.text

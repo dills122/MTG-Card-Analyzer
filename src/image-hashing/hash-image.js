@@ -6,9 +6,14 @@ const {
 const dependencies = {
     imageHash
 };
+const log = require('../logger/log');
+
+const logger = log.create({
+    isPretty: true
+});
 
 function HashImage(imgUrl, cb) {
-    console.log(`hash-image::HashImage:: Hashing Image ${imgUrl}`);
+    logger.info(`hash-image::HashImage:: Hashing Image ${imgUrl}`);
     dependencies.imageHash(imgUrl, 16, true, (error, data) => {
         if (error) {
             return cb(error);
@@ -18,7 +23,7 @@ function HashImage(imgUrl, cb) {
 }
 
 function CompareHash(hashOne, hashTwo) {
-    console.log(`hash-image::CompareHash:: Comparing Hashes ${hashOne} ${hashTwo}`);
+    logger.info(`hash-image::CompareHash:: Comparing Hashes ${hashOne} ${hashTwo}`);
     let HashLength = hashOne.length;
     let twoBitMatches = 0;
     let fourBitMatches = 0;
@@ -39,7 +44,7 @@ function CompareHash(hashOne, hashTwo) {
         fourBitMatches: _.round(fourBitMatches / (HashLength / 4), 2),
         stringCompare: _.round(stringSimilarity.compareTwoStrings(hashOne, hashTwo), 2)
     };
-    console.log(`hash-image::CompareHash:: Hash Comparison Results ${comparisonResults}`);
+    logger.info(`hash-image::CompareHash:: Hash Comparison Results ${comparisonResults}`);
     return comparisonResults;
 }
 

@@ -1,5 +1,8 @@
 const request = require('request-promise-native');
-
+const log = require('../logger/log');
+const logger = log.create({
+    isPretty: true
+});
 const dependencies = {
     request
 };
@@ -15,7 +18,7 @@ async function GetCardNames() {
         }
         return [];
     } catch (err) {
-        console.log(err);
+        logger.error(err);
     }
 }
 

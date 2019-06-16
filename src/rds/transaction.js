@@ -1,6 +1,10 @@
 const {
     CreateConnection
 } = require('./connection');
+const log = require('../logger/log');
+const logger = log.create({
+    isPretty: true
+});
 
 function InsertEntity(record) {
     let connection = CreateConnection();
@@ -10,7 +14,7 @@ function InsertEntity(record) {
         }
         connection.query('INSERT INTO Transactions SET ?', record, (error) => {
             if (error) {
-                console.log(error);
+                logger.error(error);
             }
             return connection.end();
         });

@@ -1,7 +1,10 @@
 const {
     CreateConnection
 } = require('./connection');
-
+const log = require('../logger/log');
+const logger = log.create({
+    isPretty: true
+});
 function InsertEntity(record) {
     let connection = CreateConnection();
     connection.connect((err) => {
@@ -10,7 +13,7 @@ function InsertEntity(record) {
         }
         connection.query('INSERT INTO Card_Catalog SET ?', record, (error) => {
             if (error) {
-                console.log(error);
+                logger.error(error);
             }
             return connection.end();
         });
@@ -25,7 +28,7 @@ function GetQuantity(name, set, cb) {
         }
         connection.query('SELECT Quantity FROM Card_Catalog WHERE CardName=? AND CardSet=?', [name, set], (error, results) => {
             if (error) {
-                console.log(error);
+                logger.error(error);
                 connection.end();
                 return cb(error);
             }
