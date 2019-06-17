@@ -94,6 +94,8 @@ A template is avaliable [here](./secure.config.template.js)
 
 Test images are provided at `src\test-images`
 
+Backfiller utility instructions found [here](https://github.com/dills122/MTG-Card-Analyzer/wiki/Backfiller)
+
 
 ### Packages Under the Hood
 
