@@ -50,28 +50,20 @@ async function GetImageSnippetFile(imgPath, type) {
     if (dimensions.width >= 360 && dimensions.height >= 500) {
         let alteredDimensions = GetAlteredDimensions(dimensions, type);
         let img = await jimp.read(imgPath);
-        img.crop(alteredDimensions.left, alteredDimensions.top, alteredDimensions.width, alteredDimensions.height)
-            .greyscale()
-            .contrast(.730)
-            .brightness(.235)
-            .blur(1);
+        img = cropper(img, alteredDimensions, type);
         await img.writeAsync(path);
         return path;
     }
     throw new Error("Image is to small");
 }
-//TODO Art and Flavor shouldn't be greyscale
+
 async function GetImageSnippetTmpFile(imgPath, directory, type) {
     let path = `${directory}\\${uuid()}.${imgPath.split('.')[1] || '.jpg'}`;
     let dimensions = await GetImageDimensions(imgPath);
     if (dimensions.width >= 360 && dimensions.height >= 500) {
         let alteredDimensions = GetAlteredDimensions(dimensions, type);
         let img = await jimp.read(imgPath);
-        img.crop(alteredDimensions.left, alteredDimensions.top, alteredDimensions.width, alteredDimensions.height)
-            .greyscale()
-            .contrast(.730)
-            .brightness(.235)
-            .blur(1);
+        img = cropper(img, alteredDimensions, type);
         await img.writeAsync(path);
         return path;
     }
@@ -93,14 +85,14 @@ function GetAlteredDimensions(dimensions, type) {
             left: _.round(dimensions.width * constants.borderPercent),
             top: _.round(dimensions.height * constants.type.topPercent)
         };
-    } else if( type === 'art') {
+    } else if (type === 'art') {
         return {
             width: _.round(dimensions.width * constants.art.widthPercent),
             height: _.round(dimensions.height * constants.art.heightPercent),
             left: _.round(dimensions.width * constants.borderPercent),
             top: _.round(dimensions.height * constants.art.topPercent)
         };
-    } else if( type === 'flavor') {
+    } else if (type === 'flavor') {
         return {
             width: _.round(dimensions.width * constants.flavor.widthPercent),
             height: _.round(dimensions.height * constants.flavor.heightPercent),
@@ -109,6 +101,21 @@ function GetAlteredDimensions(dimensions, type) {
         };
     } else {
         return {};
+    }
+}
+
+function cropper(img, dimensions, type) {
+    if (type !== 'art' || type !== 'flavor') {
+        return img.crop(dimensions.left, dimensions.top, dimensions.width, dimensions.height)
+            .greyscale()
+            .contrast(.730)
+            .brightness(.235)
+            .blur(1);
+    } else {
+        return img.crop(dimensions.left, dimensions.top, dimensions.width, dimensions.height)
+            .contrast(.730)
+            .brightness(.235)
+            .blur(1);
     }
 }
 

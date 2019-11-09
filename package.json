@@ -16,9 +16,10 @@
   "dependencies": {
     "@hapi/joi": "^15.0.3",
     "app-root-path": "^2.2.1",
+    "async": "^3.1.0",
     "bunyan": "^1.8.12",
     "fuzzyset.js": "0.0.8",
-    "image-hash": "^3.3.7",
+    "image-hash": "^3.5.1",
     "image-size": "^0.7.3",
     "image-to-base64": "^2.0.1",
     "jimp": "^0.6.4",
