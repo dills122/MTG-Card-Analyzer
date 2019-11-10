@@ -13,7 +13,7 @@ const schema = joi.object().keys({
     type: joi.string().required(),
     directory: joi.string().required(),
     logger: joi.object().optional()
-})
+});
 
 class ImageProcessor {
     constructor(params) {

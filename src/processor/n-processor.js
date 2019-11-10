@@ -8,6 +8,7 @@ const logger = require('../logger/log');
 const dependencies = {
     ImageProcessor: require("./image-processor"),
     CreateDirectory: callbackify(require("../file-io").CreateDirectory),
+    MatchName: require("../fuzzy-matching/index").MatchName
 };
 
 class Processor {
@@ -16,7 +17,6 @@ class Processor {
         this.queryingEnabled = params.queryingEnabled;
         this.imagePaths = {};
         this.extractedText = {};
-        this.matches = {};
         this.logger = logger.create({
             isPretty: params.isPretty
         });
@@ -25,7 +25,8 @@ class Processor {
     execute(callback) {
         async.waterfall([
             (next) => this.createDirectory(next),
-            (next) => this.extractName(next)
+            (next) => this.extractName(next),
+            (next) => this.processExtractionResults(next)
         ], callback);
     }
 
@@ -50,7 +51,20 @@ class Processor {
             }
             this.nameExtractionResults = results;
             return callback();
-        })
+        });
+    }
+
+    processExtractionResults(callback) {
+        dependencies.MatchName.create({
+            cleanText: this.nameExtractionResults.cleanText,
+            dirtyText: this.nameExtractionResults.dirtyText
+        }).Match((err, matchResults) => {
+            if(err) {
+                return callback(err);
+            }
+            this.nameMatches = matchResults;
+            return callback();
+        });
     }
 }
 
