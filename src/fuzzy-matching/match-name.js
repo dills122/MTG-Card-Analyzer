@@ -16,7 +16,7 @@ const dependencies = {
 
 const schema = joi.object().keys({
     cleanText: joi.string().required(),
-    dirtyText: string().optional(),
+    dirtyText: joi.string().optional(),
     logger: joi.object().optional()
 });
 
@@ -53,9 +53,11 @@ class MatchName {
             if (err) {
                 return callback(err);
             }
-            let filteredNames = this._filterNames(names);
+            let filteredNames = this.filteredNames(names);
+            console.log("MATCHES");
             let fuzzy = FuzzySet(filteredNames);
-            this.initialResults = fuzzy.get(cleanText);
+            this.initialResults = fuzzy.get(this.cleanText);
+            console.log(this.initialResults);
             return callback();
         });
     }
@@ -69,17 +71,17 @@ class MatchName {
             };
         });
 
-        let highConfidenceMatches = _.filter(fixedResults, {
-            percentage: config.highConfidence
+        let highConfidenceMatches = _.filter(fixedResults, (item) => {
+            return item.percentage >= config.highConfidence;
         });
 
         if (highConfidenceMatches.length > 1) {
-            return callback(null, highConfidenceMatches.splice(config.maxMatches + 1));
+            return callback(null, highConfidenceMatches.splice(0, config.maxMatches + 1));
         }
 
-        return callback(null, _.filter(fixedResults, {
-            percentage: config.minConfidence
-        }).splice(config.maxMatches + 1));
+        return callback(null, _.filter(fixedResults, (item) => {
+            return item.percentage >= config.minConfidence;
+        }).splice(0, config.maxMatches + 1));
     }
 }
 
