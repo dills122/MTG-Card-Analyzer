@@ -8,7 +8,8 @@ const logger = require('../logger/log');
 const dependencies = {
     ImageProcessor: require("./image-processor"),
     CreateDirectory: callbackify(require("../file-io").CreateDirectory),
-    MatchName: require("../fuzzy-matching/index").MatchName
+    MatchName: require("../fuzzy-matching/index").MatchName,
+    Hasher: require("../image-hashing/hash-image").HashImage
 };
 
 class Processor {
@@ -26,7 +27,8 @@ class Processor {
         async.waterfall([
             (next) => this.createDirectory(next),
             (next) => this.extractName(next),
-            (next) => this.processExtractionResults(next)
+            (next) => this.processExtractionResults(next),
+            (next) => this.hashLocal(next)
         ], callback);
     }
 
@@ -64,6 +66,15 @@ class Processor {
             }
             this.nameMatches = matchResults;
             return callback();
+        });
+    }
+
+    hashLocal(callback) {
+        dependencies.Hasher(this.filePath, (err, hash) => {
+            if(err) {
+                return callback(err);
+            }
+            this.localHash = hash;
         });
     }
 }

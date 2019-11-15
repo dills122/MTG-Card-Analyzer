@@ -9,6 +9,7 @@ const {
     promisify
 } = require('util');
 const logger = require('../logger/log');
+const joi = require("@hapi/joi");
 
 const HashImage = promisify(Hash.HashImage);
 const GetHashes = promisify(CardHashes.GetHashes);
@@ -26,28 +27,35 @@ const config = {
     }
 };
 
+const schema = joi.object().keys({
+    cards: joi.array().min(1).required(),
+    localHash: joi.string().min(1).required(),
+    name: joi.string().required(),
+    queryingEnabled: joi.boolean().optional().default(false)
+});
+
 function ProcessHashes(params) {
     _.bindAll(this, Object.keys(ProcessHashes.prototype));
-    if (!params.localCardPath && !params.cards && !params.name) {
-        return {
-            error: 'malformed parameters'
-        };
+    let isValid = !joi.validate(params, schema).error;
+    if(!isValid) {
+        throw new Error("Required params missing");
     }
-    this.logger = params.logger;
-    this.localCardPath = params.localCardPath;
-    this.cards = params.cards;
-    this.name = params.name;
-    this.queryingEnabled = params.queryingEnabled;
+    _.assign(this, params);
+    if(!this.logger) {
+        this.logger = logger.create({
+            isPretty: false
+        });
+    }
 }
 
 ProcessHashes.prototype.compareDbHashes = async function () {
     this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
     try {
-        let localCardHash = await HashImage(this.localCardPath);
+        // let this.localHash = await HashImage(this.localCardPath);
         let hashes = await GetHashes(this.name);
         let matches = [];
         hashes.forEach((dbHash) => {
-            let compareResults = Hash.CompareHash(localCardHash, dbHash.cardHash);
+            let compareResults = Hash.CompareHash(this.localHash, dbHash.cardHash);
             let isMatch = compareResults.twoBitMatches > .92 &&
                 compareResults.fourBitMatches > .92 &&
                 compareResults.stringCompare > .92;
@@ -80,7 +88,7 @@ ProcessHashes.prototype.compareDbHashes = async function () {
 
 ProcessHashes.prototype.compareRemoteImages = async function () {
     try {
-        let localCardHash = await HashImage(this.localCardPath);
+        // let this.localHash = await HashImage(this.localCardPath);
         let cards = _.map(this.cards, function (card) {
             return {
                 imgUrl: card.image_uris.normal || card.image_uris.large,
@@ -93,7 +101,7 @@ ProcessHashes.prototype.compareRemoteImages = async function () {
             let setName = cards[i].setName;
             let remoteImageHash = await HashImage(url);
             this._insertCardHash(remoteImageHash, setName);
-            let comparisonResults = Hash.CompareHash(localCardHash, remoteImageHash);
+            let comparisonResults = Hash.CompareHash(this.localHash, remoteImageHash);
             if (!_.isEmpty(comparisonResults)) {
                 comparisonResultsList.push(Object.assign(comparisonResults, {
                     setName
