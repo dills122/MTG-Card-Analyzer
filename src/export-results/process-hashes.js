@@ -49,9 +49,8 @@ function ProcessHashes(params) {
 }
 
 ProcessHashes.prototype.compareDbHashes = async function () {
-    this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
     try {
-        // let this.localHash = await HashImage(this.localCardPath);
+        this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
         let hashes = await GetHashes(this.name);
         let matches = [];
         hashes.forEach((dbHash) => {
@@ -71,14 +70,7 @@ ProcessHashes.prototype.compareDbHashes = async function () {
                 error: 'No Matches Found'
             };
         }
-        if (matches.length > 1) {
-            return {
-                sets: _.map(matches, result => result.setName)
-            };
-        }
-        return {
-            value: matches[0]
-        };
+        return matches;
     } catch (error) {
         return {
             error
@@ -88,7 +80,7 @@ ProcessHashes.prototype.compareDbHashes = async function () {
 
 ProcessHashes.prototype.compareRemoteImages = async function () {
     try {
-        // let this.localHash = await HashImage(this.localCardPath);
+        this.logger.info(`process-hashes::compareDbHashes: Compare Remote Image Hashes`);
         let cards = _.map(this.cards, function (card) {
             return {
                 imgUrl: card.image_uris.normal || card.image_uris.large,
@@ -117,6 +109,9 @@ ProcessHashes.prototype.compareRemoteImages = async function () {
         return bestMatches;
     } catch (error) {
         this.logger.error(error);
+        return {
+            error
+        };
     }
 }
 

@@ -9,7 +9,8 @@ const dependencies = {
     ImageProcessor: require("./image-processor"),
     CreateDirectory: callbackify(require("../file-io").CreateDirectory),
     MatchName: require("../fuzzy-matching/index").MatchName,
-    Hasher: require("../image-hashing/hash-image").HashImage
+    Hasher: require("../image-hashing/hash-image").HashImage,
+    MatchProcessor: require("./matching-processor")
 };
 
 class Processor {
@@ -18,6 +19,7 @@ class Processor {
         this.queryingEnabled = params.queryingEnabled;
         this.imagePaths = {};
         this.extractedText = {};
+        this.matcherResults = [];
         this.logger = logger.create({
             isPretty: params.isPretty
         });
@@ -28,7 +30,7 @@ class Processor {
             (next) => this.createDirectory(next),
             (next) => this.extractName(next),
             (next) => this.processExtractionResults(next),
-            (next) => this.hashLocal(next)
+            (next) => this.attemptMatching(next)
         ], callback);
     }
 
@@ -61,7 +63,7 @@ class Processor {
             cleanText: this.nameExtractionResults.cleanText,
             dirtyText: this.nameExtractionResults.dirtyText
         }).Match((err, matchResults) => {
-            if(err) {
+            if (err) {
                 return callback(err);
             }
             this.nameMatches = matchResults;
@@ -69,12 +71,34 @@ class Processor {
         });
     }
 
-    hashLocal(callback) {
-        dependencies.Hasher(this.filePath, (err, hash) => {
-            if(err) {
+    attemptMatching(callback) {
+        async.each(this.nameMatches, (match, cb) => {
+            dependencies.MatchProcessor.create({
+                name: match.name,
+                filePath: this.filePath
+            }).execute((err, results) => {
+                if (err) {
+                    return cb(err);
+                }
+                this.matcherResults.push({
+                    name: match.name,
+                    sets: results
+                });
+                return cb();
+            })
+        }, (err) => {
+            if (err) {
                 return callback(err);
             }
-            this.localHash = hash;
+            if(_.isEmpty(this.matcherResults)) {
+                return callback(new Error("No matches found"));
+            }
+            if(this.matcherResults.length === 1) {
+                //Insert matched card
+            } else {
+                //Insert an Needs attention record
+            }
+            return callback();
         });
     }
 }

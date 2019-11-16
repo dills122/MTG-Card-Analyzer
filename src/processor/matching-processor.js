@@ -15,7 +15,7 @@ const dependencies = {
 
 const schema = joi.object().keys({
     name: joi.string().required(),
-    queryingEnabled: joi.bool().optional().default(false)
+    filePath: joi.string().required()
 
 });
 
@@ -86,18 +86,40 @@ class MatcherProcessor {
         });
 
         async.parallel([
-            async () => processHashes.compareDbHashes,
-            async () => processHashes.compareRemoteImages
-        ], (err, hashResults) => {
-            if(err) {
+            (cb) => {
+                async.waterfall([
+                    async () => processHashes.compareDbHashes,
+                        (next) => this._processHashResults(next)
+                ], cb);
+            },
+            (cb) => {
+                async.waterfall([
+                    async () => processHashes.compareRemoteImages,
+                        (next) => this._processHashResults(next)
+                ], cb);
+            }
+        ], (err, finalResults) => {
+            if (err) {
                 return callback(err);
             }
-            this._processHashResults(hashResults, callback);
+            let [db, remote, ...rest] = finalResults;
+            let mergedResults = db.concat(remote);
+            this.matchResults = new Set(mergedResults);
+
+            return callback(null, this.matchResults);
         });
     }
 
     _processHashResults(hashResults, callback) {
-        //TODO check hash comparison results
+        if (_.isEmpty(hashResults)) {
+            return callback(null, []); //No set to return
+        }
+
+        if (hashResults.length > 1) {
+            return callback(null, _.map(hashResults, "setName"));
+        }
+        let matchObject = hashResults[0] || {};
+        return callback(null, [_.get(matchObject, "setName", "")]);
     }
 }
 
