@@ -34,7 +34,10 @@ class MatcherProcessor {
     }
 
     execute(cb) {
-        async.waterfall([], cb);
+        async.waterfall([
+            (next) => this._search(next),
+            (next) => this._processResults(next)
+        ], cb);
     }
 
     _search(callback) {

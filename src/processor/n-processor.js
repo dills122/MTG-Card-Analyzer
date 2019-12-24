@@ -10,7 +10,12 @@ const dependencies = {
     CreateDirectory: callbackify(require("../file-io").CreateDirectory),
     MatchName: require("../fuzzy-matching/index").MatchName,
     Hasher: require("../image-hashing/hash-image").HashImage,
-    MatchProcessor: require("./matching-processor")
+    MatchProcessor: require("./matching-processor"),
+    NeedsAttention: require("../models/needs-attention"),
+    Collection: require("../models/card-collection"),
+    RDSCollection: require("../rds/").Collection,
+    GetAdditionalCardInfo: require("../scryfall-api/").Search.SearchByNameExact,
+    Base64: callbackify(require("image-to-base64"))
 };
 
 class Processor {
@@ -45,14 +50,16 @@ class Processor {
     }
 
     extractName(callback) {
-        dependencies.ImageProcessor.create({
+        let extractor = dependencies.ImageProcessor.create({
             path: this.filePath,
             type: 'name',
             directory: this.directory
-        }).extract((err, results) => {
+        });
+        extractor.extract((err, results) => {
             if (err) {
                 return callback(err);
             }
+            this.nameExtractionImagePath = extractor.imagePath;
             this.nameExtractionResults = results;
             return callback();
         });
@@ -90,14 +97,60 @@ class Processor {
             if (err) {
                 return callback(err);
             }
-            if(_.isEmpty(this.matcherResults)) {
+            if (_.isEmpty(this.matcherResults)) {
                 return callback(new Error("No matches found"));
             }
-            if(this.matcherResults.length === 1) {
-                //Insert matched card
+            if (this.matcherResults.length === 1) {
+                this.CreateCollectionsRecord(this.matcherResults[0], callback);
             } else {
-                //Insert an Needs attention record
+                async.each(this.matcherResults, this.CreateNeedsAttentionRecord, (err) => {
+                    if(err) {
+                        return callback(err);
+                    }
+                    return callback();
+                });
             }
+        });
+    }
+
+    CreateNeedsAttentionRecord(record, callback) {
+        dependencies.Base64(this.nameExtractionImagePath, (err, name64Image) => {
+            if(err) {
+                return callback(err);
+            }
+            let needsAttenionModel = dependencies.NeedsAttention.create({
+                cardName: record.name,
+                extractedText: this.nameExtractionResults.cleanText,
+                dirtyExtractedText: this.nameExtractionResults.dirtyText,
+                possibleSets: record.sets.join(','),
+                nameImage: name64Image
+            });
+            needsAttenionModel.Insert();
+            return callback();
+        });
+    }
+
+    CreateCollectionsRecord(record, callback) {
+        let set = record.sets[0];
+        async.parallel([
+            (next) => dependencies.RDSCollection.GetQuantity(record.name, set, next),
+            (next) => dependencies.GetAdditionalCardInfo(record.name, '', next)
+        ], (err, results) => {
+            if (err) {
+                return callback(err);
+            }
+            let [qty, additionalInfo] = results;
+            let collectionsModel = dependencies.Collection.create({
+                cardName: record.name,
+                cardSet: set,
+                quantity: qty,
+                automated: true,
+                magicId: additionalInfo.tcgplayer_id,
+                imageUrl: additionalInfo.image_uris.normal,
+                estValue: _.round((additionalInfo.prices.usd * qty), 4),
+                cardType: additionalInfo.type_line
+            });
+            collectionsModel.Insert();
             return callback();
         });
     }
