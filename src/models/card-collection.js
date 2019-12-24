@@ -1,37 +1,31 @@
 const _ = require('lodash');
 const Joi = require('@hapi/joi');
-const schema = require('./schemas/card-collection.schema').schema;
 const {
     Collection
 } = require('../rds/index');
 
-function CardCollection(params) {
-    _.bindAll(this, Object.keys(CardCollection.prototype));
-}
+const schema = Joi.object().keys({
+    cardId: Joi.number(),
+    cardName: Joi.string().min(3).max(50).required(),
+    cardType: Joi.string().min(3).max(50).required(),
+    cardSet: Joi.string().min(3).max(50).required(),
+    quantity: Joi.number().min(1).required(),
+    estValue: Joi.number().optional(),
+    automated: Joi.bool(),
+    magicId: Joi.number().min(1).required(),
+    imageUrl: Joi.string().min(3).max(150).required(),
+});
 
-CardCollection.prototype.initiate = function(obj) {
-    if(_.isNull(obj)) {
-        return {
-            error: "Object null"
-        };
+class CardCollection {
+    constructor(params) {
+        let validatedSchema = Joi.attempt(params, schema);
+        _.assign(this, validatedSchema);
     }
-    let validation = Joi.validate(obj, schema).error;
-    let isValid = !validation;
-    if(isValid) {
-        this.data = obj;
-    }
-    console.log(validation);
-    return isValid;
-};
 
-CardCollection.prototype.CheckSchema = function() {
-    return !Joi.validate(this.data, schema).error;
-}
-
-CardCollection.prototype.Insert = function() {
-    if(this.CheckSchema && !_.isNull(this.data)) {
-        Collection.InsertEntity(this.data);
-    }
+    Insert() {
+        let object = _.pick(this, Object.keys(schema.describe().keys));
+        Collection.InsertEntity(object);
+    } 
 }
 
 module.exports = {

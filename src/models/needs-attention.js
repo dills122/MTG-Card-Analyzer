@@ -1,34 +1,30 @@
 const _ = require('lodash');
 const Joi = require('@hapi/joi');
-const schema = require('./schemas/needs-attention.schema').schema;
 const {
-    NDAttn
+    Collection
 } = require('../rds/index');
 
-function NeedsAttention() {
-    _.bindAll(this, Object.keys(NeedsAttention.prototype));
-}
+const schema = Joi.object().keys({
+    id: Joi.number(),
+    cardName: Joi.string().min(3).max(50).optional(),
+    extractedText: Joi.string().max(100).required(),
+    dirtyExtractedText: Joi.string().max(100).required(),
+    nameImage: Joi.string().min(1).required(),
+    typeImage: Joi.string().min(3).optional(),
+    artImage: Joi.string().min(3).optional(),
+    flavorImage: Joi.string().min(3).optional(),
+    possibleSets: Joi.string().min(3).required()
+});
 
-NeedsAttention.prototype.initiate = function (obj) {
-    if (_.isNull(obj)) {
-        return {
-            error: "Object null"
-        };
+class NeedsAttention {
+    constructor(params) {
+        let validatedSchema = Joi.attempt(params, schema);
+        _.assign(this, validatedSchema);
     }
-    let isValid = !Joi.validate(obj, schema).error;
-    if (isValid) {
-        this.data = obj;
-    }
-    return isValid;
-};
 
-NeedsAttention.prototype.CheckSchema = function () {
-    return !Joi.validate(this.data, schema).error;
-}
-
-NeedsAttention.prototype.Insert = function () {
-    if (this.CheckSchema && !_.isNull(this.data)) {
-        NDAttn.InsertEntity(this.data, (err, records) => console.log(err || records));
+    Insert() {
+        let object = _.pick(this, Object.keys(schema.describe().keys));
+        Collection.InsertEntity(object);
     }
 }
 
