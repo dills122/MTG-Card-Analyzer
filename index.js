@@ -7,6 +7,7 @@
     const {
         Processor
     } = require('./src/processor/index');
+    const newProcessor = require("./src/processor/n-processor");
 
     const isAccessible = promisify(fs.access);
 
@@ -49,18 +50,18 @@
                 isAccessible(filePath).then((isUnavailable) => {
                     if (!isUnavailable) {
                         let fileOutputEnabled = !!flags.f || flags.file;
-                        let processor = Processor.create({
+                        let processor = newProcessor.create({
                             filePath: filePath,
                             queryingEnabled: !!flags.q || flags.query,
                             isPretty: !!flags.p || flags.pretty
                         });
                         processor.execute((err) => {
                             if (err) console.log(err);
-                            if (fileOutputEnabled) {
-                                processor.generateOutput((err) => {
-                                    if (err) console.log(err)
-                                });
-                            }
+                            // if (fileOutputEnabled) {
+                            //     processor.generateOutput((err) => {
+                            //         if (err) console.log(err)
+                            //     });
+                            // }
                         });
                     }
                 });

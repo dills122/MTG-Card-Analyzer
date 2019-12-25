@@ -74,6 +74,7 @@ class Processor {
                 return callback(err);
             }
             this.nameMatches = matchResults;
+            this.logger.info(`Matches returned ${this.nameMatches}`);
             return callback();
         });
     }

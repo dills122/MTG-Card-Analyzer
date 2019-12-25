@@ -1,18 +1,13 @@
 const _ = require('lodash');
+const async = require("async");
 const {
     CardHashes
 } = require('../rds/index');
 const {
     Hash
 } = require('../image-hashing/index');
-const {
-    promisify
-} = require('util');
 const logger = require('../logger/log');
 const joi = require("@hapi/joi");
-
-const HashImage = promisify(Hash.HashImage);
-const GetHashes = promisify(CardHashes.GetHashes);
 
 const config = {
     remoteMatch: {
@@ -34,52 +29,46 @@ const schema = joi.object().keys({
     queryingEnabled: joi.boolean().optional().default(false)
 });
 
-function ProcessHashes(params) {
-    _.bindAll(this, Object.keys(ProcessHashes.prototype));
-    let isValid = !joi.validate(params, schema).error;
-    if(!isValid) {
-        throw new Error("Required params missing");
-    }
-    _.assign(this, params);
-    if(!this.logger) {
-        this.logger = logger.create({
-            isPretty: false
-        });
-    }
-}
-
-ProcessHashes.prototype.compareDbHashes = async function () {
-    try {
-        this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
-        let hashes = await GetHashes(this.name);
-        let matches = [];
-        hashes.forEach((dbHash) => {
-            let compareResults = Hash.CompareHash(this.localHash, dbHash.cardHash);
-            let isMatch = compareResults.twoBitMatches > .92 &&
-                compareResults.fourBitMatches > .92 &&
-                compareResults.stringCompare > .92;
-            if (isMatch) {
-                matches.push(Object.assign(compareResults, {
-                    setName: dbHash.setName
-                }));
-            }
-        });
-        if (matches.length === 0) {
-            this.logger.info(`process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`);
-            return {
-                error: 'No Matches Found'
-            };
+class ProcessHashes {
+    constructor(params = {}) {
+        let validatedSchema = joi.attempt(params, schema);
+        _.assign(this, validatedSchema);
+        if (!this.logger) {
+            this.logger = logger.create({
+                isPretty: false
+            });
         }
-        return matches;
-    } catch (error) {
-        return {
-            error
-        };
     }
-};
 
-ProcessHashes.prototype.compareRemoteImages = async function () {
-    try {
+    compareDbHashes(callback) {
+        this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
+        CardHashes.GetHashes(this.name, (err, hashes) => {
+            if (err) {
+                return callback(err);
+            }
+            let matches = [];
+            hashes.forEach((dbHash) => {
+                let compareResults = Hash.CompareHash(this.localHash, dbHash.cardHash);
+                let isMatch = compareResults.twoBitMatches > .92 &&
+                    compareResults.fourBitMatches > .92 &&
+                    compareResults.stringCompare > .92;
+                if (isMatch) {
+                    matches.push(Object.assign(compareResults, {
+                        setName: dbHash.setName
+                    }));
+                }
+            });
+            if (matches.length === 0) {
+                this.logger.info(`process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`);
+                return callback({
+                    error: 'No Matches Found'
+                });
+            }
+            return callback(null, matches);
+        });
+    }
+
+    compareRemoteImages(callback) {
         this.logger.info(`process-hashes::compareDbHashes: Compare Remote Image Hashes`);
         let cards = _.map(this.cards, function (card) {
             return {
@@ -88,42 +77,46 @@ ProcessHashes.prototype.compareRemoteImages = async function () {
             }
         });
         let comparisonResultsList = [];
-        for (let i = 0; i < cards.length; i++) {
-            let url = cards[i].imgUrl;
-            let setName = cards[i].setName;
-            let remoteImageHash = await HashImage(url);
-            this._insertCardHash(remoteImageHash, setName);
-            let comparisonResults = Hash.CompareHash(this.localHash, remoteImageHash);
-            if (!_.isEmpty(comparisonResults)) {
-                comparisonResultsList.push(Object.assign(comparisonResults, {
-                    setName
-                }));
+        async.each(cards, (card, cb) => {
+            let url = card.imgUrl;
+            Hash.HashImage(url, (err, remoteImageHash) => {
+                if (err) {
+                    return cb(err);
+                }
+                let setName = card.setName;
+                this._insertCardHash(remoteImageHash, setName);
+                let comparisonResults = Hash.CompareHash(this.localHash, remoteImageHash);
+                if (!_.isEmpty(comparisonResults)) {
+                    comparisonResultsList.push(Object.assign(comparisonResults, {
+                        setName
+                    }));
+                }
+                return cb();
+            });
+        }, (err) => {
+            if (err) {
+                return callback(err);
             }
-        }
-        let matchValues = config.remoteMatch;
-        let bestMatches = _.filter(comparisonResultsList, function (match) {
-            return match.twoBitMatches >= matchValues.twoBit &&
-                match.fourBitMatches >= matchValues.fourBit &&
-                match.stringCompare >= matchValues.stringCompare;
+            let matchValues = config.remoteMatch;
+            let bestMatches = _.filter(comparisonResultsList, function (match) {
+                return match.twoBitMatches >= matchValues.twoBit &&
+                    match.fourBitMatches >= matchValues.fourBit &&
+                    match.stringCompare >= matchValues.stringCompare;
+            });
+            return callback(null, bestMatches);
         });
-        return bestMatches;
-    } catch (error) {
-        this.logger.error(error);
-        return {
-            error
-        };
+    }
+
+    _insertCardHash() {
+        if (this.queryingEnabled) {
+            CardHashes.InsertEntity({
+                Name: this.name,
+                SetName: setName,
+                CardHash: hash
+            });
+        }
     }
 }
-
-ProcessHashes.prototype._insertCardHash = function (hash, setName) {
-    if (this.queryingEnabled) {
-        CardHashes.InsertEntity({
-            Name: this.name,
-            SetName: setName,
-            CardHash: hash
-        });
-    }
-};
 
 module.exports = {
     create: function (params) {

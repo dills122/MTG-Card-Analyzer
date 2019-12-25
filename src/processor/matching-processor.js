@@ -8,9 +8,9 @@ const {
 const logger = require('../logger/log');
 
 const dependencies = {
-    Searcher: callbackify(require("../scryfall-api/index").Search),
+    Searcher: callbackify(require("../scryfall-api/index").Search.SearchList),
     HashProcessor: require("../export-results/index").ProcessHashes,
-    Hash: callbackify(require("../image-hashing/index").Hash)
+    Hash: require("../image-hashing/").Hash.HashImage
 };
 
 const schema = joi.object().keys({
@@ -41,6 +41,7 @@ class MatcherProcessor {
     }
 
     _search(callback) {
+        this.logger.info(`Beginning card search ${this.name}`);
         dependencies.Searcher(this.name, (err, results) => {
             if (err) {
                 return callback(err);
@@ -51,19 +52,23 @@ class MatcherProcessor {
     }
 
     _processResults(callback) {
+        this.logger.info("Checking search results");
         if (!_.isArray(this.cards)) {
             return callback(new Error("Error gathering results"));
         }
         let numCards = this.cards.length;
 
         if (numCards === 0) {
+            this.logger.info("No results returned");
             return callback(null, 0);
         }
 
         if (numCards === 1) {
+            this.logger.info("Exactly one result returned");
             return callback(null, this.cards[0]);
         }
 
+        this.logger.info("Multiple results returned");
         async.waterfall([
             (next) => this._hashLocalCard(next),
             (next) => this._processMultiSetMatches(next)
@@ -71,7 +76,8 @@ class MatcherProcessor {
     }
 
     _hashLocalCard(callback) {
-        dependencies.Hash((err, hash) => {
+        this.logger.info(`Hashing local image ${this.filePath}`)
+        dependencies.Hash(this.filePath, (err, hash) => {
             if (err) {
                 return callback(err);
             }
@@ -81,31 +87,31 @@ class MatcherProcessor {
     }
 
     _processMultiSetMatches(callback) {
-        let processHashes = ProcessHashes.create({
+        let processHashes = dependencies.HashProcessor.create({
             name: this.name,
             cards: this.cards,
             localHash: this.localHash,
             queryingEnabled: this.queryingEnabled
         });
-
+        this.logger.info("Processing multi set matches");
         async.parallel([
             (cb) => {
                 async.waterfall([
-                    async () => processHashes.compareDbHashes,
-                        (next) => this._processHashResults(next)
+                    (next) => processHashes.compareDbHashes(next),
+                    this._processHashResults
                 ], cb);
             },
             (cb) => {
                 async.waterfall([
-                    async () => processHashes.compareRemoteImages,
-                        (next) => this._processHashResults(next)
+                    (next) => processHashes.compareRemoteImages(next),
+                    this._processHashResults
                 ], cb);
             }
         ], (err, finalResults) => {
             if (err) {
                 return callback(err);
             }
-            let [db, remote, ...rest] = finalResults;
+            let [db, remote] = finalResults;
             let mergedResults = db.concat(remote);
             this.matchResults = new Set(mergedResults);
 
