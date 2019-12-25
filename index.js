@@ -7,7 +7,6 @@
     const {
         Processor
     } = require('./src/processor/index');
-    const newProcessor = require("./src/processor/n-processor");
 
     const isAccessible = promisify(fs.access);
 
@@ -31,7 +30,7 @@
                 type: 'boolean',
                 alias: 'f',
                 default: false
-           },
+            },
             pretty: {
                 type: 'boolean',
                 alias: 'p',
@@ -50,7 +49,7 @@
                 isAccessible(filePath).then((isUnavailable) => {
                     if (!isUnavailable) {
                         let fileOutputEnabled = !!flags.f || flags.file;
-                        let processor = newProcessor.create({
+                        let processor = Processor.create({
                             filePath: filePath,
                             queryingEnabled: !!flags.q || flags.query,
                             isPretty: !!flags.p || flags.pretty
