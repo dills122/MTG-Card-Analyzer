@@ -5,7 +5,7 @@ const { callbackify } = require("util");
 
 const logger = require('../logger/log');
 const dependencies = {
-    resize: callbackify(require('../image-processing/index').resize.GetImageSnippetTmpFile),
+    resize: callbackify(require('./resize').GetImageSnippetTmpFile),
     textExtraction: require("../image-analysis/index").textExtraction
 };
 const schema = joi.object().keys({

@@ -54,10 +54,8 @@ class MatchName {
                 return callback(err);
             }
             let filteredNames = this.filteredNames(names);
-            console.log("MATCHES");
             let fuzzy = FuzzySet(filteredNames);
             this.initialResults = fuzzy.get(this.cleanText);
-            console.log(this.initialResults);
             return callback();
         });
     }

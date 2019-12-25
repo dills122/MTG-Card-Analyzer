@@ -6,11 +6,11 @@ const {
 
 const logger = require('../logger/log');
 const dependencies = {
-    ImageProcessor: require("./image-processor"),
+    ImageProcessor: require("../image-processing").ImageProcessor,
     CreateDirectory: callbackify(require("../file-io").CreateDirectory),
     MatchName: require("../fuzzy-matching/index").MatchName,
     Hasher: require("../image-hashing/hash-image").HashImage,
-    MatchProcessor: require("./matching-processor"),
+    MatchProcessor: require("../matcher").MatchingProcessor,
     NeedsAttention: require("../models/needs-attention"),
     Collection: require("../models/card-collection"),
     RDSCollection: require("../rds").Collection,
