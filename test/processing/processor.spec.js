@@ -149,7 +149,6 @@ describe("Integration::", () => {
         stubs.Base64Stub = sandbox.stub(Processor.dependencies, "Base64").callsArgWith(1, null, NAME_BASE_64);
     });
 
-
     afterEach(() => {
         sandbox.restore();
     });
@@ -206,7 +205,29 @@ describe("Integration::", () => {
                 assert.isTrue(stubs.Base64Stub.callCount === 3);
                 return done(err);
             });
-            
+        });
+
+        it("Should error out if no fuzzy match results are returned", (done) => {
+            stubs.MatchNameMatchStub.restore();
+            stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "Match").callsArgWith(0, null, []);
+            let processorInstance = Processor.create({
+                filePath: FAKE_PATH
+            });
+            processorInstance.execute((err) => {
+                assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
+                assert.deepEqual(processorInstance.directory, DIR);
+                assert.isTrue(stubs.ImageProcessorCreateStub.calledOnce);
+                assert.isTrue(stubs.ImageProcessorExtractStub.calledOnce);
+                assert.isTrue(stubs.MatchNameCreateStub.calledOnce);
+                assert.isTrue(stubs.MatchNameMatchStub.calledOnce);
+                assert.isTrue(err instanceof Error);
+                assert.isFalse(stubs.MatchProcessorCreateStub.calledOnce);
+                assert.isFalse(stubs.MatchProcessorExecuteStub.calledOnce);
+                assert.isFalse(stubs.CollectionGetQtyStub.calledOnce);
+                assert.isFalse(stubs.CollectionInsertStub.calledOnce);
+                assert.isFalse(stubs.GetAdditionalCardInfoStub.calledOnce);
+                return done();
+            });
         });
     });
 });
