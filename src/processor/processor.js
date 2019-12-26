@@ -7,14 +7,13 @@ const {
 const logger = require('../logger/log');
 const dependencies = {
     ImageProcessor: require("../image-processing").ImageProcessor,
-    CreateDirectory: callbackify(require("../file-io").CreateDirectory),
+    FileIO: require("../file-io"),
     MatchName: require("../fuzzy-matching/index").MatchName,
-    Hasher: require("../image-hashing/hash-image").HashImage,
     MatchProcessor: require("../matcher").MatchingProcessor,
     NeedsAttention: require("../models/needs-attention"),
     Collection: require("../models/card-collection"),
     RDSCollection: require("../rds").Collection,
-    GetAdditionalCardInfo: require("../scryfall-api").Search.SearchByNameExact,
+    GetAdditionalCardInfo: require("../scryfall-api").Search,
     Base64: callbackify(require("image-to-base64"))
 };
 
@@ -40,7 +39,8 @@ class Processor {
     }
 
     createDirectory(callback) {
-        dependencies.CreateDirectory((err, directory) => {
+        this.logger.info("Creating Directory");
+        dependencies.FileIO.CreateDirectory((err, directory) => {
             if (err) {
                 return callback(err);
             }
@@ -50,6 +50,7 @@ class Processor {
     }
 
     extractName(callback) {
+        this.logger.info("Extracting Name");
         let extractor = dependencies.ImageProcessor.create({
             path: this.filePath,
             type: 'name',
@@ -66,6 +67,7 @@ class Processor {
     }
 
     processExtractionResults(callback) {
+        this.logger.info("Matching Name");
         dependencies.MatchName.create({
             cleanText: this.nameExtractionResults.cleanText,
             dirtyText: this.nameExtractionResults.dirtyText
@@ -80,6 +82,7 @@ class Processor {
     }
 
     attemptMatching(callback) {
+        this.logger.info("Attempting Matching");
         async.each(this.nameMatches, (match, cb) => {
             dependencies.MatchProcessor.create({
                 name: match.name,
@@ -104,8 +107,10 @@ class Processor {
             if (this.matcherResults.length === 1) {
                 this.CreateCollectionsRecord(this.matcherResults[0], callback);
             } else {
-                async.each(this.matcherResults, this.CreateNeedsAttentionRecord, (err) => {
-                    if(err) {
+                async.each(this.matcherResults, (match, cb) =>{
+                    this.CreateNeedsAttentionRecord(match, cb);
+                }, (err) => {
+                    if (err) {
                         return callback(err);
                     }
                     return callback();
@@ -115,8 +120,9 @@ class Processor {
     }
 
     CreateNeedsAttentionRecord(record, callback) {
+        this.logger.info("Creating Needs Attention Record");
         dependencies.Base64(this.nameExtractionImagePath, (err, name64Image) => {
-            if(err) {
+            if (err) {
                 return callback(err);
             }
             let needsAttenionModel = dependencies.NeedsAttention.create({
@@ -132,12 +138,14 @@ class Processor {
     }
 
     CreateCollectionsRecord(record, callback) {
+        this.logger.info("Creating Collections Record");
         let set = record.sets[0];
         async.parallel([
-            (next) => dependencies.RDSCollection.GetQuantity(record.name, set, next),
-            (next) => dependencies.GetAdditionalCardInfo(record.name, '', next)
+            async.apply(dependencies.RDSCollection.GetQuantity, record.name, set),
+            async.apply(dependencies.GetAdditionalCardInfo.SearchByNameExact, record.name, '')
         ], (err, results) => {
             if (err) {
+                this.logger.error(err);
                 return callback(err);
             }
             let [qty, additionalInfo] = results;
@@ -151,6 +159,7 @@ class Processor {
                 estValue: _.round((additionalInfo.prices.usd * qty), 4),
                 cardType: additionalInfo.type_line
             });
+            this.logger.info("Preparing to insert record");
             collectionsModel.Insert();
             return callback();
         });

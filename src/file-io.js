@@ -8,7 +8,6 @@ const rimraf = require('rimraf');
 
 const writeFile = promisify(fs.writeFile);
 const unlinkFile = promisify(fs.unlink);
-const mkDir = promisify(fs.mkdir);
 
 async function WriteToFile(contents, path = '') {
     return await writeFile(path || `${uuid()}.json`, JSON.stringify(contents));
@@ -18,15 +17,19 @@ async function DeleteFile(path) {
     return await unlinkFile(path);
 }
 
-async function CreateDirectory() {
+function CreateDirectory(callback) {
     const dirPath = `${tempDirectory}\\${uuid()}`;
-    await mkDir(dirPath);
-    return dirPath;
+    fs.mkDir(dirPath, (err) => {
+        if (err) {
+            return callback(err);
+        }
+        return callback(null, dirPath);
+    });
 }
 
 function CleanUpFiles(directory, callback) {
     rimraf(directory, (err) => {
-        if(err) {
+        if (err) {
             return callback(err);
         }
         return callback();

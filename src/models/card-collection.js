@@ -31,5 +31,6 @@ class CardCollection {
 module.exports = {
     create:function(params) {
         return new CardCollection(params);
-    }
+    },
+    prototype: CardCollection.prototype
 };

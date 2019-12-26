@@ -31,5 +31,6 @@ class NeedsAttention {
 module.exports = {
     create: function (params) {
         return new NeedsAttention(params);
-    }
+    },
+    prototype: NeedsAttention.prototype
 };
