@@ -19,7 +19,7 @@ async function DeleteFile(path) {
 
 function CreateDirectory(callback) {
     const dirPath = `${tempDirectory}\\${uuid()}`;
-    fs.mkDir(dirPath, (err) => {
+    fs.mkdir(dirPath, (err) => {
         if (err) {
             return callback(err);
         }

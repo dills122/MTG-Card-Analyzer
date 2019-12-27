@@ -3,6 +3,7 @@ const _ = require('lodash');
 const {
     callbackify
 } = require("util");
+const joi = require("@hapi/joi");
 
 const logger = require('../logger/log');
 const dependencies = {
@@ -17,15 +18,21 @@ const dependencies = {
     Base64: callbackify(require("image-to-base64"))
 };
 
+const schema = joi.object().keys({
+    filePath: joi.string().min(1).required(),
+    queryingEnabled: joi.boolean().default(true),
+    isPretty: joi.boolean().default(true)
+});
+
 class Processor {
     constructor(params) {
-        this.filePath = params.filePath;
-        this.queryingEnabled = params.queryingEnabled;
+        let validatedSchema = joi.attempt(params, schema);
+        _.assign(this, validatedSchema);
         this.imagePaths = {};
         this.extractedText = {};
         this.matcherResults = [];
         this.logger = logger.create({
-            isPretty: params.isPretty
+            isPretty: this.isPretty
         });
     }
 
@@ -104,17 +111,22 @@ class Processor {
             if (_.isEmpty(this.matcherResults)) {
                 return callback(new Error("No matches found"));
             }
-            if (this.matcherResults.length === 1) {
-                this.CreateCollectionsRecord(this.matcherResults[0], callback);
+            if (this.queryingEnabled) {
+                if (this.matcherResults.length === 1) {
+                    this.CreateCollectionsRecord(this.matcherResults[0], callback);
+                } else {
+                    async.each(this.matcherResults, (match, cb) => {
+                        this.CreateNeedsAttentionRecord(match, cb);
+                    }, (err) => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        return callback();
+                    });
+                }
             } else {
-                async.each(this.matcherResults, (match, cb) =>{
-                    this.CreateNeedsAttentionRecord(match, cb);
-                }, (err) => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    return callback();
-                });
+                this.logger.info("Final results:", this.matcherResults);
+                return callback();
             }
         });
     }
@@ -142,7 +154,7 @@ class Processor {
         let set = record.sets[0];
         async.parallel([
             async.apply(dependencies.RDSCollection.GetQuantity, record.name, set),
-            async.apply(dependencies.GetAdditionalCardInfo.SearchByNameExact, record.name, '')
+                async.apply(dependencies.GetAdditionalCardInfo.SearchByNameExact, record.name, '')
         ], (err, results) => {
             if (err) {
                 this.logger.error(err);

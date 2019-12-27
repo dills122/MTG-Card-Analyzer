@@ -152,7 +152,7 @@ describe("Integration::", () => {
     afterEach(() => {
         sandbox.restore();
     });
-    describe.only("Processor::", () => {
+    describe("Processor::", () => {
 
         it("Should execute happy path for a collection record", (done) => {
             let processorInstance = Processor.create({

@@ -1,11 +1,5 @@
 const _ = require('lodash');
 const async = require("async");
-const {
-    CardHashes
-} = require('../rds/index');
-const {
-    Hash
-} = require('../image-hashing/index');
 const logger = require('../logger/log');
 const joi = require("@hapi/joi");
 
@@ -20,6 +14,11 @@ const config = {
         fourBit: .85,
         stringCompare: .92
     }
+};
+
+const dependencies = {
+    CardHashes: require("../rds").CardHashes,
+    Hash: require("../image-hashing").Hash
 };
 
 const schema = joi.object().keys({
@@ -42,22 +41,23 @@ class ProcessHashes {
 
     compareDbHashes(callback) {
         this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
-        CardHashes.GetHashes(this.name, (err, hashes) => {
+        dependencies.CardHashes.GetHashes(this.name, (err, hashes) => {
             if (err) {
                 return callback(err);
             }
             let matches = [];
             hashes.forEach((dbHash) => {
-                let compareResults = Hash.CompareHash(this.localHash, dbHash.cardHash);
-                let isMatch = compareResults.twoBitMatches > .92 &&
-                    compareResults.fourBitMatches > .92 &&
-                    compareResults.stringCompare > .92;
+                let compareResults = dependencies.Hash.CompareHash(this.localHash, dbHash.cardHash);
+                let isMatch = compareResults.twoBitMatches >= .92 &&
+                    compareResults.fourBitMatches >= .88 &&
+                    compareResults.stringCompare >= .92;
                 if (isMatch) {
                     matches.push(Object.assign(compareResults, {
                         setName: dbHash.setName
                     }));
                 }
             });
+            this.logger.info(matches);
             if (matches.length === 0) {
                 this.logger.info(`process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`);
                 return callback({
@@ -71,21 +71,22 @@ class ProcessHashes {
     compareRemoteImages(callback) {
         this.logger.info(`process-hashes::compareDbHashes: Compare Remote Image Hashes`);
         let cards = _.map(this.cards, function (card) {
+            let images = card.image_uris || {};
             return {
-                imgUrl: card.image_uris.normal || card.image_uris.large,
+                imgUrl: images.normal || images.large,
                 setName: card.set_name
             }
         });
         let comparisonResultsList = [];
         async.each(cards, (card, cb) => {
             let url = card.imgUrl;
-            Hash.HashImage(url, (err, remoteImageHash) => {
+            dependencies.Hash.HashImage(url, (err, remoteImageHash) => {
                 if (err) {
                     return cb(err);
                 }
                 let setName = card.setName;
                 this._insertCardHash(remoteImageHash, setName);
-                let comparisonResults = Hash.CompareHash(this.localHash, remoteImageHash);
+                let comparisonResults = dependencies.Hash.CompareHash(this.localHash, remoteImageHash);
                 if (!_.isEmpty(comparisonResults)) {
                     comparisonResultsList.push(Object.assign(comparisonResults, {
                         setName
@@ -121,5 +122,6 @@ class ProcessHashes {
 module.exports = {
     create: function (params) {
         return new ProcessHashes(params);
-    }
+    },
+    prototype: ProcessHashes.prototype
 }

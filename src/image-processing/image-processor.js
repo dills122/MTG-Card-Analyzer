@@ -1,11 +1,10 @@
 const async = require("async");
 const _ = require('lodash');
 const joi = require("@hapi/joi");
-const { callbackify } = require("util");
 
 const logger = require('../logger/log');
 const dependencies = {
-    resize: callbackify(require('./resize').GetImageSnippetTmpFile),
+    resize: require('./resize'),
     textExtraction: require("../image-analysis/index").textExtraction
 };
 const schema = joi.object().keys({
@@ -16,13 +15,10 @@ const schema = joi.object().keys({
 });
 
 class ImageProcessor {
-    constructor(params) {
-        let isValid = !joi.validate(params, schema).error;
-        if(!isValid) {
-            throw new Error("Required params missing");
-        }
-        _.assign(this, params);
-        if(!this.logger) {
+    constructor(params = {}) {
+        let validatedSchema = joi.attempt(params, schema);
+        _.assign(this, validatedSchema);
+        if (!this.logger) {
             this.logger = logger.create({
                 isPretty: false
             });
@@ -37,18 +33,17 @@ class ImageProcessor {
     }
 
     cropImage(callback) {
-        dependencies.resize(this.path, this.directory, this.type, (err, imgPath) => {
-            if(err) {
-                return callback(err);
-            }
+        dependencies.resize.GetImageSnippetTmpFile(this.path, this.directory, this.type).then((imgPath) => {
             this.imagePath = imgPath;
             return callback();
-        });
+        }).catch((err) => {
+            return callback(err);
+        })
     }
 
     extractText(callback) {
         dependencies.textExtraction.ScanImage(this.imagePath, (err, extractResults) => {
-            if(err) {
+            if (err) {
                 return callback(err);
             }
             this.results = extractResults;
