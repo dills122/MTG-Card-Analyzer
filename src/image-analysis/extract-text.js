@@ -23,7 +23,7 @@ function ScanImage(imgBuffer, cb) {
 
         }).finally(resultOrError => {
             let cleanedString = cleanString(resultOrError.text);
-            (`Extracted text: ${resultOrError.text}`);
+            logger.info(`Extracted text: ${resultOrError.text}`);
             logger.info(`Extracted cleaned text: ${cleanedString}`);
             return cb(null, {
                 cleanText: cleanedString,

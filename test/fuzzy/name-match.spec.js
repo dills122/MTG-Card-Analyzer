@@ -10,11 +10,10 @@ const {
 describe('FuzzyMatching::', () => {
     let sandbox = {};
     let stubs = {};
-    let Match = create().Match;
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
-        stubs.BulkNamesStub = sandbox.stub(dependencies, "GetNames").returns([{
+        stubs.BulkNamesStub = sandbox.stub(dependencies, "GetNames").callsArgWith(0, null, [{
                 name: "Legion's Landing // Adanto, the First Fort"
             },
             {
@@ -110,42 +109,32 @@ describe('FuzzyMatching::', () => {
     describe('NameMatching::', () => {
         it('Should return a high probability match', (done) => {
             let name = 'AdantoVanguard';
-            Match(name).then((matches) => {
+            create({
+                cleanText: name
+            }).Match((err, matches) => {
+                console.log(matches);
                 let [first, ...rest] = matches;
                 assert.equal(stubs.BulkNamesStub.callCount, 1);
                 expect(matches).to.be.an('array');
-                assert.equal(first[1], 'Adanto Vanguard');
-                assert.equal(first.length, 2);
-                chai.assert.isAtLeast(first[0], .85);
+                assert.equal(first.name, 'Adanto Vanguard');
+                chai.assert.isObject(first);
+                chai.assert.isAtMost(Object.keys(first).length, 2);
+                chai.assert.isAtLeast(first.percentage, .85);
                 chai.assert.isAtLeast(matches.length, 1);
-                done();
+                done(err);
             });
         });
 
-        it('Should return a lower probability match', (done) => {
+        it('Should return no match due to low probability', (done) => {
             let name = 'Coat Vangsduardsadfasd';
-            Match(name).then((matches) => {
-                let [first, ...rest] = matches;
+            create({
+                cleanText: name
+            }).Match((err, matches) => {
+                console.log(matches);
                 assert.equal(stubs.BulkNamesStub.callCount, 1);
-                expect(matches).to.be.an('array');
-                assert.equal(first[1], 'Adanto Vanguard');
-                assert.equal(first.length, 2);
-                chai.assert.isAtLeast(first[0], .30);
-                chai.assert.isAtLeast(matches.length, 1);
-                done();
-            });
-        });
-
-        it('Should return an incorrect match or no matches', (done) => {
-            let name = 'Coat Vansbarnsss as E';
-            Match(name).then((matches) => {
-                let [first, ...rest] = matches;
-                assert.equal(stubs.BulkNamesStub.callCount, 1);
-                expect(matches).to.be.an('array');
-                assert.notEqual(first[1], 'Adanto Vanguard');
-                assert.equal(first.length, 2);
-                chai.assert.isAtLeast(matches.length, 1);
-                done();
+                chai.assert.isArray(matches);
+                assert.equal(matches.length, 0);
+                done(err);
             });
         });
     });

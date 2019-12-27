@@ -1,6 +1,6 @@
 {
   "name": "mtg-card-analyzer",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "a mtg ocr app for documenting a collection",
   "main": "index.js",
   "scripts": {
@@ -16,13 +16,15 @@
   "dependencies": {
     "@hapi/joi": "^15.0.3",
     "app-root-path": "^2.2.1",
+    "async": "^3.1.0",
     "bunyan": "^1.8.12",
+    "clean-text-utils": "^1.1.17",
     "fuzzyset.js": "0.0.8",
-    "image-hash": "^3.3.7",
+    "image-hash": "^3.5.1",
     "image-size": "^0.7.3",
     "image-to-base64": "^2.0.1",
     "jimp": "^0.6.4",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.15",
     "meow": "^5.0.0",
     "mysql": "^2.17.1",
     "nedb": "^1.8.0",

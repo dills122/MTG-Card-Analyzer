@@ -44,7 +44,7 @@ function CompareHash(hashOne, hashTwo) {
         fourBitMatches: _.round(fourBitMatches / (HashLength / 4), 2),
         stringCompare: _.round(stringSimilarity.compareTwoStrings(hashOne, hashTwo), 2)
     };
-    logger.info(`hash-image::CompareHash:: Hash Comparison Results ${comparisonResults}`);
+    logger.info("hash-image::CompareHash:: Hash Comparison Results", comparisonResults);
     return comparisonResults;
 }
 

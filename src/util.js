@@ -1,10 +1,14 @@
+const txtUtil = require("clean-text-utils");
 const log = require('./logger/log');
 const logger = log.create({
     isPretty: true
 });
 
 function cleanString(string) {
-    return string.replace(/[^A-Za-z\s]/g, '');
+    let cleanedString = txtUtil.strip.extraSpace(string);
+    cleanedString = txtUtil.strip.newlines(string);
+    cleanedString = txtUtil.strip.punctuation(string);
+    return cleanedString;
 }
 
 function requireF(modulePath) { // force require
