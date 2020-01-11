@@ -85,6 +85,16 @@ A template is avaliable [here](./secure.config.template.js)
     }
 ```
 
+### First Test Run
+
+Once all of the setup is complete to run your first image through the processor you can use one of the test images or use the given command below.
+
+```
+# Run at the base directory of the repo
+node index.js scan ./src/test-images/PlatinumAngel.jpg
+# Might need to run as sudo on linux
+```
+
 ### Current Commands
 
 * `scan <filePath>` : this command scans a single image and outputs the results to the terminal
