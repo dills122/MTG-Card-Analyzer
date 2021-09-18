@@ -1,0 +1,26 @@
+name: CI Job
+
+on:
+  pull_request:
+    types: [synchronize, opened, reopened]
+  push:
+    branches:
+      - master
+jobs:
+  pr_job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14
+      - run: npm install
+      - run: npm test
+  dot_only_linter_job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          node-version: 14
+      - run: chmod +x "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
+      - run: "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
