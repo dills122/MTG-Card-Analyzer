@@ -19,7 +19,7 @@
     "async": "^3.1.0",
     "bunyan": "^1.8.12",
     "clean-text-utils": "^1.1.17",
-    "fuzzyset.js": "0.0.8",
+    "fuzzyset.js": "1.0.6",
     "image-hash": "^3.5.1",
     "image-size": "^0.7.3",
     "image-to-base64": "^2.0.1",
