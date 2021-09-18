@@ -24,3 +24,10 @@ jobs:
           node-version: 14
       - run: chmod +x "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
       - run: "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
+  automerge:
+    needs: [pr_job, dot_only_linter_job]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v2.1.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
