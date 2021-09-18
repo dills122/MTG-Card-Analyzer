@@ -14,7 +14,7 @@
   "author": "Dylan Steele",
   "license": "MIT",
   "dependencies": {
-    "@hapi/joi": "^15.0.3",
+    "@hapi/joi": "^17.1.1",
     "app-root-path": "^2.2.1",
     "async": "^3.1.0",
     "bunyan": "^1.8.12",
