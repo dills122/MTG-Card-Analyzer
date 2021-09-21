@@ -30,7 +30,7 @@
     "nedb": "^1.8.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
-    "rimraf": "^2.6.3",
+    "rimraf": "^3.0.2",
     "string-similarity": "^4.0.4",
     "temp-dir": "^2.0.0",
     "tesseract.js": "^1.0.19",
