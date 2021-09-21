@@ -33,7 +33,7 @@
     "rimraf": "^2.6.3",
     "string-similarity": "^4.0.4",
     "temp-dir": "^2.0.0",
-    "tesseract.js": "^1.0.19",
+    "tesseract.js": "^2.1.5",
     "tmp": "^0.2.1",
     "uuid": "^3.3.2"
   },
