@@ -21,7 +21,7 @@
     "clean-text-utils": "^1.1.17",
     "fuzzyset.js": "1.0.6",
     "image-hash": "^4.0.1",
-    "image-size": "^0.7.3",
+    "image-size": "^1.0.0",
     "image-to-base64": "^2.0.1",
     "jimp": "^0.16.1",
     "lodash": "^4.17.15",
