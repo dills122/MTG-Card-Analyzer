@@ -20,7 +20,7 @@
     "bunyan": "^1.8.12",
     "clean-text-utils": "^1.1.17",
     "fuzzyset.js": "1.0.7",
-    "image-hash": "^4.0.1",
+    "image-hash": "^5.0.1",
     "image-size": "^1.0.0",
     "image-to-base64": "^2.0.1",
     "jimp": "^0.16.1",
