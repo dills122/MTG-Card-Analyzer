@@ -1,6 +1,6 @@
 const async = require("async");
 const _ = require('lodash');
-const joi = require("@hapi/joi");
+const joi = require("joi");
 
 const logger = require('../logger/log');
 const dependencies = {

@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const async = require("async");
 const logger = require('../logger/log');
-const joi = require("@hapi/joi");
+const joi = require("joi");
 
 const config = {
     remoteMatch: {
