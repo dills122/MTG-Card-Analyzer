@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const async = require("async");
-const joi = require("@hapi/joi");
+const joi = require("joi");
 const FuzzySet = require('fuzzyset.js');
 const logger = require('../logger/log');
 
@@ -22,8 +22,8 @@ const schema = joi.object().keys({
 
 class MatchName {
     constructor(params) {
-        let isValid = !joi.validate(params, schema).error;
-        if (!isValid) {
+        let { error: hasError } = !schema.validate(params);
+        if (hasError) {
             throw new Error("Required params missing");
         }
         _.assign(this, params);
