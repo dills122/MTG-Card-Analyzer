@@ -35,7 +35,7 @@
     "temp-dir": "^2.0.0",
     "tesseract.js": "^2.1.5",
     "tmp": "^0.2.1",
-    "uuid": "^3.3.2"
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
