@@ -25,7 +25,9 @@ const schema = joi.object().keys({
     cards: joi.array().min(1).required(),
     localHash: joi.string().min(1).required(),
     name: joi.string().required(),
-    queryingEnabled: joi.boolean().optional().default(false)
+    queryingEnabled: joi.boolean().optional().default(false),
+    ignoreNoDbMatch: joi.boolean().optional().default(false),
+    allowRemoteBestGuess: joi.boolean().optional().default(false)
 });
 
 class ProcessHashes {
@@ -65,6 +67,9 @@ class ProcessHashes {
                 this.logger.info(
                     `process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`
                 );
+                if (this.ignoreNoDbMatch) {
+                    return callback(null, []);
+                }
                 return callback({
                     error: "No Matches Found"
                 });
@@ -119,6 +124,21 @@ class ProcessHashes {
                         match.stringCompare >= matchValues.stringCompare
                     );
                 });
+                if (
+                    this.allowRemoteBestGuess &&
+                    _.isEmpty(bestMatches) &&
+                    !_.isEmpty(comparisonResultsList)
+                ) {
+                    // Fallback: choose the single best candidate by similarity if thresholds were too strict
+                    bestMatches = _.orderBy(
+                        comparisonResultsList,
+                        ["stringCompare", "twoBitMatches", "fourBitMatches"],
+                        ["desc", "desc", "desc"]
+                    ).slice(0, 1);
+                    this.logger.info(
+                        "process-hashes::compareRemoteImages: Using best available match"
+                    );
+                }
                 return callback(null, bestMatches);
             }
         );

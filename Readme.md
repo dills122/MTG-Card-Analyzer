@@ -5,6 +5,8 @@
 
 A collectors dream application, that gives you the ability to take pictures of your cards and have them instantly be recognized and added to your collection. This app will scan each image uploaded attempt to grab the name of the card and analyze the set image in an attempt to match it with a given set.
 
+> Status (Jan 2026): runnable on Node 16 with Tesseract.js v3; OCR + fuzzy matching + image hashing work. DB writes are now opt-in (off by default) while we stabilize.
+
 ## Example
 
 Here is a test extraction:
@@ -55,48 +57,41 @@ More examples are available [here](https://github.com/dills122/mtg-card-analyzer
 
 ## Getting Up And Running
 
-### Getting Started
+### Prerequisites
 
-Clone repo
+- Node 16
+- Tesseract.js v3 (npm dependency) with `eng.traineddata` available (an English traineddata is bundled at repo root)
+- Optional: MySQL 8+ if you want to persist collections/needs-attention and hash cache
 
-> `git clone https://github.com/dills122/MTG-Card-Analyzer.git`
+### Install
 
-Install dependencies
+- Clone: `git clone https://github.com/dills122/MTG-Card-Analyzer.git`
+- Install deps: `npm i`
+- Seed local name dictionary (NeDB): `node ./src/db-local/bulk-insert.js`
 
-> `npm i`
+### Configure MySQL (optional, only if you want writes)
 
-Navigate to the repo's directory, you will need to setup a few things first
-
-- Run this script to seed your local name dictionary
-    - `node .\src\db-local\bulk-insert.js`
-- Create an RDS instance in AWS or any other mySql db provider
-    - Create a `secure.config.js` with your mySql credentials (Schema below)
-    - All sql scripts are located in `src\data\scripts\sql`, run all the table create scripts
-
-#### Secure Config Schema
-
-A template is avaliable [here](./secure.config.template.js)
+- Create an RDS instance (or local MySQL). SQL scripts live in `src/data/scripts/sql`.
+- Create `secure.config.js` (template: `secure.config.template.js`) with:
 
 ```
-    rds: {
-        host: '...',
-        database: '...',
-        user: '...',
-        password: '...'
-    }
+rds: {
+    host: '...',
+    database: '...',
+    user: '...',
+    password: '...'
+}
 ```
+
+Example local container:
 
 ```bash
-docker run -d \
-  --name mtg-db \
-  -p 3306:3306 \
+docker run -d --name mtg-db -p 3306:3306 \
   -e MYSQL_ROOT_PASSWORD=rootPass122! \
   -e MYSQL_DATABASE=MtgCardCatalog \
   -e MYSQL_USER=app_user \
   -e MYSQL_PASSWORD=app_pass100! \
   mysql:8.0
-
-mysql -h 127.0.0.1 -P 3306 -u app_user -p
 ```
 
 ### First Test Run
@@ -106,19 +101,31 @@ Once all of the setup is complete to run your first image through the processor 
 ```
 # Run at the base directory of the repo
 node index.js scan ./src/test-images/PlatinumAngel.jpg
-# Might need to run as sudo on linux
 ```
 
 ### Current Commands
 
-- `scan <filePath>` : this command scans a single image and outputs the results to the terminal
+- `scan <filePath>` : scan a single image and output results
     - flags:
-        - `query` or `q`: for disabling database manipulation (default `true`)
-        - `file` or `f`: for processing an output file (default `false`)
+        - `--query` or `-q`: enable database writes (default `false`). When false, runs read-only and skips inserts.
+        - `--pretty` or `-p`: pretty logging (default `true`).
+
+Notes:
+
+- If you want NeDB to write somewhere else (e.g., CI), set `CARD_NAMES_DB_PATH=/tmp`.
+- Temp image snippets are written to the system temp dir and cleaned up per run.
 
 Test images are provided at `src\test-images`
 
 Backfiller utility instructions found [here](https://github.com/dills122/MTG-Card-Analyzer/wiki/Backfiller)
+
+### Running Tests
+
+```
+npm test
+```
+
+Tests stub external calls; no MySQL needed. If you set a custom NeDB path for tests, export `CARD_NAMES_DB_PATH=/tmp`.
 
 ### Packages Under the Hood
 

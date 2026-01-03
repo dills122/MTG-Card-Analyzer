@@ -7,13 +7,14 @@ function InsertEntity(record, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
         if (err) {
-            return cb(err);
+            return cb ? cb(err) : null;
         }
         connection.query("INSERT INTO Card_Catalog SET ?", record, (error) => {
             if (error) {
                 logger.error(error);
             }
-            return connection.end();
+            connection.end();
+            if (cb) cb(error || null);
         });
     });
 }

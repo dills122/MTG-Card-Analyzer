@@ -85,7 +85,9 @@ class MatcherProcessor {
             name: this.name,
             cards: this.cards,
             localHash: this.localHash,
-            queryingEnabled: this.queryingEnabled
+            queryingEnabled: this.queryingEnabled,
+            ignoreNoDbMatch: true,
+            allowRemoteBestGuess: true
         });
         this.logger.info("Processing multi set matches");
         async.parallel(
@@ -111,10 +113,9 @@ class MatcherProcessor {
                     return callback(err);
                 }
                 let [db, remote] = finalResults;
-                let mergedResults = db.concat(remote);
-                this.matchResults = new Set(mergedResults);
-
-                return callback(null, this.matchResults);
+                let mergedResults = _.uniq((db || []).concat(remote || []));
+                this.matchResults = mergedResults;
+                return callback(null, mergedResults);
             }
         );
     }

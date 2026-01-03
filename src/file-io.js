@@ -3,6 +3,7 @@ const { promisify } = require("util");
 const uuid = require("uuid/v4");
 const tempDirectory = require("temp-dir");
 const rimraf = require("rimraf");
+const path = require("path");
 
 const writeFile = promisify(fs.writeFile);
 const unlinkFile = promisify(fs.unlink);
@@ -16,7 +17,7 @@ async function DeleteFile(path) {
 }
 
 function CreateDirectory(callback) {
-    const dirPath = `${tempDirectory}\\${uuid()}`;
+    const dirPath = path.join(tempDirectory, uuid());
     fs.mkdir(dirPath, (err) => {
         if (err) {
             return callback(err);

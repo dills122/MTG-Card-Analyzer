@@ -4,4 +4,6 @@ pre-commit:
         lint:
             run: pnpm lint
         prettier:
-            run: pnpm prettier:check
+            stage_fixed: true
+            glob: "*.{js,ts,jsx,tsx,md,json}"
+            run: pnpm prettier:write {staged_files}

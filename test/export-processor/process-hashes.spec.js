@@ -1,3 +1,5 @@
+const os = require("os");
+process.env.CARD_NAMES_DB_PATH = os.tmpdir();
 const { assert } = require("chai");
 const sinon = require("sinon");
 const ProcessHashes = require("../../src/export-processor/").ProcessHashes;

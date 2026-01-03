@@ -1,4 +1,3 @@
-const async = require("async");
 const _ = require("lodash");
 const joi = require("joi");
 
@@ -26,31 +25,31 @@ class ImageProcessor {
     }
 
     extract(callback) {
-        async.waterfall(
-            [(next) => this.cropImage(next), (next) => this.extractText(next)],
-            callback
-        );
+        const done = _.once(callback);
+        this.cropImage()
+            .then(() => this.extractText())
+            .then((results) => done(null, results))
+            .catch((err) => done(err));
     }
 
-    cropImage(callback) {
-        dependencies.resize
+    cropImage() {
+        return dependencies.resize
             .GetImageSnippetTmpFile(this.path, this.directory, this.type)
             .then((imgPath) => {
                 this.imagePath = imgPath;
-                return callback();
-            })
-            .catch((err) => {
-                return callback(err);
+                return imgPath;
             });
     }
 
-    extractText(callback) {
-        dependencies.textExtraction.ScanImage(this.imagePath, (err, extractResults) => {
-            if (err) {
-                return callback(err);
-            }
-            this.results = extractResults;
-            return callback(null, this.results);
+    extractText() {
+        return new Promise((resolve, reject) => {
+            dependencies.textExtraction.ScanImage(this.imagePath, (err, extractResults) => {
+                if (err) {
+                    return reject(err);
+                }
+                this.results = extractResults;
+                return resolve(this.results);
+            });
         });
     }
 }

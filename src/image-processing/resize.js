@@ -1,6 +1,7 @@
 const _ = require("lodash");
 const jimp = require("jimp");
 const uuid = require("uuid/v4");
+const path = require("path");
 const { GetImageDimensions } = require("./util");
 
 const constants = {
@@ -48,27 +49,29 @@ async function GetImageSnippet(imgPath, type) {
 }
 
 async function GetImageSnippetFile(imgPath, type) {
-    let path = `${uuid()}.${imgPath.split(".")[1] || ".jpg"}`;
-    let dimensions = await GetImageDimensions(imgPath);
+    const ext = path.extname(imgPath) || ".jpg";
+    const filePath = `${uuid()}${ext}`;
+    const dimensions = await GetImageDimensions(imgPath);
     if (dimensions.width >= 360 && dimensions.height >= 500) {
-        let alteredDimensions = GetAlteredDimensions(dimensions, type);
+        const alteredDimensions = GetAlteredDimensions(dimensions, type);
         let img = await jimp.read(imgPath);
         img = cropper(img, alteredDimensions, type);
-        await img.writeAsync(path);
-        return path;
+        await img.writeAsync(filePath);
+        return filePath;
     }
     throw new Error("Image is to small");
 }
 
 async function GetImageSnippetTmpFile(imgPath, directory, type) {
-    let path = `${directory}\\${uuid()}.${imgPath.split(".")[1] || ".jpg"}`;
-    let dimensions = await GetImageDimensions(imgPath);
+    const ext = path.extname(imgPath) || ".jpg";
+    const filePath = path.join(directory, `${uuid()}${ext}`);
+    const dimensions = await GetImageDimensions(imgPath);
     if (dimensions.width >= 360 && dimensions.height >= 500) {
-        let alteredDimensions = GetAlteredDimensions(dimensions, type);
+        const alteredDimensions = GetAlteredDimensions(dimensions, type);
         let img = await jimp.read(imgPath);
         img = cropper(img, alteredDimensions, type);
-        await img.writeAsync(path);
-        return path;
+        await img.writeAsync(filePath);
+        return filePath;
     }
     throw new Error("Image is to small");
 }

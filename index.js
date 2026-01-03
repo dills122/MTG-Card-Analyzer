@@ -12,7 +12,7 @@
         $ scan <filePath>
 
         Options
-        --query, -q  Disable Db Modification (true default)
+        --query, -q  Enable DB writes (off by default)
 
         Examples
         $ scan .\\img-path --query
@@ -21,8 +21,8 @@
             flags: {
                 query: {
                     type: "boolean",
-                    alias: "r",
-                    default: true
+                    alias: "q",
+                    default: false
                 },
                 pretty: {
                     type: "boolean",
@@ -42,13 +42,15 @@
             case "scan":
                 isAccessible(filePath).then((isUnavailable) => {
                     if (!isUnavailable) {
+                        const queryingEnabled = !!flags.q || flags.query;
                         let processor = Processor.create({
                             filePath: filePath,
-                            queryingEnabled: !!flags.q || flags.query,
+                            queryingEnabled,
                             isPretty: !!flags.p || flags.pretty
                         });
                         processor.execute((err) => {
                             if (err) console.log(err);
+                            process.exit(0);
                         });
                     }
                 });

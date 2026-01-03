@@ -115,26 +115,25 @@ class Processor {
                 if (_.isEmpty(this.matcherResults)) {
                     return callback(new Error("No matches found"));
                 }
-                if (this.queryingEnabled) {
-                    if (this.matcherResults.length === 1) {
-                        this.CreateCollectionsRecord(this.matcherResults[0], callback);
-                    } else {
-                        async.each(
-                            this.matcherResults,
-                            (match, cb) => {
-                                this.CreateNeedsAttentionRecord(match, cb);
-                            },
-                            (err) => {
-                                if (err) {
-                                    return callback(err);
-                                }
-                                return callback();
-                            }
-                        );
-                    }
-                } else {
+                if (!this.queryingEnabled) {
                     this.logger.info("Final results:", this.matcherResults);
                     return callback();
+                }
+                if (this.matcherResults.length === 1) {
+                    this.CreateCollectionsRecord(this.matcherResults[0], callback);
+                } else {
+                    async.each(
+                        this.matcherResults,
+                        (match, cb) => {
+                            this.CreateNeedsAttentionRecord(match, cb);
+                        },
+                        (err) => {
+                            if (err) {
+                                return callback(err);
+                            }
+                            return callback();
+                        }
+                    );
                 }
             }
         );

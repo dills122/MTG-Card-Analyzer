@@ -12,27 +12,26 @@ function ScanImage(imgBuffer, cb) {
     logger.info(
         `extract-text::ScanImage:: Scanning Card ${Buffer.isBuffer(imgBuffer) ? "Image Buffer" : imgBuffer}`
     );
-    dependencies.Tesseract.recognize(imgBuffer)
-        .progress((message) => {
-            logger.info(JSON.stringify(message, null, 4));
-        })
-        .catch((err) => {
-            logger.error(err);
-            return cb(err, null, dependencies.Tesseract);
-        })
-        .then(() => {})
-        .finally((resultOrError) => {
-            let cleanedString = cleanString(resultOrError.text);
-            logger.info(`Extracted text: ${resultOrError.text}`);
+    dependencies.Tesseract.recognize(imgBuffer, "eng", {
+        logger: (message) => logger.info(JSON.stringify(message, null, 4))
+    })
+        .then((result) => {
+            const extractedText = (result && result.data && result.data.text) || result.text || "";
+            const cleanedString = cleanString(extractedText);
+            logger.info(`Extracted text: ${extractedText}`);
             logger.info(`Extracted cleaned text: ${cleanedString}`);
             return cb(
                 null,
                 {
                     cleanText: cleanedString,
-                    dirtyText: resultOrError.text
+                    dirtyText: extractedText
                 },
                 dependencies.Tesseract
             );
+        })
+        .catch((err) => {
+            logger.error(err);
+            return cb(err, null, dependencies.Tesseract);
         });
 }
 
