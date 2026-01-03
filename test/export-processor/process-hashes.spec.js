@@ -1,7 +1,4 @@
-const {
-    assert,
-    expect
-} = require("chai");
+const { assert } = require("chai");
 const sinon = require("sinon");
 const ProcessHashes = require("../../src/export-processor/").ProcessHashes;
 const CardHashes = require("../../src/rds").CardHashes;
@@ -13,17 +10,20 @@ const CLOSE_DIFF_HASH = "THISISANEXAMPLEOFAFAKAHASHEEEEEE";
 const FAR_DIFF_HASH = "THISISANEXAMPLEOFAHASHAADDEEDD";
 const FAKE_SET = "FAKESET";
 
-const FakeCards = [{
-    image_uris: {
-        normal: 'http://www.fake.url/img'
+const FakeCards = [
+    {
+        image_uris: {
+            normal: "http://www.fake.url/img"
+        },
+        set_name: FAKE_SET
     },
-    set_name: FAKE_SET
-}, {
-    image_uris: {
-        normal: 'http://www.another.fake.url/img'
-    },
-    set_name: FAKE_SET
-}];
+    {
+        image_uris: {
+            normal: "http://www.another.fake.url/img"
+        },
+        set_name: FAKE_SET
+    }
+];
 
 describe("Integration::", () => {
     describe("ProcessHashes::", () => {
@@ -31,11 +31,15 @@ describe("Integration::", () => {
         let stubs = {};
 
         beforeEach(() => {
-            stubs.getHashesStub = sandbox.stub(CardHashes, "GetHashes").callsArgWith(1, null, [{
-                cardHash: FAKE_HASH,
-                setName: FAKE_SET
-            }]);
-            stubs.insertHashStub = sandbox.stub(ProcessHashes.prototype, "_insertCardHash").returns();
+            stubs.getHashesStub = sandbox.stub(CardHashes, "GetHashes").callsArgWith(1, null, [
+                {
+                    cardHash: FAKE_HASH,
+                    setName: FAKE_SET
+                }
+            ]);
+            stubs.insertHashStub = sandbox
+                .stub(ProcessHashes.prototype, "_insertCardHash")
+                .returns();
         });
         afterEach(() => {
             sandbox.restore();
@@ -66,7 +70,7 @@ describe("Integration::", () => {
             hasher.compareDbHashes((err, matches) => {
                 assert.isTrue(stubs.getHashesStub.calledOnce);
                 assert.deepEqual(err, {
-                    error: 'No Matches Found'
+                    error: "No Matches Found"
                 });
                 assert.isUndefined(matches);
                 return done();
@@ -80,45 +84,55 @@ describe("Integration::", () => {
         });
 
         it("Should execute happy path for compareRemoteHashes", (done) => {
-            stubs.hashImageStub = sandbox.stub(Hash, "HashImage")
-                .onFirstCall().callsArgWith(1, null, CLOSE_DIFF_HASH)
-                .onSecondCall().callsArgWith(1, null, FAKE_HASH);
+            stubs.hashImageStub = sandbox
+                .stub(Hash, "HashImage")
+                .onFirstCall()
+                .callsArgWith(1, null, CLOSE_DIFF_HASH)
+                .onSecondCall()
+                .callsArgWith(1, null, FAKE_HASH);
 
             let hasher = ProcessHashes.create({
                 cards: FakeCards,
                 localHash: CLOSE_DIFF_HASH,
-                name: 'Test'
+                name: "Test"
             });
 
             hasher.compareRemoteImages((err, matches) => {
                 assert.isTrue(stubs.hashImageStub.calledTwice);
                 assert.isTrue(stubs.insertHashStub.calledTwice);
-                assert.isTrue(_.filter(matches, {
-                    setName: FAKE_SET
-                }).length === 2);
+                assert.isTrue(
+                    _.filter(matches, {
+                        setName: FAKE_SET
+                    }).length === 2
+                );
                 return done(err);
             });
         });
 
         it("Should return no results for compareRemoteHashes", (done) => {
-            stubs.hashImageStub = sandbox.stub(Hash, "HashImage")
-                .onFirstCall().callsArgWith(1, null, CLOSE_DIFF_HASH)
-                .onSecondCall().callsArgWith(1, null, FAKE_HASH);
+            stubs.hashImageStub = sandbox
+                .stub(Hash, "HashImage")
+                .onFirstCall()
+                .callsArgWith(1, null, CLOSE_DIFF_HASH)
+                .onSecondCall()
+                .callsArgWith(1, null, FAKE_HASH);
 
             let hasher = ProcessHashes.create({
                 cards: FakeCards,
                 localHash: FAR_DIFF_HASH,
-                name: 'Test'
+                name: "Test"
             });
 
             hasher.compareRemoteImages((err, matches) => {
                 assert.isTrue(stubs.hashImageStub.calledTwice);
                 assert.isTrue(stubs.insertHashStub.calledTwice);
-                assert.isTrue(_.filter(matches, {
-                    setName: FAKE_SET
-                }).length === 0);
+                assert.isTrue(
+                    _.filter(matches, {
+                        setName: FAKE_SET
+                    }).length === 0
+                );
                 return done(err);
             });
         });
     });
-})
+});

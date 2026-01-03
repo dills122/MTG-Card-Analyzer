@@ -1,0 +1,7 @@
+pre-commit:
+    parallel: true
+    commands:
+        lint:
+            run: pnpm lint
+        prettier:
+            run: pnpm prettier:check

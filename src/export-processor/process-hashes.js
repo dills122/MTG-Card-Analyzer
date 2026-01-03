@@ -1,18 +1,18 @@
-const _ = require('lodash');
+const _ = require("lodash");
 const async = require("async");
-const logger = require('../logger/log');
+const logger = require("../logger/log");
 const joi = require("joi");
 
 const config = {
     remoteMatch: {
-        twoBit: .75,
-        fourBit: .70,
-        stringCompare: .75
+        twoBit: 0.75,
+        fourBit: 0.7,
+        stringCompare: 0.75
     },
     dbMatch: {
-        twoBit: .92,
-        fourBit: .85,
-        stringCompare: .92
+        twoBit: 0.92,
+        fourBit: 0.85,
+        stringCompare: 0.92
     }
 };
 
@@ -48,20 +48,25 @@ class ProcessHashes {
             let matches = [];
             hashes.forEach((dbHash) => {
                 let compareResults = dependencies.Hash.CompareHash(this.localHash, dbHash.cardHash);
-                let isMatch = compareResults.twoBitMatches >= .92 &&
-                    compareResults.fourBitMatches >= .88 &&
-                    compareResults.stringCompare >= .92;
+                let isMatch =
+                    compareResults.twoBitMatches >= 0.92 &&
+                    compareResults.fourBitMatches >= 0.88 &&
+                    compareResults.stringCompare >= 0.92;
                 if (isMatch) {
-                    matches.push(Object.assign(compareResults, {
-                        setName: dbHash.setName
-                    }));
+                    matches.push(
+                        Object.assign(compareResults, {
+                            setName: dbHash.setName
+                        })
+                    );
                 }
             });
             this.logger.info(matches);
             if (matches.length === 0) {
-                this.logger.info(`process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`);
+                this.logger.info(
+                    `process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`
+                );
                 return callback({
-                    error: 'No Matches Found'
+                    error: "No Matches Found"
                 });
             }
             return callback(null, matches);
@@ -75,42 +80,53 @@ class ProcessHashes {
             return {
                 imgUrl: images.normal || images.large,
                 setName: card.set_name
-            }
+            };
         });
         let comparisonResultsList = [];
-        async.each(cards, (card, cb) => {
-            let url = card.imgUrl;
-            dependencies.Hash.HashImage(url, (err, remoteImageHash) => {
+        async.each(
+            cards,
+            (card, cb) => {
+                let url = card.imgUrl;
+                dependencies.Hash.HashImage(url, (err, remoteImageHash) => {
+                    if (err) {
+                        return cb(err);
+                    }
+                    let setName = card.setName;
+                    this._insertCardHash(remoteImageHash, setName);
+                    let comparisonResults = dependencies.Hash.CompareHash(
+                        this.localHash,
+                        remoteImageHash
+                    );
+                    if (!_.isEmpty(comparisonResults)) {
+                        comparisonResultsList.push(
+                            Object.assign(comparisonResults, {
+                                setName
+                            })
+                        );
+                    }
+                    return cb();
+                });
+            },
+            (err) => {
                 if (err) {
-                    return cb(err);
+                    return callback(err);
                 }
-                let setName = card.setName;
-                this._insertCardHash(remoteImageHash, setName);
-                let comparisonResults = dependencies.Hash.CompareHash(this.localHash, remoteImageHash);
-                if (!_.isEmpty(comparisonResults)) {
-                    comparisonResultsList.push(Object.assign(comparisonResults, {
-                        setName
-                    }));
-                }
-                return cb();
-            });
-        }, (err) => {
-            if (err) {
-                return callback(err);
+                let matchValues = config.remoteMatch;
+                let bestMatches = _.filter(comparisonResultsList, function (match) {
+                    return (
+                        match.twoBitMatches >= matchValues.twoBit &&
+                        match.fourBitMatches >= matchValues.fourBit &&
+                        match.stringCompare >= matchValues.stringCompare
+                    );
+                });
+                return callback(null, bestMatches);
             }
-            let matchValues = config.remoteMatch;
-            let bestMatches = _.filter(comparisonResultsList, function (match) {
-                return match.twoBitMatches >= matchValues.twoBit &&
-                    match.fourBitMatches >= matchValues.fourBit &&
-                    match.stringCompare >= matchValues.stringCompare;
-            });
-            return callback(null, bestMatches);
-        });
+        );
     }
 
-    _insertCardHash() {
+    _insertCardHash(setName, hash) {
         if (this.queryingEnabled) {
-            CardHashes.InsertEntity({
+            dependencies.CardHashes.InsertEntity({
                 Name: this.name,
                 SetName: setName,
                 CardHash: hash
@@ -124,4 +140,4 @@ module.exports = {
         return new ProcessHashes(params);
     },
     prototype: ProcessHashes.prototype
-}
+};

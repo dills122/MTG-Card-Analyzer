@@ -1,7 +1,1 @@
-module.export = [
-  "Aura",
-  "Cartouche",
-  "Curse",
-  "Saga",
-  "Shrine"
-];
+module.export = ["Aura", "Cartouche", "Curse", "Saga", "Shrine"];

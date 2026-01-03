@@ -1,8 +1,1 @@
-module.exports = [
-    "Clue",
-    "Contraption",
-    "Equipment",
-    "Fortification",
-    "Treasure",
-    "Vehicle"
-];
+module.exports = ["Clue", "Contraption", "Equipment", "Fortification", "Treasure", "Vehicle"];

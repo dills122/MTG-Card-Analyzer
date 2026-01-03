@@ -1,18 +1,16 @@
-const {
-    CreateConnection
-} = require('./connection');
-const log = require('../logger/log');
+const { CreateConnection } = require("./connection");
+const log = require("../logger/log");
 const logger = log.create({
     isPretty: true
 });
 
-function InsertEntity(record) {
+function InsertEntity(record, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        if(err) {
+        if (err) {
             return cb(err);
         }
-        connection.query('INSERT INTO Transactions SET ?', record, (error) => {
+        connection.query("INSERT INTO Transactions SET ?", record, (error) => {
             if (error) {
                 logger.error(error);
             }
@@ -23,4 +21,4 @@ function InsertEntity(record) {
 
 module.exports = {
     InsertEntity
-}
+};

@@ -1,16 +1,14 @@
-const creatureTypes = require('../data/creatureTypes');
-const cardTypes = require('../data/cardTypes');
-const FuzzySet = require('fuzzyset.js');
+const creatureTypes = require("../data/creatureTypes");
+const cardTypes = require("../data/cardTypes");
+const FuzzySet = require("fuzzyset.js");
 
 function CheckForCreatureType(cleanText) {
     let fuzzy = FuzzySet(creatureTypes);
     if (!cleanText.match(/[\s]/g)) {
         let result = fuzzy.get(cleanText) || [];
-        return result.length > 0 ? [
-            [result[0][0], 'Creature']
-        ] : [];
+        return result.length > 0 ? [[result[0][0], "Creature"]] : [];
     }
-    let subStrs = cleanText.split(' ') || [];
+    let subStrs = cleanText.split(" ") || [];
     let percentage = 0;
     let isCreature = subStrs.some((subName) => {
         let result = fuzzy.get(subName) || [];
@@ -20,9 +18,7 @@ function CheckForCreatureType(cleanText) {
         }
         return false;
     });
-    return isCreature ? [
-        [percentage, 'Creature']
-    ] : [];
+    return isCreature ? [[percentage, "Creature"]] : [];
 }
 
 function CheckForBaseType(cleanText = "") {
@@ -31,7 +27,7 @@ function CheckForBaseType(cleanText = "") {
         if (!cleanText.match(/[\s]/g)) {
             return fuzzy.get(cleanText) || [];
         }
-        let subStrs = cleanText.split(' ') || [];
+        let subStrs = cleanText.split(" ") || [];
         let results = [];
         subStrs.forEach((subName) => {
             let result = fuzzy.get(subName);
@@ -48,4 +44,4 @@ function CheckForBaseType(cleanText = "") {
 module.exports = {
     CheckForCreatureType,
     CheckForBaseType
-}
+};

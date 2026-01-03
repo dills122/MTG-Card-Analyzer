@@ -1,12 +1,10 @@
-const _ = require('lodash');
-const stringSimilarity = require('string-similarity');
-const {
-    imageHash
-} = require('image-hash');
+const _ = require("lodash");
+const stringSimilarity = require("string-similarity");
+const { imageHash } = require("image-hash");
 const dependencies = {
     imageHash
 };
-const log = require('../logger/log');
+const log = require("../logger/log");
 
 const logger = log.create({
     isPretty: true
@@ -27,7 +25,7 @@ function CompareHash(hashOne, hashTwo) {
     let HashLength = hashOne.length;
     let twoBitMatches = 0;
     let fourBitMatches = 0;
-    hashOne.split('').forEach((c, index) => {
+    hashOne.split("").forEach((c, index) => {
         if (index % 2 === 0) {
             let hashOneDoubleStr = hashOne.slice(index - 2, index);
             let hashTwoDoubleStr = hashTwo.slice(index - 2, index);

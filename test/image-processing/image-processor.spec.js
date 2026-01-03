@@ -1,7 +1,4 @@
-const {
-    assert,
-    expect
-} = require("chai");
+const { assert } = require("chai");
 const sinon = require("sinon");
 const ImageProcessor = require("../../src/image-processing").ImageProcessor;
 const resize = require("../../src/image-processing/").resize;
@@ -12,8 +9,8 @@ const FAKE_PATH_INPUT = "/input/to/fake.img";
 const FAKE_DIR = "./DIR";
 const TYPE = "name";
 const FAKE_EXTRACTION = {
-    cleanText: 'MTG Card',
-    dirtyText: '$ MTG Card'
+    cleanText: "MTG Card",
+    dirtyText: "$ MTG Card"
 };
 
 describe("Integration::", () => {
@@ -23,7 +20,9 @@ describe("Integration::", () => {
 
         beforeEach(() => {
             stubs.resizeStub = sandbox.stub(resize, "GetImageSnippetTmpFile").resolves(FAKE_PATH);
-            stubs.textExtractionStub = sandbox.stub(textExtraction, "ScanImage").callsArgWith(1, null, FAKE_EXTRACTION);
+            stubs.textExtractionStub = sandbox
+                .stub(textExtraction, "ScanImage")
+                .callsArgWith(1, null, FAKE_EXTRACTION);
         });
 
         afterEach(() => {
@@ -42,7 +41,7 @@ describe("Integration::", () => {
                 assert.isTrue(stubs.textExtractionStub.calledOnce);
                 assert.deepEqual(processor.results, FAKE_EXTRACTION);
                 return done(err);
-            })
+            });
         });
 
         it("Should error out due to an incomplete schema", (done) => {

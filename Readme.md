@@ -68,10 +68,10 @@ Install dependencies
 Navigate to the repo's directory, you will need to setup a few things first
 
 - Run this script to seed your local name dictionary
-  - `node .\src\db-local\bulk-insert.js`
+    - `node .\src\db-local\bulk-insert.js`
 - Create an RDS instance in AWS or any other mySql db provider
-  - Create a `secure.config.js` with your mySql credentials (Schema below)
-  - All sql scripts are located in `src\data\scripts\sql`, run all the table create scripts
+    - Create a `secure.config.js` with your mySql credentials (Schema below)
+    - All sql scripts are located in `src\data\scripts\sql`, run all the table create scripts
 
 #### Secure Config Schema
 
@@ -112,9 +112,9 @@ node index.js scan ./src/test-images/PlatinumAngel.jpg
 ### Current Commands
 
 - `scan <filePath>` : this command scans a single image and outputs the results to the terminal
-  - flags:
-    - `query` or `q`: for disabling database manipulation (default `true`)
-    - `file` or `f`: for processing an output file (default `false`)
+    - flags:
+        - `query` or `q`: for disabling database manipulation (default `true`)
+        - `file` or `f`: for processing an output file (default `false`)
 
 Test images are provided at `src\test-images`
 

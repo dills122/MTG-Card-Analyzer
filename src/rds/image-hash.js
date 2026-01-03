@@ -1,12 +1,10 @@
-const {
-    CreateConnection
-} = require('./connection');
-const log = require('../logger/log');
+const { CreateConnection } = require("./connection");
+const log = require("../logger/log");
 const logger = log.create({
     isPretty: true
 });
 
-function InsertEntity(record) {
+function InsertEntity(record, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
         if (err) {
@@ -17,7 +15,7 @@ function InsertEntity(record) {
                 logger.error(error);
             }
             if (hashes.length === 0) {
-                connection.query('INSERT INTO Image_Results SET ?', record, (error) => {
+                connection.query("INSERT INTO Image_Results SET ?", record, (error) => {
                     if (error) {
                         logger.error(error);
                     }
@@ -34,19 +32,23 @@ function GetHashes(name, set, cb) {
         if (err) {
             return cb(err);
         }
-        connection.query('SELECT ArtImage as artImage, FlavorImage as flavorImage, ArtImageHash as artImageHash, FlavorImageHash as flavorImageHash, FlavorMatchPercent as flavorMatchPercent, ArtMatchPercent as artMatchPercent FROM Image_Results WHERE Name=? AND SetName=?', [name, set], (error, results) => {
-            if (error) {
-                logger.error(error);
+        connection.query(
+            "SELECT ArtImage as artImage, FlavorImage as flavorImage, ArtImageHash as artImageHash, FlavorImageHash as flavorImageHash, FlavorMatchPercent as flavorMatchPercent, ArtMatchPercent as artMatchPercent FROM Image_Results WHERE Name=? AND SetName=?",
+            [name, set],
+            (error, results) => {
+                if (error) {
+                    logger.error(error);
+                    connection.end();
+                    return cb(error);
+                }
                 connection.end();
-                return cb(error);
+                return cb(null, results ? results : 0);
             }
-            connection.end();
-            return cb(null, results ? results : 0);
-        });
+        );
     });
 }
 
 module.exports = {
     InsertEntity,
     GetHashes
-}
+};

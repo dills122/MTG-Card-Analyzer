@@ -1,5 +1,5 @@
 module.exports = {
-    util: require('./util'),
-    resize: require('./resize'),
+    util: require("./util"),
+    resize: require("./resize"),
     ImageProcessor: require("./image-processor")
 };

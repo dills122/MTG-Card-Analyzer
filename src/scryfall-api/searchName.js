@@ -1,7 +1,6 @@
-
-const request = require('request-promise-native');
-const apiConfig = require('./api.config');
-const log = require('../logger/log');
+const request = require("request-promise-native");
+const apiConfig = require("./api.config");
+const log = require("../logger/log");
 const logger = log.create({
     isPretty: true
 });
@@ -10,12 +9,12 @@ const dependencies = {
 };
 
 const REQUEST_HEADERS = {
-    'User-Agent': 'MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)',
-    'Accept': 'application/json'
+    "User-Agent": "MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)",
+    Accept: "application/json"
 };
 
 //These return a random/newest card if printed across sets
-async function SearchByNameExact(exact, fuzzy= '') {
+async function SearchByNameExact(exact, fuzzy = "") {
     try {
         let response = await dependencies.request({
             uri: encodeURI(`${apiConfig.templates.cardNameExact}${exact}`),
@@ -23,7 +22,7 @@ async function SearchByNameExact(exact, fuzzy= '') {
         });
         if (response) {
             let cardInfo = JSON.parse(response) || {};
-            if(Object.keys(cardInfo).length === 0) {
+            if (Object.keys(cardInfo).length === 0) {
                 return await SearchByNameFuzzy(fuzzy);
             }
             return cardInfo;
@@ -35,8 +34,8 @@ async function SearchByNameExact(exact, fuzzy= '') {
 }
 
 //These return a random/newest card if printed across sets
-async function SearchByNameFuzzy(exact, fuzzy= '') {
-    if(fuzzy === '') {
+async function SearchByNameFuzzy(exact, fuzzy = "") {
+    if (fuzzy === "") {
         return {};
     }
     try {
@@ -50,7 +49,7 @@ async function SearchByNameFuzzy(exact, fuzzy= '') {
         }
         return {};
     } catch (err) {
-        ;logger.error(err);
+        logger.error(err);
         return {
             err
         };
@@ -58,7 +57,7 @@ async function SearchByNameFuzzy(exact, fuzzy= '') {
 }
 
 async function SearchList(exact) {
-    let name = exact.replace(/ /g, '%20');
+    let name = exact.replace(/ /g, "%20");
     try {
         let response = await dependencies.request({
             uri: `${apiConfig.templates.cardListExact}${name}&unique=prints`,
@@ -66,7 +65,7 @@ async function SearchList(exact) {
         });
         if (response) {
             let cardInfo = JSON.parse(response) || {};
-            if(Object.keys(cardInfo).length === 0) {
+            if (Object.keys(cardInfo).length === 0) {
                 return [await SearchByNameFuzzy(name)];
             }
             return cardInfo.data;
@@ -82,4 +81,4 @@ module.exports = {
     SearchByNameFuzzy,
     SearchList,
     dependencies
-}
+};

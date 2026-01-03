@@ -1,11 +1,9 @@
 const async = require("async");
 const joi = require("joi");
 const _ = require("lodash");
-const {
-    callbackify
-} = require("util");
+const { callbackify } = require("util");
 
-const logger = require('../logger/log');
+const logger = require("../logger/log");
 
 const dependencies = {
     Searcher: callbackify(require("../scryfall-api/index").Search.SearchList),
@@ -16,7 +14,6 @@ const dependencies = {
 const schema = joi.object().keys({
     name: joi.string().required(),
     filePath: joi.string().required()
-
 });
 
 class MatcherProcessor {
@@ -34,10 +31,7 @@ class MatcherProcessor {
     }
 
     execute(cb) {
-        async.waterfall([
-            (next) => this._search(next),
-            (next) => this._processResults(next)
-        ], cb);
+        async.waterfall([(next) => this._search(next), (next) => this._processResults(next)], cb);
     }
 
     _search(callback) {
@@ -69,14 +63,14 @@ class MatcherProcessor {
         }
 
         this.logger.info("Multiple results returned");
-        async.waterfall([
-            (next) => this._hashLocalCard(next),
-            (next) => this._processMultiSetMatches(next)
-        ], callback);
+        async.waterfall(
+            [(next) => this._hashLocalCard(next), (next) => this._processMultiSetMatches(next)],
+            callback
+        );
     }
 
     _hashLocalCard(callback) {
-        this.logger.info(`Hashing local image ${this.filePath}`)
+        this.logger.info(`Hashing local image ${this.filePath}`);
         dependencies.Hash(this.filePath, (err, hash) => {
             if (err) {
                 return callback(err);
@@ -94,29 +88,35 @@ class MatcherProcessor {
             queryingEnabled: this.queryingEnabled
         });
         this.logger.info("Processing multi set matches");
-        async.parallel([
-            (cb) => {
-                async.waterfall([
-                    (next) => processHashes.compareDbHashes(next),
-                    this._processHashResults
-                ], cb);
-            },
-            (cb) => {
-                async.waterfall([
-                    (next) => processHashes.compareRemoteImages(next),
-                    this._processHashResults
-                ], cb);
-            }
-        ], (err, finalResults) => {
-            if (err) {
-                return callback(err);
-            }
-            let [db, remote] = finalResults;
-            let mergedResults = db.concat(remote);
-            this.matchResults = new Set(mergedResults);
+        async.parallel(
+            [
+                (cb) => {
+                    async.waterfall(
+                        [(next) => processHashes.compareDbHashes(next), this._processHashResults],
+                        cb
+                    );
+                },
+                (cb) => {
+                    async.waterfall(
+                        [
+                            (next) => processHashes.compareRemoteImages(next),
+                            this._processHashResults
+                        ],
+                        cb
+                    );
+                }
+            ],
+            (err, finalResults) => {
+                if (err) {
+                    return callback(err);
+                }
+                let [db, remote] = finalResults;
+                let mergedResults = db.concat(remote);
+                this.matchResults = new Set(mergedResults);
 
-            return callback(null, this.matchResults);
-        });
+                return callback(null, this.matchResults);
+            }
+        );
     }
 
     _processHashResults(hashResults, callback) {
@@ -137,4 +137,4 @@ module.exports = {
         return new MatcherProcessor(params);
     },
     dependencies
-}
+};

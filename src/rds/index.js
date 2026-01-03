@@ -1,8 +1,8 @@
 module.exports = {
-    connection: require('./connection').CreateConnection,
-    Collection: require('./collection'),
-    NDAttn: require('./needs-attention'),
-    Transaction: require('./transaction'),
-    ImageResults: require('./image-hash'),
-    CardHashes: require('./card-hash')
+    connection: require("./connection").CreateConnection,
+    Collection: require("./collection"),
+    NDAttn: require("./needs-attention"),
+    Transaction: require("./transaction"),
+    ImageResults: require("./image-hash"),
+    CardHashes: require("./card-hash")
 };

@@ -1,73 +1,73 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - master
-      - main
-  pull_request:
-    branches:
-      - master
-      - main
+    push:
+        branches:
+            - master
+            - main
+    pull_request:
+        branches:
+            - master
+            - main
 
 permissions:
-  contents: read
-  pull-requests: read
+    contents: read
+    pull-requests: read
 jobs:
-  pr_job:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 3
+    pr_job:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 3
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.13.1
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.13.1
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: pnpm
+                  cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - name: Test
-        run: pnpm test
-  dot_only_linter_job:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 3
+            - name: Test
+              run: pnpm test
+    dot_only_linter_job:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 3
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.13.1
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.13.1
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: pnpm
+                  cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - run: chmod +x "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
-      - run: "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
-  automerge:
-    needs: [pr_job, dot_only_linter_job]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: fastify/github-action-merge-dependabot@v2.1.1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+            - run: chmod +x "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
+            - run: "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
+    automerge:
+        needs: [pr_job, dot_only_linter_job]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: fastify/github-action-merge-dependabot@v2.1.1
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}

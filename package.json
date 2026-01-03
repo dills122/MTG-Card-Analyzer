@@ -1,46 +1,54 @@
 {
-  "name": "mtg-card-analyzer",
-  "version": "0.2.0",
-  "description": "a mtg ocr app for documenting a collection",
-  "main": "index.js",
-  "scripts": {
-    "test": "mocha \"./test/**/*.spec.js\"",
-    "setup-db": "node src/data/scripts/setup-db.js"
-  },
-  "keywords": [
-    "mtg",
-    "ocr",
-    "collector"
-  ],
-  "author": "Dylan Steele",
-  "license": "MIT",
-  "dependencies": {
-    "joi": "^17.6.0",
-    "async": "^3.2.4",
-    "bunyan": "^1.8.12",
-    "clean-text-utils": "^1.1.17",
-    "fuzzyset.js": "1.0.7",
-    "image-hash": "^5.3.1",
-    "image-size": "^1.0.0",
-    "image-to-base64": "^2.0.1",
-    "jimp": "^0.16.1",
-    "lodash": "^4.17.21",
-    "meow": "^7.0.0",
-    "@dills1220/nedb": "^1.8.4",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
-    "rimraf": "^3.0.2",
-    "string-similarity": "^4.0.4",
-    "temp-dir": "^2.0.0",
-    "tesseract.js": "^2.1.5",
-    "tmp": "^0.2.1",
-    "uuid": "^3.3.2",
-    "mysql2": "^3.11.2"
-  },
-  "devDependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^10.0.0",
-    "proxyquire": "^2.1.0",
-    "sinon": "^14.0.0"
-  }
+    "name": "mtg-card-analyzer",
+    "version": "0.2.0",
+    "description": "a mtg ocr app for documenting a collection",
+    "main": "index.js",
+    "scripts": {
+        "test": "mocha \"./test/**/*.spec.js\"",
+        "lint": "eslint . --ext js",
+        "prettier:check": "prettier --check .",
+        "prettier:write": "prettier --write .",
+        "setup-db": "node src/data/scripts/setup-db.js",
+        "prepare": "lefthook install"
+    },
+    "keywords": [
+        "mtg",
+        "ocr",
+        "collector"
+    ],
+    "author": "Dylan Steele",
+    "license": "MIT",
+    "dependencies": {
+        "joi": "^17.6.0",
+        "async": "^3.2.4",
+        "bunyan": "^1.8.12",
+        "clean-text-utils": "^1.1.17",
+        "fuzzyset.js": "1.0.7",
+        "image-hash": "^5.3.1",
+        "image-size": "^1.0.0",
+        "image-to-base64": "^2.0.1",
+        "jimp": "^0.16.1",
+        "lodash": "^4.17.21",
+        "meow": "^7.0.0",
+        "@dills1220/nedb": "^1.8.4",
+        "request": "^2.88.0",
+        "request-promise-native": "^1.0.7",
+        "rimraf": "^3.0.2",
+        "string-similarity": "^4.0.4",
+        "temp-dir": "^2.0.0",
+        "tesseract.js": "^2.1.5",
+        "tmp": "^0.2.1",
+        "uuid": "^3.3.2",
+        "mysql2": "^3.11.2"
+    },
+    "devDependencies": {
+        "chai": "^4.2.0",
+        "mocha": "^10.0.0",
+        "proxyquire": "^2.1.0",
+        "sinon": "^14.0.0",
+        "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "prettier": "^3.3.3",
+        "lefthook": "^1.7.8"
+    }
 }

@@ -1,4 +1,4 @@
-const Joi = require('joi');
+const Joi = require("joi");
 
 module.exports = {
     //Need to finialize schema
@@ -8,6 +8,6 @@ module.exports = {
         artImage: Joi.string().min(3).optional(),
         flavorImage: Joi.string().min(3).optional(),
         flavorMatchPercent: Joi.number().min(0).required(),
-        artMatchPercent: Joi.number().min(0).required(),
+        artMatchPercent: Joi.number().min(0).required()
     })
 };

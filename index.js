@@ -1,16 +1,13 @@
 (() => {
-    const meow = require('meow');
-    const {
-        promisify
-    } = require('util');
-    const fs = require('fs');
-    const {
-        Processor
-    } = require('./src/processor/index');
+    const meow = require("meow");
+    const { promisify } = require("util");
+    const fs = require("fs");
+    const { Processor } = require("./src/processor/index");
 
     const isAccessible = promisify(fs.access);
 
-    const cli = meow(`
+    const cli = meow(
+        `
         Usage
         $ scan <filePath>
 
@@ -19,28 +16,30 @@
 
         Examples
         $ scan .\\img-path --query
-    `, {
-        flags: {
-            query: {
-                type: 'boolean',
-                alias: 'r',
-                default: true
-            },
-            pretty: {
-                type: 'boolean',
-                alias: 'p',
-                default: true
+    `,
+        {
+            flags: {
+                query: {
+                    type: "boolean",
+                    alias: "r",
+                    default: true
+                },
+                pretty: {
+                    type: "boolean",
+                    alias: "p",
+                    default: true
+                }
             }
         }
-    });
+    );
 
-    let cmd = cli.input[0] || '';
-    let filePath = cli.input[1] || '';
+    let cmd = cli.input[0] || "";
+    let filePath = cli.input[1] || "";
     let flags = cli.flags;
 
     if (cli.input.length > 0) {
         switch (cmd) {
-            case 'scan':
+            case "scan":
                 isAccessible(filePath).then((isUnavailable) => {
                     if (!isUnavailable) {
                         let processor = Processor.create({
@@ -55,10 +54,10 @@
                 });
                 break;
             default:
-                console.log('Command not found');
+                console.log("Command not found");
                 break;
         }
     } else {
-        console.log('Try running --help for more info');
+        console.log("Try running --help for more info");
     }
 })();

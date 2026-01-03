@@ -1,4 +1,1 @@
-module.exports = [
-    "Arcane",
-    "Trap"
-];
+module.exports = ["Arcane", "Trap"];

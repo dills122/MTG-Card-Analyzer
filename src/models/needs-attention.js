@@ -1,8 +1,6 @@
-const _ = require('lodash');
-const Joi = require('joi');
-const {
-    Collection
-} = require('../rds/index');
+const _ = require("lodash");
+const Joi = require("joi");
+const { Collection } = require("../rds/index");
 
 const schema = Joi.object().keys({
     id: Joi.number(),

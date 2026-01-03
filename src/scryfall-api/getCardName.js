@@ -1,5 +1,5 @@
-const request = require('request-promise-native');
-const log = require('../logger/log');
+const request = require("request-promise-native");
+const log = require("../logger/log");
 const logger = log.create({
     isPretty: true
 });
@@ -7,11 +7,11 @@ const dependencies = {
     request
 };
 
-const baseUrl = 'https://api.scryfall.com';
+const baseUrl = "https://api.scryfall.com";
 
 const REQUEST_HEADERS = {
-    'User-Agent': 'MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)',
-    'Accept': 'application/json'
+    "User-Agent": "MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)",
+    Accept: "application/json"
 };
 
 async function GetCardNames() {
@@ -34,4 +34,4 @@ async function GetCardNames() {
 module.exports = {
     GetCardNames,
     dependencies
-}
+};

@@ -1,10 +1,10 @@
 const async = require("async");
-const _ = require('lodash');
+const _ = require("lodash");
 const joi = require("joi");
 
-const logger = require('../logger/log');
+const logger = require("../logger/log");
 const dependencies = {
-    resize: require('./resize'),
+    resize: require("./resize"),
     textExtraction: require("../image-analysis/index").textExtraction
 };
 const schema = joi.object().keys({
@@ -26,19 +26,22 @@ class ImageProcessor {
     }
 
     extract(callback) {
-        async.waterfall([
-            (next) => this.cropImage(next),
-            (next) => this.extractText(next)
-        ], callback);
+        async.waterfall(
+            [(next) => this.cropImage(next), (next) => this.extractText(next)],
+            callback
+        );
     }
 
     cropImage(callback) {
-        dependencies.resize.GetImageSnippetTmpFile(this.path, this.directory, this.type).then((imgPath) => {
-            this.imagePath = imgPath;
-            return callback();
-        }).catch((err) => {
-            return callback(err);
-        })
+        dependencies.resize
+            .GetImageSnippetTmpFile(this.path, this.directory, this.type)
+            .then((imgPath) => {
+                this.imagePath = imgPath;
+                return callback();
+            })
+            .catch((err) => {
+                return callback(err);
+            });
     }
 
     extractText(callback) {
@@ -57,4 +60,4 @@ module.exports = {
         return new ImageProcessor(params);
     },
     dependencies
-}
+};

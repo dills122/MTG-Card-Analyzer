@@ -1,15 +1,13 @@
-const fs = require('fs');
-const {
-    promisify
-} = require('util');
-const uuid = require('uuid/v4');
-const tempDirectory = require('temp-dir');
-const rimraf = require('rimraf');
+const fs = require("fs");
+const { promisify } = require("util");
+const uuid = require("uuid/v4");
+const tempDirectory = require("temp-dir");
+const rimraf = require("rimraf");
 
 const writeFile = promisify(fs.writeFile);
 const unlinkFile = promisify(fs.unlink);
 
-async function WriteToFile(contents, path = '') {
+async function WriteToFile(contents, path = "") {
     return await writeFile(path || `${uuid()}.json`, JSON.stringify(contents));
 }
 
@@ -33,7 +31,7 @@ function CleanUpFiles(directory, callback) {
             return callback(err);
         }
         return callback();
-    })
+    });
 }
 
 module.exports = {
@@ -41,4 +39,4 @@ module.exports = {
     DeleteFile,
     CreateDirectory,
     CleanUpFiles
-}
+};
