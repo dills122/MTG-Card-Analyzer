@@ -1,8 +1,6 @@
-const {
-    promisify
-} = require('util');
+const { promisify } = require("util");
 
-var sizeOf = promisify(require('image-size'));
+var sizeOf = promisify(require("image-size"));
 
 async function GetImageDimensions(imagePath) {
     return await sizeOf(imagePath);
@@ -10,4 +8,4 @@ async function GetImageDimensions(imagePath) {
 
 module.exports = {
     GetImageDimensions
-}
+};

@@ -3,9 +3,9 @@
 
 module.exports = {
     rds: {
-        host: '...',
-        database: '...',
-        user: '...',
-        password: '...'
+        host: "...",
+        database: "...",
+        user: "...",
+        password: "..."
     }
-}
+};

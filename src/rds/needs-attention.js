@@ -1,7 +1,5 @@
-const {
-    CreateConnection
-} = require('./connection');
-const log = require('../logger/log');
+const { CreateConnection } = require("./connection");
+const log = require("../logger/log");
 const logger = log.create({
     isPretty: true
 });
@@ -9,11 +7,11 @@ const logger = log.create({
 function InsertEntity(record, cb) {
     let connection = CreateConnection();
     connection.connect((err) => {
-        if(err) {
+        if (err) {
             return cb(err);
         }
-        connection.query('INSERT INTO Card_NEED_ATTN SET ?', record, (error, results) => {
-            if(error) {
+        connection.query("INSERT INTO Card_NEED_ATTN SET ?", record, (error, results) => {
+            if (error) {
                 logger.error(error);
                 cb(error);
             }
@@ -25,4 +23,4 @@ function InsertEntity(record, cb) {
 
 module.exports = {
     InsertEntity
-}
+};

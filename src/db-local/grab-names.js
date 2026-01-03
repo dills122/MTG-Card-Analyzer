@@ -1,6 +1,4 @@
-const {
-    db
-} = require('./db');
+const { db } = require("./db");
 
 function GetBulkNames(cb) {
     db.find({}, (err, docs) => {
@@ -13,4 +11,4 @@ function GetBulkNames(cb) {
 
 module.exports = {
     GetBulkNames
-}
+};

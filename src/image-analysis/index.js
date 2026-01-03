@@ -1,3 +1,3 @@
 module.exports = {
-    textExtraction: require('./extract-text')
+    textExtraction: require("./extract-text")
 };

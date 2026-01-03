@@ -1,5 +1,5 @@
-const _ = require('lodash');
-const schema = require('./schemas/transaction.schema').schema;
+const _ = require("lodash");
+const schema = require("./schemas/transaction.schema").schema;
 // const {
 //     Transaction
 // } = require('../rds/index');
@@ -14,25 +14,23 @@ Transaction.prototype.initiate = function (obj) {
             error: "Object null"
         };
     }
-    let { error: hasError } = !schema.validate(params);
-    if (!hasError) {
-        this.data = obj;
-    }
-    return isValid;
+    let { error: hasError } = !schema.validate(obj);
+    if (hasError) return false;
+    this.data = obj;
 };
 
 Transaction.prototype.CheckSchema = function () {
     return !schema.validate(this.data).error;
-}
+};
 
 Transaction.prototype.Insert = function () {
     if (this.CheckSchema && !_.isNull(this.data)) {
         // Transaction.InsertEntity(this.data);
     }
-}
+};
 
 module.exports = {
     create: function (params) {
         return new Transaction(params);
-    },
+    }
 };

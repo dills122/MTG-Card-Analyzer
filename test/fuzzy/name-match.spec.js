@@ -1,19 +1,17 @@
-const chai = require('chai');
+const chai = require("chai");
 const expect = chai.expect;
-const sinon = require('sinon');
-const assert = require('assert');
-const {
-    create,
-    dependencies
-} = require('../../src/fuzzy-matching/match-name');
+const sinon = require("sinon");
+const assert = require("assert");
+const { create, dependencies } = require("../../src/fuzzy-matching/match-name");
 
-describe('FuzzyMatching::', () => {
+describe("FuzzyMatching::", () => {
     let sandbox = {};
     let stubs = {};
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
-        stubs.BulkNamesStub = sandbox.stub(dependencies, "GetNames").callsArgWith(0, null, [{
+        stubs.BulkNamesStub = sandbox.stub(dependencies, "GetNames").callsArgWith(0, null, [
+            {
                 name: "Legion's Landing // Adanto, the First Fort"
             },
             {
@@ -26,107 +24,107 @@ describe('FuzzyMatching::', () => {
                 name: "Chain Lightning"
             },
             {
-                "name": "Gangrenous Zombies"
+                name: "Gangrenous Zombies"
             },
             {
-                "name": "Sarkhan Vol"
+                name: "Sarkhan Vol"
             },
             {
-                "name": "Darkness"
+                name: "Darkness"
             },
             {
-                "name": "Commandeer"
+                name: "Commandeer"
             },
             {
-                "name": "Carrion Beetles"
+                name: "Carrion Beetles"
             },
             {
-                "name": "Drag Down"
+                name: "Drag Down"
             },
             {
-                "name": "Swirling Sandstorm"
+                name: "Swirling Sandstorm"
             },
             {
-                "name": "Diving Griffin"
+                name: "Diving Griffin"
             },
             {
-                "name": "Copperhoof Vorrac"
+                name: "Copperhoof Vorrac"
             },
             {
-                "name": "Lawless Broker"
+                name: "Lawless Broker"
             },
             {
-                "name": "Dark Supplicant"
+                name: "Dark Supplicant"
             },
             {
-                "name": "Weldfast Monitor"
+                name: "Weldfast Monitor"
             },
             {
-                "name": "Inspiring Roar"
+                name: "Inspiring Roar"
             },
             {
-                "name": "Gavony Unhallowed"
+                name: "Gavony Unhallowed"
             },
             {
-                "name": "Creeping Renaissance"
+                name: "Creeping Renaissance"
             },
             {
-                "name": "Coat of Arms"
+                name: "Coat of Arms"
             },
             {
-                "name": "Mobilized District"
+                name: "Mobilized District"
             },
             {
-                "name": "Emberhorn Minotaur"
+                name: "Emberhorn Minotaur"
             },
             {
-                "name": "Well of Life"
+                name: "Well of Life"
             },
             {
-                "name": "Juvenile Gloomwidow"
+                name: "Juvenile Gloomwidow"
             },
             {
-                "name": "Canopy Vista"
+                name: "Canopy Vista"
             },
             {
-                "name": "Champion of Wits"
+                name: "Champion of Wits"
             },
             {
-                "name": "Zephyr Falcon"
+                name: "Zephyr Falcon"
             },
             {
-                "name": "Sulfurous Blast"
+                name: "Sulfurous Blast"
             },
             {
-                "name": "Archfiend of Despair"
+                name: "Archfiend of Despair"
             }
-        ])
+        ]);
     });
     afterEach(() => {
         sinon.restore();
         stubs.BulkNamesStub.restore();
-    })
-    describe('NameMatching::', () => {
-        it('Should return a high probability match', (done) => {
-            let name = 'AdantoVanguard';
+    });
+    describe("NameMatching::", () => {
+        it("Should return a high probability match", (done) => {
+            let name = "AdantoVanguard";
             create({
                 cleanText: name
             }).Match((err, matches) => {
                 console.log(matches);
-                let [first, ...rest] = matches;
+                let [first] = matches;
                 assert.equal(stubs.BulkNamesStub.callCount, 1);
-                expect(matches).to.be.an('array');
-                assert.equal(first.name, 'Adanto Vanguard');
+                expect(matches).to.be.an("array");
+                assert.equal(first.name, "Adanto Vanguard");
                 chai.assert.isObject(first);
                 chai.assert.isAtMost(Object.keys(first).length, 2);
-                chai.assert.isAtLeast(first.percentage, .85);
+                chai.assert.isAtLeast(first.percentage, 0.85);
                 chai.assert.isAtLeast(matches.length, 1);
                 done(err);
             });
         });
 
-        it('Should return no match due to low probability', (done) => {
-            let name = 'Coat Vangsduardsadfasd';
+        it("Should return no match due to low probability", (done) => {
+            let name = "Coat Vangsduardsadfasd";
             create({
                 cleanText: name
             }).Match((err, matches) => {

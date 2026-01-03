@@ -1,5 +1,5 @@
-const base64Img = require('image-to-base64');
-const log = require('../logger/log');
+const base64Img = require("image-to-base64");
+const log = require("../logger/log");
 const dependencies = {
     base64Img
 };
@@ -31,4 +31,4 @@ async function StringfyImagesNDAtn(imagePaths) {
 module.exports = {
     StringfyImagesNDAtn,
     dependencies
-}
+};

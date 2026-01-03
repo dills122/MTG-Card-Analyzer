@@ -1,5 +1,5 @@
 const txtUtil = require("clean-text-utils");
-const log = require('./logger/log');
+const log = require("./logger/log");
 const logger = log.create({
     isPretty: true
 });
@@ -11,7 +11,8 @@ function cleanString(string) {
     return cleanedString;
 }
 
-function requireF(modulePath) { // force require
+function requireF(modulePath) {
+    // force require
     try {
         return require(modulePath);
     } catch (e) {
@@ -23,4 +24,4 @@ function requireF(modulePath) { // force require
 module.exports = {
     cleanString,
     requireF
-}
+};

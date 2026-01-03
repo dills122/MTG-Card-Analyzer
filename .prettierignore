@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+coverage
+pnpm-lock.yaml
+eng.traineddata
+src/test-images
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff

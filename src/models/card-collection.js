@@ -1,8 +1,6 @@
-const _ = require('lodash');
-const Joi = require('joi');
-const {
-    Collection
-} = require('../rds/index');
+const _ = require("lodash");
+const Joi = require("joi");
+const { Collection } = require("../rds/index");
 
 const schema = Joi.object().keys({
     cardId: Joi.number(),
@@ -13,7 +11,7 @@ const schema = Joi.object().keys({
     estValue: Joi.number().optional(),
     automated: Joi.bool(),
     magicId: Joi.number().min(1).required(),
-    imageUrl: Joi.string().min(3).max(150).required(),
+    imageUrl: Joi.string().min(3).max(150).required()
 });
 
 class CardCollection {
@@ -25,11 +23,11 @@ class CardCollection {
     Insert() {
         let object = _.pick(this, Object.keys(schema.describe().keys));
         Collection.InsertEntity(object);
-    } 
+    }
 }
 
 module.exports = {
-    create:function(params) {
+    create: function (params) {
         return new CardCollection(params);
     },
     prototype: CardCollection.prototype

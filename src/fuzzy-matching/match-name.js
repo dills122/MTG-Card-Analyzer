@@ -1,17 +1,17 @@
-const _ = require('lodash');
+const _ = require("lodash");
 const async = require("async");
 const joi = require("joi");
-const FuzzySet = require('fuzzyset.js');
-const logger = require('../logger/log');
+const FuzzySet = require("fuzzyset.js");
+const logger = require("../logger/log");
 
 const config = {
-    highConfidence: .95,
-    minConfidence: .70,
+    highConfidence: 0.95,
+    minConfidence: 0.7,
     maxMatches: 5
 };
 
 const dependencies = {
-    GetNames: require('../db-local/index').GetBulkNames
+    GetNames: require("../db-local/index").GetBulkNames
 };
 
 const schema = joi.object().keys({
@@ -41,11 +41,10 @@ class MatchName {
     }
 
     Match(callback) {
-        async.waterfall([
-            (next) => this.gatherInitialResults(next),
-            (next) => this.filterBulkMatches(next),
-        ], callback);
-
+        async.waterfall(
+            [(next) => this.gatherInitialResults(next), (next) => this.filterBulkMatches(next)],
+            callback
+        );
     }
 
     gatherInitialResults(callback) {
@@ -77,9 +76,12 @@ class MatchName {
             return callback(null, highConfidenceMatches.splice(0, config.maxMatches + 1));
         }
 
-        return callback(null, _.filter(fixedResults, (item) => {
-            return item.percentage >= config.minConfidence;
-        }).splice(0, config.maxMatches + 1));
+        return callback(
+            null,
+            _.filter(fixedResults, (item) => {
+                return item.percentage >= config.minConfidence;
+            }).splice(0, config.maxMatches + 1)
+        );
     }
 }
 
