@@ -59,6 +59,9 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - run: chmod +x "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
       - run: "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
   automerge:
