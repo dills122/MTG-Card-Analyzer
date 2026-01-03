@@ -4,7 +4,8 @@
   "description": "a mtg ocr app for documenting a collection",
   "main": "index.js",
   "scripts": {
-    "test": "mocha \"./test/**/*.spec.js\""
+    "test": "mocha \"./test/**/*.spec.js\"",
+    "setup-db": "node src/data/scripts/setup-db.js"
   },
   "keywords": [
     "mtg",
@@ -15,7 +16,6 @@
   "license": "MIT",
   "dependencies": {
     "joi": "^17.6.0",
-    "app-root-path": "^3.0.0",
     "async": "^3.2.4",
     "bunyan": "^1.8.12",
     "clean-text-utils": "^1.1.17",
@@ -26,7 +26,6 @@
     "jimp": "^0.16.1",
     "lodash": "^4.17.21",
     "meow": "^7.0.0",
-    "mysql": "^2.17.1",
     "@dills1220/nedb": "^1.8.4",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
@@ -35,7 +34,8 @@
     "temp-dir": "^2.0.0",
     "tesseract.js": "^2.1.5",
     "tmp": "^0.2.1",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "mysql2": "^3.11.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",

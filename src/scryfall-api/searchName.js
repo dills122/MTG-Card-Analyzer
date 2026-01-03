@@ -9,10 +9,18 @@ const dependencies = {
     request
 };
 
+const REQUEST_HEADERS = {
+    'User-Agent': 'MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)',
+    'Accept': 'application/json'
+};
+
 //These return a random/newest card if printed across sets
 async function SearchByNameExact(exact, fuzzy= '') {
     try {
-        let response = await dependencies.request(encodeURI(`${apiConfig.templates.cardNameExact}${exact}`));
+        let response = await dependencies.request({
+            uri: encodeURI(`${apiConfig.templates.cardNameExact}${exact}`),
+            headers: REQUEST_HEADERS
+        });
         if (response) {
             let cardInfo = JSON.parse(response) || {};
             if(Object.keys(cardInfo).length === 0) {
@@ -32,7 +40,10 @@ async function SearchByNameFuzzy(exact, fuzzy= '') {
         return {};
     }
     try {
-        let response = await dependencies.request(encodeURI(`${apiConfig.templates.fuzzy}${exact}`));
+        let response = await dependencies.request({
+            uri: encodeURI(`${apiConfig.templates.fuzzy}${exact}`),
+            headers: REQUEST_HEADERS
+        });
         if (response) {
             let cardInfo = JSON.parse(response) || {};
             return cardInfo;
@@ -49,7 +60,10 @@ async function SearchByNameFuzzy(exact, fuzzy= '') {
 async function SearchList(exact) {
     let name = exact.replace(/ /g, '%20');
     try {
-        let response = await dependencies.request(`${apiConfig.templates.cardListExact}${name}&unique=prints`);
+        let response = await dependencies.request({
+            uri: `${apiConfig.templates.cardListExact}${name}&unique=prints`,
+            headers: REQUEST_HEADERS
+        });
         if (response) {
             let cardInfo = JSON.parse(response) || {};
             if(Object.keys(cardInfo).length === 0) {

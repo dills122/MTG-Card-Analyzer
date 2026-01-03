@@ -9,9 +9,17 @@ const dependencies = {
 
 const baseUrl = 'https://api.scryfall.com';
 
+const REQUEST_HEADERS = {
+    'User-Agent': 'MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)',
+    'Accept': 'application/json'
+};
+
 async function GetCardNames() {
     try {
-        let response = await dependencies.request(`${baseUrl}/catalog/card-names`);
+        let response = await dependencies.request({
+            uri: `${baseUrl}/catalog/card-names`,
+            headers: REQUEST_HEADERS
+        });
         if (response) {
             let names = JSON.parse(response).data || [];
             return names;
@@ -19,6 +27,7 @@ async function GetCardNames() {
         return [];
     } catch (err) {
         logger.error(err);
+        return [];
     }
 }
 

@@ -15,5 +15,5 @@ CREATE TABLE Card_NEED_ATTN (
     CreatedBy varchar(25) NOT NULL,
     UpdatedBy varchar(25) NOT NULL,
     PRIMARY KEY (ItemID),
-    CONSTRAINT U_CardSet UNIQUE (CardName,ExtractedText,NameImage)
+    CONSTRAINT U_CardSet UNIQUE (CardName,ExtractedText,NameImage(255))
 );
