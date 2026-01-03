@@ -1,6 +1,6 @@
 const _ = require("lodash");
 const jimp = require("jimp");
-const uuid = require("uuid/v4");
+const { randomUUID } = require("crypto");
 const path = require("path");
 const { GetImageDimensions } = require("./util");
 
@@ -50,7 +50,7 @@ async function GetImageSnippet(imgPath, type) {
 
 async function GetImageSnippetFile(imgPath, type) {
     const ext = path.extname(imgPath) || ".jpg";
-    const filePath = `${uuid()}${ext}`;
+    const filePath = `${randomUUID()}${ext}`;
     const dimensions = await GetImageDimensions(imgPath);
     if (dimensions.width >= 360 && dimensions.height >= 500) {
         const alteredDimensions = GetAlteredDimensions(dimensions, type);
@@ -64,7 +64,7 @@ async function GetImageSnippetFile(imgPath, type) {
 
 async function GetImageSnippetTmpFile(imgPath, directory, type) {
     const ext = path.extname(imgPath) || ".jpg";
-    const filePath = path.join(directory, `${uuid()}${ext}`);
+    const filePath = path.join(directory, `${randomUUID()}${ext}`);
     const dimensions = await GetImageDimensions(imgPath);
     if (dimensions.width >= 360 && dimensions.height >= 500) {
         const alteredDimensions = GetAlteredDimensions(dimensions, type);
