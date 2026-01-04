@@ -1,7 +1,7 @@
-const sinon = require("sinon");
-const assert = require("chai").assert;
-const api = require("../../src/scryfall-api/searchName");
-const cardNames = require("../../src/scryfall-api/getCardName");
+import { assert } from "chai";
+import sinon from "sinon";
+import api from "../../src/scryfall-api/searchName.js";
+import cardNames from "../../src/scryfall-api/getCardName.js";
 const deps = api.dependencies;
 
 describe("Srcyfall Api::", () => {

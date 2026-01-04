@@ -127,6 +127,12 @@ npm test
 
 Tests stub external calls; no MySQL needed. If you set a custom NeDB path for tests, export `CARD_NAMES_DB_PATH=/tmp`.
 
+### TypeScript Migration (incremental)
+
+- TypeScript tooling is configured to allow JavaScript (`allowJs`) and to only typecheck (`noEmit`) so you can start migrating file-by-file.
+- Run `npm run typecheck` (or `pnpm typecheck`) to get type feedback without touching the runtime.
+- Future `.ts` files can live alongside existing `.js` under `src/` and will be picked up automatically.
+
 ### Packages Under the Hood
 
 - `fuzzyset.js`

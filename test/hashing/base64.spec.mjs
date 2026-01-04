@@ -1,6 +1,6 @@
-const Base64 = require("../../src/image-hashing/base64-img");
-const chai = require("chai");
-const sinon = require("sinon");
+import { assert } from "chai";
+import Base64 from "../../src/image-hashing/base64-img.js";
+import sinon from "sinon";
 
 describe("Base64::", () => {
     let stubs = {};
@@ -20,12 +20,12 @@ describe("Base64::", () => {
                 nameImage: ""
             })
                 .then((base64Imgs) => {
-                    chai.assert.isObject(base64Imgs);
-                    chai.assert.deepEqual(base64Imgs.nameImage, base64Str);
-                    chai.assert.deepEqual(base64Imgs.typeImage, base64Str);
-                    chai.assert.deepEqual(base64Imgs.flavorImage, base64Str);
-                    chai.assert.deepEqual(base64Imgs.artImage, base64Str);
-                    chai.assert.equal(stubs.base64Stub.callCount, 4);
+                    assert.isObject(base64Imgs);
+                    assert.deepEqual(base64Imgs.nameImage, base64Str);
+                    assert.deepEqual(base64Imgs.typeImage, base64Str);
+                    assert.deepEqual(base64Imgs.flavorImage, base64Str);
+                    assert.deepEqual(base64Imgs.artImage, base64Str);
+                    assert.equal(stubs.base64Stub.callCount, 4);
                     done();
                 })
                 .catch((error) => {

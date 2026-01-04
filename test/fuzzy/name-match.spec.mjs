@@ -1,8 +1,9 @@
-const chai = require("chai");
-const expect = chai.expect;
-const sinon = require("sinon");
-const assert = require("assert");
-const { create, dependencies } = require("../../src/fuzzy-matching/match-name");
+import assert from "assert";
+import { expect, assert as chaiAssert } from "chai";
+import sinon from "sinon";
+import matchName from "../../src/fuzzy-matching/match-name.js";
+
+const { create, dependencies } = matchName;
 
 describe("FuzzyMatching::", () => {
     let sandbox = {};
@@ -115,10 +116,10 @@ describe("FuzzyMatching::", () => {
                 assert.equal(stubs.BulkNamesStub.callCount, 1);
                 expect(matches).to.be.an("array");
                 assert.equal(first.name, "Adanto Vanguard");
-                chai.assert.isObject(first);
-                chai.assert.isAtMost(Object.keys(first).length, 2);
-                chai.assert.isAtLeast(first.percentage, 0.85);
-                chai.assert.isAtLeast(matches.length, 1);
+                chaiAssert.isObject(first);
+                chaiAssert.isAtMost(Object.keys(first).length, 2);
+                chaiAssert.isAtLeast(first.percentage, 0.85);
+                chaiAssert.isAtLeast(matches.length, 1);
                 done(err);
             });
         });
@@ -130,7 +131,7 @@ describe("FuzzyMatching::", () => {
             }).Match((err, matches) => {
                 console.log(matches);
                 assert.equal(stubs.BulkNamesStub.callCount, 1);
-                chai.assert.isArray(matches);
+                chaiAssert.isArray(matches);
                 assert.equal(matches.length, 0);
                 done(err);
             });

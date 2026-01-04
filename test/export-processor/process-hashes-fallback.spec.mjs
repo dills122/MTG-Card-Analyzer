@@ -1,5 +1,8 @@
-const { assert } = require("chai");
-const sinon = require("sinon");
+import { assert } from "chai";
+import sinon from "sinon";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 const proxyquire = require("proxyquire").noCallThru();
 
 describe("ProcessHashes fallback behavior", () => {
@@ -13,7 +16,7 @@ describe("ProcessHashes fallback behavior", () => {
         sandbox.restore();
     });
 
-    it("returns best guess when allowRemoteBestGuess is true and thresholds not met", (done) => {
+    it("returns best guess when allowRemoteBestGuess is true and thresholds not met", async () => {
         const hashImageStub = sandbox
             .stub()
             .onFirstCall()
@@ -26,7 +29,7 @@ describe("ProcessHashes fallback behavior", () => {
             stringCompare: 0.65
         });
 
-        const ProcessHashes = proxyquire("../../src/export-processor/process-hashes", {
+        const ProcessHashes = proxyquire("../../src/export-processor/process-hashes.js", {
             "../image-hashing": {
                 Hash: {
                     HashImage: hashImageStub,
@@ -56,11 +59,16 @@ describe("ProcessHashes fallback behavior", () => {
             allowRemoteBestGuess: true
         });
 
-        hasher.compareRemoteImages((err, matches) => {
-            assert.isNull(err);
-            assert.isTrue(hashImageStub.calledTwice);
-            assert.equal(matches.length, 1);
-            done();
+        await new Promise((resolve, reject) => {
+            hasher.compareRemoteImages((err, matches) => {
+                if (err) {
+                    return reject(err);
+                }
+                assert.isNull(err);
+                assert.isTrue(hashImageStub.calledTwice);
+                assert.equal(matches.length, 1);
+                resolve();
+            });
         });
     });
 });

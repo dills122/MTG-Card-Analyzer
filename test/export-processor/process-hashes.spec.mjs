@@ -1,11 +1,16 @@
-const os = require("os");
+import os from "os";
+import { assert } from "chai";
+import sinon from "sinon";
+import _ from "lodash";
+import exportProcessor from "../../src/export-processor/index.js";
+import rds from "../../src/rds/index.js";
+import imageHashing from "../../src/image-hashing/index.js";
+
 process.env.CARD_NAMES_DB_PATH = os.tmpdir();
-const { assert } = require("chai");
-const sinon = require("sinon");
-const ProcessHashes = require("../../src/export-processor/").ProcessHashes;
-const CardHashes = require("../../src/rds").CardHashes;
-const Hash = require("../../src/image-hashing").Hash;
-const _ = require("lodash");
+
+const { ProcessHashes } = exportProcessor;
+const { CardHashes } = rds;
+const { Hash } = imageHashing;
 
 const FAKE_HASH = "THISISANEXAMPLEOFAFAKEHASHEEEEEE";
 const CLOSE_DIFF_HASH = "THISISANEXAMPLEOFAFAKAHASHEEEEEE";
