@@ -1,0 +1,5 @@
+# Exclude paths from Codacy analysis (including markdown)
+exclude_paths:
+    - "**/*.md"
+    - "src/test-images/**"
+    - "node_modules/**"
