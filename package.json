@@ -4,8 +4,10 @@
     "description": "a mtg ocr app for documenting a collection",
     "type": "module",
     "main": "index.mjs",
+    "packageManager": "pnpm@10.13.1",
     "engines": {
-        "node": ">=18"
+        "node": ">=20.0.0",
+        "pnpm": ">=8.0.0"
     },
     "scripts": {
         "test": "mocha \"./test/**/*.spec.mjs\"",
@@ -21,7 +23,10 @@
         "ocr",
         "collector"
     ],
-    "author": "Dylan Steele",
+    "author": {
+        "name": "Dylan Steele",
+        "email": "dylansteele57@gmail.com"
+    },
     "license": "MIT",
     "dependencies": {
         "@dills1220/nedb": "^1.8.4",

@@ -5,7 +5,7 @@
 
 A collectors dream application, that gives you the ability to take pictures of your cards and have them instantly be recognized and added to your collection. This app will scan each image uploaded attempt to grab the name of the card and analyze the set image in an attempt to match it with a given set.
 
-> Status (Jan 2026): runnable on Node 18 with Tesseract.js v3; OCR + fuzzy matching + image hashing work. DB writes are now opt-in (off by default) while we stabilize.
+> Status (Jan 2026): runnable on Node 22 with Tesseract.js v3; OCR + fuzzy matching + image hashing work. DB writes are now opt-in (off by default) while we stabilize.
 
 ## Example
 
@@ -59,7 +59,7 @@ More examples are available [here](https://github.com/dills122/mtg-card-analyzer
 
 ### Prerequisites
 
-- Node 18
+- Node 22
 - Tesseract.js v3 (npm dependency) with `eng.traineddata` available (an English traineddata is bundled at repo root)
 - Optional: MySQL 8+ if you want to persist collections/needs-attention and hash cache
 
