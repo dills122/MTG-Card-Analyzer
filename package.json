@@ -46,7 +46,7 @@
         "request-promise-native": "^1.0.7",
         "rimraf": "^6.1.2",
         "string-similarity": "^4.0.4",
-        "tesseract.js": "^3.0.3",
+        "tesseract.js": "^7.0.0",
         "tmp": "^0.2.5"
     },
     "devDependencies": {
