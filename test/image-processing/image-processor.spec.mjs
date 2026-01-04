@@ -18,8 +18,11 @@ describe("Integration::", () => {
         let stubs = {};
 
         beforeEach(() => {
-            stubs.resizeStub = sandbox.stub().resolves(FAKE_PATH);
-            stubs.textExtractionStub = sandbox.stub().callsArgWith(1, null, FAKE_EXTRACTION);
+            stubs.preprocessStub = sandbox.stub().resolves({
+                variants: [{ buffer: Buffer.from("OCR"), region: TYPE, psm: "line" }],
+                previewPath: FAKE_PATH
+            });
+            stubs.textExtractionStub = sandbox.stub().callsArgWith(2, null, FAKE_EXTRACTION);
         });
 
         afterEach(() => {
@@ -32,13 +35,13 @@ describe("Integration::", () => {
                 type: TYPE,
                 directory: FAKE_DIR,
                 dependencies: {
-                    resize: { GetImageSnippetTmpFile: stubs.resizeStub },
+                    ocrPreprocessor: { prepareOcrVariants: stubs.preprocessStub },
                     textExtraction: { ScanImage: stubs.textExtractionStub }
                 }
             });
 
             processor.extract((err) => {
-                assert.isTrue(stubs.resizeStub.calledOnce);
+                assert.isTrue(stubs.preprocessStub.calledOnce);
                 assert.isTrue(stubs.textExtractionStub.calledOnce);
                 assert.deepEqual(processor.results, FAKE_EXTRACTION);
                 return done(err);

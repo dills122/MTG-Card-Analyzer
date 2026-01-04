@@ -4,6 +4,7 @@ import joi from "joi";
 import FuzzySet from "fuzzyset.js";
 import logger from "../logger/log.mjs";
 import dbLocal from "../db-local/index.mjs";
+import { cleanString } from "../util.mjs";
 
 const config = {
     highConfidence: 0.95,
@@ -36,7 +37,12 @@ class MatchName {
     }
 
     filteredNames(names) {
-        return names.map((record) => record.name);
+        this.nameLookup = {};
+        return names.map((record) => {
+            const normalized = normalizeForMatch(record.name);
+            this.nameLookup[normalized] = record.name;
+            return normalized;
+        });
     }
 
     Match(callback) {
@@ -53,7 +59,12 @@ class MatchName {
             }
             const filteredNames = this.filteredNames(names);
             const fuzzy = FuzzySet(filteredNames);
-            this.initialResults = fuzzy.get(this.cleanText);
+            const normalizedQuery = normalizeForMatch(this.cleanText);
+            const exact = this.nameLookup[normalizedQuery];
+            this.initialResults = exact ? [[1, normalizedQuery]] : fuzzy.get(normalizedQuery);
+            if (!this.initialResults) {
+                this.initialResults = [];
+            }
             return callback();
         });
     }
@@ -62,7 +73,7 @@ class MatchName {
         const fixedResults = _.map(this.initialResults, (match) => {
             const [namePercent, nameMatch] = match;
             return {
-                name: nameMatch,
+                name: this.nameLookup[nameMatch] || nameMatch,
                 percentage: namePercent
             };
         });
@@ -94,3 +105,7 @@ export default {
     dependencies,
     MatchName
 };
+
+function normalizeForMatch(text) {
+    return cleanString(text).toUpperCase().trim();
+}
