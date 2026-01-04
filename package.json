@@ -43,7 +43,7 @@
     "devDependencies": {
         "@types/node": "^16.9.1",
         "chai": "^6.2.2",
-        "eslint": "^8.57.0",
+        "eslint": "^9.39.2",
         "eslint-config-prettier": "^9.1.2",
         "lefthook": "^1.13.6",
         "mocha": "^11.7.5",
