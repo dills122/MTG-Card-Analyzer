@@ -5,7 +5,7 @@
 
 A collectors dream application, that gives you the ability to take pictures of your cards and have them instantly be recognized and added to your collection. This app will scan each image uploaded attempt to grab the name of the card and analyze the set image in an attempt to match it with a given set.
 
-> Status (Jan 2026): runnable on Node 16 with Tesseract.js v3; OCR + fuzzy matching + image hashing work. DB writes are now opt-in (off by default) while we stabilize.
+> Status (Jan 2026): runnable on Node 18 with Tesseract.js v3; OCR + fuzzy matching + image hashing work. DB writes are now opt-in (off by default) while we stabilize.
 
 ## Example
 
@@ -59,7 +59,7 @@ More examples are available [here](https://github.com/dills122/mtg-card-analyzer
 
 ### Prerequisites
 
-- Node 16
+- Node 18
 - Tesseract.js v3 (npm dependency) with `eng.traineddata` available (an English traineddata is bundled at repo root)
 - Optional: MySQL 8+ if you want to persist collections/needs-attention and hash cache
 
@@ -72,7 +72,7 @@ More examples are available [here](https://github.com/dills122/mtg-card-analyzer
 ### Configure MySQL (optional, only if you want writes)
 
 - Create an RDS instance (or local MySQL). SQL scripts live in `src/data/scripts/sql`.
-- Create `secure.config.js` (template: `secure.config.template.js`) with:
+- Create `secure.config.cjs` (template: `secure.config.template.cjs`) with:
 
 ```
 rds: {
@@ -100,7 +100,7 @@ Once all of the setup is complete to run your first image through the processor 
 
 ```
 # Run at the base directory of the repo
-node index.js scan ./src/test-images/PlatinumAngel.jpg
+node index.mjs scan ./src/test-images/PlatinumAngel.jpg
 ```
 
 ### Current Commands

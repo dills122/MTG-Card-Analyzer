@@ -1,7 +1,7 @@
 import assert from "assert";
 import { expect, assert as chaiAssert } from "chai";
 import sinon from "sinon";
-import matchName from "../../src/fuzzy-matching/match-name.js";
+import matchName from "../../src/fuzzy-matching/match-name.mjs";
 
 const { create, dependencies } = matchName;
 

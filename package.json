@@ -2,14 +2,18 @@
     "name": "mtg-card-analyzer",
     "version": "0.2.0",
     "description": "a mtg ocr app for documenting a collection",
-    "main": "index.js",
+    "type": "module",
+    "main": "index.mjs",
+    "engines": {
+        "node": ">=18"
+    },
     "scripts": {
         "test": "mocha \"./test/**/*.spec.mjs\"",
         "lint": "eslint . --ext js,mjs",
         "prettier:check": "prettier --check \"**/*.{js,mjs,ts,tsx,md,json,yml,yaml}\"",
         "prettier:write": "prettier --write \"**/*.{js,mjs,ts,tsx,md,json,yml,yaml}\"",
         "typecheck": "tsc --noEmit",
-        "setup-db": "node src/data/scripts/setup-db.js",
+        "setup-db": "node src/data/scripts/setup-db.cjs",
         "prepare": "lefthook install"
     },
     "keywords": [
@@ -41,7 +45,7 @@
         "tmp": "^0.2.5"
     },
     "devDependencies": {
-        "@types/node": "^16.9.1",
+        "@types/node": "^18.19.130",
         "chai": "^6.2.2",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.2",

@@ -1,9 +1,6 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-const proxyquire = require("proxyquire").noCallThru();
+import { buildFileIO } from "../src/file-io.mjs";
 
 describe("File IO helpers", () => {
     let sandbox;
@@ -17,13 +14,14 @@ describe("File IO helpers", () => {
     });
 
     it("writes to a random json file when no path supplied", async () => {
-        const writeStub = sandbox.stub().callsArgWith(2, null);
+        const writeStub = sandbox.stub().resolves();
         const randomUUID = sandbox.stub().returns("uuid-123");
-        const { WriteToFile } = proxyquire("../src/file-io.js", {
-            fs: { writeFile: writeStub, unlink: () => {} },
-            crypto: { randomUUID },
-            os: { tmpdir: () => "/tmp/mock" },
-            rimraf: () => {}
+        const { WriteToFile } = buildFileIO({
+            fs: { writeFile: writeStub, unlink: () => {}, mkdir: () => {} },
+            promisify: () => writeStub,
+            randomUUID,
+            tempDirectory: "/tmp/mock",
+            rimrafLib: () => {}
         });
 
         await WriteToFile({ hello: "world" });
@@ -36,11 +34,12 @@ describe("File IO helpers", () => {
     it("creates a directory under tmpdir using randomUUID", (done) => {
         const mkdirStub = sandbox.stub().callsArgWith(1, null);
         const randomUUID = sandbox.stub().returns("uuid-abc");
-        const { CreateDirectory } = proxyquire("../src/file-io.js", {
+        const { CreateDirectory } = buildFileIO({
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: mkdirStub },
-            crypto: { randomUUID },
-            os: { tmpdir: () => "/tmp/mock" },
-            rimraf: () => {}
+            promisify: (fn) => fn,
+            randomUUID,
+            tempDirectory: "/tmp/mock",
+            rimrafLib: () => {}
         });
 
         CreateDirectory((err, dirPath) => {
@@ -53,11 +52,12 @@ describe("File IO helpers", () => {
     it("cleans up files via promise-based rimraf", async () => {
         const rimrafStub = sandbox.stub().returns(Promise.resolve());
         const doneSpy = sandbox.spy();
-        const { CleanUpFiles } = proxyquire("../src/file-io.js", {
+        const { CleanUpFiles } = buildFileIO({
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {} },
-            crypto: { randomUUID: () => "id" },
-            os: { tmpdir: () => "/tmp/mock" },
-            rimraf: rimrafStub
+            promisify: (fn) => fn,
+            randomUUID: () => "id",
+            tempDirectory: "/tmp/mock",
+            rimrafLib: rimrafStub
         });
 
         CleanUpFiles("/tmp/mock/dir", doneSpy);
@@ -74,11 +74,12 @@ describe("File IO helpers", () => {
             assert.isTrue(doneSpy.calledOnce);
             done();
         });
-        const { CleanUpFiles } = proxyquire("../src/file-io.js", {
+        const { CleanUpFiles } = buildFileIO({
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {} },
-            crypto: { randomUUID: () => "id" },
-            os: { tmpdir: () => "/tmp/mock" },
-            rimraf: legacyRimraf
+            promisify: (fn) => fn,
+            randomUUID: () => "id",
+            tempDirectory: "/tmp/mock",
+            rimrafLib: legacyRimraf
         });
 
         CleanUpFiles("/tmp/mock/dir", doneSpy);
