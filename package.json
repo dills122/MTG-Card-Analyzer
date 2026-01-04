@@ -5,9 +5,9 @@
     "main": "index.js",
     "scripts": {
         "test": "mocha \"./test/**/*.spec.mjs\"",
-        "lint": "eslint . --ext js",
-        "prettier:check": "prettier --check .",
-        "prettier:write": "prettier --write .",
+        "lint": "eslint . --ext js,mjs",
+        "prettier:check": "prettier --check \"**/*.{js,mjs,ts,tsx,md,json,yml,yaml}\"",
+        "prettier:write": "prettier --write \"**/*.{js,mjs,ts,tsx,md,json,yml,yaml}\"",
         "typecheck": "tsc --noEmit",
         "setup-db": "node src/data/scripts/setup-db.js",
         "prepare": "lefthook install"
