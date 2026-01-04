@@ -1,9 +1,7 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import imageProcessing from "../../src/image-processing/index.js";
-import imageAnalysis from "../../src/image-analysis/index.js";
-const { ImageProcessor, resize } = imageProcessing;
-const { textExtraction } = imageAnalysis;
+import imageProcessing from "../../src/image-processing/index.mjs";
+const { ImageProcessor } = imageProcessing;
 
 const FAKE_PATH = "./to/fake.img";
 const FAKE_PATH_INPUT = "/input/to/fake.img";
@@ -20,10 +18,8 @@ describe("Integration::", () => {
         let stubs = {};
 
         beforeEach(() => {
-            stubs.resizeStub = sandbox.stub(resize, "GetImageSnippetTmpFile").resolves(FAKE_PATH);
-            stubs.textExtractionStub = sandbox
-                .stub(textExtraction, "ScanImage")
-                .callsArgWith(1, null, FAKE_EXTRACTION);
+            stubs.resizeStub = sandbox.stub().resolves(FAKE_PATH);
+            stubs.textExtractionStub = sandbox.stub().callsArgWith(1, null, FAKE_EXTRACTION);
         });
 
         afterEach(() => {
@@ -34,7 +30,11 @@ describe("Integration::", () => {
             let processor = ImageProcessor.create({
                 path: FAKE_PATH_INPUT,
                 type: TYPE,
-                directory: FAKE_DIR
+                directory: FAKE_DIR,
+                dependencies: {
+                    resize: { GetImageSnippetTmpFile: stubs.resizeStub },
+                    textExtraction: { ScanImage: stubs.textExtractionStub }
+                }
             });
 
             processor.extract((err) => {

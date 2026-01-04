@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import Hashing from "../../src/image-hashing/hash-image.js";
+import Hashing from "../../src/image-hashing/hash-image.mjs";
 
 describe("Hashing::", () => {
     const url = "https://img.scryfall.com/cards/normal/en/shm/53.jpg?1517813031";

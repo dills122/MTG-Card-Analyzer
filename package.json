@@ -2,14 +2,20 @@
     "name": "mtg-card-analyzer",
     "version": "0.2.0",
     "description": "a mtg ocr app for documenting a collection",
-    "main": "index.js",
+    "type": "module",
+    "main": "index.mjs",
+    "packageManager": "pnpm@10.13.1",
+    "engines": {
+        "node": ">=20.0.0",
+        "pnpm": ">=8.0.0"
+    },
     "scripts": {
         "test": "mocha \"./test/**/*.spec.mjs\"",
         "lint": "eslint . --ext js,mjs",
         "prettier:check": "prettier --check \"**/*.{js,mjs,ts,tsx,md,json,yml,yaml}\"",
         "prettier:write": "prettier --write \"**/*.{js,mjs,ts,tsx,md,json,yml,yaml}\"",
         "typecheck": "tsc --noEmit",
-        "setup-db": "node src/data/scripts/setup-db.js",
+        "setup-db": "node src/data/scripts/setup-db.cjs",
         "prepare": "lefthook install"
     },
     "keywords": [
@@ -17,21 +23,24 @@
         "ocr",
         "collector"
     ],
-    "author": "Dylan Steele",
+    "author": {
+        "name": "Dylan Steele",
+        "email": "dylansteele57@gmail.com"
+    },
     "license": "MIT",
     "dependencies": {
         "@dills1220/nedb": "^1.8.4",
         "async": "^3.2.6",
         "bunyan": "^1.8.15",
         "clean-text-utils": "^1.1.17",
+        "commander": "^14.0.2",
         "fuzzyset.js": "1.0.7",
         "image-hash": "^5.3.2",
         "image-size": "^1.2.1",
         "image-to-base64": "^2.2.0",
         "jimp": "^0.22.12",
-        "joi": "^17.13.3",
+        "joi": "^18.0.2",
         "lodash": "^4.17.21",
-        "meow": "^7.1.1",
         "mysql2": "^3.16.0",
         "request": "^2.88.0",
         "request-promise-native": "^1.0.7",
@@ -41,11 +50,13 @@
         "tmp": "^0.2.5"
     },
     "devDependencies": {
-        "@types/node": "^16.9.1",
+        "@eslint/js": "^9.39.2",
+        "@types/node": "^18.19.130",
         "chai": "^6.2.2",
-        "eslint": "^8.57.0",
-        "eslint-config-prettier": "^9.1.2",
-        "lefthook": "^1.13.6",
+        "eslint": "^9.39.2",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^17.0.0",
+        "lefthook": "^2.0.13",
         "mocha": "^11.7.5",
         "prettier": "^3.7.4",
         "proxyquire": "^2.1.3",

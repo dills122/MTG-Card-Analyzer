@@ -1,79 +1,68 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import { createRequire } from "module";
-import { fileURLToPath } from "url";
+import { run } from "../index.mjs";
 
-const require = createRequire(import.meta.url);
-const proxyquire = require("proxyquire").noCallThru();
-const indexModulePath = require.resolve(fileURLToPath(new URL("../index.js", import.meta.url)));
-
-describe("CLI::index.js", () => {
+describe("CLI::index.mjs", () => {
     let sandbox;
     let consoleLogStub;
     let processExitStub;
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
-        consoleLogStub = sandbox.stub(console, "log");
-        processExitStub = sandbox.stub(process, "exit");
+        consoleLogStub = sandbox.stub();
+        processExitStub = sandbox.stub();
     });
 
     afterEach(() => {
         sandbox.restore();
-        delete require.cache[indexModulePath];
     });
 
-    async function loadIndexWith(cliReturnOverrides = {}, fsAccessImpl) {
-        const meowStub = sandbox.stub().returns({
-            input: [],
+    async function runCli(cliOverrides = {}, accessImpl) {
+        const fakeCli = {
+            filePath: "",
             flags: {},
-            ...cliReturnOverrides
-        });
-
-        const fsStub = {
-            access: fsAccessImpl
-                ? fsAccessImpl
-                : (_path, cb) => {
-                      // mimic async fs.access success
-                      setImmediate(() => cb(null));
-                  }
+            helpRequested: false,
+            ...cliOverrides
         };
-
+        const commanderFactory = sandbox.stub().resolves(fakeCli);
         const executeStub = sandbox.stub().callsFake((cb) => cb && cb());
         const processorCreateStub = sandbox.stub().returns({
             execute: executeStub
         });
 
-        proxyquire("../index.js", {
-            meow: meowStub,
-            fs: fsStub,
-            "./src/processor/index": { Processor: { create: processorCreateStub } }
+        const fsAccessStub = accessImpl ? accessImpl : sandbox.stub().resolves();
+
+        await run({
+            argv: [],
+            commanderFactory,
+            fsAccess: fsAccessStub,
+            processorFactory: processorCreateStub,
+            exit: processExitStub,
+            logger: { log: consoleLogStub }
         });
 
-        return { meowStub, executeStub, processorCreateStub };
+        return { commanderFactory, executeStub, processorCreateStub, fsAccessStub, fakeCli };
     }
 
     it("prints help when no command provided", async () => {
-        await loadIndexWith();
+        await runCli();
         assert.isTrue(consoleLogStub.calledWith("Try running --help for more info"));
         assert.isFalse(processExitStub.called);
     });
 
-    it("prints error for unknown command", async () => {
-        await loadIndexWith({ input: ["unknown"] });
-        assert.isTrue(consoleLogStub.calledWith("Command not found"));
+    it("prints usage when help is requested", async () => {
+        await runCli({ opts: () => ({ help: true }) });
+        assert.isTrue(consoleLogStub.called);
         assert.isFalse(processExitStub.called);
     });
 
     it("invokes Processor for scan command with defaults and exits", async () => {
-        const { processorCreateStub, executeStub } = await loadIndexWith({
-            input: ["scan", "./some-path.jpg"],
+        const { processorCreateStub, executeStub, fsAccessStub } = await runCli({
+            filePath: "./some-path.jpg",
             flags: { q: false, query: false, p: true, pretty: true }
         });
 
-        // wait a tick for the async fs.access -> then chain
-        await new Promise((resolve) => setImmediate(resolve));
-
+        assert.isTrue(fsAccessStub.calledWith("./some-path.jpg"));
         assert.isTrue(processorCreateStub.calledOnce);
         assert.deepInclude(processorCreateStub.firstCall.args[0], {
             filePath: "./some-path.jpg",

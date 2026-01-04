@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import Base64 from "../../src/image-hashing/base64-img.js";
+import Base64 from "../../src/image-hashing/base64-img.mjs";
 import sinon from "sinon";
 
 describe("Base64::", () => {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dotOnlyFound=$(grep -r --include=\*.spec.js -E '(\.only)' ./)
+dotOnlyFound=$(grep -r --include=\*.spec.js --include=\*.spec.mjs -E '(\.only)' ./)
 
 if [ -z "$dotOnlyFound" ]; then
       echo "No .only found, good to go!"

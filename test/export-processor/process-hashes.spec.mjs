@@ -2,9 +2,9 @@ import os from "os";
 import { assert } from "chai";
 import sinon from "sinon";
 import _ from "lodash";
-import exportProcessor from "../../src/export-processor/index.js";
-import rds from "../../src/rds/index.js";
-import imageHashing from "../../src/image-hashing/index.js";
+import exportProcessor from "../../src/export-processor/index.mjs";
+import rds from "../../src/rds/index.mjs";
+import imageHashing from "../../src/image-hashing/index.mjs";
 
 process.env.CARD_NAMES_DB_PATH = os.tmpdir();
 

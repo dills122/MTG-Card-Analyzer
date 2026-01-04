@@ -60,6 +60,7 @@ typings/
 # next.js build output
 .next
 
-secure.config.js
+# Local secure config (any extension)
+secure.config.*
 
 yarn.lock

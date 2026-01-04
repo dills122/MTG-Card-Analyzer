@@ -1,9 +1,6 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-const proxyquire = require("proxyquire").noCallThru();
+import ProcessHashesModule from "../../src/export-processor/process-hashes.mjs";
 
 describe("ProcessHashes fallback behavior", () => {
     let sandbox;
@@ -29,34 +26,27 @@ describe("ProcessHashes fallback behavior", () => {
             stringCompare: 0.65
         });
 
-        const ProcessHashes = proxyquire("../../src/export-processor/process-hashes.js", {
-            "../image-hashing": {
-                Hash: {
-                    HashImage: hashImageStub,
-                    CompareHash: compareHashStub
-                }
-            },
-            "../rds": {
-                CardHashes: {
-                    GetHashes: sandbox.stub().callsArgWith(1, null, [])
-                }
-            },
-            "../logger/log": {
-                create: () => ({
-                    info: () => {},
-                    error: () => {}
-                })
-            }
-        });
-
-        const hasher = ProcessHashes.create({
+        const hasher = ProcessHashesModule.create({
             cards: [
                 { image_uris: { normal: "a" }, set_name: "A" },
                 { image_uris: { normal: "b" }, set_name: "B" }
             ],
             localHash: "local",
             name: "Test",
-            allowRemoteBestGuess: true
+            allowRemoteBestGuess: true,
+            dependencies: {
+                Hash: {
+                    HashImage: hashImageStub,
+                    CompareHash: compareHashStub
+                },
+                CardHashes: {
+                    GetHashes: sandbox.stub().callsArgWith(1, null, [])
+                }
+            },
+            logger: {
+                info: () => {},
+                error: () => {}
+            }
         });
 
         await new Promise((resolve, reject) => {
