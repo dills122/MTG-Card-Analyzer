@@ -1,8 +1,9 @@
-const { assert } = require("chai");
-const sinon = require("sinon");
-const ImageProcessor = require("../../src/image-processing").ImageProcessor;
-const resize = require("../../src/image-processing/").resize;
-const textExtraction = require("../../src/image-analysis/").textExtraction;
+import { assert } from "chai";
+import sinon from "sinon";
+import imageProcessing from "../../src/image-processing/index.js";
+import imageAnalysis from "../../src/image-analysis/index.js";
+const { ImageProcessor, resize } = imageProcessing;
+const { textExtraction } = imageAnalysis;
 
 const FAKE_PATH = "./to/fake.img";
 const FAKE_PATH_INPUT = "/input/to/fake.img";

@@ -1,5 +1,8 @@
-const { assert } = require("chai");
-const sinon = require("sinon");
+import { assert } from "chai";
+import sinon from "sinon";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 const proxyquire = require("proxyquire").noCallThru();
 
 describe("File IO helpers", () => {
@@ -16,7 +19,7 @@ describe("File IO helpers", () => {
     it("writes to a random json file when no path supplied", async () => {
         const writeStub = sandbox.stub().callsArgWith(2, null);
         const randomUUID = sandbox.stub().returns("uuid-123");
-        const { WriteToFile } = proxyquire("../src/file-io", {
+        const { WriteToFile } = proxyquire("../src/file-io.js", {
             fs: { writeFile: writeStub, unlink: () => {} },
             crypto: { randomUUID },
             os: { tmpdir: () => "/tmp/mock" },
@@ -33,7 +36,7 @@ describe("File IO helpers", () => {
     it("creates a directory under tmpdir using randomUUID", (done) => {
         const mkdirStub = sandbox.stub().callsArgWith(1, null);
         const randomUUID = sandbox.stub().returns("uuid-abc");
-        const { CreateDirectory } = proxyquire("../src/file-io", {
+        const { CreateDirectory } = proxyquire("../src/file-io.js", {
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: mkdirStub },
             crypto: { randomUUID },
             os: { tmpdir: () => "/tmp/mock" },
@@ -50,7 +53,7 @@ describe("File IO helpers", () => {
     it("cleans up files via promise-based rimraf", async () => {
         const rimrafStub = sandbox.stub().returns(Promise.resolve());
         const doneSpy = sandbox.spy();
-        const { CleanUpFiles } = proxyquire("../src/file-io", {
+        const { CleanUpFiles } = proxyquire("../src/file-io.js", {
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {} },
             crypto: { randomUUID: () => "id" },
             os: { tmpdir: () => "/tmp/mock" },
@@ -71,7 +74,7 @@ describe("File IO helpers", () => {
             assert.isTrue(doneSpy.calledOnce);
             done();
         });
-        const { CleanUpFiles } = proxyquire("../src/file-io", {
+        const { CleanUpFiles } = proxyquire("../src/file-io.js", {
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {} },
             crypto: { randomUUID: () => "id" },
             os: { tmpdir: () => "/tmp/mock" },

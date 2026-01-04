@@ -10,6 +10,14 @@ module.exports = {
         ecmaVersion: 2021,
         sourceType: "script"
     },
+    overrides: [
+        {
+            files: ["**/*.mjs"],
+            parserOptions: {
+                sourceType: "module"
+            }
+        }
+    ],
     rules: {
         "no-console": "off"
     }

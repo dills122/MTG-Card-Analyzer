@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "allowJs": true,
+        "checkJs": false,
+        "noEmit": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
+        "types": ["node"]
+    },
+    "include": [
+        "index.js",
+        "src/**/*",
+        "test/**/*",
+        "secure.config.js",
+        "secure.config.template.js"
+    ],
+    "exclude": ["node_modules", "dist", "coverage"]
+}

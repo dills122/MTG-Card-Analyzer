@@ -1,7 +1,11 @@
-const path = require("path");
-const { assert } = require("chai");
-const sinon = require("sinon");
+import { assert } from "chai";
+import sinon from "sinon";
+import { createRequire } from "module";
+import { fileURLToPath } from "url";
+
+const require = createRequire(import.meta.url);
 const proxyquire = require("proxyquire").noCallThru();
+const indexModulePath = require.resolve(fileURLToPath(new URL("../index.js", import.meta.url)));
 
 describe("CLI::index.js", () => {
     let sandbox;
@@ -16,19 +20,15 @@ describe("CLI::index.js", () => {
 
     afterEach(() => {
         sandbox.restore();
-        delete require.cache[require.resolve(path.resolve(__dirname, "..", "index.js"))];
+        delete require.cache[indexModulePath];
     });
 
-    function loadIndexWith(cliReturnOverrides = {}, fsAccessImpl) {
-        const meowStub = sandbox.stub().returns(
-            Object.assign(
-                {
-                    input: [],
-                    flags: {}
-                },
-                cliReturnOverrides
-            )
-        );
+    async function loadIndexWith(cliReturnOverrides = {}, fsAccessImpl) {
+        const meowStub = sandbox.stub().returns({
+            input: [],
+            flags: {},
+            ...cliReturnOverrides
+        });
 
         const fsStub = {
             access: fsAccessImpl
@@ -44,7 +44,7 @@ describe("CLI::index.js", () => {
             execute: executeStub
         });
 
-        proxyquire(path.resolve(__dirname, "..", "index.js"), {
+        proxyquire("../index.js", {
             meow: meowStub,
             fs: fsStub,
             "./src/processor/index": { Processor: { create: processorCreateStub } }
@@ -53,20 +53,20 @@ describe("CLI::index.js", () => {
         return { meowStub, executeStub, processorCreateStub };
     }
 
-    it("prints help when no command provided", () => {
-        loadIndexWith();
+    it("prints help when no command provided", async () => {
+        await loadIndexWith();
         assert.isTrue(consoleLogStub.calledWith("Try running --help for more info"));
         assert.isFalse(processExitStub.called);
     });
 
-    it("prints error for unknown command", () => {
-        loadIndexWith({ input: ["unknown"] });
+    it("prints error for unknown command", async () => {
+        await loadIndexWith({ input: ["unknown"] });
         assert.isTrue(consoleLogStub.calledWith("Command not found"));
         assert.isFalse(processExitStub.called);
     });
 
     it("invokes Processor for scan command with defaults and exits", async () => {
-        const { processorCreateStub, executeStub } = loadIndexWith({
+        const { processorCreateStub, executeStub } = await loadIndexWith({
             input: ["scan", "./some-path.jpg"],
             flags: { q: false, query: false, p: true, pretty: true }
         });
