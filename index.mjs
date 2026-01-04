@@ -1,39 +1,52 @@
-import meow from "meow";
 import { access } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { Command } from "commander";
 import processorModule from "./src/processor/index.mjs";
 
 const { Processor } = processorModule;
 
-const usage = `
-        Usage
-        $ scan <filePath>
+function buildCli(argv) {
+    const program = new Command();
+    const parsed = {
+        filePath: "",
+        flags: {},
+        helpRequested: false
+    };
 
-        Options
-        --query, -q  Enable DB writes (off by default)
-        --pretty, -p Pretty logging (on by default)
+    program.showHelpAfterError();
+    program.showSuggestionAfterError();
+    program.exitOverride();
 
-        Examples
-        $ scan .\\img-path --query
-    `;
+    program
+        .command("scan")
+        .argument("<filePath>")
+        .description("Scan an image file and process MTG card info")
+        .option("-q, --query", "Enable DB writes (off by default)", false)
+        .option("-p, --pretty", "Pretty logging (on by default)", true)
+        .action((filePath, options) => {
+            parsed.filePath = filePath;
+            parsed.flags = options || {};
+        });
 
-function buildCli(meowImpl, argv) {
-    return meowImpl(usage, {
-        importMeta: import.meta,
-        argv,
-        flags: {
-            query: {
-                type: "boolean",
-                alias: "q",
-                default: false
-            },
-            pretty: {
-                type: "boolean",
-                alias: "p",
-                default: true
-            }
+    program.addHelpText(
+        "after",
+        `
+Examples:
+  $ scan ./img-path --query
+`
+    );
+
+    try {
+        program.parse(argv, { from: "user" });
+    } catch (err) {
+        if (err.code === "commander.helpDisplayed") {
+            parsed.helpRequested = true;
+        } else {
+            throw err;
         }
-    });
+    }
+
+    return parsed;
 }
 
 async function ensureFileAccessible(accessFn, filePath) {
@@ -54,53 +67,45 @@ async function executeProcessor(processor) {
 export async function run(options = {}) {
     const {
         argv = process.argv.slice(2),
-        meowImpl = meow,
+        commanderFactory = buildCli,
         fsAccess = access,
         processorFactory = Processor.create,
         exit = process.exit,
         logger = console
     } = options;
 
-    const cli = buildCli(meowImpl, argv);
+    const normalizedArgv = argv[0] === "scan" ? argv : ["scan", ...argv];
 
-    const cmd = cli.input[0] || "";
-    const filePath = cli.input[1] || "";
+    const cli = await commanderFactory(normalizedArgv);
+    const filePath = cli.filePath;
     const flags = cli.flags || {};
 
-    if (cli.input.length === 0) {
+    if (cli.helpRequested || !filePath) {
         logger.log("Try running --help for more info");
         return;
     }
 
-    switch (cmd) {
-        case "scan": {
-            try {
-                await ensureFileAccessible(fsAccess, filePath);
-            } catch (err) {
-                logger.log(err?.message || String(err));
-                return;
-            }
+    try {
+        await ensureFileAccessible(fsAccess, filePath);
+    } catch (err) {
+        logger.log(err?.message || String(err));
+        return;
+    }
 
-            const queryingEnabled = Boolean(flags.q ?? flags.query);
-            const prettyFlag = flags.p ?? flags.pretty;
-            const processor = processorFactory({
-                filePath,
-                queryingEnabled,
-                isPretty: prettyFlag === undefined ? true : Boolean(prettyFlag)
-            });
+    const queryingEnabled = Boolean(flags.q ?? flags.query);
+    const prettyFlag = flags.p ?? flags.pretty;
+    const processor = processorFactory({
+        filePath,
+        queryingEnabled,
+        isPretty: prettyFlag === undefined ? true : Boolean(prettyFlag)
+    });
 
-            try {
-                await executeProcessor(processor);
-                exit(0);
-            } catch (err) {
-                logger.log(err);
-                exit(1);
-            }
-            return;
-        }
-        default: {
-            logger.log("Command not found");
-        }
+    try {
+        await executeProcessor(processor);
+        exit(0);
+    } catch (err) {
+        logger.log(err);
+        exit(1);
     }
 }
 

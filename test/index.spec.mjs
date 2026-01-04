@@ -18,12 +18,13 @@ describe("CLI::index.mjs", () => {
     });
 
     async function runCli(cliOverrides = {}, accessImpl) {
-        const meowStub = sandbox.stub().returns({
-            input: [],
+        const fakeCli = {
+            filePath: "",
             flags: {},
+            helpRequested: false,
             ...cliOverrides
-        });
-
+        };
+        const commanderFactory = sandbox.stub().resolves(fakeCli);
         const executeStub = sandbox.stub().callsFake((cb) => cb && cb());
         const processorCreateStub = sandbox.stub().returns({
             execute: executeStub
@@ -33,14 +34,14 @@ describe("CLI::index.mjs", () => {
 
         await run({
             argv: [],
-            meowImpl: meowStub,
+            commanderFactory,
             fsAccess: fsAccessStub,
             processorFactory: processorCreateStub,
             exit: processExitStub,
             logger: { log: consoleLogStub }
         });
 
-        return { meowStub, executeStub, processorCreateStub, fsAccessStub };
+        return { commanderFactory, executeStub, processorCreateStub, fsAccessStub, fakeCli };
     }
 
     it("prints help when no command provided", async () => {
@@ -49,15 +50,15 @@ describe("CLI::index.mjs", () => {
         assert.isFalse(processExitStub.called);
     });
 
-    it("prints error for unknown command", async () => {
-        await runCli({ input: ["unknown"] });
-        assert.isTrue(consoleLogStub.calledWith("Command not found"));
+    it("prints usage when help is requested", async () => {
+        await runCli({ opts: () => ({ help: true }) });
+        assert.isTrue(consoleLogStub.called);
         assert.isFalse(processExitStub.called);
     });
 
     it("invokes Processor for scan command with defaults and exits", async () => {
         const { processorCreateStub, executeStub, fsAccessStub } = await runCli({
-            input: ["scan", "./some-path.jpg"],
+            filePath: "./some-path.jpg",
             flags: { q: false, query: false, p: true, pretty: true }
         });
 

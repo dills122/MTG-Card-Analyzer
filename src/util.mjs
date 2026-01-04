@@ -1,6 +1,6 @@
 import txtUtil from "clean-text-utils";
-import logger from "./logger/log.mjs";
 import { createRequire } from "node:module";
+import logger from "./logger/log.mjs";
 
 const require = createRequire(import.meta.url);
 const logInstance = logger.create({
@@ -17,7 +17,8 @@ function cleanString(string) {
 function requireF(modulePath) {
     try {
         return require(modulePath);
-    } catch (e) {
+        // eslint-disable-next-line no-unused-vars
+    } catch (err) {
         logInstance.error(`requireF(): The file "${modulePath}".js could not be loaded.`);
         return false;
     }

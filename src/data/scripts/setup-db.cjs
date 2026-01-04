@@ -9,6 +9,7 @@ let secureConfig;
 try {
     secureConfig = require(secureConfigPath);
 } catch (err) {
+    console.error(err);
     secureConfig = null;
 }
 
