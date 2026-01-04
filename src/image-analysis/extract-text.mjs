@@ -82,7 +82,8 @@ async function runCandidate(candidate, type) {
 
 function getTesseractConfig(type, psm) {
     return {
-        tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,'- ",
+        tessedit_char_whitelist:
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,'- ",
         preserve_interword_spaces: "1",
         tessedit_pageseg_mode: resolvePsm(psm, type),
         oem: 1
@@ -115,17 +116,17 @@ function normalizeOcrText(text) {
 }
 
 function selectBestResult(results) {
-    return results.reduce(
-        (best, current) => {
-            if (!best) return current;
-            if (current.confidence > best.confidence) return current;
-            if (current.confidence === best.confidence && current.cleanText.length > best.cleanText.length) {
-                return current;
-            }
-            return best;
-        },
-        results[0]
-    );
+    return results.reduce((best, current) => {
+        if (!best) return current;
+        if (current.confidence > best.confidence) return current;
+        if (
+            current.confidence === best.confidence &&
+            current.cleanText.length > best.cleanText.length
+        ) {
+            return current;
+        }
+        return best;
+    }, results[0]);
 }
 
 function ShutDown() {

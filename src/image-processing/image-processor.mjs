@@ -66,7 +66,9 @@ class ImageProcessor {
                     this.results = extractResults;
                     try {
                         if (extractResults?.bestVariant?.buffer && this.directory) {
-                            this.imagePath = await this.persistBestVariant(extractResults.bestVariant.buffer);
+                            this.imagePath = await this.persistBestVariant(
+                                extractResults.bestVariant.buffer
+                            );
                         }
                     } catch (writeErr) {
                         return reject(writeErr);

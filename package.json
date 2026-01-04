@@ -12,6 +12,7 @@
     "scripts": {
         "test": "mocha \"./test/**/*.spec.mjs\"",
         "lint": "eslint . --ext js,mjs",
+        "lint-staged": "lint-staged",
         "prettier:check": "prettier --check \"**/*.{js,mjs,ts,tsx,md,json,yml,yaml}\"",
         "prettier:write": "prettier --write \"**/*.{js,mjs,ts,tsx,md,json,yml,yaml}\"",
         "typecheck": "tsc --noEmit",
@@ -57,6 +58,7 @@
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.0.0",
         "lefthook": "^2.0.13",
+        "lint-staged": "^16.2.7",
         "mocha": "^11.7.5",
         "prettier": "^3.7.4",
         "proxyquire": "^2.1.3",

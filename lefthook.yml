@@ -1,9 +1,5 @@
 pre-commit:
-    parallel: true
+    parallel: false
     commands:
-        lint:
-            run: pnpm lint
-        prettier:
-            stage_fixed: true
-            glob: "*.{js,ts,jsx,tsx,md,json}"
-            run: pnpm prettier:write {staged_files}
+        lint-staged:
+            run: pnpm lint-staged

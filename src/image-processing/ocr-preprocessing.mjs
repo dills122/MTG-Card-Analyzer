@@ -20,18 +20,74 @@ const preprocessConfig = {
 // Region templates focus on likely text bands (top name line, lower type line, and fallbacks).
 const regionTemplates = {
     name: [
-        { key: "name-core", leftPercent: 0.08, topPercent: 0.05, widthPercent: 0.78, heightPercent: 0.065, psm: "line" },
-        { key: "name-wide", leftPercent: 0.05, topPercent: 0.045, widthPercent: 0.9, heightPercent: 0.08, psm: "line" },
-        { key: "top-band", leftPercent: 0.05, topPercent: 0.03, widthPercent: 0.9, heightPercent: 0.12, psm: "block" }
+        {
+            key: "name-core",
+            leftPercent: 0.08,
+            topPercent: 0.05,
+            widthPercent: 0.78,
+            heightPercent: 0.065,
+            psm: "line"
+        },
+        {
+            key: "name-wide",
+            leftPercent: 0.05,
+            topPercent: 0.045,
+            widthPercent: 0.9,
+            heightPercent: 0.08,
+            psm: "line"
+        },
+        {
+            key: "top-band",
+            leftPercent: 0.05,
+            topPercent: 0.03,
+            widthPercent: 0.9,
+            heightPercent: 0.12,
+            psm: "block"
+        }
     ],
     type: [
-        { key: "type-core", leftPercent: 0.08, topPercent: 0.565, widthPercent: 0.78, heightPercent: 0.08, psm: "line" },
-        { key: "type-wide", leftPercent: 0.05, topPercent: 0.54, widthPercent: 0.9, heightPercent: 0.1, psm: "block" },
-        { key: "lower-band", leftPercent: 0.05, topPercent: 0.6, widthPercent: 0.9, heightPercent: 0.14, psm: "sparse" }
+        {
+            key: "type-core",
+            leftPercent: 0.08,
+            topPercent: 0.565,
+            widthPercent: 0.78,
+            heightPercent: 0.08,
+            psm: "line"
+        },
+        {
+            key: "type-wide",
+            leftPercent: 0.05,
+            topPercent: 0.54,
+            widthPercent: 0.9,
+            heightPercent: 0.1,
+            psm: "block"
+        },
+        {
+            key: "lower-band",
+            leftPercent: 0.05,
+            topPercent: 0.6,
+            widthPercent: 0.9,
+            heightPercent: 0.14,
+            psm: "sparse"
+        }
     ],
     default: [
-        { key: "top-strip", leftPercent: 0.05, topPercent: 0.05, widthPercent: 0.9, heightPercent: 0.15, psm: "block" },
-        { key: "bottom-strip", leftPercent: 0.05, topPercent: 0.75, widthPercent: 0.9, heightPercent: 0.2, psm: "sparse" }
+        {
+            key: "top-strip",
+            leftPercent: 0.05,
+            topPercent: 0.05,
+            widthPercent: 0.9,
+            heightPercent: 0.15,
+            psm: "block"
+        },
+        {
+            key: "bottom-strip",
+            leftPercent: 0.05,
+            topPercent: 0.75,
+            widthPercent: 0.9,
+            heightPercent: 0.2,
+            psm: "sparse"
+        }
     ]
 };
 
@@ -45,7 +101,10 @@ const regionTemplates = {
 async function prepareOcrVariants(imgPath, type, options = {}) {
     const { directory } = options;
     const dimensions = await GetImageDimensions(imgPath);
-    if (dimensions.width < preprocessConfig.minSourceWidth || dimensions.height < preprocessConfig.minSourceHeight) {
+    if (
+        dimensions.width < preprocessConfig.minSourceWidth ||
+        dimensions.height < preprocessConfig.minSourceHeight
+    ) {
         throw new Error("Image is to small");
     }
 
@@ -91,7 +150,11 @@ function percentToPixels(region, dimensions) {
 }
 
 async function cropAndPreprocess(baseImage, region) {
-    const { left, top, width, height } = clampToImage(region, baseImage.bitmap.width, baseImage.bitmap.height);
+    const { left, top, width, height } = clampToImage(
+        region,
+        baseImage.bitmap.width,
+        baseImage.bitmap.height
+    );
     const cropped = baseImage.clone().crop(left, top, width, height);
     return buildOcrImage(cropped);
 }
@@ -113,9 +176,19 @@ function clampToImage(region, width, height) {
  * OCR-friendly preprocessing: grayscale -> normalize -> blur -> upscale -> threshold -> invert -> sharpen.
  */
 async function buildOcrImage(img) {
-    let working = img.clone().greyscale().normalize().contrast(preprocessConfig.contrast).brightness(preprocessConfig.brightness);
+    let working = img
+        .clone()
+        .greyscale()
+        .normalize()
+        .contrast(preprocessConfig.contrast)
+        .brightness(preprocessConfig.brightness);
     working = working.gaussian(preprocessConfig.blur);
-    working = await padAndScale(working, preprocessConfig.padding, preprocessConfig.scaleFactor, preprocessConfig.minOutputWidth);
+    working = await padAndScale(
+        working,
+        preprocessConfig.padding,
+        preprocessConfig.scaleFactor,
+        preprocessConfig.minOutputWidth
+    );
 
     const threshold = computeOtsuThreshold(working);
     working = applyThreshold(working, threshold);
@@ -129,7 +202,11 @@ async function buildOcrImage(img) {
 }
 
 async function padAndScale(img, padding, scaleFactor, minWidth) {
-    const padded = await new jimp(img.bitmap.width + padding * 2, img.bitmap.height + padding * 2, 0xffffffff);
+    const padded = await new jimp(
+        img.bitmap.width + padding * 2,
+        img.bitmap.height + padding * 2,
+        0xffffffff
+    );
     padded.composite(img, padding, padding);
     const targetWidth = Math.max(minWidth, Math.round(padded.bitmap.width * scaleFactor));
     padded.resize(targetWidth, jimp.AUTO);

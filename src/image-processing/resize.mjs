@@ -75,7 +75,10 @@ async function GetImageSnippetTmpFile(imgPath, directory, type) {
  */
 async function buildSnippetImage(imgPath, type) {
     const dimensions = await GetImageDimensions(imgPath);
-    if (dimensions.width < preprocessConfig.minSourceWidth || dimensions.height < preprocessConfig.minSourceHeight) {
+    if (
+        dimensions.width < preprocessConfig.minSourceWidth ||
+        dimensions.height < preprocessConfig.minSourceHeight
+    ) {
         throw new Error("Image is to small");
     }
     const alteredDimensions = GetAlteredDimensions(dimensions, type);
@@ -133,12 +136,7 @@ function cropper(img, dimensions) {
  * Normalize for OCR: grayscale -> denoise -> threshold -> morph -> pad/scale -> sharpen.
  */
 async function enhanceForOcr(img) {
-    img = img
-        .greyscale()
-        .normalize()
-        .contrast(0.25)
-        .brightness(0.05)
-        .gaussian(1); // light blur to reduce noise before thresholding
+    img = img.greyscale().normalize().contrast(0.25).brightness(0.05).gaussian(1); // light blur to reduce noise before thresholding
 
     const threshold = computeOtsuThreshold(img);
     img = applyThreshold(img, threshold);
@@ -278,7 +276,10 @@ async function padAndScale(img, padding, minWidth) {
         0xffffffff
     );
     padded.composite(img, padding, padding);
-    const targetWidth = Math.max(minWidth, Math.round(padded.bitmap.width * preprocessConfig.scaleFactor));
+    const targetWidth = Math.max(
+        minWidth,
+        Math.round(padded.bitmap.width * preprocessConfig.scaleFactor)
+    );
     padded.resize(targetWidth, jimp.AUTO);
     return padded;
 }
