@@ -70,8 +70,8 @@ importers:
         specifier: ^9.39.2
         version: 9.39.2
       '@types/node':
-        specifier: ^18.19.130
-        version: 18.19.130
+        specifier: ^25.0.10
+        version: 25.0.10
       chai:
         specifier: ^6.2.2
         version: 6.2.2
@@ -447,8 +447,8 @@ packages:
   '@types/node@16.9.1':
     resolution: {integrity: sha512-QpLcX9ZSsq3YYUUnD3nFDY8H7wctAhQj/TFKL8Ya8v5fMm3CFXxo8zStsLAl780ltoYoo1WvKUVGBQK+1ifr7g==}
 
-  '@types/node@18.19.130':
-    resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
+  '@types/node@25.0.10':
+    resolution: {integrity: sha512-zWW5KPngR/yvakJgGOmZ5vTBemDoSqF3AcV/LrO5u5wTWyEAVVh+IT39G4gtyAkh3CtTZs8aX/yRM82OfzHJRg==}
 
   '@yetzt/binary-search-tree@0.2.6':
     resolution: {integrity: sha512-e/8wt8AAumI8VK5sv09b3IgWuRoblXJ5z0SQYfrL2nap89oKihvVaP1zy3FzD5NaeRi1X0gdXZA9lB3QAZILBg==}
@@ -1554,8 +1554,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  undici-types@5.26.5:
-    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+  undici-types@7.16.0:
+    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
@@ -2057,9 +2057,9 @@ snapshots:
 
   '@types/node@16.9.1': {}
 
-  '@types/node@18.19.130':
+  '@types/node@25.0.10':
     dependencies:
-      undici-types: 5.26.5
+      undici-types: 7.16.0
 
   '@yetzt/binary-search-tree@0.2.6': {}
 
@@ -3148,7 +3148,7 @@ snapshots:
 
   typescript@5.9.3: {}
 
-  undici-types@5.26.5: {}
+  undici-types@7.16.0: {}
 
   uri-js@4.4.1:
     dependencies:
