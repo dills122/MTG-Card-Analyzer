@@ -40,7 +40,7 @@
         "image-to-base64": "^2.2.0",
         "jimp": "^0.22.12",
         "joi": "^18.0.2",
-        "lodash": "^4.17.21",
+        "lodash": "^4.17.23",
         "mysql2": "^3.16.0",
         "request": "^2.88.0",
         "request-promise-native": "^1.0.7",
