@@ -1,5 +1,11 @@
 ---
 exclude_paths:
-    - "**/*.md"
+    - "README.md"
+    - "Readme.md"
+    - "readme.md"
+    - "**/README.md"
+    - "**/Readme.md"
+    - "**/readme.md"
     - "src/test-images/**"
     - "node_modules/**"
+    - "tmp/**"
