@@ -37,6 +37,9 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            - name: Lint + Format + Types
+              run: pnpm check:fast
+
             - name: Test
               run: pnpm test
     dot_only_linter_job:

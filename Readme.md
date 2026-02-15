@@ -128,6 +128,31 @@ npm test
 
 Tests stub external calls; no MySQL required.
 
+### Quality Commands
+
+```bash
+# Lint only
+pnpm lint
+
+# Auto-fix lint issues where possible
+pnpm lint:fix
+
+# Check formatting
+pnpm prettier:check
+
+# Write formatting fixes
+pnpm format
+
+# Type checking (no emit)
+pnpm typecheck
+
+# Fast quality gate (lint + prettier + typecheck)
+pnpm check:fast
+
+# Full local gate (check:fast + tests)
+pnpm check
+```
+
 ### MySQL / RDS (Optional, Legacy)
 
 MySQL scripts and modules still exist in `src/rds` and `src/data/scripts/sql`, but the default runtime path is local-first NeDB. Treat RDS as optional/legacy until sync/backup mode is formalized.
