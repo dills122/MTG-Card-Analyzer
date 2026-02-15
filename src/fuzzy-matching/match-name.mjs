@@ -2,7 +2,7 @@ import _ from "lodash";
 import joi from "joi";
 import FuzzySet from "fuzzyset.js";
 import logger from "../logger/log.mjs";
-import dbLocal from "../db-local/index.mjs";
+import storage from "../storage/index.mjs";
 import { cleanString } from "../util.mjs";
 
 const config = {
@@ -12,7 +12,7 @@ const config = {
 };
 
 const dependencies = {
-    GetNames: dbLocal.GetBulkNames
+    GetNames: storage.names.getAll
 };
 
 const schema = joi.object().keys({
@@ -50,14 +50,7 @@ class MatchName {
     }
 
     async gatherInitialResults() {
-        const names = await new Promise((resolve, reject) => {
-            dependencies.GetNames((err, rows) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve(rows);
-            });
-        });
+        const names = await dependencies.GetNames();
         const filteredNames = this.filteredNames(names);
         const fuzzy = FuzzySet(filteredNames);
         const normalizedQuery = normalizeForMatch(this.cleanText);

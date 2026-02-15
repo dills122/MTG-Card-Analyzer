@@ -40,8 +40,8 @@ describe("ProcessHashes fallback behavior", () => {
                     CompareHash: compareHashStub
                 },
                 CardHashes: {
-                    GetHashes: sandbox.stub().callsArgWith(1, null, []),
-                    InsertEntity: sandbox.stub().returns()
+                    getByCardName: sandbox.stub().resolves([]),
+                    upsert: sandbox.stub().returns()
                 }
             },
             logger: {

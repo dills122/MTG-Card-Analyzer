@@ -11,7 +11,7 @@ describe("FuzzyMatching::", () => {
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
-        stubs.BulkNamesStub = sandbox.stub(dependencies, "GetNames").callsArgWith(0, null, [
+        stubs.BulkNamesStub = sandbox.stub(dependencies, "GetNames").resolves([
             {
                 name: "Legion's Landing // Adanto, the First Fort"
             },

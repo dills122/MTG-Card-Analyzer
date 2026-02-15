@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import jimp from "jimp";
 import logger from "../logger/log.mjs";
 import joi from "joi";
-import dbLocal from "../db-local/index.mjs";
+import storage from "../storage/index.mjs";
 import imageHashing from "../image-hashing/index.mjs";
 import FileIO from "../file-io.mjs";
 
@@ -26,7 +26,7 @@ const config = {
 };
 
 const defaultDependencies = {
-    CardHashes: dbLocal.CardHashes,
+    CardHashes: storage.hashes,
     Hash: imageHashing.Hash,
     CreateDirectory: FileIO.CreateDirectory,
     CleanUpFiles: FileIO.CleanUpFiles
@@ -60,14 +60,7 @@ class ProcessHashes {
 
     async compareDbHashes() {
         this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
-        const hashes = await new Promise((resolve, reject) => {
-            this.dependencies.CardHashes.GetHashes(this.name, (err, results) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve(results);
-            });
-        });
+        const hashes = await this.dependencies.CardHashes.getByCardName(this.name);
         const matches = [];
         hashes.forEach((dbHash) => {
             const compareResults = this.dependencies.Hash.CompareHash(
@@ -257,7 +250,7 @@ class ProcessHashes {
     }
 
     _insertCardHash(setName, hash) {
-        this.dependencies.CardHashes.InsertEntity({
+        this.dependencies.CardHashes.upsert({
             Name: this.name,
             SetName: setName,
             CardHash: hash

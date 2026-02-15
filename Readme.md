@@ -97,6 +97,15 @@ node index.mjs scan ./src/test-images/PlatinumAngel.jpg
     - a full `.db` file path.
 - Temp image snippets are written to system temp and cleaned up per run.
 
+### Storage Adapter
+
+- The app now uses a storage abstraction layer.
+- Default adapter: `nedb`
+- Alternate adapter available: `rds` (legacy/optional)
+- Select adapter with:
+    - `STORAGE_ADAPTER=nedb` (default)
+    - `STORAGE_ADAPTER=rds`
+
 Test images are provided at `src\test-images`
 
 Backfiller utility instructions found [here](https://github.com/dills122/MTG-Card-Analyzer/wiki/Backfiller)

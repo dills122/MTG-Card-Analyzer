@@ -1,11 +1,9 @@
 import _ from "lodash";
-import { promisify } from "node:util";
-import dbLocal from "./db-local/index.mjs";
+import storage from "./storage/index.mjs";
 import scryfall from "./scryfall-api/index.mjs";
 import imageHashing from "./image-hashing/index.mjs";
 
-const { GetBulkNames } = dbLocal;
-const { CardHashes } = dbLocal;
+const { names: NamesStore, hashes: HashesStore } = storage;
 const { Search } = scryfall;
 const { Hash } = imageHashing;
 
@@ -16,7 +14,14 @@ async function backFillCardHashes(cardName) {
         const cards = searchResults.data || [];
         for (const card of cards) {
             const imageUris = card.image_uris || {};
-            const cardHash = await promisify(Hash.HashImage)(imageUris.normal);
+            const cardHash = await new Promise((resolve, reject) => {
+                Hash.HashImage(imageUris.normal, (err, hash) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    return resolve(hash);
+                });
+            });
             cardHashes.push({
                 cardName: card.name,
                 setName: card.set_name,
@@ -27,7 +32,7 @@ async function backFillCardHashes(cardName) {
         }
         cardHashes = _.uniq(cardHashes);
         if (cardHashes.length > 0) {
-            cardHashes.forEach((hash) => CardHashes.InsertEntity(hash));
+            cardHashes.forEach((hash) => HashesStore.upsert(hash));
         }
         return true;
     } catch (err) {
@@ -37,7 +42,7 @@ async function backFillCardHashes(cardName) {
 }
 
 async function backFillMatchingCards() {
-    const names = await promisify(GetBulkNames)();
+    const names = await NamesStore.getAll();
     for (const { name } of names) {
         await backFillCardHashes(name);
     }

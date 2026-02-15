@@ -3,13 +3,13 @@ import { assert } from "chai";
 import sinon from "sinon";
 import _ from "lodash";
 import exportProcessor from "../../src/export-processor/index.mjs";
-import dbLocal from "../../src/db-local/index.mjs";
+import storage from "../../src/storage/index.mjs";
 import imageHashing from "../../src/image-hashing/index.mjs";
 
 process.env.CARD_NAMES_DB_PATH = os.tmpdir();
 
 const { ProcessHashes } = exportProcessor;
-const { CardHashes } = dbLocal;
+const CardHashes = storage.hashes;
 const { Hash } = imageHashing;
 
 const FAKE_HASH = "THISISANEXAMPLEOFAFAKEHASHEEEEEE";
@@ -38,7 +38,7 @@ describe("Integration::", () => {
         let stubs = {};
 
         beforeEach(() => {
-            stubs.getHashesStub = sandbox.stub(CardHashes, "GetHashes").callsArgWith(1, null, [
+            stubs.getHashesStub = sandbox.stub(CardHashes, "getByCardName").resolves([
                 {
                     cardHash: FAKE_HASH,
                     setName: FAKE_SET
@@ -140,7 +140,7 @@ describe("Integration::", () => {
         it("Should insert remote hash records with correct set + hash mapping when querying enabled", async () => {
             stubs.insertHashStub.restore();
             stubs.hashImageStub = sandbox.stub(Hash, "HashImage").callsArgWith(1, null, FAKE_HASH);
-            stubs.insertEntityStub = sandbox.stub(CardHashes, "InsertEntity").returns();
+            stubs.insertEntityStub = sandbox.stub(CardHashes, "upsert").returns();
 
             let hasher = ProcessHashes.create({
                 cards: [
