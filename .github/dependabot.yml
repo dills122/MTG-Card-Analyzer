@@ -8,6 +8,7 @@ updates:
     - package-ecosystem: "npm" # See documentation for possible values
       directory: "/" # Location of package manifests
       schedule:
-          interval: "daily"
+          interval: "monthly"
       ignore:
-          - dependency-name: "meow"
+          # need to handle this upgrade on its own
+          - dependency-name: "tesseract.js"
