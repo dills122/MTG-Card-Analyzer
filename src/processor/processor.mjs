@@ -1,6 +1,6 @@
 import async from "async";
 import _ from "lodash";
-import { callbackify } from "node:util";
+import { callbackify, inspect } from "node:util";
 import joi from "joi";
 import logger from "../logger/log.mjs";
 import imageProcessing from "../image-processing/index.mjs";
@@ -103,16 +103,19 @@ class ProcessorClass {
         async.each(
             this.nameMatches,
             (match, cb) => {
-                dependencies.MatchProcessor.create({
+                const matchProcessor = dependencies.MatchProcessor.create({
                     name: match.name,
-                    filePath: this.filePath
-                }).execute((err, results) => {
+                    filePath: this.filePath,
+                    queryingEnabled: this.queryingEnabled
+                });
+                matchProcessor.execute((err, results) => {
                     if (err) {
                         return cb(err);
                     }
                     this.matcherResults.push({
                         name: match.name,
-                        sets: results
+                        sets: results,
+                        setVerificationLinks: matchProcessor.matchResultDetails || []
                     });
                     return cb();
                 });
@@ -125,7 +128,15 @@ class ProcessorClass {
                     return callback(new Error("No matches found"));
                 }
                 if (!this.queryingEnabled) {
-                    this.logger.info("Final results:", this.matcherResults);
+                    this.logger.info("Final results:");
+                    // Print user-facing results in a readable object format.
+                    console.log(
+                        inspect(this.matcherResults, {
+                            depth: null,
+                            colors: false,
+                            compact: false
+                        })
+                    );
                     return callback();
                 }
                 if (this.matcherResults.length === 1) {
