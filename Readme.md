@@ -3,9 +3,9 @@
 [![CI Job](https://github.com/dills122/MTG-Card-Analyzer/actions/workflows/ci.action.yml/badge.svg)](https://github.com/dills122/MTG-Card-Analyzer/actions/workflows/ci.action.yml)
 [![CodeFactor](https://www.codefactor.io/repository/github/dills122/mtg-card-analyzer/badge)](https://www.codefactor.io/repository/github/dills122/mtg-card-analyzer)
 
-A collectors dream application, that gives you the ability to take pictures of your cards and have them instantly be recognized and added to your collection. This app will scan each image uploaded attempt to grab the name of the card and analyze the set image in an attempt to match it with a given set.
+A local-first MTG card scanner for OCR + fuzzy name matching + image-hash set matching. The app scans a card image, extracts the name, finds likely card prints, and uses local caching to improve match speed/quality over time.
 
-> Status (Jan 2026): runnable on Node 22 with Tesseract.js v3; OCR + fuzzy matching + image hashing work. DB writes are now opt-in (off by default) while we stabilize.
+> Status (Feb 2026): runnable on Node 22 with Tesseract.js v3; OCR + fuzzy matching + image hashing work. The default runtime is local-first using NeDB caches.
 
 ## Example
 
@@ -61,42 +61,16 @@ More examples are available [here](https://github.com/dills122/mtg-card-analyzer
 
 - Node 22
 - Tesseract.js v3 (npm dependency) with `eng.traineddata` available (an English traineddata is bundled at repo root)
-- Optional: MySQL 8+ if you want to persist collections/needs-attention and hash cache
 
 ### Install
 
 - Clone: `git clone https://github.com/dills122/MTG-Card-Analyzer.git`
 - Install deps: `npm i`
-- Seed local name dictionary (NeDB): `node ./src/db-local/bulk-insert.js`
+- Seed local name dictionary (NeDB): `node ./src/db-local/bulk-insert.mjs`
 
-### Configure MySQL (optional, only if you want writes)
+### First Scan
 
-- Create an RDS instance (or local MySQL). SQL scripts live in `src/data/scripts/sql`.
-- Create `secure.config.cjs` (template: `secure.config.template.cjs`) with:
-
-```
-rds: {
-    host: '...',
-    database: '...',
-    user: '...',
-    password: '...'
-}
-```
-
-Example local container:
-
-```bash
-docker run -d --name mtg-db -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD=rootPass122! \
-  -e MYSQL_DATABASE=MtgCardCatalog \
-  -e MYSQL_USER=app_user \
-  -e MYSQL_PASSWORD=app_pass100! \
-  mysql:8.0
-```
-
-### First Test Run
-
-Once all of the setup is complete to run your first image through the processor you can use one of the test images or use the given command below.
+After install + seed, run:
 
 ```
 # Run at the base directory of the repo
@@ -107,17 +81,44 @@ node index.mjs scan ./src/test-images/PlatinumAngel.jpg
 
 - `scan <filePath>` : scan a single image and output results
     - flags:
-        - `--query` or `-q`: enable database writes (default `false`). When false, runs read-only and skips inserts.
+        - `--query` or `-q`: enable additional persistence flows used by legacy paths (default `false`).
         - `--pretty` or `-p`: pretty logging (default `true`).
 
-Notes:
+### Local Storage (NeDB)
 
-- If you want NeDB to write somewhere else (e.g., CI), set `CARD_NAMES_DB_PATH=/tmp`.
-- Temp image snippets are written to the system temp dir and cleaned up per run.
+- Name dictionary DB:
+    - env var: `CARD_NAMES_DB_PATH`
+    - file default: `cardNames.db`
+- Hash cache DB:
+    - env var: `CARD_HASH_DB_PATH` (falls back to `CARD_NAMES_DB_PATH` if unset)
+    - file default: `card-hashes.db`
+- You can set either env var to:
+    - a directory (app will append the default filename), or
+    - a full `.db` file path.
+- Temp image snippets are written to system temp and cleaned up per run.
+
+### Storage Adapter
+
+- The app now uses a storage abstraction layer.
+- Default adapter: `nedb`
+- Alternate adapter available: `rds` (legacy/optional)
+- Select adapter with:
+    - `STORAGE_ADAPTER=nedb` (default)
+    - `STORAGE_ADAPTER=rds`
 
 Test images are provided at `src\test-images`
 
 Backfiller utility instructions found [here](https://github.com/dills122/MTG-Card-Analyzer/wiki/Backfiller)
+
+### Troubleshooting
+
+- `Error: No matches found` on known cards:
+    - Usually means the local names DB is empty or pointing at the wrong path.
+    - Re-seed names: `node ./src/db-local/bulk-insert.mjs`
+    - Verify path by setting it explicitly:
+        - `CARD_NAMES_DB_PATH=/absolute/path/to/db-or-dir node index.mjs scan ./src/test-images/QueenMarchesa.png`
+- Seeing warnings from tesseract params:
+    - Those warnings are noisy but non-fatal in current runtime.
 
 ### Running Tests
 
@@ -125,7 +126,36 @@ Backfiller utility instructions found [here](https://github.com/dills122/MTG-Car
 npm test
 ```
 
-Tests stub external calls; no MySQL needed. If you set a custom NeDB path for tests, export `CARD_NAMES_DB_PATH=/tmp`.
+Tests stub external calls; no MySQL required.
+
+### Quality Commands
+
+```bash
+# Lint only
+pnpm lint
+
+# Auto-fix lint issues where possible
+pnpm lint:fix
+
+# Check formatting
+pnpm prettier:check
+
+# Write formatting fixes
+pnpm format
+
+# Type checking (no emit)
+pnpm typecheck
+
+# Fast quality gate (lint + prettier + typecheck)
+pnpm check:fast
+
+# Full local gate (check:fast + tests)
+pnpm check
+```
+
+### MySQL / RDS (Optional, Legacy)
+
+MySQL scripts and modules still exist in `src/rds` and `src/data/scripts/sql`, but the default runtime path is local-first NeDB. Treat RDS as optional/legacy until sync/backup mode is formalized.
 
 ### TypeScript Migration (incremental)
 

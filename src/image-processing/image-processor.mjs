@@ -1,12 +1,16 @@
 import _ from "lodash";
 import joi from "joi";
 import logger from "../logger/log.mjs";
-import resize from "./resize.mjs";
+import { randomUUID } from "node:crypto";
+import path from "node:path";
+import { writeFile } from "node:fs/promises";
+import ocrPreprocessor from "./ocr-preprocessing.mjs";
 import { textExtraction } from "../image-analysis/index.mjs";
 
 const defaultDependencies = {
-    resize,
-    textExtraction
+    ocrPreprocessor,
+    textExtraction,
+    writeFile
 };
 
 const schema = joi.object().keys({
@@ -41,24 +45,44 @@ class ImageProcessor {
     }
 
     cropImage() {
-        return this.dependencies.resize
-            .GetImageSnippetTmpFile(this.path, this.directory, this.type)
-            .then((imgPath) => {
-                this.imagePath = imgPath;
-                return imgPath;
+        return this.dependencies.ocrPreprocessor
+            .prepareOcrVariants(this.path, this.type, { directory: this.directory })
+            .then(({ variants, previewPath }) => {
+                this.ocrVariants = variants;
+                this.imagePath = previewPath;
+                return variants;
             });
     }
 
     extractText() {
         return new Promise((resolve, reject) => {
-            this.dependencies.textExtraction.ScanImage(this.imagePath, (err, extractResults) => {
-                if (err) {
-                    return reject(err);
+            this.dependencies.textExtraction.ScanImage(
+                this.ocrVariants || this.imagePath,
+                this.type,
+                async (err, extractResults) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    this.results = extractResults;
+                    try {
+                        if (extractResults?.bestVariant?.buffer && this.directory) {
+                            this.imagePath = await this.persistBestVariant(
+                                extractResults.bestVariant.buffer
+                            );
+                        }
+                    } catch (writeErr) {
+                        return reject(writeErr);
+                    }
+                    return resolve(this.results);
                 }
-                this.results = extractResults;
-                return resolve(this.results);
-            });
+            );
         });
+    }
+
+    async persistBestVariant(buffer) {
+        const filePath = path.join(this.directory, `${randomUUID()}.png`);
+        await this.dependencies.writeFile(filePath, buffer);
+        return filePath;
     }
 }
 

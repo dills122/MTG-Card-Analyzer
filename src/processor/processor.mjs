@@ -1,4 +1,3 @@
-import async from "async";
 import _ from "lodash";
 import { callbackify, inspect } from "node:util";
 import joi from "joi";
@@ -44,168 +43,226 @@ class ProcessorClass {
     }
 
     execute(callback) {
-        async.waterfall(
-            [
-                (next) => this.createDirectory(next),
-                (next) => this.extractName(next),
-                (next) => this.processExtractionResults(next),
-                (next) => this.attemptMatching(next)
-            ],
-            callback
-        );
+        const execution = this.executeAsync();
+        if (typeof callback === "function") {
+            execution.then(() => callback()).catch((err) => callback(err));
+            return;
+        }
+        return execution;
+    }
+
+    async executeAsync() {
+        await this.createDirectoryAsync();
+        await this.extractNameAsync();
+        await this.processExtractionResultsAsync();
+        await this.attemptMatchingAsync();
     }
 
     createDirectory(callback) {
+        const execution = this.createDirectoryAsync();
+        if (typeof callback === "function") {
+            execution.then(() => callback()).catch((err) => callback(err));
+            return;
+        }
+        return execution;
+    }
+
+    async createDirectoryAsync() {
         this.logger.info("Creating Directory");
-        dependencies.FileIO.CreateDirectory((err, directory) => {
-            if (err) {
-                return callback(err);
-            }
-            this.directory = directory;
-            return callback();
-        });
+        const directory = await dependencies.FileIO.CreateDirectory();
+        this.directory = directory;
     }
 
     extractName(callback) {
+        const execution = this.extractNameAsync();
+        if (typeof callback === "function") {
+            execution.then(() => callback()).catch((err) => callback(err));
+            return;
+        }
+        return execution;
+    }
+
+    async extractNameAsync() {
         this.logger.info("Extracting Name");
         const extractor = dependencies.ImageProcessor.create({
             path: this.filePath,
             type: "name",
             directory: this.directory
         });
-        extractor.extract((err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            this.nameExtractionImagePath = extractor.imagePath;
-            this.nameExtractionResults = results;
-            return callback();
+        const results = await new Promise((resolve, reject) => {
+            extractor.extract((err, extractedResults) => {
+                if (err) {
+                    return reject(err);
+                }
+                return resolve(extractedResults);
+            });
         });
+        this.nameExtractionImagePath = extractor.imagePath;
+        this.nameExtractionResults = results;
     }
 
     processExtractionResults(callback) {
+        const execution = this.processExtractionResultsAsync();
+        if (typeof callback === "function") {
+            execution.then(() => callback()).catch((err) => callback(err));
+            return;
+        }
+        return execution;
+    }
+
+    async processExtractionResultsAsync() {
         this.logger.info("Matching Name");
-        dependencies.MatchName.create({
+        const matchResults = await dependencies.MatchName.create({
             cleanText: this.nameExtractionResults.cleanText,
             dirtyText: this.nameExtractionResults.dirtyText
-        }).Match((err, matchResults) => {
-            if (err) {
-                return callback(err);
-            }
-            this.nameMatches = matchResults;
-            this.logger.info(`Matches returned ${this.nameMatches}`);
-            return callback();
-        });
+        }).Match();
+        this.nameMatches = matchResults;
+        this.logger.info(`Matches returned ${this.nameMatches}`);
     }
 
     attemptMatching(callback) {
+        const execution = this.attemptMatchingAsync();
+        if (typeof callback === "function") {
+            execution.then(() => callback()).catch((err) => callback(err));
+            return;
+        }
+        return execution;
+    }
+
+    async attemptMatchingAsync() {
         this.logger.info("Attempting Matching");
-        async.each(
-            this.nameMatches,
-            (match, cb) => {
-                const matchProcessor = dependencies.MatchProcessor.create({
-                    name: match.name,
-                    filePath: this.filePath,
-                    queryingEnabled: this.queryingEnabled
-                });
-                matchProcessor.execute((err, results) => {
-                    if (err) {
-                        return cb(err);
-                    }
-                    this.matcherResults.push({
-                        name: match.name,
-                        sets: results,
-                        setVerificationLinks: matchProcessor.matchResultDetails || []
-                    });
-                    return cb();
-                });
-            },
-            (err) => {
-                if (err) {
-                    return callback(err);
-                }
-                if (_.isEmpty(this.matcherResults)) {
-                    return callback(new Error("No matches found"));
-                }
-                if (!this.queryingEnabled) {
-                    this.logger.info("Final results:");
-                    // Print user-facing results in a readable object format.
-                    console.log(
-                        inspect(this.matcherResults, {
-                            depth: null,
-                            colors: false,
-                            compact: false
-                        })
-                    );
-                    return callback();
-                }
-                if (this.matcherResults.length === 1) {
-                    this.CreateCollectionsRecord(this.matcherResults[0], callback);
-                } else {
-                    async.each(
-                        this.matcherResults,
-                        (match, cb) => {
-                            this.CreateNeedsAttentionRecord(match, cb);
-                        },
-                        (asyncErr) => {
-                            if (asyncErr) {
-                                return callback(asyncErr);
-                            }
-                            return callback();
-                        }
-                    );
-                }
-            }
+        const matchResults = await Promise.all(
+            this.nameMatches.map((match) => this._attemptMatch(match))
+        );
+        this.matcherResults.push(...matchResults);
+        if (_.isEmpty(this.matcherResults)) {
+            throw new Error("No matches found");
+        }
+        if (!this.queryingEnabled) {
+            this.logger.info("Final results:");
+            // Print user-facing results in a readable object format.
+            console.log(
+                inspect(this.matcherResults, {
+                    depth: null,
+                    colors: false,
+                    compact: false
+                })
+            );
+            return;
+        }
+        if (this.matcherResults.length === 1) {
+            await this.CreateCollectionsRecordAsync(this.matcherResults[0]);
+            return;
+        }
+        await Promise.all(
+            this.matcherResults.map((matchResult) =>
+                this.CreateNeedsAttentionRecordAsync(matchResult)
+            )
         );
     }
 
-    CreateNeedsAttentionRecord(record, callback) {
-        this.logger.info("Creating Needs Attention Record");
-        dependencies.Base64(this.nameExtractionImagePath, (err, name64Image) => {
-            if (err) {
-                return callback(err);
-            }
-            const needsAttenionModel = dependencies.NeedsAttention.create({
-                cardName: record.name,
-                extractedText: this.nameExtractionResults.cleanText,
-                dirtyExtractedText: this.nameExtractionResults.dirtyText,
-                possibleSets: record.sets.join(","),
-                nameImage: name64Image
+    _attemptMatch(match) {
+        const matchProcessor = dependencies.MatchProcessor.create({
+            name: match.name,
+            filePath: this.filePath,
+            queryingEnabled: this.queryingEnabled
+        });
+        return new Promise((resolve, reject) => {
+            matchProcessor.execute((err, results) => {
+                if (err) {
+                    return reject(err);
+                }
+                return resolve({
+                    name: match.name,
+                    sets: results,
+                    setVerificationLinks: matchProcessor.matchResultDetails || []
+                });
             });
-            needsAttenionModel.Insert();
-            return callback();
         });
     }
 
+    CreateNeedsAttentionRecord(record, callback) {
+        const execution = this.CreateNeedsAttentionRecordAsync(record);
+        if (typeof callback === "function") {
+            execution.then(() => callback()).catch((err) => callback(err));
+            return;
+        }
+        return execution;
+    }
+
+    async CreateNeedsAttentionRecordAsync(record) {
+        this.logger.info("Creating Needs Attention Record");
+        const name64Image = await new Promise((resolve, reject) => {
+            dependencies.Base64(this.nameExtractionImagePath, (err, encodedImage) => {
+                if (err) {
+                    return reject(err);
+                }
+                return resolve(encodedImage);
+            });
+        });
+        const needsAttenionModel = dependencies.NeedsAttention.create({
+            cardName: record.name,
+            extractedText: this.nameExtractionResults.cleanText,
+            dirtyExtractedText: this.nameExtractionResults.dirtyText,
+            possibleSets: record.sets.join(","),
+            nameImage: name64Image
+        });
+        needsAttenionModel.Insert();
+    }
+
     CreateCollectionsRecord(record, callback) {
+        const execution = this.CreateCollectionsRecordAsync(record);
+        if (typeof callback === "function") {
+            execution.then(() => callback()).catch((err) => callback(err));
+            return;
+        }
+        return execution;
+    }
+
+    async CreateCollectionsRecordAsync(record) {
         this.logger.info("Creating Collections Record");
         const set = record.sets[0];
-        async.parallel(
-            [
-                async.apply(dependencies.RDSCollection.GetQuantity, record.name, set),
-                async.apply(dependencies.GetAdditionalCardInfo.SearchByNameExact, record.name, "")
-            ],
-            (err, results) => {
-                if (err) {
-                    this.logger.error(err);
-                    return callback(err);
-                }
-                const [qty, additionalInfo] = results;
-                const collectionsModel = dependencies.Collection.create({
-                    cardName: record.name,
-                    cardSet: set,
-                    quantity: qty,
-                    automated: true,
-                    magicId: additionalInfo.tcgplayer_id,
-                    imageUrl: additionalInfo.image_uris.normal,
-                    estValue: _.round(additionalInfo.prices.usd * qty, 4),
-                    cardType: additionalInfo.type_line
-                });
-                this.logger.info("Preparing to insert record");
-                collectionsModel.Insert();
-                return callback();
-            }
-        );
+        let qty;
+        let additionalInfo;
+        try {
+            [qty, additionalInfo] = await Promise.all([
+                new Promise((resolve, reject) => {
+                    dependencies.RDSCollection.GetQuantity(record.name, set, (err, quantity) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        return resolve(quantity);
+                    });
+                }),
+                new Promise((resolve, reject) => {
+                    dependencies.GetAdditionalCardInfo.SearchByNameExact(
+                        record.name,
+                        "",
+                        (err, info) => {
+                            if (err) {
+                                return reject(err);
+                            }
+                            return resolve(info);
+                        }
+                    );
+                })
+            ]);
+        } catch (err) {
+            this.logger.error(err);
+            throw err;
+        }
+        const collectionsModel = dependencies.Collection.create({
+            cardName: record.name,
+            cardSet: set,
+            quantity: qty,
+            automated: true,
+            magicId: additionalInfo.tcgplayer_id,
+            imageUrl: additionalInfo.image_uris.normal,
+            estValue: _.round(additionalInfo.prices.usd * qty, 4),
+            cardType: additionalInfo.type_line
+        });
+        this.logger.info("Preparing to insert record");
+        collectionsModel.Insert();
     }
 }
 

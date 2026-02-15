@@ -6,11 +6,16 @@ import logger from "../logger/log.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
 import exportProcessor from "../export-processor/index.mjs";
 import imageHashing from "../image-hashing/index.mjs";
+import imageProcessing from "../image-processing/index.mjs";
+import FileIO from "../file-io.mjs";
 
 const dependencies = {
     Searcher: callbackify(scryfallApi.Search.SearchList),
     HashProcessor: exportProcessor.ProcessHashes,
-    Hash: imageHashing.Hash.HashImage
+    Hash: imageHashing.Hash.HashImage,
+    CreateDirectory: FileIO.CreateDirectory,
+    CleanUpFiles: FileIO.CleanUpFiles,
+    GetSetSymbolSnippetTmpFile: imageProcessing.resize.GetImageSnippetTmpFile
 };
 
 const schema = joi.object().keys({
@@ -74,69 +79,103 @@ class MatcherProcessor {
 
     _hashLocalCard(callback) {
         this.logger.info(`Hashing local image ${this.filePath}`);
-        dependencies.Hash(this.filePath, (err, hash) => {
+        dependencies
+            .CreateDirectory()
+            .then((directory) => {
+                this.setSymbolDirectory = directory;
+                this._hashFromSetSymbol(directory, (hashErr) => {
+                    if (hashErr) {
+                        this.logger.error(
+                            `Set symbol crop/hash failed for ${this.filePath}; falling back to full card hash`
+                        );
+                        return this._hashFromPath(this.filePath, callback);
+                    }
+                    return callback();
+                });
+            })
+            .catch(() => {
+                return this._hashFromPath(this.filePath, callback);
+            });
+    }
+
+    _hashFromSetSymbol(directory, callback) {
+        this.logger.info(`Hashing set symbol image ${this.filePath}`);
+        dependencies
+            .GetSetSymbolSnippetTmpFile(this.filePath, directory, "set-symbol")
+            .then((setSymbolPath) => {
+                this.setSymbolImagePath = setSymbolPath;
+                dependencies.Hash(setSymbolPath, (err, hash) => {
+                    this._cleanupSetSymbolDirectory();
+                    if (err) {
+                        return callback(err);
+                    }
+                    this.hashMode = "set-symbol";
+                    this.localHash = hash;
+                    return callback();
+                });
+            })
+            .catch((err) => {
+                this._cleanupSetSymbolDirectory();
+                return callback(err);
+            });
+    }
+
+    _hashFromPath(filePath, callback) {
+        dependencies.Hash(filePath, (err, hash) => {
             if (err) {
                 return callback(err);
             }
+            this.hashMode = "full-card";
             this.localHash = hash;
             return callback();
         });
     }
 
+    _cleanupSetSymbolDirectory() {
+        if (!this.setSymbolDirectory) {
+            return;
+        }
+        const dir = this.setSymbolDirectory;
+        this.setSymbolDirectory = "";
+        dependencies.CleanUpFiles(dir).catch(() => {});
+    }
+
     _processMultiSetMatches(callback) {
+        const execution = this._processMultiSetMatchesAsync();
+        execution.then((results) => callback(null, results)).catch((err) => callback(err));
+    }
+
+    async _processMultiSetMatchesAsync() {
         const processHashes = dependencies.HashProcessor.create({
             name: this.name,
             cards: this.cards,
             localHash: this.localHash,
+            hashMode: this.hashMode || "full-card",
             queryingEnabled: this.queryingEnabled,
             ignoreNoDbMatch: true,
             allowRemoteBestGuess: true
         });
         this.logger.info("Processing multi set matches");
-        const shouldQueryDb = Boolean(this.queryingEnabled);
-        async.parallel(
-            [
-                (cb) => {
-                    if (!shouldQueryDb) {
-                        return cb(null, []);
-                    }
-                    async.waterfall(
-                        [
-                            (next) => processHashes.compareDbHashes(next),
-                            this._processHashResults
-                        ],
-                        (err, results) => {
-                            if (err) {
-                                this.logger.error(
-                                    `DB hash lookup failed for ${this.name}; continuing with remote-only results`
-                                );
-                                return cb(null, []);
-                            }
-                            return cb(null, results);
-                        }
-                    );
-                },
-                (cb) => {
-                    async.waterfall(
-                        [
-                            (next) => processHashes.compareRemoteImages(next),
-                            this._processHashResults
-                        ],
-                        cb
-                    );
-                }
-            ],
-            (err, finalResults) => {
-                if (err) {
-                    return callback(err);
-                }
-                const [db, remote] = finalResults;
-                const mergedResults = _.uniq((db || []).concat(remote || []));
-                this.matchResults = mergedResults;
-                this.matchResultDetails = this._buildMatchDetails(mergedResults);
-                return callback(null, mergedResults);
-            }
-        );
+        const shouldQueryCache = true;
+        const dbPromise = shouldQueryCache
+            ? processHashes
+                  .compareDbHashes()
+                  .then((results) => this._processHashResults(results))
+                  .catch(() => {
+                      this.logger.error(
+                          `DB hash lookup failed for ${this.name}; continuing with remote-only results`
+                      );
+                      return [];
+                  })
+            : Promise.resolve([]);
+        const remotePromise = processHashes
+            .compareRemoteImages()
+            .then((results) => this._processHashResults(results));
+        const [db, remote] = await Promise.all([dbPromise, remotePromise]);
+        const mergedResults = _.uniq((db || []).concat(remote || []));
+        this.matchResults = mergedResults;
+        this.matchResultDetails = this._buildMatchDetails(mergedResults);
+        return mergedResults;
     }
 
     _buildMatchDetails(setNames = []) {
@@ -163,16 +202,16 @@ class MatcherProcessor {
         });
     }
 
-    _processHashResults(hashResults, callback) {
+    _processHashResults(hashResults) {
         if (_.isEmpty(hashResults)) {
-            return callback(null, []); // No set to return
+            return []; // No set to return
         }
 
         if (hashResults.length > 1) {
-            return callback(null, _.map(hashResults, "setName"));
+            return _.map(hashResults, "setName");
         }
         const matchObject = hashResults[0] || {};
-        return callback(null, [_.get(matchObject, "setName", "")]);
+        return [_.get(matchObject, "setName", "")];
     }
 }
 

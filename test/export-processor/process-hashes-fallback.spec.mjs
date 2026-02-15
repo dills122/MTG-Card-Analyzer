@@ -40,7 +40,8 @@ describe("ProcessHashes fallback behavior", () => {
                     CompareHash: compareHashStub
                 },
                 CardHashes: {
-                    GetHashes: sandbox.stub().callsArgWith(1, null, [])
+                    getByCardName: sandbox.stub().resolves([]),
+                    upsert: sandbox.stub().returns()
                 }
             },
             logger: {
@@ -49,17 +50,9 @@ describe("ProcessHashes fallback behavior", () => {
             }
         });
 
-        await new Promise((resolve, reject) => {
-            hasher.compareRemoteImages((err, matches) => {
-                if (err) {
-                    return reject(err);
-                }
-                assert.isNull(err);
-                assert.isTrue(hashImageStub.calledTwice);
-                assert.isAtLeast(matches.length, 1);
-                assert.isAtMost(matches.length, 2);
-                resolve();
-            });
-        });
+        const matches = await hasher.compareRemoteImages();
+        assert.isTrue(hashImageStub.calledTwice);
+        assert.isAtLeast(matches.length, 1);
+        assert.isAtMost(matches.length, 2);
     });
 });

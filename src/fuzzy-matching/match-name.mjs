@@ -1,9 +1,9 @@
 import _ from "lodash";
-import async from "async";
 import joi from "joi";
 import FuzzySet from "fuzzyset.js";
 import logger from "../logger/log.mjs";
-import dbLocal from "../db-local/index.mjs";
+import storage from "../storage/index.mjs";
+import { cleanString } from "../util.mjs";
 
 const config = {
     highConfidence: 0.95,
@@ -12,7 +12,7 @@ const config = {
 };
 
 const dependencies = {
-    GetNames: dbLocal.GetBulkNames
+    GetNames: storage.names.getAll
 };
 
 const schema = joi.object().keys({
@@ -36,33 +36,36 @@ class MatchName {
     }
 
     filteredNames(names) {
-        return names.map((record) => record.name);
-    }
-
-    Match(callback) {
-        async.waterfall(
-            [(next) => this.gatherInitialResults(next), (next) => this.filterBulkMatches(next)],
-            callback
-        );
-    }
-
-    gatherInitialResults(callback) {
-        dependencies.GetNames((err, names) => {
-            if (err) {
-                return callback(err);
-            }
-            const filteredNames = this.filteredNames(names);
-            const fuzzy = FuzzySet(filteredNames);
-            this.initialResults = fuzzy.get(this.cleanText);
-            return callback();
+        this.nameLookup = {};
+        return names.map((record) => {
+            const normalized = normalizeForMatch(record.name);
+            this.nameLookup[normalized] = record.name;
+            return normalized;
         });
     }
 
-    filterBulkMatches(callback) {
+    async Match() {
+        await this.gatherInitialResults();
+        return this.filterBulkMatches();
+    }
+
+    async gatherInitialResults() {
+        const names = await dependencies.GetNames();
+        const filteredNames = this.filteredNames(names);
+        const fuzzy = FuzzySet(filteredNames);
+        const normalizedQuery = normalizeForMatch(this.cleanText);
+        const exact = this.nameLookup[normalizedQuery];
+        this.initialResults = exact ? [[1, normalizedQuery]] : fuzzy.get(normalizedQuery);
+        if (!this.initialResults) {
+            this.initialResults = [];
+        }
+    }
+
+    async filterBulkMatches() {
         const fixedResults = _.map(this.initialResults, (match) => {
             const [namePercent, nameMatch] = match;
             return {
-                name: nameMatch,
+                name: this.nameLookup[nameMatch] || nameMatch,
                 percentage: namePercent
             };
         });
@@ -72,15 +75,12 @@ class MatchName {
         });
 
         if (highConfidenceMatches.length > 1) {
-            return callback(null, highConfidenceMatches.splice(0, config.maxMatches + 1));
+            return highConfidenceMatches.splice(0, config.maxMatches + 1);
         }
 
-        return callback(
-            null,
-            _.filter(fixedResults, (item) => item.percentage >= config.minConfidence).splice(
-                0,
-                config.maxMatches + 1
-            )
+        return _.filter(fixedResults, (item) => item.percentage >= config.minConfidence).splice(
+            0,
+            config.maxMatches + 1
         );
     }
 }
@@ -94,3 +94,7 @@ export default {
     dependencies,
     MatchName
 };
+
+function normalizeForMatch(text) {
+    return cleanString(text).toUpperCase().trim();
+}
