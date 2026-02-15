@@ -49,17 +49,9 @@ describe("ProcessHashes fallback behavior", () => {
             }
         });
 
-        await new Promise((resolve, reject) => {
-            hasher.compareRemoteImages((err, matches) => {
-                if (err) {
-                    return reject(err);
-                }
-                assert.isNull(err);
-                assert.isTrue(hashImageStub.calledTwice);
-                assert.isAtLeast(matches.length, 1);
-                assert.isAtMost(matches.length, 2);
-                resolve();
-            });
-        });
+        const matches = await hasher.compareRemoteImages();
+        assert.isTrue(hashImageStub.calledTwice);
+        assert.isAtLeast(matches.length, 1);
+        assert.isAtMost(matches.length, 2);
     });
 });

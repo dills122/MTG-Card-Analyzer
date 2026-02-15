@@ -41,12 +41,10 @@ describe("Integration::", () => {
                 cleanText: EXTRACTED_TEXT,
                 dirtyText: EXTRACTED_TEXT
             });
-        stubs.CreateDirectoryStub = sandbox
-            .stub(FileIO, "CreateDirectory")
-            .callsArgWith(0, null, DIR);
+        stubs.CreateDirectoryStub = sandbox.stub(FileIO, "CreateDirectory").resolves(DIR);
         stubs.MatchNameCreateStub = sandbox.stub(MatchName, "create").returns(MatchNameInstance);
         MatchNameInstance.Match = new Function();
-        stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "Match").callsArgWith(0, null, [
+        stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "Match").resolves([
             {
                 name: "Pacifism",
                 percentage: 100
@@ -212,22 +210,20 @@ describe("Integration::", () => {
         it("Should execute happy path for needs attention record", (done) => {
             stubs.MatchNameMatchStub.restore();
             stubs.MatchProcessorExecuteStub.restore();
-            stubs.MatchNameMatchStub = sandbox
-                .stub(MatchNameInstance, "Match")
-                .callsArgWith(0, null, [
-                    {
-                        name: "Pacifism",
-                        percentage: 90.2
-                    },
-                    {
-                        name: "Fake",
-                        percentage: 89.2
-                    },
-                    {
-                        name: "Another Fake",
-                        percentage: 90
-                    }
-                ]);
+            stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "Match").resolves([
+                {
+                    name: "Pacifism",
+                    percentage: 90.2
+                },
+                {
+                    name: "Fake",
+                    percentage: 89.2
+                },
+                {
+                    name: "Another Fake",
+                    percentage: 90
+                }
+            ]);
             stubs.MatchProcessorExecuteStub = sandbox
                 .stub(MatchProcessorInstance, "execute")
                 .callsArgWith(0, null, [COLLECTION_NAME, COLLECTION_NAME_TWO]); //Empty right now and will have to be a multi call oen since in async.each
@@ -252,9 +248,7 @@ describe("Integration::", () => {
 
         it("Should error out if no fuzzy match results are returned", (done) => {
             stubs.MatchNameMatchStub.restore();
-            stubs.MatchNameMatchStub = sandbox
-                .stub(MatchNameInstance, "Match")
-                .callsArgWith(0, null, []);
+            stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "Match").resolves([]);
             let processorInstance = Processor.create({
                 filePath: FAKE_PATH
             });
@@ -273,6 +267,39 @@ describe("Integration::", () => {
                 assert.isFalse(stubs.GetAdditionalCardInfoStub.calledOnce);
                 return done();
             });
+        });
+
+        it("Should support promise execution without callback", async () => {
+            let processorInstance = Processor.create({
+                filePath: FAKE_PATH
+            });
+            await processorInstance.execute();
+            assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
+            assert.isTrue(stubs.ImageProcessorExtractStub.calledOnce);
+            assert.isTrue(stubs.MatchProcessorExecuteStub.calledOnce);
+            assert.isTrue(stubs.CollectionInsertStub.calledOnce);
+        });
+
+        it("Should reject promise execution on matching errors", async () => {
+            stubs.MatchProcessorExecuteStub.restore();
+            const expectedError = new Error("failed to match");
+            stubs.MatchProcessorExecuteStub = sandbox
+                .stub(MatchProcessorInstance, "execute")
+                .callsArgWith(0, expectedError);
+
+            let processorInstance = Processor.create({
+                filePath: FAKE_PATH
+            });
+
+            let caughtError;
+            try {
+                await processorInstance.execute();
+            } catch (err) {
+                caughtError = err;
+            }
+            assert.equal(caughtError, expectedError);
+            assert.isFalse(stubs.CollectionInsertStub.calledOnce);
+            assert.isFalse(stubs.NeedsAttentionInsertStub.calledOnce);
         });
     });
 });

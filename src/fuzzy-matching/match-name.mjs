@@ -1,5 +1,4 @@
 import _ from "lodash";
-import async from "async";
 import joi from "joi";
 import FuzzySet from "fuzzyset.js";
 import logger from "../logger/log.mjs";
@@ -45,31 +44,31 @@ class MatchName {
         });
     }
 
-    Match(callback) {
-        async.waterfall(
-            [(next) => this.gatherInitialResults(next), (next) => this.filterBulkMatches(next)],
-            callback
-        );
+    async Match() {
+        await this.gatherInitialResults();
+        return this.filterBulkMatches();
     }
 
-    gatherInitialResults(callback) {
-        dependencies.GetNames((err, names) => {
-            if (err) {
-                return callback(err);
-            }
-            const filteredNames = this.filteredNames(names);
-            const fuzzy = FuzzySet(filteredNames);
-            const normalizedQuery = normalizeForMatch(this.cleanText);
-            const exact = this.nameLookup[normalizedQuery];
-            this.initialResults = exact ? [[1, normalizedQuery]] : fuzzy.get(normalizedQuery);
-            if (!this.initialResults) {
-                this.initialResults = [];
-            }
-            return callback();
+    async gatherInitialResults() {
+        const names = await new Promise((resolve, reject) => {
+            dependencies.GetNames((err, rows) => {
+                if (err) {
+                    return reject(err);
+                }
+                return resolve(rows);
+            });
         });
+        const filteredNames = this.filteredNames(names);
+        const fuzzy = FuzzySet(filteredNames);
+        const normalizedQuery = normalizeForMatch(this.cleanText);
+        const exact = this.nameLookup[normalizedQuery];
+        this.initialResults = exact ? [[1, normalizedQuery]] : fuzzy.get(normalizedQuery);
+        if (!this.initialResults) {
+            this.initialResults = [];
+        }
     }
 
-    filterBulkMatches(callback) {
+    async filterBulkMatches() {
         const fixedResults = _.map(this.initialResults, (match) => {
             const [namePercent, nameMatch] = match;
             return {
@@ -83,15 +82,12 @@ class MatchName {
         });
 
         if (highConfidenceMatches.length > 1) {
-            return callback(null, highConfidenceMatches.splice(0, config.maxMatches + 1));
+            return highConfidenceMatches.splice(0, config.maxMatches + 1);
         }
 
-        return callback(
-            null,
-            _.filter(fixedResults, (item) => item.percentage >= config.minConfidence).splice(
-                0,
-                config.maxMatches + 1
-            )
+        return _.filter(fixedResults, (item) => item.percentage >= config.minConfidence).splice(
+            0,
+            config.maxMatches + 1
         );
     }
 }

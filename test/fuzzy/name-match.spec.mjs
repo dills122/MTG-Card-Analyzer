@@ -106,35 +106,31 @@ describe("FuzzyMatching::", () => {
         stubs.BulkNamesStub.restore();
     });
     describe("NameMatching::", () => {
-        it("Should return a high probability match", (done) => {
+        it("Should return a high probability match", async () => {
             let name = "AdantoVanguard";
-            create({
+            const matches = await create({
                 cleanText: name
-            }).Match((err, matches) => {
-                console.log(matches);
-                let [first] = matches;
-                assert.equal(stubs.BulkNamesStub.callCount, 1);
-                expect(matches).to.be.an("array");
-                assert.equal(first.name, "Adanto Vanguard");
-                chaiAssert.isObject(first);
-                chaiAssert.isAtMost(Object.keys(first).length, 2);
-                chaiAssert.isAtLeast(first.percentage, 0.85);
-                chaiAssert.isAtLeast(matches.length, 1);
-                done(err);
-            });
+            }).Match();
+            console.log(matches);
+            let [first] = matches;
+            assert.equal(stubs.BulkNamesStub.callCount, 1);
+            expect(matches).to.be.an("array");
+            assert.equal(first.name, "Adanto Vanguard");
+            chaiAssert.isObject(first);
+            chaiAssert.isAtMost(Object.keys(first).length, 2);
+            chaiAssert.isAtLeast(first.percentage, 0.85);
+            chaiAssert.isAtLeast(matches.length, 1);
         });
 
-        it("Should return no match due to low probability", (done) => {
+        it("Should return no match due to low probability", async () => {
             let name = "Coat Vangsduardsadfasd";
-            create({
+            const matches = await create({
                 cleanText: name
-            }).Match((err, matches) => {
-                console.log(matches);
-                assert.equal(stubs.BulkNamesStub.callCount, 1);
-                chaiAssert.isArray(matches);
-                assert.equal(matches.length, 0);
-                done(err);
-            });
+            }).Match();
+            console.log(matches);
+            assert.equal(stubs.BulkNamesStub.callCount, 1);
+            chaiAssert.isArray(matches);
+            assert.equal(matches.length, 0);
         });
     });
 });

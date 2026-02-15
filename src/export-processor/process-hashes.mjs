@@ -1,5 +1,4 @@
 import _ from "lodash";
-import async from "async";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import jimp from "jimp";
@@ -59,47 +58,50 @@ class ProcessHashes {
             });
     }
 
-    compareDbHashes(callback) {
+    async compareDbHashes() {
         this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
-        this.dependencies.CardHashes.GetHashes(this.name, (err, hashes) => {
-            if (err) {
-                return callback(err);
-            }
-            const matches = [];
-            hashes.forEach((dbHash) => {
-                const compareResults = this.dependencies.Hash.CompareHash(
-                    this.localHash,
-                    dbHash.cardHash
-                );
-                const isMatch =
-                    compareResults.twoBitMatches >= config.dbMatch.twoBit &&
-                    compareResults.fourBitMatches >= config.dbMatch.fourBit &&
-                    compareResults.stringCompare >= config.dbMatch.stringCompare;
-                if (isMatch) {
-                    matches.push(
-                        Object.assign(compareResults, {
-                            setName: dbHash.setName
-                        })
-                    );
+        const hashes = await new Promise((resolve, reject) => {
+            this.dependencies.CardHashes.GetHashes(this.name, (err, results) => {
+                if (err) {
+                    return reject(err);
                 }
+                return resolve(results);
             });
-            this.logger.info(matches);
-            if (matches.length === 0) {
-                this.logger.info(
-                    `process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`
-                );
-                if (this.ignoreNoDbMatch) {
-                    return callback(null, []);
-                }
-                return callback({
-                    error: "No Matches Found"
-                });
-            }
-            return callback(null, matches);
         });
+        const matches = [];
+        hashes.forEach((dbHash) => {
+            const compareResults = this.dependencies.Hash.CompareHash(
+                this.localHash,
+                dbHash.cardHash
+            );
+            const isMatch =
+                compareResults.twoBitMatches >= config.dbMatch.twoBit &&
+                compareResults.fourBitMatches >= config.dbMatch.fourBit &&
+                compareResults.stringCompare >= config.dbMatch.stringCompare;
+            if (isMatch) {
+                matches.push(
+                    Object.assign(compareResults, {
+                        setName: dbHash.setName
+                    })
+                );
+            }
+        });
+        this.logger.info(matches);
+        if (matches.length === 0) {
+            this.logger.info(
+                `process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`
+            );
+            if (this.ignoreNoDbMatch) {
+                return [];
+            }
+            throw {
+                error: "No Matches Found"
+            };
+        }
+        return matches;
     }
 
-    compareRemoteImages(callback) {
+    async compareRemoteImages() {
         this.logger.info(`process-hashes::compareDbHashes: Compare Remote Image Hashes`);
         const cards = _.map(this.cards, function (card) {
             const images = card.image_uris || {};
@@ -109,125 +111,135 @@ class ProcessHashes {
             };
         });
         const comparisonResultsList = [];
-        this._withRemoteHashDirectory((dirErr, tempDirectory, done) => {
-            if (dirErr) {
-                return callback(dirErr);
-            }
-            async.each(
-                cards,
-                (card, cb) => {
-                    const url = card.imgUrl;
-                    this._hashRemoteForComparison(url, tempDirectory, (err, remoteImageHash) => {
-                        if (err) {
-                            return cb(err);
-                        }
-                        const setName = card.setName;
-                        this._insertCardHash(setName, remoteImageHash);
-                        const comparisonResults = this.dependencies.Hash.CompareHash(
-                            this.localHash,
-                            remoteImageHash
-                        );
-                        if (!_.isEmpty(comparisonResults)) {
-                            comparisonResultsList.push(
-                                Object.assign(comparisonResults, {
-                                    setName
-                                })
-                            );
-                        }
-                        return cb();
-                    });
-                },
-                (err) => {
-                    done();
-                    if (err) {
-                        return callback(err);
-                    }
-                    const matchValues = config.remoteMatch;
-                    let bestMatches = _.filter(comparisonResultsList, function (match) {
-                        return (
-                            match.twoBitMatches >= matchValues.twoBit &&
-                            match.fourBitMatches >= matchValues.fourBit &&
-                            match.stringCompare >= matchValues.stringCompare
-                        );
-                    });
-                    if (
-                        this.allowRemoteBestGuess &&
-                        _.isEmpty(bestMatches) &&
-                        !_.isEmpty(comparisonResultsList)
-                    ) {
-                        const sortedByScore = _.orderBy(
-                            comparisonResultsList.map((match) => ({
-                                ...match,
-                                confidenceScore: _.round(
-                                    match.stringCompare * 0.5 +
-                                        match.twoBitMatches * 0.3 +
-                                        match.fourBitMatches * 0.2,
-                                    4
-                                )
-                            })),
-                            ["confidenceScore", "stringCompare", "twoBitMatches", "fourBitMatches"],
-                            ["desc", "desc", "desc", "desc"]
-                        );
-                        const topScore = sortedByScore[0].confidenceScore;
-                        bestMatches = sortedByScore
-                            .filter(
-                                (match) =>
-                                    topScore - match.confidenceScore <=
-                                    config.remoteBestGuess.minScoreDeltaFromTop
-                            )
-                            .slice(0, config.remoteBestGuess.maxCandidates)
-                            .map((match) => _.omit(match, ["confidenceScore"]));
-                        this.logger.info(
-                            "process-hashes::compareRemoteImages: Using best available match"
-                        );
-                        this.logger.info(bestMatches);
-                    }
-                    return callback(null, bestMatches);
+        const { tempDirectory, done } = await this._withRemoteHashDirectory();
+        try {
+            const hashResults = await Promise.all(
+                cards.map(async (card) => {
+                    const remoteImageHash = await this._hashRemoteForComparison(
+                        card.imgUrl,
+                        tempDirectory
+                    );
+                    return {
+                        setName: card.setName,
+                        remoteImageHash
+                    };
+                })
+            );
+            hashResults.forEach(({ setName, remoteImageHash }) => {
+                this._insertCardHash(setName, remoteImageHash);
+                const comparisonResults = this.dependencies.Hash.CompareHash(
+                    this.localHash,
+                    remoteImageHash
+                );
+                if (!_.isEmpty(comparisonResults)) {
+                    comparisonResultsList.push(
+                        Object.assign(comparisonResults, {
+                            setName
+                        })
+                    );
                 }
+            });
+        } finally {
+            done();
+        }
+        const matchValues = config.remoteMatch;
+        let bestMatches = _.filter(comparisonResultsList, function (match) {
+            return (
+                match.twoBitMatches >= matchValues.twoBit &&
+                match.fourBitMatches >= matchValues.fourBit &&
+                match.stringCompare >= matchValues.stringCompare
             );
         });
+        if (
+            this.allowRemoteBestGuess &&
+            _.isEmpty(bestMatches) &&
+            !_.isEmpty(comparisonResultsList)
+        ) {
+            const sortedByScore = _.orderBy(
+                comparisonResultsList.map((match) => ({
+                    ...match,
+                    confidenceScore: _.round(
+                        match.stringCompare * 0.5 +
+                            match.twoBitMatches * 0.3 +
+                            match.fourBitMatches * 0.2,
+                        4
+                    )
+                })),
+                ["confidenceScore", "stringCompare", "twoBitMatches", "fourBitMatches"],
+                ["desc", "desc", "desc", "desc"]
+            );
+            const topScore = sortedByScore[0].confidenceScore;
+            bestMatches = sortedByScore
+                .filter(
+                    (match) =>
+                        topScore - match.confidenceScore <=
+                        config.remoteBestGuess.minScoreDeltaFromTop
+                )
+                .slice(0, config.remoteBestGuess.maxCandidates)
+                .map((match) => _.omit(match, ["confidenceScore"]));
+            this.logger.info("process-hashes::compareRemoteImages: Using best available match");
+            this.logger.info(bestMatches);
+        }
+        return bestMatches;
     }
 
-    _withRemoteHashDirectory(callback) {
+    async _withRemoteHashDirectory() {
         if (this.hashMode !== "set-symbol") {
-            return callback(null, "", () => {});
+            return {
+                tempDirectory: "",
+                done: () => {}
+            };
         }
-        this.dependencies.CreateDirectory((err, directory) => {
-            if (err) {
-                return callback(err);
+        const directory = await this.dependencies.CreateDirectory();
+        return {
+            tempDirectory: directory,
+            done: () => {
+                this.dependencies.CleanUpFiles(directory).catch(() => {});
             }
-            return callback(null, directory, () => {
-                this.dependencies.CleanUpFiles(directory, () => {});
+        };
+    }
+
+    async _hashRemoteForComparison(url, tempDirectory) {
+        if (this.hashMode !== "set-symbol") {
+            return new Promise((resolve, reject) => {
+                this.dependencies.Hash.HashImage(url, (err, hash) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    return resolve(hash);
+                });
+            });
+        }
+        try {
+            return await this._hashRemoteSetSymbol(url, tempDirectory);
+        } catch {
+            this.logger.error(
+                `Remote set symbol crop/hash failed for ${url}; falling back to full image hash`
+            );
+            return new Promise((resolve, reject) => {
+                this.dependencies.Hash.HashImage(url, (hashErr, hash) => {
+                    if (hashErr) {
+                        return reject(hashErr);
+                    }
+                    return resolve(hash);
+                });
+            });
+        }
+    }
+
+    async _hashRemoteSetSymbol(url, tempDirectory) {
+        const image = await jimp.read(url);
+        const cropped = this._cropRemoteSetSymbol(image);
+        const tmpFilePath = path.join(tempDirectory, `${randomUUID()}.png`);
+        await cropped.writeAsync(tmpFilePath);
+        return new Promise((resolve, reject) => {
+            this.dependencies.Hash.HashImage(tmpFilePath, (err, hash) => {
+                if (err) {
+                    return reject(err);
+                }
+                return resolve(hash);
             });
         });
-    }
-
-    _hashRemoteForComparison(url, tempDirectory, callback) {
-        if (this.hashMode !== "set-symbol") {
-            return this.dependencies.Hash.HashImage(url, callback);
-        }
-        return this._hashRemoteSetSymbol(url, tempDirectory, (err, hash) => {
-            if (err) {
-                this.logger.error(
-                    `Remote set symbol crop/hash failed for ${url}; falling back to full image hash`
-                );
-                return this.dependencies.Hash.HashImage(url, callback);
-            }
-            return callback(null, hash);
-        });
-    }
-
-    _hashRemoteSetSymbol(url, tempDirectory, callback) {
-        jimp.read(url)
-            .then((image) => {
-                const cropped = this._cropRemoteSetSymbol(image);
-                const tmpFilePath = path.join(tempDirectory, `${randomUUID()}.png`);
-                return cropped.writeAsync(tmpFilePath).then(() => tmpFilePath);
-            })
-            .then((tmpFilePath) => {
-                this.dependencies.Hash.HashImage(tmpFilePath, callback);
-            })
-            .catch((err) => callback(err));
     }
 
     _cropRemoteSetSymbol(image) {

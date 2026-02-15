@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import { promisify } from "node:util";
 import { randomUUID } from "node:crypto";
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 import { rimraf as rimrafFn } from "rimraf";
 
 const defaultDeps = {
@@ -26,27 +26,39 @@ function buildFileIO(deps = defaultDeps) {
         return unlinkFile(filePath);
     }
 
-    function CreateDirectory(callback) {
+    async function CreateDirectory() {
         const dirPath = path.join(deps.tempDirectory, deps.randomUUID());
-        deps.fs.mkdir(dirPath, (err) => {
-            if (err) {
-                return callback(err);
-            }
-            return callback(null, dirPath);
+        await new Promise((resolve, reject) => {
+            deps.fs.mkdir(dirPath, (err) => {
+                if (err) {
+                    return reject(err);
+                }
+                return resolve();
+            });
         });
+        return dirPath;
     }
 
-    function CleanUpFiles(directory, callback) {
-        const done = callback || (() => {});
-        try {
-            const result = rimraf(directory);
-            if (result && typeof result.then === "function") {
-                result.then(() => done()).catch((err) => done(err));
-                return;
-            }
-            done();
-        } catch (err) {
-            done(err);
+    async function CleanUpFiles(directory) {
+        if (deps.rimrafLib && deps.rimrafLib.rimraf) {
+            await deps.rimrafLib.rimraf(directory);
+            return;
+        }
+        if (typeof rimraf === "function" && rimraf.length >= 2) {
+            await new Promise((resolve, reject) => {
+                rimraf(directory, (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    return resolve();
+                });
+            });
+            return;
+        }
+        const result = rimraf(directory);
+        if (result && typeof result.then === "function") {
+            await result;
+            return;
         }
     }
 
@@ -68,4 +80,4 @@ export default {
     buildFileIO
 };
 
-export { WriteToFile, DeleteFile, CreateDirectory, CleanUpFiles, buildFileIO };
+export { buildFileIO, CleanUpFiles, CreateDirectory, DeleteFile, WriteToFile };

@@ -52,45 +52,44 @@ describe("Integration::", () => {
             sandbox.restore();
         });
 
-        it("Should execute happy path for compareDbHashes", (done) => {
+        it("Should execute happy path for compareDbHashes", async () => {
             let hasher = ProcessHashes.create({
                 cards: [{}, {}],
                 localHash: CLOSE_DIFF_HASH,
                 name: "Test"
             });
 
-            hasher.compareDbHashes((err, matches) => {
-                let match = matches[0] || {};
-                assert.isTrue(stubs.getHashesStub.calledOnce);
-                assert.deepEqual(match.setName, FAKE_SET);
-                return done(err);
-            });
+            const matches = await hasher.compareDbHashes();
+            let match = matches[0] || {};
+            assert.isTrue(stubs.getHashesStub.calledOnce);
+            assert.deepEqual(match.setName, FAKE_SET);
         });
 
-        it("Should fail with no match found error", (done) => {
+        it("Should fail with no match found error", async () => {
             let hasher = ProcessHashes.create({
                 cards: [{}, {}],
                 localHash: FAR_DIFF_HASH,
                 name: "Test"
             });
 
-            hasher.compareDbHashes((err, matches) => {
-                assert.isTrue(stubs.getHashesStub.calledOnce);
-                assert.deepEqual(err, {
-                    error: "No Matches Found"
-                });
-                assert.isUndefined(matches);
-                return done();
+            let caughtError;
+            try {
+                await hasher.compareDbHashes();
+            } catch (err) {
+                caughtError = err;
+            }
+            assert.isTrue(stubs.getHashesStub.calledOnce);
+            assert.deepEqual(caughtError, {
+                error: "No Matches Found"
             });
         });
 
-        it("Should fail to validate schema", (done) => {
+        it("Should fail to validate schema", () => {
             let hasher = () => ProcessHashes.create({});
             assert.throw(hasher, Error);
-            return done();
         });
 
-        it("Should execute happy path for compareRemoteHashes", (done) => {
+        it("Should execute happy path for compareRemoteHashes", async () => {
             stubs.hashImageStub = sandbox
                 .stub(Hash, "HashImage")
                 .onFirstCall()
@@ -104,19 +103,17 @@ describe("Integration::", () => {
                 name: "Test"
             });
 
-            hasher.compareRemoteImages((err, matches) => {
-                assert.isTrue(stubs.hashImageStub.calledTwice);
-                assert.isTrue(stubs.insertHashStub.calledTwice);
-                assert.isTrue(
-                    _.filter(matches, {
-                        setName: FAKE_SET
-                    }).length === 2
-                );
-                return done(err);
-            });
+            const matches = await hasher.compareRemoteImages();
+            assert.isTrue(stubs.hashImageStub.calledTwice);
+            assert.isTrue(stubs.insertHashStub.calledTwice);
+            assert.isTrue(
+                _.filter(matches, {
+                    setName: FAKE_SET
+                }).length === 2
+            );
         });
 
-        it("Should return no results for compareRemoteHashes", (done) => {
+        it("Should return no results for compareRemoteHashes", async () => {
             stubs.hashImageStub = sandbox
                 .stub(Hash, "HashImage")
                 .onFirstCall()
@@ -130,19 +127,17 @@ describe("Integration::", () => {
                 name: "Test"
             });
 
-            hasher.compareRemoteImages((err, matches) => {
-                assert.isTrue(stubs.hashImageStub.calledTwice);
-                assert.isTrue(stubs.insertHashStub.calledTwice);
-                assert.isTrue(
-                    _.filter(matches, {
-                        setName: FAKE_SET
-                    }).length === 0
-                );
-                return done(err);
-            });
+            const matches = await hasher.compareRemoteImages();
+            assert.isTrue(stubs.hashImageStub.calledTwice);
+            assert.isTrue(stubs.insertHashStub.calledTwice);
+            assert.isTrue(
+                _.filter(matches, {
+                    setName: FAKE_SET
+                }).length === 0
+            );
         });
 
-        it("Should insert remote hash records with correct set + hash mapping when querying enabled", (done) => {
+        it("Should insert remote hash records with correct set + hash mapping when querying enabled", async () => {
             stubs.insertHashStub.restore();
             stubs.hashImageStub = sandbox.stub(Hash, "HashImage").callsArgWith(1, null, FAKE_HASH);
             stubs.insertEntityStub = sandbox.stub(CardHashes, "InsertEntity").returns();
@@ -161,19 +156,16 @@ describe("Integration::", () => {
                 queryingEnabled: true
             });
 
-            hasher.compareRemoteImages((err) => {
-                assert.isNull(err);
-                assert.isTrue(stubs.insertEntityStub.calledOnce);
-                assert.deepEqual(stubs.insertEntityStub.firstCall.args[0], {
-                    Name: "Test",
-                    SetName: "SET_A",
-                    CardHash: FAKE_HASH
-                });
-                return done();
+            await hasher.compareRemoteImages();
+            assert.isTrue(stubs.insertEntityStub.calledOnce);
+            assert.deepEqual(stubs.insertEntityStub.firstCall.args[0], {
+                Name: "Test",
+                SetName: "SET_A",
+                CardHash: FAKE_HASH
             });
         });
 
-        it("Should fall back to full remote hash when remote set-symbol hashing fails", (done) => {
+        it("Should fall back to full remote hash when remote set-symbol hashing fails", async () => {
             stubs.hashImageStub = sandbox.stub(Hash, "HashImage").callsArgWith(1, null, FAKE_HASH);
             let hasher = ProcessHashes.create({
                 cards: [
@@ -191,19 +183,16 @@ describe("Integration::", () => {
 
             stubs.createDirectoryStub = sandbox
                 .stub(hasher.dependencies, "CreateDirectory")
-                .callsArgWith(0, null, "/tmp/remote-hash-dir");
-            stubs.cleanupStub = sandbox.stub(hasher.dependencies, "CleanUpFiles").callsArgWith(1);
+                .resolves("/tmp/remote-hash-dir");
+            stubs.cleanupStub = sandbox.stub(hasher.dependencies, "CleanUpFiles").resolves();
             stubs.symbolStub = sandbox
                 .stub(hasher, "_hashRemoteSetSymbol")
-                .callsArgWith(2, new Error("crop failed"));
+                .rejects(new Error("crop failed"));
 
-            hasher.compareRemoteImages((err) => {
-                assert.isNull(err);
-                assert.isTrue(stubs.symbolStub.calledOnce);
-                assert.isTrue(stubs.hashImageStub.calledOnce);
-                assert.equal(stubs.hashImageStub.firstCall.args[0], "http://www.fake.url/img");
-                return done();
-            });
+            await hasher.compareRemoteImages();
+            assert.isTrue(stubs.symbolStub.calledOnce);
+            assert.isTrue(stubs.hashImageStub.calledOnce);
+            assert.equal(stubs.hashImageStub.firstCall.args[0], "http://www.fake.url/img");
         });
     });
 });
