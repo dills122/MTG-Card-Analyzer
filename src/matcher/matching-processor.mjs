@@ -15,12 +15,13 @@ const dependencies = {
 
 const schema = joi.object().keys({
     name: joi.string().required(),
-    filePath: joi.string().required()
+    filePath: joi.string().required(),
+    queryingEnabled: joi.boolean().optional()
 });
 
 class MatcherProcessor {
     constructor(params = {}) {
-        const { error: hasError } = !schema.validate(params);
+        const { error: hasError } = schema.validate(params);
         if (hasError) {
             throw new Error("Required params missing");
         }
@@ -92,12 +93,27 @@ class MatcherProcessor {
             allowRemoteBestGuess: true
         });
         this.logger.info("Processing multi set matches");
+        const shouldQueryDb = Boolean(this.queryingEnabled);
         async.parallel(
             [
                 (cb) => {
+                    if (!shouldQueryDb) {
+                        return cb(null, []);
+                    }
                     async.waterfall(
-                        [(next) => processHashes.compareDbHashes(next), this._processHashResults],
-                        cb
+                        [
+                            (next) => processHashes.compareDbHashes(next),
+                            this._processHashResults
+                        ],
+                        (err, results) => {
+                            if (err) {
+                                this.logger.error(
+                                    `DB hash lookup failed for ${this.name}; continuing with remote-only results`
+                                );
+                                return cb(null, []);
+                            }
+                            return cb(null, results);
+                        }
                     );
                 },
                 (cb) => {
@@ -117,9 +133,34 @@ class MatcherProcessor {
                 const [db, remote] = finalResults;
                 const mergedResults = _.uniq((db || []).concat(remote || []));
                 this.matchResults = mergedResults;
+                this.matchResultDetails = this._buildMatchDetails(mergedResults);
                 return callback(null, mergedResults);
             }
         );
+    }
+
+    _buildMatchDetails(setNames = []) {
+        const cardBySet = new Map();
+        (this.cards || []).forEach((card) => {
+            const setName = _.get(card, "set_name", "");
+            if (!setName || cardBySet.has(setName)) {
+                return;
+            }
+            cardBySet.set(setName, {
+                setName,
+                scryfallUri: _.get(card, "scryfall_uri", "") || _.get(card, "uri", "")
+            });
+        });
+
+        return setNames.map((setName) => {
+            const matchDetail = cardBySet.get(setName);
+            return (
+                matchDetail || {
+                    setName,
+                    scryfallUri: ""
+                }
+            );
+        });
     }
 
     _processHashResults(hashResults, callback) {

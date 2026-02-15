@@ -198,6 +198,9 @@ describe("Integration::", () => {
                 assert.isTrue(stubs.MatchNameCreateStub.calledOnce);
                 assert.isTrue(stubs.MatchNameMatchStub.calledOnce);
                 assert.isTrue(stubs.MatchProcessorCreateStub.calledOnce);
+                assert.deepInclude(stubs.MatchProcessorCreateStub.firstCall.args[0], {
+                    queryingEnabled: true
+                });
                 assert.isTrue(stubs.MatchProcessorExecuteStub.calledOnce);
                 assert.isTrue(stubs.CollectionGetQtyStub.calledOnce);
                 assert.isTrue(stubs.CollectionInsertStub.calledOnce);

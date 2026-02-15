@@ -141,5 +141,36 @@ describe("Integration::", () => {
                 return done(err);
             });
         });
+
+        it("Should insert remote hash records with correct set + hash mapping when querying enabled", (done) => {
+            stubs.insertHashStub.restore();
+            stubs.hashImageStub = sandbox.stub(Hash, "HashImage").callsArgWith(1, null, FAKE_HASH);
+            stubs.insertEntityStub = sandbox.stub(CardHashes, "InsertEntity").returns();
+
+            let hasher = ProcessHashes.create({
+                cards: [
+                    {
+                        image_uris: {
+                            normal: "http://www.fake.url/img"
+                        },
+                        set_name: "SET_A"
+                    }
+                ],
+                localHash: CLOSE_DIFF_HASH,
+                name: "Test",
+                queryingEnabled: true
+            });
+
+            hasher.compareRemoteImages((err) => {
+                assert.isNull(err);
+                assert.isTrue(stubs.insertEntityStub.calledOnce);
+                assert.deepEqual(stubs.insertEntityStub.firstCall.args[0], {
+                    Name: "Test",
+                    SetName: "SET_A",
+                    CardHash: FAKE_HASH
+                });
+                return done();
+            });
+        });
     });
 });

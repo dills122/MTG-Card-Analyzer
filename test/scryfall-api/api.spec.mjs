@@ -60,6 +60,34 @@ describe("Srcyfall Api::", () => {
                     done(err);
                 });
         });
+
+        it("SearchByNameExact returns empty object when request fails", (done) => {
+            stubs.requestStub.restore();
+            stubs.requestStub = sandbox.stub(deps, "request").rejects(new Error("network fail"));
+            api.SearchByNameExact("Fake Name")
+                .then((card) => {
+                    assert.isTrue(stubs.requestStub.calledOnce);
+                    assert.deepStrictEqual(card, {});
+                    done();
+                })
+                .catch((err) => {
+                    done(err);
+                });
+        });
+
+        it("SearchList returns empty list when request fails", (done) => {
+            stubs.requestStub.restore();
+            stubs.requestStub = sandbox.stub(deps, "request").rejects(new Error("network fail"));
+            api.SearchList("Fake Name")
+                .then((cards) => {
+                    assert.isTrue(stubs.requestStub.calledOnce);
+                    assert.deepStrictEqual(cards, []);
+                    done();
+                })
+                .catch((err) => {
+                    done(err);
+                });
+        });
     });
     describe("::getCardName::", () => {
         let json = {

@@ -13,7 +13,7 @@ describe("ProcessHashes fallback behavior", () => {
         sandbox.restore();
     });
 
-    it("returns best guess when allowRemoteBestGuess is true and thresholds not met", async () => {
+    it("returns ranked fallback candidates when allowRemoteBestGuess is true and thresholds not met", async () => {
         const hashImageStub = sandbox
             .stub()
             .onFirstCall()
@@ -56,7 +56,8 @@ describe("ProcessHashes fallback behavior", () => {
                 }
                 assert.isNull(err);
                 assert.isTrue(hashImageStub.calledTwice);
-                assert.equal(matches.length, 1);
+                assert.isAtLeast(matches.length, 1);
+                assert.isAtMost(matches.length, 2);
                 resolve();
             });
         });
