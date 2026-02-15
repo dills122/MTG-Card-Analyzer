@@ -41,7 +41,7 @@
         "jimp": "^0.22.12",
         "joi": "^18.0.2",
         "lodash": "^4.17.21",
-        "mysql2": "^3.16.0",
+        "mysql2": "^3.17.1",
         "request": "^2.88.0",
         "request-promise-native": "^1.0.7",
         "rimraf": "^6.1.2",
