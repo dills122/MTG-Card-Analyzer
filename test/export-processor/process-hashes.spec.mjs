@@ -172,5 +172,38 @@ describe("Integration::", () => {
                 return done();
             });
         });
+
+        it("Should fall back to full remote hash when remote set-symbol hashing fails", (done) => {
+            stubs.hashImageStub = sandbox.stub(Hash, "HashImage").callsArgWith(1, null, FAKE_HASH);
+            let hasher = ProcessHashes.create({
+                cards: [
+                    {
+                        image_uris: {
+                            normal: "http://www.fake.url/img"
+                        },
+                        set_name: "SET_A"
+                    }
+                ],
+                localHash: CLOSE_DIFF_HASH,
+                name: "Test",
+                hashMode: "set-symbol"
+            });
+
+            stubs.createDirectoryStub = sandbox
+                .stub(hasher.dependencies, "CreateDirectory")
+                .callsArgWith(0, null, "/tmp/remote-hash-dir");
+            stubs.cleanupStub = sandbox.stub(hasher.dependencies, "CleanUpFiles").callsArgWith(1);
+            stubs.symbolStub = sandbox
+                .stub(hasher, "_hashRemoteSetSymbol")
+                .callsArgWith(2, new Error("crop failed"));
+
+            hasher.compareRemoteImages((err) => {
+                assert.isNull(err);
+                assert.isTrue(stubs.symbolStub.calledOnce);
+                assert.isTrue(stubs.hashImageStub.calledOnce);
+                assert.equal(stubs.hashImageStub.firstCall.args[0], "http://www.fake.url/img");
+                return done();
+            });
+        });
     });
 });

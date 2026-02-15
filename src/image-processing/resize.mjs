@@ -24,6 +24,12 @@ const constants = {
         heightPercent: 0.2927,
         widthPercent: 0.8557
     },
+    setSymbol: {
+        leftPercent: 0.78,
+        topPercent: 0.535,
+        widthPercent: 0.13,
+        heightPercent: 0.1
+    },
     borderPercent: 0.0535
 };
 
@@ -123,6 +129,14 @@ function GetAlteredDimensions(dimensions, type) {
             height: _.round(dimensions.height * constants.flavor.heightPercent),
             left: _.round(dimensions.width * constants.borderPercent),
             top: _.round(dimensions.height * constants.flavor.topPercent)
+        };
+    }
+    if (type === "set-symbol") {
+        return {
+            width: _.round(dimensions.width * constants.setSymbol.widthPercent),
+            height: _.round(dimensions.height * constants.setSymbol.heightPercent),
+            left: _.round(dimensions.width * constants.setSymbol.leftPercent),
+            top: _.round(dimensions.height * constants.setSymbol.topPercent)
         };
     }
     throw new Error(`Unsupported snippet type "${type}"`);

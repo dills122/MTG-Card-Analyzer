@@ -6,11 +6,16 @@ import logger from "../logger/log.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
 import exportProcessor from "../export-processor/index.mjs";
 import imageHashing from "../image-hashing/index.mjs";
+import imageProcessing from "../image-processing/index.mjs";
+import FileIO from "../file-io.mjs";
 
 const dependencies = {
     Searcher: callbackify(scryfallApi.Search.SearchList),
     HashProcessor: exportProcessor.ProcessHashes,
-    Hash: imageHashing.Hash.HashImage
+    Hash: imageHashing.Hash.HashImage,
+    CreateDirectory: FileIO.CreateDirectory,
+    CleanUpFiles: FileIO.CleanUpFiles,
+    GetSetSymbolSnippetTmpFile: imageProcessing.resize.GetImageSnippetTmpFile
 };
 
 const schema = joi.object().keys({
@@ -74,13 +79,63 @@ class MatcherProcessor {
 
     _hashLocalCard(callback) {
         this.logger.info(`Hashing local image ${this.filePath}`);
-        dependencies.Hash(this.filePath, (err, hash) => {
+        dependencies.CreateDirectory((dirErr, directory) => {
+            if (dirErr) {
+                return this._hashFromPath(this.filePath, callback);
+            }
+            this.setSymbolDirectory = directory;
+            this._hashFromSetSymbol(directory, (hashErr) => {
+                if (hashErr) {
+                    this.logger.error(
+                        `Set symbol crop/hash failed for ${this.filePath}; falling back to full card hash`
+                    );
+                    return this._hashFromPath(this.filePath, callback);
+                }
+                return callback();
+            });
+        });
+    }
+
+    _hashFromSetSymbol(directory, callback) {
+        this.logger.info(`Hashing set symbol image ${this.filePath}`);
+        dependencies
+            .GetSetSymbolSnippetTmpFile(this.filePath, directory, "set-symbol")
+            .then((setSymbolPath) => {
+                this.setSymbolImagePath = setSymbolPath;
+                dependencies.Hash(setSymbolPath, (err, hash) => {
+                    this._cleanupSetSymbolDirectory();
+                    if (err) {
+                        return callback(err);
+                    }
+                    this.hashMode = "set-symbol";
+                    this.localHash = hash;
+                    return callback();
+                });
+            })
+            .catch((err) => {
+                this._cleanupSetSymbolDirectory();
+                return callback(err);
+            });
+    }
+
+    _hashFromPath(filePath, callback) {
+        dependencies.Hash(filePath, (err, hash) => {
             if (err) {
                 return callback(err);
             }
+            this.hashMode = "full-card";
             this.localHash = hash;
             return callback();
         });
+    }
+
+    _cleanupSetSymbolDirectory() {
+        if (!this.setSymbolDirectory) {
+            return;
+        }
+        const dir = this.setSymbolDirectory;
+        this.setSymbolDirectory = "";
+        dependencies.CleanUpFiles(dir, () => {});
     }
 
     _processMultiSetMatches(callback) {
@@ -88,6 +143,7 @@ class MatcherProcessor {
             name: this.name,
             cards: this.cards,
             localHash: this.localHash,
+            hashMode: this.hashMode || "full-card",
             queryingEnabled: this.queryingEnabled,
             ignoreNoDbMatch: true,
             allowRemoteBestGuess: true
@@ -101,10 +157,7 @@ class MatcherProcessor {
                         return cb(null, []);
                     }
                     async.waterfall(
-                        [
-                            (next) => processHashes.compareDbHashes(next),
-                            this._processHashResults
-                        ],
+                        [(next) => processHashes.compareDbHashes(next), this._processHashResults],
                         (err, results) => {
                             if (err) {
                                 this.logger.error(

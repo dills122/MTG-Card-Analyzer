@@ -68,10 +68,17 @@ describe("MatcherProcessor::", () => {
                 scryfall_uri: "https://scryfall.com/card/m21/1/example"
             }
         ]);
-        const hashStub = sandbox.stub(dependencies, "Hash").callsArgWith(1, null, "FAKE_LOCAL_HASH");
-        const processHashesStub = sandbox.stub(dependencies.HashProcessor, "create").returns(
-            processHashesInstance
-        );
+        const hashStub = sandbox
+            .stub(dependencies, "Hash")
+            .callsArgWith(1, null, "FAKE_LOCAL_HASH");
+        sandbox.stub(dependencies, "CreateDirectory").callsArgWith(0, null, "/tmp/set-symbol-dir");
+        sandbox
+            .stub(dependencies, "GetSetSymbolSnippetTmpFile")
+            .resolves("/tmp/set-symbol-dir/set-symbol.png");
+        sandbox.stub(dependencies, "CleanUpFiles").callsArgWith(1);
+        const processHashesStub = sandbox
+            .stub(dependencies.HashProcessor, "create")
+            .returns(processHashesInstance);
 
         const processor = create({
             name: "Pacifism",
@@ -103,6 +110,11 @@ describe("MatcherProcessor::", () => {
             { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } }
         ]);
         sandbox.stub(dependencies, "Hash").callsArgWith(1, null, "FAKE_LOCAL_HASH");
+        sandbox.stub(dependencies, "CreateDirectory").callsArgWith(0, null, "/tmp/set-symbol-dir");
+        sandbox
+            .stub(dependencies, "GetSetSymbolSnippetTmpFile")
+            .resolves("/tmp/set-symbol-dir/set-symbol.png");
+        sandbox.stub(dependencies, "CleanUpFiles").callsArgWith(1);
         sandbox.stub(dependencies.HashProcessor, "create").returns(processHashesInstance);
 
         const processor = create({
@@ -130,6 +142,11 @@ describe("MatcherProcessor::", () => {
             { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
         ]);
         sandbox.stub(dependencies, "Hash").callsArgWith(1, null, "FAKE_LOCAL_HASH");
+        sandbox.stub(dependencies, "CreateDirectory").callsArgWith(0, null, "/tmp/set-symbol-dir");
+        sandbox
+            .stub(dependencies, "GetSetSymbolSnippetTmpFile")
+            .resolves("/tmp/set-symbol-dir/set-symbol.png");
+        sandbox.stub(dependencies, "CleanUpFiles").callsArgWith(1);
         sandbox.stub(dependencies.HashProcessor, "create").returns(processHashesInstance);
 
         const processor = create({
@@ -142,6 +159,35 @@ describe("MatcherProcessor::", () => {
             assert.isNull(err);
             assert.isTrue(processHashesInstance.compareDbHashes.calledOnce);
             assert.deepEqual(result, ["M22"]);
+            done();
+        });
+    });
+
+    it("falls back to hashing full card when set symbol crop fails", (done) => {
+        const processHashesInstance = {
+            compareDbHashes: (cb) => cb(null, []),
+            compareRemoteImages: (cb) => cb(null, [{ setName: "M21" }])
+        };
+
+        sandbox.stub(dependencies, "Searcher").callsArgWith(1, null, [
+            { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } },
+            { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
+        ]);
+        const hashStub = sandbox.stub(dependencies, "Hash").callsArgWith(1, null, "FALLBACK_HASH");
+        sandbox.stub(dependencies, "CreateDirectory").callsArgWith(0, null, "/tmp/set-symbol-dir");
+        sandbox.stub(dependencies, "GetSetSymbolSnippetTmpFile").rejects(new Error("crop failed"));
+        sandbox.stub(dependencies, "CleanUpFiles").callsArgWith(1);
+        sandbox.stub(dependencies.HashProcessor, "create").returns(processHashesInstance);
+
+        const processor = create({
+            name: "Pacifism",
+            filePath: "/tmp/pacifism.jpg"
+        });
+
+        processor.execute((err, result) => {
+            assert.isNull(err);
+            assert.equal(hashStub.firstCall.args[0], "/tmp/pacifism.jpg");
+            assert.deepEqual(result, ["M21"]);
             done();
         });
     });

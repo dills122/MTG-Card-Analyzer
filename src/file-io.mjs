@@ -38,15 +38,15 @@ function buildFileIO(deps = defaultDeps) {
 
     function CleanUpFiles(directory, callback) {
         const done = callback || (() => {});
-        if (rimraf.length >= 2) {
-            // Legacy callback API (rimraf v3)
-            return rimraf(directory, done);
-        }
-        const result = rimraf(directory);
-        if (result && typeof result.then === "function") {
-            result.then(() => done()).catch((err) => done(err));
-        } else {
+        try {
+            const result = rimraf(directory);
+            if (result && typeof result.then === "function") {
+                result.then(() => done()).catch((err) => done(err));
+                return;
+            }
             done();
+        } catch (err) {
+            done(err);
         }
     }
 
