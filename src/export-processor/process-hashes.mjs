@@ -11,6 +11,10 @@ const config = {
         fourBit: 0.7,
         stringCompare: 0.75
     },
+    remoteBestGuess: {
+        maxCandidates: 3,
+        minScoreDeltaFromTop: 0.03
+    },
     dbMatch: {
         twoBit: 0.92,
         fourBit: 0.85,
@@ -107,7 +111,7 @@ class ProcessHashes {
                         return cb(err);
                     }
                     const setName = card.setName;
-                    this._insertCardHash(remoteImageHash, setName);
+                    this._insertCardHash(setName, remoteImageHash);
                     const comparisonResults = this.dependencies.Hash.CompareHash(
                         this.localHash,
                         remoteImageHash
@@ -139,14 +143,32 @@ class ProcessHashes {
                     _.isEmpty(bestMatches) &&
                     !_.isEmpty(comparisonResultsList)
                 ) {
-                    bestMatches = _.orderBy(
-                        comparisonResultsList,
-                        ["stringCompare", "twoBitMatches", "fourBitMatches"],
-                        ["desc", "desc", "desc"]
-                    ).slice(0, 1);
+                    const sortedByScore = _.orderBy(
+                        comparisonResultsList.map((match) => ({
+                            ...match,
+                            confidenceScore: _.round(
+                                match.stringCompare * 0.5 +
+                                    match.twoBitMatches * 0.3 +
+                                    match.fourBitMatches * 0.2,
+                                4
+                            )
+                        })),
+                        ["confidenceScore", "stringCompare", "twoBitMatches", "fourBitMatches"],
+                        ["desc", "desc", "desc", "desc"]
+                    );
+                    const topScore = sortedByScore[0].confidenceScore;
+                    bestMatches = sortedByScore
+                        .filter(
+                            (match) =>
+                                topScore - match.confidenceScore <=
+                                config.remoteBestGuess.minScoreDeltaFromTop
+                        )
+                        .slice(0, config.remoteBestGuess.maxCandidates)
+                        .map((match) => _.omit(match, ["confidenceScore"]));
                     this.logger.info(
                         "process-hashes::compareRemoteImages: Using best available match"
                     );
+                    this.logger.info(bestMatches);
                 }
                 return callback(null, bestMatches);
             }

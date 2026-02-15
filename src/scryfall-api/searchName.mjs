@@ -31,6 +31,7 @@ async function SearchByNameExact(exact, fuzzy = "") {
         return {};
     } catch (err) {
         logger.error(err);
+        return {};
     }
 }
 
@@ -74,6 +75,7 @@ async function SearchList(exact) {
         return [];
     } catch (err) {
         logger.error(err);
+        return [];
     }
 }
 

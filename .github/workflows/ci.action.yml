@@ -66,8 +66,25 @@ jobs:
             - run: "${GITHUB_WORKSPACE}/.github/scripts/dot-only-test-linter.sh"
     automerge:
         needs: [pr_job, dot_only_linter_job]
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
         steps:
-            - uses: fastify/github-action-merge-dependabot@v2.1.1
+            - name: Merge Dependabot PR
+              uses: actions/github-script@v7
               with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const pr = context.payload.pull_request;
+                      if (!pr) {
+                        core.setFailed("No pull request payload found.");
+                        return;
+                      }
+
+                      await github.rest.pulls.merge({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        pull_number: pr.number,
+                        merge_method: "squash"
+                      });

@@ -41,7 +41,7 @@
         "image-to-base64": "^2.2.0",
         "jimp": "0.22.12",
         "joi": "^18.0.2",
-        "lodash": "^4.17.21",
+        "lodash": "^4.17.23",
         "mysql2": "^3.16.0",
         "request": "^2.88.0",
         "request-promise-native": "^1.0.7",
@@ -52,7 +52,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.39.2",
-        "@types/node": "^18.19.130",
+        "@types/node": "^25.2.3",
         "chai": "^6.2.2",
         "eslint": "^9.39.2",
         "eslint-config-prettier": "^10.1.8",
