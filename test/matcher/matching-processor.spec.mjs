@@ -99,7 +99,7 @@ describe("MatcherProcessor::", () => {
         });
     });
 
-    it("skips DB hash lookup when querying is disabled", (done) => {
+    it("still uses local hash cache lookup when querying is disabled", (done) => {
         const processHashesInstance = {
             compareDbHashes: sandbox.stub().resolves([{ setName: "M20" }]),
             compareRemoteImages: () => Promise.resolve([{ setName: "M21" }])
@@ -125,8 +125,8 @@ describe("MatcherProcessor::", () => {
 
         processor.execute((err, result) => {
             assert.isNull(err);
-            assert.isTrue(processHashesInstance.compareDbHashes.notCalled);
-            assert.deepEqual(result, ["M21"]);
+            assert.isTrue(processHashesInstance.compareDbHashes.calledOnce);
+            assert.sameMembers(result, ["M20", "M21"]);
             done();
         });
     });

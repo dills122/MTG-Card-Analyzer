@@ -156,8 +156,8 @@ class MatcherProcessor {
             allowRemoteBestGuess: true
         });
         this.logger.info("Processing multi set matches");
-        const shouldQueryDb = Boolean(this.queryingEnabled);
-        const dbPromise = shouldQueryDb
+        const shouldQueryCache = true;
+        const dbPromise = shouldQueryCache
             ? processHashes
                   .compareDbHashes()
                   .then((results) => this._processHashResults(results))

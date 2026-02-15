@@ -3,12 +3,11 @@ import { promisify } from "node:util";
 import dbLocal from "./db-local/index.mjs";
 import scryfall from "./scryfall-api/index.mjs";
 import imageHashing from "./image-hashing/index.mjs";
-import rds from "./rds/index.mjs";
 
 const { GetBulkNames } = dbLocal;
+const { CardHashes } = dbLocal;
 const { Search } = scryfall;
 const { Hash } = imageHashing;
-const { CardHashes } = rds;
 
 async function backFillCardHashes(cardName) {
     try {

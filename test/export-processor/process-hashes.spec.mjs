@@ -3,13 +3,13 @@ import { assert } from "chai";
 import sinon from "sinon";
 import _ from "lodash";
 import exportProcessor from "../../src/export-processor/index.mjs";
-import rds from "../../src/rds/index.mjs";
+import dbLocal from "../../src/db-local/index.mjs";
 import imageHashing from "../../src/image-hashing/index.mjs";
 
 process.env.CARD_NAMES_DB_PATH = os.tmpdir();
 
 const { ProcessHashes } = exportProcessor;
-const { CardHashes } = rds;
+const { CardHashes } = dbLocal;
 const { Hash } = imageHashing;
 
 const FAKE_HASH = "THISISANEXAMPLEOFAFAKEHASHEEEEEE";

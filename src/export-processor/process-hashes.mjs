@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import jimp from "jimp";
 import logger from "../logger/log.mjs";
 import joi from "joi";
-import rds from "../rds/index.mjs";
+import dbLocal from "../db-local/index.mjs";
 import imageHashing from "../image-hashing/index.mjs";
 import FileIO from "../file-io.mjs";
 
@@ -26,7 +26,7 @@ const config = {
 };
 
 const defaultDependencies = {
-    CardHashes: rds.CardHashes,
+    CardHashes: dbLocal.CardHashes,
     Hash: imageHashing.Hash,
     CreateDirectory: FileIO.CreateDirectory,
     CleanUpFiles: FileIO.CleanUpFiles
@@ -257,13 +257,11 @@ class ProcessHashes {
     }
 
     _insertCardHash(setName, hash) {
-        if (this.queryingEnabled) {
-            this.dependencies.CardHashes.InsertEntity({
-                Name: this.name,
-                SetName: setName,
-                CardHash: hash
-            });
-        }
+        this.dependencies.CardHashes.InsertEntity({
+            Name: this.name,
+            SetName: setName,
+            CardHash: hash
+        });
     }
 }
 
