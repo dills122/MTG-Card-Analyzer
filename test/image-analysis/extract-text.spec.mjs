@@ -22,13 +22,12 @@ describe("TextExtraction::", () => {
                 }
             });
 
-        textExtraction.ScanImage("/tmp/fake-image.jpg", (err, result) => {
+        textExtraction.ScanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.isNull(err);
             assert.isTrue(recognizeStub.calledOnce);
-            assert.deepEqual(result, {
-                cleanText: "Pacifism",
-                dirtyText: "  Pacifism!! \n"
-            });
+            assert.equal(result.cleanText, "PACIFISM");
+            assert.equal(result.dirtyText, "  Pacifism!! \n");
+            assert.containsAllKeys(result, ["confidence", "bestVariant", "candidates"]);
             done();
         });
     });
@@ -39,7 +38,7 @@ describe("TextExtraction::", () => {
             .stub(textExtraction.dependencies.Tesseract, "recognize")
             .rejects(expectedErr);
 
-        textExtraction.ScanImage("/tmp/fake-image.jpg", (err, result) => {
+        textExtraction.ScanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.strictEqual(err, expectedErr);
             assert.isTrue(recognizeStub.calledOnce);
             assert.isNull(result);
