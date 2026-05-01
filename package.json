@@ -62,7 +62,7 @@
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.0.0",
         "lefthook": "^2.0.13",
-        "lint-staged": "^16.2.7",
+        "lint-staged": "^16.4.0",
         "mocha": "^11.7.5",
         "prettier": "^3.7.4",
         "proxyquire": "^2.1.3",
