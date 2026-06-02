@@ -38,7 +38,7 @@
         "async": "^3.2.6",
         "bunyan": "^1.8.15",
         "clean-text-utils": "^1.1.17",
-        "commander": "^14.0.2",
+        "commander": "^15.0.0",
         "fuzzyset.js": "1.0.7",
         "image-hash": "^7.0.1",
         "image-size": "^1.2.1",
