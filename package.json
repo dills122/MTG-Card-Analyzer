@@ -40,7 +40,7 @@
         "clean-text-utils": "^1.1.17",
         "commander": "^14.0.2",
         "fuzzyset.js": "1.0.7",
-        "image-hash": "^5.3.2",
+        "image-hash": "^7.0.1",
         "image-size": "^1.2.1",
         "image-to-base64": "^2.2.0",
         "jimp": "0.22.12",
