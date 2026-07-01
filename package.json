@@ -34,7 +34,7 @@
     },
     "license": "MIT",
     "dependencies": {
-        "@dills1220/nedb": "^1.8.4",
+        "@dills1220/nedb": "^1.9.1",
         "async": "^3.2.6",
         "bunyan": "^1.8.15",
         "clean-text-utils": "^1.1.17",
