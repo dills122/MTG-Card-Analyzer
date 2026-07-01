@@ -39,8 +39,8 @@ importers:
         specifier: 0.22.12
         version: 0.22.12
       joi:
-        specifier: ^18.2.1
-        version: 18.2.1
+        specifier: ^18.2.3
+        version: 18.2.3
       lodash:
         specifier: ^4.18.1
         version: 4.18.1
@@ -1050,8 +1050,8 @@ packages:
   jimp@0.22.12:
     resolution: {integrity: sha512-R5jZaYDnfkxKJy1dwLpj/7cvyjxiclxU3F4TrI/J4j2rS0niq6YDUMoPn5hs8GDpO+OZGo7Ky057CRtWesyhfg==}
 
-  joi@18.2.1:
-    resolution: {integrity: sha512-2/OKlogiESf2Nh3TFCrRjrr9z1DRHeW0I+KReF67+4J0Ns+8hBtHRmoWAZ2OFU6I5+TWLEe6sVlSdXPjHm5UbQ==}
+  joi@18.2.3:
+    resolution: {integrity: sha512-N5A3KTWQpPWT4ExxxPlUx7WmykGXRzhNidWhV41d6Abu9YfI2NyWCJuxdPnslJCPWtbRpSVOWSnSS6GakLM/Rg==}
     engines: {node: '>= 20'}
 
   jpeg-js@0.4.4:
@@ -2767,7 +2767,7 @@ snapshots:
       - debug
       - encoding
 
-  joi@18.2.1:
+  joi@18.2.3:
     dependencies:
       '@hapi/address': 5.1.1
       '@hapi/formula': 3.0.2
