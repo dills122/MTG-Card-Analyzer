@@ -1,0 +1,4 @@
+{
+    "expectedCommit": "0248f5b22ec1b5e53b0c5c3be39d150932e0821d",
+    "note": "Reviewed AI Central revision used by pnpm ai:setup. Update only with --record-pin after review."
+}

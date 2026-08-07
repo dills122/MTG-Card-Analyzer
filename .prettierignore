@@ -2,6 +2,8 @@ node_modules
 dist
 build
 coverage
+.claude/worktrees
+.codex/skills
 pnpm-lock.yaml
 eng.traineddata
 src/test-images

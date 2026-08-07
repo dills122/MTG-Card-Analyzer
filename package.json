@@ -10,6 +10,8 @@
         "pnpm": ">=8.0.0"
     },
     "scripts": {
+        "ai:check": "node scripts/setup-ai-context.mjs --check",
+        "ai:setup": "node scripts/setup-ai-context.mjs",
         "test": "mocha \"./test/**/*.spec.mjs\"",
         "test:regression": "node scripts/run-regression.mjs",
         "regression": "node scripts/run-regression.mjs --no-fail-on-regression",

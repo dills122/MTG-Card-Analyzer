@@ -79,6 +79,14 @@ secure.config.*
 *.swo
 *~
 
+# Local AI Central links (repository-owned AI files remain tracked)
+.agents/
+.claude/agents/
+.claude/skills
+.claude/worktrees/
+.codex/skills/
+.codex/steering/javascript-typescript-steering.md
+
 # macOS
 .DS_Store
 .AppleDouble
