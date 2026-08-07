@@ -12,8 +12,14 @@ function InsertRecord(record, cb) {
             return cb(err, null);
         }
         connection.query(
-            `INSERT INTO NeedsAttention (cardName, possibleSets, extractedText, dirtyExtractedText, nameImage) VALUES ("${record.cardName}","${record.possibleSets}", "${record.extractedText}","${record.dirtyExtractedText}","${record.nameImage}")`,
-            [],
+            "INSERT INTO NeedsAttention (cardName, possibleSets, extractedText, dirtyExtractedText, nameImage) VALUES (?, ?, ?, ?, ?)",
+            [
+                record.cardName,
+                record.possibleSets,
+                record.extractedText,
+                record.dirtyExtractedText,
+                record.nameImage
+            ],
             (err, results) => {
                 if (err) {
                     logger.error(err);

@@ -12,8 +12,8 @@ function GetQuantity(name, set, cb) {
             return cb(err, null);
         }
         connection.query(
-            `SELECT quantity FROM CardCollection WHERE cardName="${name}" AND cardSet="${set}" LIMIT 1`,
-            [],
+            "SELECT quantity FROM CardCollection WHERE cardName=? AND cardSet=? LIMIT 1",
+            [name, set],
             (err, results) => {
                 if (err) {
                     logger.error(err);
@@ -33,8 +33,8 @@ function InsertRecord(record, cb) {
             return cb(err, null);
         }
         connection.query(
-            `INSERT INTO CardCollection (cardName, cardSet, quantity) VALUES ("${record.cardName}","${record.cardSet}","${record.quantity}")`,
-            [],
+            "INSERT INTO CardCollection (cardName, cardSet, quantity) VALUES (?, ?, ?)",
+            [record.cardName, record.cardSet, record.quantity],
             (err, results) => {
                 if (err) {
                     logger.error(err);

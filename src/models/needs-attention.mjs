@@ -1,8 +1,12 @@
 import _ from "lodash";
 import Joi from "joi";
 import rds from "../rds/index.mjs";
+import log from "../logger/log.mjs";
 
-const { Collection } = rds;
+const { NDAttn } = rds;
+const logger = log.create({
+    isPretty: true
+});
 
 const schema = Joi.object().keys({
     id: Joi.number(),
@@ -22,9 +26,16 @@ class NeedsAttention {
         _.assign(this, validatedSchema);
     }
 
-    Insert() {
+    Insert(callback) {
         const object = _.pick(this, Object.keys(schema.describe().keys));
-        Collection.InsertEntity(object);
+        NDAttn.InsertRecord(object, (err, results) => {
+            if (err) {
+                logger.error(err);
+            }
+            if (typeof callback === "function") {
+                callback(err, results);
+            }
+        });
     }
 }
 
