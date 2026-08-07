@@ -128,6 +128,18 @@ npm test
 
 Tests stub external calls; no MySQL required.
 
+### Test Coverage
+
+```bash
+# Run tests with coverage report (text + html + lcov, written to coverage/)
+pnpm coverage
+
+# Same, but fail the run if thresholds in the "c8" package.json block aren't met
+pnpm coverage:check
+```
+
+No coverage thresholds are enforced yet — baseline is being established, see [#31](https://github.com/dills122/MTG-Card-Analyzer/issues/31).
+
 ### Quality Commands
 
 ```bash
