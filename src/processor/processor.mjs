@@ -117,7 +117,7 @@ class ProcessorClass {
             dirtyText: this.nameExtractionResults.dirtyText
         }).Match();
         this.nameMatches = matchResults;
-        this.logger.info(`Matches returned ${this.nameMatches}`);
+        this.logger.info(formatMatchSummary(this.nameMatches));
     }
 
     attemptMatching(callback) {
@@ -130,7 +130,7 @@ class ProcessorClass {
     }
 
     async attemptMatchingAsync() {
-        this.logger.info("Attempting Matching");
+        this.logger.info(`Attempting Matching with ${this.nameMatches.length} candidate names`);
         const matchResults = await Promise.all(
             this.nameMatches.map((match) => this._attemptMatch(match))
         );
@@ -165,7 +165,8 @@ class ProcessorClass {
         const matchProcessor = dependencies.MatchProcessor.create({
             name: match.name,
             filePath: this.filePath,
-            queryingEnabled: this.queryingEnabled
+            queryingEnabled: this.queryingEnabled,
+            logger: this.logger
         });
         return new Promise((resolve, reject) => {
             matchProcessor.execute((err, results) => {
@@ -264,6 +265,21 @@ class ProcessorClass {
         this.logger.info("Preparing to insert record");
         collectionsModel.Insert();
     }
+}
+
+function formatMatchSummary(matches = []) {
+    if (!matches.length) {
+        return "Matches returned (0): none";
+    }
+
+    const summarized = matches.map((match, index) => {
+        const name = _.get(match, "name", "unknown");
+        const rawPercent = Number(_.get(match, "percentage", 0));
+        const displayPercent = _.round(rawPercent <= 1 ? rawPercent * 100 : rawPercent, 1);
+        return `${index + 1}. ${name} (${displayPercent}%)`;
+    });
+
+    return `Matches returned (${matches.length}): ${summarized.join(" | ")}`;
 }
 
 export const create = (params) => new ProcessorClass(params);
