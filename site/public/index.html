@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+            name="description"
+            content="Help MTG Card Analyzer recognize real-world cards by contributing labeled test photos."
+        />
+        <meta name="theme-color" content="#f2eee4" />
+        <title>MTG Card Analyzer — Contribute a card photo</title>
+        <link rel="stylesheet" href="/styles.css" />
+        <script src="/app.js" type="module"></script>
+    </head>
+    <body>
+        <a class="skip-link" href="#main">Skip to content</a>
+        <header class="site-header">
+            <a class="wordmark" href="#top" aria-label="MTG Card Analyzer home">
+                <span class="wordmark-mark" aria-hidden="true">M</span>
+                <span>MTG Card Analyzer</span>
+            </a>
+            <nav aria-label="Primary navigation">
+                <a href="#about">About</a>
+                <a href="#contribute">Contribute</a>
+                <a href="https://github.com/dills1220/MTG-Card-Analyzer">GitHub</a>
+            </nav>
+        </header>
+
+        <main id="main">
+            <section class="hero" id="top">
+                <div class="hero-copy">
+                    <p class="eyebrow">Open-source recognition, trained by real collections</p>
+                    <h1>Better scans start with stranger photos.</h1>
+                    <p class="hero-lede">
+                        MTG Card Analyzer identifies Magic cards from scans, phone photos, awkward
+                        crops, and less-than-perfect light. Your labeled images help us test the
+                        cases that clean sample data misses.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button button-primary" href="#contribute">Contribute a photo</a>
+                        <a class="text-link" href="https://github.com/dills1220/MTG-Card-Analyzer">
+                            Explore the project <span aria-hidden="true">↗</span>
+                        </a>
+                    </div>
+                </div>
+                <div
+                    class="hero-visual"
+                    aria-label="A photographed card becoming structured test data"
+                >
+                    <div class="card-photo" aria-hidden="true">
+                        <div class="card-photo-frame">
+                            <span class="card-photo-title">PACIFISM</span>
+                            <div class="card-photo-art"></div>
+                            <div class="card-photo-rules">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scan-line" aria-hidden="true"></div>
+                    <dl class="metadata-chip">
+                        <div>
+                            <dt>Card</dt>
+                            <dd>Pacifism</dd>
+                        </div>
+                        <div>
+                            <dt>Set</dt>
+                            <dd>BBD · 101</dd>
+                        </div>
+                        <div>
+                            <dt>Quality</dt>
+                            <dd>Good photo</dd>
+                        </div>
+                    </dl>
+                </div>
+            </section>
+
+            <section class="project-strip" aria-label="Project qualities">
+                <p>
+                    <strong>Local-first</strong><span>Your collection stays on your machine.</span>
+                </p>
+                <p>
+                    <strong>Deterministic</strong
+                    ><span>Fixtures make regressions reproducible.</span>
+                </p>
+                <p>
+                    <strong>Open source</strong
+                    ><span>Every result can be inspected and improved.</span>
+                </p>
+            </section>
+
+            <section class="about section-shell" id="about">
+                <div class="section-heading">
+                    <p class="eyebrow">How contributions help</p>
+                    <h2>One photo. A tougher scanner.</h2>
+                </div>
+                <ol class="process-list">
+                    <li>
+                        <span class="step-number">01</span>
+                        <div>
+                            <h3>Upload the original</h3>
+                            <p>Phone photos and imperfect captures are especially useful.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-number">02</span>
+                        <div>
+                            <h3>Label the exact printing</h3>
+                            <p>Use Scryfall lookup or enter every field yourself.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-number">03</span>
+                        <div>
+                            <h3>We review the fixture</h3>
+                            <p>
+                                Nothing is published automatically; submissions enter a review
+                                queue.
+                            </p>
+                        </div>
+                    </li>
+                </ol>
+            </section>
+
+            <section class="contribute-section" id="contribute">
+                <div class="section-shell form-shell">
+                    <div class="form-intro">
+                        <p class="eyebrow">Fixture workshop</p>
+                        <h2>Contribute a card photo</h2>
+                        <p>
+                            Start with a clear original file. We accept JPEG, PNG, or WebP images up
+                            to 10 MiB. Required fields are marked with an asterisk.
+                        </p>
+                    </div>
+
+                    <form id="submission-form" enctype="multipart/form-data">
+                        <fieldset class="form-section upload-section">
+                            <legend><span>1</span> Add the image</legend>
+                            <div class="upload-layout">
+                                <div class="upload-control">
+                                    <label class="drop-zone" for="image">
+                                        <span class="upload-icon" aria-hidden="true">↑</span>
+                                        <strong>Choose a card photo</strong>
+                                        <span>or drop it here</span>
+                                        <small>JPEG, PNG, or WebP · 10 MiB max</small>
+                                    </label>
+                                    <input
+                                        class="visually-hidden-file"
+                                        id="image"
+                                        name="image"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        required
+                                    />
+                                    <p class="field-error" data-error-for="image"></p>
+                                </div>
+                                <div class="upload-preview" id="upload-preview" aria-live="polite">
+                                    <div class="preview-placeholder" aria-hidden="true"></div>
+                                    <div>
+                                        <strong id="upload-name">No image selected</strong>
+                                        <span id="upload-details"
+                                            >Your preview will appear here.</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="form-section metadata-section">
+                            <legend><span>2</span> Identify the printing</legend>
+                            <div
+                                class="entry-mode"
+                                role="radiogroup"
+                                aria-label="Metadata entry mode"
+                            >
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name="sourceMode"
+                                        value="scryfall"
+                                        checked
+                                    />
+                                    <span
+                                        ><strong>Find with Scryfall</strong
+                                        ><small>Fastest</small></span
+                                    >
+                                </label>
+                                <label>
+                                    <input type="radio" name="sourceMode" value="manual" />
+                                    <span
+                                        ><strong>Enter manually</strong
+                                        ><small>Full control</small></span
+                                    >
+                                </label>
+                            </div>
+
+                            <div class="scryfall-lookup" id="scryfall-lookup">
+                                <label for="card-search">Search card name</label>
+                                <div class="search-row">
+                                    <input
+                                        id="card-search"
+                                        type="search"
+                                        list="card-suggestions"
+                                        autocomplete="off"
+                                        placeholder="Try ‘Lightning Bolt’"
+                                    />
+                                    <datalist id="card-suggestions"></datalist>
+                                    <button
+                                        class="button button-secondary"
+                                        id="lookup-button"
+                                        type="button"
+                                    >
+                                        Find printings
+                                    </button>
+                                </div>
+                                <p class="field-hint" id="lookup-status" role="status">
+                                    Type at least two characters for suggestions.
+                                </p>
+                                <div class="field-group printing-field" id="printing-field" hidden>
+                                    <label for="printing">Choose the photographed printing</label>
+                                    <select id="printing">
+                                        <option value="">Select a printing</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="metadata-layout">
+                                <div class="metadata-fields">
+                                    <div class="field-group field-wide">
+                                        <label for="name"
+                                            >Card name <span aria-hidden="true">*</span></label
+                                        >
+                                        <input
+                                            id="name"
+                                            name="name"
+                                            type="text"
+                                            maxlength="200"
+                                            required
+                                        />
+                                        <p class="field-error" data-error-for="name"></p>
+                                    </div>
+                                    <div class="field-group">
+                                        <label for="setCode"
+                                            >Set code <span aria-hidden="true">*</span></label
+                                        >
+                                        <input
+                                            id="setCode"
+                                            name="setCode"
+                                            type="text"
+                                            maxlength="12"
+                                            required
+                                        />
+                                        <p class="field-error" data-error-for="setCode"></p>
+                                    </div>
+                                    <div class="field-group">
+                                        <label for="collectorNumber">
+                                            Collector no. <span aria-hidden="true">*</span>
+                                        </label>
+                                        <input
+                                            id="collectorNumber"
+                                            name="collectorNumber"
+                                            type="text"
+                                            maxlength="40"
+                                            required
+                                        />
+                                        <p class="field-error" data-error-for="collectorNumber"></p>
+                                    </div>
+                                    <div class="field-group field-wide">
+                                        <label for="setName"
+                                            >Set name <span aria-hidden="true">*</span></label
+                                        >
+                                        <input
+                                            id="setName"
+                                            name="setName"
+                                            type="text"
+                                            maxlength="160"
+                                            required
+                                        />
+                                        <p class="field-error" data-error-for="setName"></p>
+                                    </div>
+                                    <div class="field-group field-wide">
+                                        <label for="typeLine"
+                                            >Type line <span aria-hidden="true">*</span></label
+                                        >
+                                        <input
+                                            id="typeLine"
+                                            name="typeLine"
+                                            type="text"
+                                            maxlength="300"
+                                            required
+                                        />
+                                        <p class="field-error" data-error-for="typeLine"></p>
+                                    </div>
+                                    <div class="field-group">
+                                        <label for="rarity"
+                                            >Rarity <span aria-hidden="true">*</span></label
+                                        >
+                                        <select id="rarity" name="rarity" required>
+                                            <option value="">Choose rarity</option>
+                                            <option value="common">Common</option>
+                                            <option value="uncommon">Uncommon</option>
+                                            <option value="rare">Rare</option>
+                                            <option value="mythic">Mythic rare</option>
+                                            <option value="special">Special</option>
+                                            <option value="bonus">Bonus</option>
+                                        </select>
+                                        <p class="field-error" data-error-for="rarity"></p>
+                                    </div>
+                                    <div class="field-group">
+                                        <label for="quality"
+                                            >Image quality <span aria-hidden="true">*</span></label
+                                        >
+                                        <select id="quality" name="quality" required>
+                                            <option value="">Choose quality</option>
+                                            <option value="clean-scan">Clean scan</option>
+                                            <option value="good-photo">Good photo</option>
+                                            <option value="average-photo">Average photo</option>
+                                            <option value="poor-lighting">Poor lighting</option>
+                                            <option value="blur">Blur</option>
+                                            <option value="rotation">Rotation</option>
+                                            <option value="cropping">Cropping</option>
+                                            <option value="low-resolution">Low resolution</option>
+                                        </select>
+                                        <p class="field-error" data-error-for="quality"></p>
+                                    </div>
+                                    <div class="field-group field-wide">
+                                        <label for="notes">Notes <span>Optional</span></label>
+                                        <textarea
+                                            id="notes"
+                                            name="notes"
+                                            rows="4"
+                                            maxlength="2000"
+                                            placeholder="Glare, sleeve, crop, camera conditions, or anything else worth knowing"
+                                        ></textarea>
+                                        <p class="field-error" data-error-for="notes"></p>
+                                    </div>
+                                    <input id="scryfallId" name="scryfallId" type="hidden" />
+                                    <input id="scryfallUri" name="scryfallUri" type="hidden" />
+                                </div>
+                                <aside
+                                    class="reference-card"
+                                    id="reference-card"
+                                    aria-live="polite"
+                                >
+                                    <div class="reference-image-wrap">
+                                        <span>SCRYFALL REFERENCE</span>
+                                        <div
+                                            class="reference-placeholder"
+                                            id="reference-placeholder"
+                                        >
+                                            Choose a printing to see its reference image.
+                                        </div>
+                                        <img id="reference-image" alt="" hidden />
+                                    </div>
+                                    <p>
+                                        Reference art helps confirm the exact set and collector
+                                        number.
+                                    </p>
+                                </aside>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="form-section confirm-section">
+                            <legend><span>3</span> Send for review</legend>
+                            <label class="consent-control">
+                                <input name="consent" type="checkbox" value="yes" required />
+                                <span>
+                                    I took or have permission to share this image, and it may be
+                                    used in the project’s public test fixtures.
+                                    <span aria-hidden="true">*</span>
+                                </span>
+                            </label>
+                            <p class="field-error" data-error-for="consent"></p>
+                            <div id="turnstile-container"></div>
+                            <div class="submit-row">
+                                <p id="submission-status" role="status">
+                                    Submissions are private until a maintainer reviews them.
+                                </p>
+                                <button
+                                    class="button button-primary"
+                                    id="submit-button"
+                                    type="submit"
+                                >
+                                    Send contribution
+                                </button>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <a class="wordmark" href="#top">
+                <span class="wordmark-mark" aria-hidden="true">M</span>
+                <span>MTG Card Analyzer</span>
+            </a>
+            <p>Built for the odd angles, old sleeves, and kitchen-table lighting.</p>
+            <a href="https://github.com/dills1220/MTG-Card-Analyzer">View source on GitHub</a>
+        </footer>
+    </body>
+</html>
