@@ -1,53 +1,10 @@
 import Datastore from "@dills1220/nedb";
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
 import { getConfig } from "../config/index.mjs";
-
-function toDbFilePath(basePath, fileName) {
-    if (!basePath) {
-        return "";
-    }
-    return path.extname(basePath).toLowerCase() === ".db"
-        ? basePath
-        : path.join(basePath, fileName);
-}
-
-function canUsePath(filePath) {
-    if (!filePath) {
-        return false;
-    }
-    try {
-        fs.mkdirSync(path.dirname(filePath), { recursive: true });
-        fs.accessSync(path.dirname(filePath), fs.constants.R_OK | fs.constants.W_OK);
-        return true;
-    } catch {
-        return false;
-    }
-}
+import { resolveDbFilename as resolvePath } from "./resolve-db-path.mjs";
 
 function resolveDbFilename() {
-    const home = process.env.HOME || os.tmpdir();
-    const legacyPreferencesPath =
-        process.platform === "darwin" ? path.join(home, "Library/Preferences") : "";
     const config = getConfig();
-    const candidates = [
-        config.cardHashDbPath || config.cardNamesDbPath,
-        process.env.APPDATA,
-        legacyPreferencesPath,
-        process.platform !== "darwin" ? path.join(home, ".local/share") : "",
-        path.join(home, ".mtg-card-analyzer"),
-        path.join(os.tmpdir(), "mtg-card-analyzer")
-    ];
-
-    for (const candidate of candidates) {
-        const dbFile = toDbFilePath(candidate, "card-hashes.db");
-        if (canUsePath(dbFile)) {
-            return dbFile;
-        }
-    }
-
-    return path.join(os.tmpdir(), "mtg-card-analyzer", "card-hashes.db");
+    return resolvePath(config.cardHashDbPath || config.cardNamesDbPath, "card-hashes.db");
 }
 
 // Resolved lazily on first real use (not at import time) so config sourced from

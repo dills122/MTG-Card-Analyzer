@@ -12,7 +12,7 @@ function InsertRecord(record, cb) {
             return cb(err, null);
         }
         connection.query(
-            "INSERT INTO NeedsAttention (cardName, possibleSets, extractedText, dirtyExtractedText, nameImage) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO Card_NEED_ATTN (cardName, possibleSets, extractedText, dirtyExtractedText, nameImage) VALUES (?, ?, ?, ?, ?)",
             [
                 record.cardName,
                 record.possibleSets,

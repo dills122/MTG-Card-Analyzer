@@ -7,13 +7,12 @@ import fuzzyMatching from "../../src/fuzzy-matching/index.mjs";
 import matcher from "../../src/matcher/index.mjs";
 import NeedsAttention from "../../src/models/needs-attention.mjs";
 import Collection from "../../src/models/card-collection.mjs";
-import rds from "../../src/rds/index.mjs";
 import scryfallApi from "../../src/scryfall-api/index.mjs";
+import storage from "../../src/storage/index.mjs";
 const { Processor } = processorModule;
 const { ImageProcessor } = imageProcessing;
 const { MatchName } = fuzzyMatching;
 const { MatchingProcessor: MatchProcessor } = matcher;
-const { Collection: RDSCollection } = rds;
 const { Search: GetAdditionalCardInfo } = scryfallApi;
 
 const EXTRACTED_TEXT = "Pacifism s";
@@ -59,11 +58,12 @@ describe("Integration::", () => {
             .callsArgWith(0, null, [COLLECTION_NAME]); //Empty right now and will have to be a multi call oen since in async.each
         stubs.NeedsAttentionInsertStub = sandbox
             .stub(NeedsAttention.prototype, "Insert")
-            .returns(null);
-        stubs.CollectionInsertStub = sandbox.stub(Collection.prototype, "Insert").returns(null);
-        stubs.CollectionGetQtyStub = sandbox
-            .stub(RDSCollection, "GetQuantity")
-            .callsArgWith(2, null, 2);
+            .resolves(null);
+        stubs.CollectionInsertStub = sandbox.stub(Collection.prototype, "Insert").resolves(null);
+        // Never let real specs touch the actual local ops-log file (or any other real nedb
+        // file on the machine running the tests) -- storage.log.record is the one dependency
+        // in processor.mjs not injected via `dependencies`, so it's stubbed directly here.
+        stubs.LogOperationStub = sandbox.stub(storage.log, "record");
         stubs.GetAdditionalCardInfoStub = sandbox
             .stub(GetAdditionalCardInfo, "SearchByNameExact")
             .callsArgWith(2, null, {
@@ -200,7 +200,6 @@ describe("Integration::", () => {
                     queryingEnabled: true
                 });
                 assert.isTrue(stubs.MatchProcessorExecuteStub.calledOnce);
-                assert.isTrue(stubs.CollectionGetQtyStub.calledOnce);
                 assert.isTrue(stubs.CollectionInsertStub.calledOnce);
                 assert.isTrue(stubs.GetAdditionalCardInfoStub.calledOnce);
                 return done(err);
@@ -262,7 +261,6 @@ describe("Integration::", () => {
                 assert.isTrue(err instanceof Error);
                 assert.isFalse(stubs.MatchProcessorCreateStub.calledOnce);
                 assert.isFalse(stubs.MatchProcessorExecuteStub.calledOnce);
-                assert.isFalse(stubs.CollectionGetQtyStub.calledOnce);
                 assert.isFalse(stubs.CollectionInsertStub.calledOnce);
                 assert.isFalse(stubs.GetAdditionalCardInfoStub.calledOnce);
                 return done();

@@ -1,0 +1,29 @@
+services:
+    mysql:
+        image: mysql:8
+        container_name: mtg-card-analyzer-mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-MtgCardCatalog}
+        ports:
+            - "${MYSQL_PORT:-3306}:3306"
+        volumes:
+            - mtg-mysql-data:/var/lib/mysql
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mysqladmin",
+                    "ping",
+                    "-h",
+                    "localhost",
+                    "-uroot",
+                    "-p${MYSQL_ROOT_PASSWORD:-root}"
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+volumes:
+    mtg-mysql-data:

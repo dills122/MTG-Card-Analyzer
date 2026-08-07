@@ -8,8 +8,8 @@ import fuzzyMatching from "../fuzzy-matching/index.mjs";
 import matcher from "../matcher/index.mjs";
 import NeedsAttention from "../models/needs-attention.mjs";
 import Collection from "../models/card-collection.mjs";
-import rds from "../rds/index.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
+import storage from "../storage/index.mjs";
 import imageToBase64 from "image-to-base64";
 
 const dependencies = {
@@ -19,7 +19,6 @@ const dependencies = {
     MatchProcessor: matcher.MatchingProcessor,
     NeedsAttention,
     Collection,
-    RDSCollection: rds.Collection,
     GetAdditionalCardInfo: scryfallApi.Search,
     Base64: callbackify(imageToBase64)
 };
@@ -37,6 +36,7 @@ class ProcessorClass {
         this.imagePaths = {};
         this.extractedText = {};
         this.matcherResults = [];
+        this.decision = "unknown";
         this.logger = logger.create({
             isPretty: this.isPretty
         });
@@ -52,10 +52,50 @@ class ProcessorClass {
     }
 
     async executeAsync() {
-        await this.createDirectoryAsync();
-        await this.extractNameAsync();
-        await this.processExtractionResultsAsync();
-        await this.attemptMatchingAsync();
+        const startedAt = Date.now();
+        try {
+            await this.createDirectoryAsync();
+            await this.extractNameAsync();
+            await this.processExtractionResultsAsync();
+            await this.attemptMatchingAsync();
+            await this.logOperationAsync({ durationMs: Date.now() - startedAt });
+        } catch (err) {
+            this.decision = this.decision === "unknown" ? "error" : this.decision;
+            await this.logOperationAsync({
+                durationMs: Date.now() - startedAt,
+                error: err?.message || String(err)
+            });
+            throw err;
+        }
+    }
+
+    // Local ops log -- part of the always-on nedb cache tier, no-ops when
+    // --no-local-cache is set. This is what #49 ("Transaction") became.
+    async logOperationAsync(extra = {}) {
+        try {
+            storage.log.record({
+                filePath: this.filePath,
+                extractedText: this.nameExtractionResults
+                    ? {
+                          clean: this.nameExtractionResults.cleanText,
+                          dirty: this.nameExtractionResults.dirtyText
+                      }
+                    : null,
+                nameMatches: this.nameMatches || [],
+                matcherResults: (this.matcherResults || []).map((result) => ({
+                    name: result.name,
+                    sets: result.sets
+                })),
+                decision: this.decision,
+                queryingEnabled: this.queryingEnabled,
+                storageAdapter: storage.adapterName,
+                error: null,
+                ...extra
+            });
+        } catch (logErr) {
+            // The ops log is a diagnostic aid, never a reason to fail (or mask) a real scan.
+            this.logger.error(logErr);
+        }
     }
 
     createDirectory(callback) {
@@ -136,9 +176,11 @@ class ProcessorClass {
         );
         this.matcherResults.push(...matchResults);
         if (_.isEmpty(this.matcherResults)) {
+            this.decision = "no-match";
             throw new Error("No matches found");
         }
         if (!this.queryingEnabled) {
+            this.decision = "dry-run";
             this.logger.info("Final results:");
             // Print user-facing results in a readable object format.
             console.log(
@@ -151,9 +193,11 @@ class ProcessorClass {
             return;
         }
         if (this.matcherResults.length === 1) {
+            this.decision = "collection";
             await this.CreateCollectionsRecordAsync(this.matcherResults[0]);
             return;
         }
+        this.decision = "needs-attention";
         await Promise.all(
             this.matcherResults.map((matchResult) =>
                 this.CreateNeedsAttentionRecordAsync(matchResult)
@@ -208,7 +252,7 @@ class ProcessorClass {
             possibleSets: record.sets.join(","),
             nameImage: name64Image
         });
-        needsAttenionModel.Insert();
+        await needsAttenionModel.Insert();
     }
 
     CreateCollectionsRecord(record, callback) {
@@ -223,47 +267,39 @@ class ProcessorClass {
     async CreateCollectionsRecordAsync(record) {
         this.logger.info("Creating Collections Record");
         const set = record.sets[0];
-        let qty;
         let additionalInfo;
         try {
-            [qty, additionalInfo] = await Promise.all([
-                new Promise((resolve, reject) => {
-                    dependencies.RDSCollection.GetQuantity(record.name, set, (err, quantity) => {
+            additionalInfo = await new Promise((resolve, reject) => {
+                dependencies.GetAdditionalCardInfo.SearchByNameExact(
+                    record.name,
+                    "",
+                    (err, info) => {
                         if (err) {
                             return reject(err);
                         }
-                        return resolve(quantity);
-                    });
-                }),
-                new Promise((resolve, reject) => {
-                    dependencies.GetAdditionalCardInfo.SearchByNameExact(
-                        record.name,
-                        "",
-                        (err, info) => {
-                            if (err) {
-                                return reject(err);
-                            }
-                            return resolve(info);
-                        }
-                    );
-                })
-            ]);
+                        return resolve(info);
+                    }
+                );
+            });
         } catch (err) {
             this.logger.error(err);
             throw err;
         }
+        // delta defaults to 1 (this scan found one more copy) -- the persistence layer
+        // (nedb or rds, whichever is selected) owns adding that to whatever quantity
+        // already exists for this cardName+cardSet, and computes estValue from the
+        // resulting total using priceUsd. See src/models/card-collection.mjs.
         const collectionsModel = dependencies.Collection.create({
             cardName: record.name,
             cardSet: set,
-            quantity: qty,
             automated: true,
             magicId: additionalInfo.tcgplayer_id,
             imageUrl: additionalInfo.image_uris.normal,
-            estValue: _.round(additionalInfo.prices.usd * qty, 4),
+            priceUsd: Number(additionalInfo.prices.usd) || 0,
             cardType: additionalInfo.type_line
         });
         this.logger.info("Preparing to insert record");
-        collectionsModel.Insert();
+        await collectionsModel.Insert();
     }
 }
 

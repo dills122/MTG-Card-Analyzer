@@ -6,15 +6,15 @@ Thanks for looking at MTG Card Analyzer. This doc covers how to set up, work on,
 
 - Node >= 20 (repo is developed/tested on Node 22)
 - [pnpm](https://pnpm.io/) >= 8: `corepack enable` or `npm i -g pnpm`
-- Clone and install:
+- Clone and run the setup script:
 
 ```bash
 git clone https://github.com/dills122/MTG-Card-Analyzer.git
 cd MTG-Card-Analyzer
-pnpm install
+node scripts/setup.mjs
 ```
 
-`pnpm install` also runs `lefthook install` (via the `prepare` script), which wires up git hooks for lint-staged.
+That installs deps (also runs `lefthook install` via the `prepare` script, wiring up git hooks for lint-staged), creates local config files, and seeds the card names dictionary. Full walkthrough, flags, and troubleshooting: **[docs/LOCAL_DEV.md](docs/LOCAL_DEV.md)**.
 
 ## AI-Assisted Development
 
@@ -66,10 +66,15 @@ Quick orientation — see individual `index.mjs` files in each folder for the pu
 - `src/image-processing/`, `src/image-analysis/` — image prep + OCR
 - `src/fuzzy-matching/`, `src/matcher/` — name/type matching + decision logic
 - `src/scryfall-api/` — Scryfall HTTP client
-- `src/db-local/`, `src/storage/` — local NeDB-backed cache + storage adapter abstraction
-- `src/rds/` — legacy/optional MySQL adapter, not used by default
+- `src/db-local/` — always-on local nedb cache (names, hashes, ops log) + nedb persistence backend (collection, needs-attention)
+- `src/storage/` — the two-tier abstraction over the above; see the README's Persistence Architecture section
+- `src/rds/` — legacy/optional MySQL persistence backend, not used by default
 - `src/processor/` — orchestrates the end-to-end scan pipeline
-- `index.mjs` — CLI entry point
+- `src/config/` — single source of truth for runtime settings (CLI flag > env var > config file > default)
+- `index.mjs` — CLI entry point (`scan`, `log dump`, `log stats`)
+- `scripts/` — dev tooling: `setup.mjs` (ramp-up), `verify-env.mjs` (environment sanity check)
+- `docker-compose.yml` — local MySQL for the optional `rds` adapter
+- `docs/` — deeper guides (currently: local dev setup)
 
 ## Picking Up an Issue
 

@@ -27,6 +27,11 @@
         "check:fast": "pnpm lint && pnpm prettier:check && pnpm typecheck",
         "check": "pnpm check:fast && pnpm test",
         "setup-db": "node src/data/scripts/setup-db.cjs",
+        "setup": "node scripts/setup.mjs",
+        "verify": "node scripts/verify-env.mjs",
+        "docker:up": "docker compose up -d",
+        "docker:down": "docker compose down",
+        "docker:logs": "docker compose logs -f mysql",
         "prepare": "lefthook install"
     },
     "keywords": [

@@ -22,6 +22,7 @@ describe("rds::connection", () => {
         const [config] = mysql.createConnection.firstCall.args;
         assert.deepEqual(config, {
             host: undefined,
+            port: undefined,
             user: undefined,
             password: undefined,
             database: undefined

@@ -18,6 +18,7 @@ function CreateConnection() {
     const config = getSecureConfig();
     return mysql.createConnection({
         host: config.rds.host,
+        port: config.rds.port,
         user: config.rds.user,
         password: config.rds.password,
         database: config.rds.database

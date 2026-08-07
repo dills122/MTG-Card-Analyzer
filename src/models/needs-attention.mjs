@@ -1,15 +1,8 @@
 import _ from "lodash";
 import Joi from "joi";
-import rds from "../rds/index.mjs";
-import log from "../logger/log.mjs";
-
-const { NDAttn } = rds;
-const logger = log.create({
-    isPretty: true
-});
+import storage from "../storage/index.mjs";
 
 const schema = Joi.object().keys({
-    id: Joi.number(),
     cardName: Joi.string().min(3).max(50).optional(),
     extractedText: Joi.string().max(100).required(),
     dirtyExtractedText: Joi.string().max(100).required(),
@@ -26,16 +19,9 @@ class NeedsAttention {
         _.assign(this, validatedSchema);
     }
 
-    Insert(callback) {
+    Insert() {
         const object = _.pick(this, Object.keys(schema.describe().keys));
-        NDAttn.InsertRecord(object, (err, results) => {
-            if (err) {
-                logger.error(err);
-            }
-            if (typeof callback === "function") {
-                callback(err, results);
-            }
-        });
+        return storage.needsAttention.insert(object);
     }
 }
 

@@ -12,8 +12,8 @@ CREATE TABLE Card_NEED_ATTN (
     PossibleSets varchar(50),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt DATETIME ON UPDATE CURRENT_TIMESTAMP,
-    CreatedBy varchar(25) NOT NULL,
-    UpdatedBy varchar(25) NOT NULL,
+    CreatedBy varchar(25) NOT NULL DEFAULT 'automated',
+    UpdatedBy varchar(25) NOT NULL DEFAULT 'automated',
     PRIMARY KEY (ItemID),
     CONSTRAINT U_CardSet UNIQUE (CardName,ExtractedText,NameImage(255))
 );

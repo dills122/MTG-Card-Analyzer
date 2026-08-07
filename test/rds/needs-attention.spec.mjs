@@ -21,7 +21,7 @@ describe("rds::needs-attention", () => {
         sandbox.restore();
     });
 
-    it("InsertRecord targets the NeedsAttention table with parameterized placeholders", (done) => {
+    it("InsertRecord targets the real Card_NEED_ATTN table with parameterized placeholders", (done) => {
         fakeConnection.query.callsFake((sql, params, cb) => cb(null, { insertId: 1 }));
 
         InsertRecord(
@@ -35,7 +35,7 @@ describe("rds::needs-attention", () => {
             (err) => {
                 assert.isNull(err);
                 const [sql, params] = fakeConnection.query.firstCall.args;
-                assert.match(sql, /INSERT INTO NeedsAttention/);
+                assert.match(sql, /INSERT INTO Card_NEED_ATTN/);
                 assert.notInclude(sql, "Urza's Tower");
                 assert.deepEqual(params, ["Urza's Tower", "M20,M21", "clean", "dirty", "base64=="]);
                 done();
