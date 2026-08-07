@@ -12,7 +12,7 @@ const logger = log.create({
 });
 
 function HashImage(imgUrl, cb) {
-    logger.info(`hash-image::HashImage:: Hashing Image ${imgUrl}`);
+    logger.info(`hash-image::hash start source="${imgUrl}"`);
     dependencies.imageHash(imgUrl, 16, true, (error, data) => {
         if (error) {
             return cb(error);
@@ -22,7 +22,9 @@ function HashImage(imgUrl, cb) {
 }
 
 function CompareHash(hashOne, hashTwo) {
-    logger.info(`hash-image::CompareHash:: Comparing Hashes ${hashOne} ${hashTwo}`);
+    logger.info(
+        `hash-image::compare start left=${previewHash(hashOne)} right=${previewHash(hashTwo)}`
+    );
     const HashLength = hashOne.length;
     let twoBitMatches = 0;
     let fourBitMatches = 0;
@@ -43,8 +45,18 @@ function CompareHash(hashOne, hashTwo) {
         fourBitMatches: _.round(fourBitMatches / (HashLength / 4), 2),
         stringCompare: _.round(stringSimilarity.compareTwoStrings(hashOne, hashTwo), 2)
     };
-    logger.info("hash-image::CompareHash:: Hash Comparison Results", comparisonResults);
+    logger.info("hash-image::compare result", comparisonResults);
     return comparisonResults;
+}
+
+function previewHash(hash = "") {
+    if (!hash) {
+        return "empty";
+    }
+    if (hash.length <= 16) {
+        return hash;
+    }
+    return `${hash.slice(0, 8)}...${hash.slice(-8)}(len=${hash.length})`;
 }
 
 export { CompareHash, HashImage };

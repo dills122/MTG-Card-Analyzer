@@ -59,7 +59,7 @@ class ProcessHashes {
     }
 
     async compareDbHashes() {
-        this.logger.info(`process-hashes::compareDbHashes: Compare DB Hashes`);
+        this.logger.info(`process-hashes::db-compare start name="${this.name}"`);
         const hashes = await this.dependencies.CardHashes.getByCardName(this.name);
         const matches = [];
         hashes.forEach((dbHash) => {
@@ -79,11 +79,9 @@ class ProcessHashes {
                 );
             }
         });
-        this.logger.info(matches);
+        this.logger.info(`process-hashes::db-compare matches=${matches.length}`);
         if (matches.length === 0) {
-            this.logger.info(
-                `process-hashes::compareDbHashes: No DB Hash Match Found ${this.name}`
-            );
+            this.logger.info(`process-hashes::db-compare none name="${this.name}"`);
             if (this.ignoreNoDbMatch) {
                 return [];
             }
@@ -95,7 +93,9 @@ class ProcessHashes {
     }
 
     async compareRemoteImages() {
-        this.logger.info(`process-hashes::compareDbHashes: Compare Remote Image Hashes`);
+        this.logger.info(
+            `process-hashes::remote-compare start name="${this.name}" mode=${this.hashMode} cards=${this.cards.length}`
+        );
         const cards = _.map(this.cards, function (card) {
             const images = card.image_uris || {};
             return {
@@ -170,9 +170,11 @@ class ProcessHashes {
                 )
                 .slice(0, config.remoteBestGuess.maxCandidates)
                 .map((match) => _.omit(match, ["confidenceScore"]));
-            this.logger.info("process-hashes::compareRemoteImages: Using best available match");
-            this.logger.info(bestMatches);
+            this.logger.info(
+                `process-hashes::remote-compare using-best-guess name="${this.name}" candidates=${bestMatches.map((match) => match.setName).join(",")}`
+            );
         }
+        this.logger.info(`process-hashes::remote-compare complete matches=${bestMatches.length}`);
         return bestMatches;
     }
 

@@ -98,6 +98,24 @@ describe("FuzzyMatching::", () => {
             },
             {
                 name: "Archfiend of Despair"
+            },
+            {
+                name: "Thought Reflection"
+            },
+            {
+                name: "Boon Reflection"
+            },
+            {
+                name: "Wound Reflection"
+            },
+            {
+                name: "Pure Reflection"
+            },
+            {
+                name: "Mana Reflection"
+            },
+            {
+                name: "Rage Reflection"
             }
         ]);
     });
@@ -131,6 +149,36 @@ describe("FuzzyMatching::", () => {
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             chaiAssert.isArray(matches);
             assert.equal(matches.length, 0);
+        });
+
+        it("should not match an empty OCR result", async () => {
+            const matches = await create({ cleanText: "" }).Match();
+            assert.equal(stubs.BulkNamesStub.callCount, 0);
+            chaiAssert.isArray(matches);
+            assert.equal(matches.length, 0);
+        });
+
+        it("should narrow name-style families to the strongest first-token match", async () => {
+            const matches = await create({
+                cleanText: "Thought Reflection"
+            }).Match();
+            assert.equal(stubs.BulkNamesStub.callCount, 1);
+            chaiAssert.isArray(matches);
+            chaiAssert.isAtLeast(matches.length, 1);
+            assert.equal(matches[0].name, "Thought Reflection");
+            assert.notEqual(matches[0].name, "Boon Reflection");
+            chaiAssert.isBelow(matches.length, 4);
+        });
+
+        it("should still narrow when OCR trims first token (THOU REFLECTION)", async () => {
+            const matches = await create({
+                cleanText: "THOU REFLECTION"
+            }).Match();
+            assert.equal(stubs.BulkNamesStub.callCount, 1);
+            chaiAssert.isArray(matches);
+            chaiAssert.isAtLeast(matches.length, 1);
+            assert.equal(matches[0].name, "Thought Reflection");
+            chaiAssert.isBelow(matches.length, 3);
         });
     });
 });

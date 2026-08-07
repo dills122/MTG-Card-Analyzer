@@ -21,7 +21,8 @@ const dependencies = {
 const schema = joi.object().keys({
     name: joi.string().required(),
     filePath: joi.string().required(),
-    queryingEnabled: joi.boolean().optional()
+    queryingEnabled: joi.boolean().optional(),
+    logger: joi.object().optional()
 });
 
 class MatcherProcessor {
@@ -33,7 +34,7 @@ class MatcherProcessor {
         _.assign(this, params);
         if (!this.logger) {
             this.logger = logger.create({
-                isPretty: false
+                isPretty: true
             });
         }
     }
@@ -43,7 +44,7 @@ class MatcherProcessor {
     }
 
     _search(callback) {
-        this.logger.info(`Beginning card search ${this.name}`);
+        this.logger.info(`matcher::search start name="${this.name}"`);
         dependencies.Searcher(this.name, (err, results) => {
             if (err) {
                 return callback(err);
@@ -54,23 +55,32 @@ class MatcherProcessor {
     }
 
     _processResults(callback) {
-        this.logger.info("Checking search results");
+        const numCards = _.isArray(this.cards) ? this.cards.length : "invalid";
+        this.logger.info(`matcher::search results name="${this.name}" count=${numCards}`);
         if (!_.isArray(this.cards)) {
             return callback(new Error("Error gathering results"));
         }
-        const numCards = this.cards.length;
+        const totalCards = this.cards.length;
 
-        if (numCards === 0) {
-            this.logger.info("No results returned");
+        if (totalCards === 0) {
+            this.logger.info(`matcher::search no-results name="${this.name}"`);
             return callback(null, 0);
         }
 
-        if (numCards === 1) {
-            this.logger.info("Exactly one result returned");
-            return callback(null, this.cards[0]);
+        if (totalCards === 1) {
+            this.logger.info(`matcher::search single-result name="${this.name}"`);
+            const single = this.cards[0] || {};
+            const setName = _.get(single, "set_name", "");
+            this.matchResultDetails = [
+                {
+                    setName,
+                    scryfallUri: _.get(single, "scryfall_uri", "") || _.get(single, "uri", "")
+                }
+            ];
+            return callback(null, setName ? [setName] : []);
         }
 
-        this.logger.info("Multiple results returned");
+        this.logger.info(`matcher::search multi-results name="${this.name}" count=${totalCards}`);
         async.waterfall(
             [(next) => this._hashLocalCard(next), (next) => this._processMultiSetMatches(next)],
             callback
@@ -78,7 +88,7 @@ class MatcherProcessor {
     }
 
     _hashLocalCard(callback) {
-        this.logger.info(`Hashing local image ${this.filePath}`);
+        this.logger.info(`matcher::hash local-image name="${this.name}" path="${this.filePath}"`);
         dependencies
             .CreateDirectory()
             .then((directory) => {
@@ -99,7 +109,7 @@ class MatcherProcessor {
     }
 
     _hashFromSetSymbol(directory, callback) {
-        this.logger.info(`Hashing set symbol image ${this.filePath}`);
+        this.logger.info(`matcher::hash set-symbol name="${this.name}" path="${this.filePath}"`);
         dependencies
             .GetSetSymbolSnippetTmpFile(this.filePath, directory, "set-symbol")
             .then((setSymbolPath) => {
@@ -151,11 +161,14 @@ class MatcherProcessor {
             cards: this.cards,
             localHash: this.localHash,
             hashMode: this.hashMode || "full-card",
+            logger: this.logger,
             queryingEnabled: this.queryingEnabled,
             ignoreNoDbMatch: true,
             allowRemoteBestGuess: true
         });
-        this.logger.info("Processing multi set matches");
+        this.logger.info(
+            `matcher::hash compare-start name="${this.name}" mode=${this.hashMode || "full-card"} cardCount=${this.cards.length}`
+        );
         const shouldQueryCache = true;
         const dbPromise = shouldQueryCache
             ? processHashes
@@ -175,6 +188,9 @@ class MatcherProcessor {
         const mergedResults = _.uniq((db || []).concat(remote || []));
         this.matchResults = mergedResults;
         this.matchResultDetails = this._buildMatchDetails(mergedResults);
+        this.logger.info(
+            `matcher::hash compare-complete name="${this.name}" mergedSets=${mergedResults.join(",") || "none"}`
+        );
         return mergedResults;
     }
 

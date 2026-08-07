@@ -15,8 +15,11 @@ describe("MatcherProcessor::", () => {
         sandbox.restore();
     });
 
-    it("returns the single card directly when only one search result exists", (done) => {
-        const expectedCard = { set_name: "M20" };
+    it("returns normalized set details when only one search result exists", (done) => {
+        const expectedCard = {
+            set_name: "M20",
+            scryfall_uri: "https://scryfall.com/card/m20/1/example"
+        };
         const searchStub = sandbox
             .stub(dependencies, "Searcher")
             .callsArgWith(1, null, [expectedCard]);
@@ -30,7 +33,13 @@ describe("MatcherProcessor::", () => {
             assert.isNull(err);
             assert.isTrue(searchStub.calledOnce);
             assert.isTrue(hashStub.notCalled);
-            assert.deepEqual(result, expectedCard);
+            assert.deepEqual(result, ["M20"]);
+            assert.deepEqual(processor.matchResultDetails, [
+                {
+                    setName: "M20",
+                    scryfallUri: "https://scryfall.com/card/m20/1/example"
+                }
+            ]);
             done();
         });
     });
