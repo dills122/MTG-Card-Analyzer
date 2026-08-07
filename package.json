@@ -11,6 +11,8 @@
     },
     "scripts": {
         "test": "mocha \"./test/**/*.spec.mjs\"",
+        "test:regression": "node scripts/run-regression.mjs",
+        "regression": "node scripts/run-regression.mjs --no-fail-on-regression",
         "coverage": "c8 pnpm test",
         "coverage:check": "c8 --check-coverage pnpm test",
         "lint": "eslint . --ext js,mjs",
@@ -43,7 +45,7 @@
             "index.mjs"
         ],
         "exclude": [
-            "src/test-images/**",
+            "test-images/**",
             "src/data/**",
             "**/*.spec.mjs",
             "test/**"

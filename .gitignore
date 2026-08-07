@@ -29,6 +29,9 @@ coverage/
 *.lcov
 lib-cov/
 
+# Generated OCR regression reports
+artifacts/regression/
+
 # Build output
 build/
 dist/
