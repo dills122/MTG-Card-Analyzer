@@ -11,7 +11,12 @@ const DEFAULTS = Object.freeze({
     querying: false,
     cardNamesDbPath: "",
     cardHashDbPath: "",
-    configPath: ""
+    configPath: "",
+    // The local nedb cache (names dictionary, hash cache, ops log) is always on unless
+    // explicitly turned off -- see --no-local-cache / LOCAL_CACHE_ENABLED. This is distinct
+    // from storageAdapter, which selects the backend for *real* persistence (collection,
+    // needsAttention).
+    localCacheEnabled: true
 });
 
 const KNOWN_STORAGE_ADAPTERS = ["nedb", "rds"];
@@ -61,11 +66,19 @@ function resolveConfigFilePath(explicitPath) {
     return "";
 }
 
+function parseBoolean(value) {
+    if (value === undefined) {
+        return undefined;
+    }
+    return !["false", "0", ""].includes(String(value).toLowerCase());
+}
+
 function readEnvConfig() {
     return compact({
         storageAdapter: process.env.STORAGE_ADAPTER,
         cardNamesDbPath: process.env.CARD_NAMES_DB_PATH,
-        cardHashDbPath: process.env.CARD_HASH_DB_PATH
+        cardHashDbPath: process.env.CARD_HASH_DB_PATH,
+        localCacheEnabled: parseBoolean(process.env.LOCAL_CACHE_ENABLED)
     });
 }
 

@@ -1,13 +1,19 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import { run } from "../index.mjs";
+import { run, buildCli } from "../index.mjs";
+import storage from "../src/storage/index.mjs";
 
 describe("CLI::index.mjs", () => {
     let sandbox;
     let consoleLogStub;
     let processExitStub;
     let savedEnv;
-    const envKeys = ["STORAGE_ADAPTER", "CARD_NAMES_DB_PATH", "CARD_HASH_DB_PATH"];
+    const envKeys = [
+        "STORAGE_ADAPTER",
+        "CARD_NAMES_DB_PATH",
+        "CARD_HASH_DB_PATH",
+        "LOCAL_CACHE_ENABLED"
+    ];
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
@@ -125,5 +131,108 @@ describe("CLI::index.mjs", () => {
         );
         assert.isFalse(processorCreateStub.called);
         assert.isFalse(processExitStub.called);
+    });
+
+    it("applies LOCAL_CACHE_ENABLED=false when --no-local-cache was explicitly passed", async () => {
+        await runCli({
+            filePath: "./some-path.jpg",
+            flags: {
+                q: false,
+                query: false,
+                p: true,
+                pretty: true,
+                localCache: false,
+                _localCacheExplicit: true
+            }
+        });
+
+        assert.equal(process.env.LOCAL_CACHE_ENABLED, "false");
+        assert.isTrue(processExitStub.calledWith(0));
+    });
+
+    it("defaults LOCAL_CACHE_ENABLED=true when --no-local-cache was not passed", async () => {
+        await runCli({
+            filePath: "./some-path.jpg",
+            flags: { q: false, query: false, p: true, pretty: true }
+        });
+
+        assert.equal(process.env.LOCAL_CACHE_ENABLED, "true");
+    });
+
+    describe("log subcommands", () => {
+        it("log dump prints table-formatted entries and exits 0", async () => {
+            const dumpStub = sandbox.stub(storage.log, "dump").callsFake((opts, cb) => {
+                cb(null, [
+                    {
+                        loggedAt: new Date("2026-01-01T00:00:00Z"),
+                        decision: "collection",
+                        filePath: "./a.jpg"
+                    }
+                ]);
+            });
+
+            await runCli({ command: "log-dump", flags: { limit: "50", format: "table" } });
+
+            assert.isTrue(dumpStub.calledOnce);
+            assert.isTrue(consoleLogStub.calledWithMatch(sinon.match(/collection/)));
+            assert.isTrue(processExitStub.calledWith(0));
+        });
+
+        it("log dump prints JSON when --format json is passed", async () => {
+            sandbox.stub(storage.log, "dump").callsFake((opts, cb) => {
+                cb(null, [{ decision: "collection" }]);
+            });
+
+            await runCli({ command: "log-dump", flags: { limit: "50", format: "json" } });
+
+            const printed = consoleLogStub.firstCall.args[0];
+            assert.deepEqual(JSON.parse(printed), [{ decision: "collection" }]);
+        });
+
+        it("log stats prints aggregate JSON and exits 0", async () => {
+            const statsStub = sandbox.stub(storage.log, "stats").callsFake((cb) => {
+                cb(null, {
+                    total: 3,
+                    byDecision: { collection: 3 },
+                    errorCount: 0,
+                    avgTopConfidence: 0.9
+                });
+            });
+
+            await runCli({ command: "log-stats", flags: {} });
+
+            assert.isTrue(statsStub.calledOnce);
+            const printed = JSON.parse(consoleLogStub.firstCall.args[0]);
+            assert.equal(printed.total, 3);
+            assert.isTrue(processExitStub.calledWith(0));
+        });
+    });
+});
+
+describe("CLI::index.mjs buildCli (real commander wiring)", () => {
+    it("parses `scan <file>` with no flags to explicit-source=false, localCache=true", () => {
+        const parsed = buildCli(["scan", "./card.jpg"]);
+        assert.equal(parsed.command, "scan");
+        assert.equal(parsed.filePath, "./card.jpg");
+        assert.equal(parsed.flags.localCache, true);
+        assert.equal(parsed.flags._localCacheExplicit, false);
+    });
+
+    it("parses `scan <file> --no-local-cache` to explicit-source=true, localCache=false", () => {
+        const parsed = buildCli(["scan", "./card.jpg", "--no-local-cache"]);
+        assert.equal(parsed.flags.localCache, false);
+        assert.equal(parsed.flags._localCacheExplicit, true);
+    });
+
+    it("parses `log dump --limit 5 --format json`", () => {
+        const parsed = buildCli(["log", "dump", "--limit", "5", "--format", "json"]);
+        assert.equal(parsed.command, "log-dump");
+        assert.equal(parsed.flags.limit, "5");
+        assert.equal(parsed.flags.format, "json");
+    });
+
+    it("parses `log stats`", () => {
+        const parsed = buildCli(["log", "stats"]);
+        assert.equal(parsed.command, "log-stats");
     });
 });

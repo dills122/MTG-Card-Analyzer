@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import sinon from "sinon";
 import mysql from "mysql2";
-import { GetQuantity, InsertRecord } from "../../src/rds/collection.mjs";
+import { GetQuantity, InsertRecord, UpsertRecord } from "../../src/rds/collection.mjs";
 
 describe("rds::collection", () => {
     let sandbox;
@@ -46,5 +46,71 @@ describe("rds::collection", () => {
             assert.deepEqual(params, ["Urza's Tower", "M20", 2]);
             done();
         });
+    });
+
+    it("UpsertRecord uses parameterized placeholders and MySQL's native ON DUPLICATE KEY UPDATE", (done) => {
+        fakeConnection.query.callsFake((sql, params, cb) => cb(null, { affectedRows: 1 }));
+
+        UpsertRecord(
+            {
+                cardName: "Urza's Tower",
+                cardType: "Land",
+                cardSet: "M20",
+                priceUsd: 2.5,
+                automated: true,
+                magicId: 123,
+                imageUrl: "https://example.com/p.png"
+            },
+            (err) => {
+                assert.isNull(err);
+                const [sql, params] = fakeConnection.query.firstCall.args;
+                assert.notInclude(
+                    sql,
+                    "Urza's Tower",
+                    "card name must not be interpolated into SQL"
+                );
+                assert.match(sql, /ON DUPLICATE KEY UPDATE/);
+                assert.match(sql, /quantity = quantity \+ VALUES\(quantity\)/);
+                // delta defaults to 1 when not given
+                assert.deepEqual(params, [
+                    "Urza's Tower",
+                    "Land",
+                    "M20",
+                    1,
+                    2.5,
+                    true,
+                    123,
+                    "https://example.com/p.png",
+                    2.5,
+                    2.5
+                ]);
+                done();
+            }
+        );
+    });
+
+    it("UpsertRecord defaults estValue to VALUES(estValue) when priceUsd is not given", (done) => {
+        fakeConnection.query.callsFake((sql, params, cb) => cb(null, { affectedRows: 1 }));
+
+        UpsertRecord(
+            {
+                cardName: "Urza's Tower",
+                cardType: "Land",
+                cardSet: "M20",
+                estValue: 9.99,
+                automated: true,
+                magicId: 123,
+                imageUrl: "https://example.com/p.png"
+            },
+            (err) => {
+                assert.isNull(err);
+                const [, params] = fakeConnection.query.firstCall.args;
+                // priceUsd params (last two) are null -- IF() falls through to VALUES(estValue)
+                assert.equal(params[4], 9.99, "insert-path estValue falls back to record.estValue");
+                assert.isNull(params[8]);
+                assert.isNull(params[9]);
+                done();
+            }
+        );
     });
 });

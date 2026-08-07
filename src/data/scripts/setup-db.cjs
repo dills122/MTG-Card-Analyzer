@@ -32,23 +32,11 @@ const shouldTruncate = process.argv.includes("--truncate") || process.argv.inclu
 const createScripts = [
     {
         file: "create-collection.sql",
-        table: "Card_Catalog"
-    },
-    {
-        file: "card-hash.sql",
-        table: "Card_Hashes"
+        table: "CardCollection"
     },
     {
         file: "create-needs-attention.sql",
         table: "Card_NEED_ATTN"
-    },
-    {
-        file: "image-result.sql",
-        table: "Image_Results"
-    },
-    {
-        file: "transaction.sql",
-        table: "Transactions"
     }
 ];
 

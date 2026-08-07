@@ -1,19 +1,16 @@
 import _ from "lodash";
 import Joi from "joi";
-import rds from "../rds/index.mjs";
-import log from "../logger/log.mjs";
+import storage from "../storage/index.mjs";
 
-const { Collection } = rds;
-const logger = log.create({
-    isPretty: true
-});
-
+// "I scanned another copy" semantics: delta adds to whatever quantity already exists for
+// this cardName+cardSet (default 1), it does not overwrite it. See src/storage/index.mjs
+// for the persistence tier this routes through (STORAGE_ADAPTER-selected: nedb | rds).
 const schema = Joi.object().keys({
-    cardId: Joi.number(),
     cardName: Joi.string().min(3).max(50).required(),
     cardType: Joi.string().min(3).max(50).required(),
     cardSet: Joi.string().min(3).max(50).required(),
-    quantity: Joi.number().min(1).required(),
+    delta: Joi.number().min(1).optional().default(1),
+    priceUsd: Joi.number().min(0).optional(),
     estValue: Joi.number().optional(),
     automated: Joi.bool(),
     magicId: Joi.number().min(1).required(),
@@ -26,16 +23,9 @@ class CardCollection {
         _.assign(this, validatedSchema);
     }
 
-    Insert(callback) {
+    Insert() {
         const object = _.pick(this, Object.keys(schema.describe().keys));
-        Collection.InsertRecord(object, (err, results) => {
-            if (err) {
-                logger.error(err);
-            }
-            if (typeof callback === "function") {
-                callback(err, results);
-            }
-        });
+        return storage.collection.upsert(object);
     }
 }
 

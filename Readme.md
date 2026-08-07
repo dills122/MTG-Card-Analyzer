@@ -81,49 +81,74 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
 
 - `scan <filePath>` : scan a single image and output results
     - flags:
-        - `--query` or `-q`: enable additional persistence flows used by legacy paths (default `false`).
+        - `--query` or `-q`: persist results (write to the collection / needs-attention tables; default `false`, dry-run otherwise).
         - `--pretty` or `-p`: pretty logging (default `true`).
-        - `--storage-adapter <nedb|rds>`: storage adapter to use for this run.
-        - `--card-names-db <path>`: path (dir or `.db` file) for the local card names DB.
-        - `--card-hash-db <path>`: path (dir or `.db` file) for the local card hash cache DB.
+        - `--storage-adapter <nedb|rds>`: which persistence backend this run's collection/needs-attention writes go to.
+        - `--card-names-db <path>`: path (dir or `.db` file) for the local card names cache.
+        - `--card-hash-db <path>`: path (dir or `.db` file) for the local card hash cache.
+        - `--no-local-cache`: disable the local cache (hash cache + ops log; the names dictionary is unaffected, see [Persistence Architecture](#persistence-architecture)).
         - `--config <path>`: path to a JSON config file (see [Configuration](#configuration)).
+- `log dump` : print recent entries from the local operations log
+    - flags: `--limit <n>` (default 50), `--since <ISO date>`, `--format <table|json>` (default `table`), `--config <path>`
+- `log stats` : print aggregate stats over the local operations log (totals by decision, error count, average top match confidence)
+    - flags: `--config <path>`
 
-### Local Storage (NeDB)
+### Persistence Architecture
 
-- Name dictionary DB:
-    - env var: `CARD_NAMES_DB_PATH`
-    - file default: `cardNames.db`
-- Hash cache DB:
-    - env var: `CARD_HASH_DB_PATH` (falls back to `CARD_NAMES_DB_PATH` if unset)
-    - file default: `card-hashes.db`
-- You can set either env var to:
-    - a directory (app will append the default filename), or
-    - a full `.db` file path.
-- Temp image snippets are written to system temp and cleaned up per run.
+Two deliberately separate tiers:
+
+1. **Cache tier** — always on by default (turn off with `--no-local-cache` / `LOCAL_CACHE_ENABLED=false`), always local nedb, never `STORAGE_ADAPTER`-selected. Holds the card names dictionary, the image hash cache, and the local [operations log](#operations-log). Its job is speed (skip re-querying Scryfall, skip re-hashing known cards) and local diagnostics — not being a source of truth. The names dictionary specifically is unaffected by `--no-local-cache`: it's a required local index, not an optional cache, since there's no remote alternative.
+2. **Persistence tier** — selected by `STORAGE_ADAPTER` (`nedb` | `rds`, default `nedb`). This is where your actual collection and needs-attention records live. Scanning the same card twice adds to its quantity (`delta`, default 1) rather than overwriting it — both backends compute the resulting `estValue` from the final quantity.
+
+Local cache DB files:
+
+- Name dictionary: env var `CARD_NAMES_DB_PATH`, file default `cardNames.db`
+- Hash cache: env var `CARD_HASH_DB_PATH` (falls back to `CARD_NAMES_DB_PATH` if unset), file default `card-hashes.db`
+- Operations log: shares the names dictionary's path, file default `operations.db`
+- Either DB path env var can be a directory (app appends the default filename) or a full `.db` file path.
+
+Local persistence tier DB files (nedb adapter only — `rds` writes to MySQL instead):
+
+- Collection: `collection.db`, same path resolution as the names dictionary
+- Needs-attention: `needs-attention.db`, same path resolution as the names dictionary
+
+Temp image snippets are written to system temp and cleaned up per run.
 
 ### Storage Adapter
 
-- The app now uses a storage abstraction layer.
-- Default adapter: `nedb`
-- Alternate adapter available: `rds` (legacy/optional)
-- Select adapter with (in order of precedence, highest wins):
-    - CLI flag: `--storage-adapter rds`
-    - env var: `STORAGE_ADAPTER=rds`
-    - config file: `{ "storageAdapter": "rds" }`
-    - default: `nedb`
+Select the persistence-tier adapter with (in order of precedence, highest wins):
+
+- CLI flag: `--storage-adapter rds`
+- env var: `STORAGE_ADAPTER=rds`
+- config file: `{ "storageAdapter": "rds" }`
+- default: `nedb`
+
+`rds` is optional/legacy — see [MySQL / RDS](#mysql--rds-optional-legacy).
+
+### Operations Log
+
+Every scan appends one entry to the local operations log (part of the cache tier, nedb, always local): input file, extracted OCR text, name-match candidates + confidence, what happened (`collection` / `needs-attention` / `no-match` / `dry-run` / `error`), and any error. Inspect it with:
+
+```bash
+node index.mjs log dump --limit 20
+node index.mjs log dump --format json --since 2026-01-01
+node index.mjs log stats
+```
+
+This is what issue #49 ("Transaction") became — the old model was a half-defined mix of a generic audit log and art/flavor-match-confidence tracking that never got finished; the art/flavor fields belong to #50 instead.
 
 ### Configuration
 
 All runtime settings resolve through a single config module ([src/config/index.mjs](src/config/index.mjs)). Precedence, highest wins:
 
-1. CLI flags (e.g. `--storage-adapter`, `--card-names-db`, `--card-hash-db`)
-2. Env vars (`STORAGE_ADAPTER`, `CARD_NAMES_DB_PATH`, `CARD_HASH_DB_PATH`)
+1. CLI flags (e.g. `--storage-adapter`, `--card-names-db`, `--card-hash-db`, `--no-local-cache`)
+2. Env vars (`STORAGE_ADAPTER`, `CARD_NAMES_DB_PATH`, `CARD_HASH_DB_PATH`, `LOCAL_CACHE_ENABLED`)
 3. Config file (JSON)
 4. Built-in defaults
 
 Config file is picked up from, in order: an explicit `--config <path>`, then `MTG_CONFIG_PATH` env var, then `./mtg.config.json` (cwd), then `~/.mtg-card-analyzer/config.json`. See [mtg.config.example.json](mtg.config.example.json) for the shape — copy it to `mtg.config.json` and edit.
 
-Note: MySQL/RDS credentials (host/user/password/database) are separate, in `secure.config.cjs` at repo root (loaded by [src/rds/connection.mjs](src/rds/connection.mjs)) — kept out of the general config file/repo since they're secrets, not app settings.
+Note: MySQL/RDS credentials (host/port/user/password/database) are separate, in `secure.config.cjs` at repo root (loaded by [src/rds/connection.mjs](src/rds/connection.mjs)) — kept out of the general config file/repo since they're secrets, not app settings. `port` is optional, defaults to MySQL's standard port.
 
 Test images are provided at `test-images`
 
@@ -206,7 +231,7 @@ pnpm check
 
 ### MySQL / RDS (Optional, Legacy)
 
-MySQL scripts and modules still exist in `src/rds` and `src/data/scripts/sql`, but the default runtime path is local-first NeDB. Treat RDS as optional/legacy until sync/backup mode is formalized.
+MySQL scripts and modules exist in `src/rds` and `src/data/scripts/sql` for the collection and needs-attention tables (`CardCollection`, `Card_NEED_ATTN`) -- select with `--storage-adapter rds`. The default runtime path is local-first NeDB; treat RDS as optional/legacy until sync/backup mode is formalized. Set up with `pnpm setup-db` (needs `secure.config.cjs`, see [Configuration](#configuration)). Verified against a real MySQL 8 instance as part of building this.
 
 ### TypeScript Migration (incremental)
 
