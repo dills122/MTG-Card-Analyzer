@@ -20,7 +20,7 @@ if (!secureConfig || !secureConfig.rds) {
     process.exit(1);
 }
 
-const { host, user, password, database } = secureConfig.rds;
+const { host, port, user, password, database } = secureConfig.rds;
 
 if (!host || !user || !database) {
     console.error("secure.config.cjs is missing required rds settings (host, user, database).");
@@ -43,6 +43,7 @@ const createScripts = [
 function createConnection() {
     return mysql.createConnection({
         host,
+        port,
         user,
         password
     });
@@ -68,6 +69,14 @@ async function tableExists(query, tableName) {
 
 (async () => {
     const connection = createConnection();
+    // A connection error (e.g. MySQL unreachable) fires asynchronously via the 'error' event
+    // and would otherwise crash the process with an unhandled error -- catch it here so the
+    // real failure gets one clean message instead of two (the original error plus a
+    // secondary "connection is in closed state" error from calling .end() on it below).
+    let connectionErrored = false;
+    connection.on("error", () => {
+        connectionErrored = true;
+    });
     const query = promisify(connection.query).bind(connection);
 
     try {
@@ -102,6 +111,8 @@ async function tableExists(query, tableName) {
         console.error("Database setup failed:", error.message || error);
         process.exitCode = 1;
     } finally {
-        connection.end();
+        if (!connectionErrored) {
+            connection.end();
+        }
     }
 })();

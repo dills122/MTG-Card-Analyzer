@@ -57,22 +57,27 @@ More examples are available [here](https://github.com/dills122/mtg-card-analyzer
 
 ## Getting Up And Running
 
+Full setup walkthrough, troubleshooting, and Docker/MySQL instructions: **[docs/LOCAL_DEV.md](docs/LOCAL_DEV.md)**. Quick version below.
+
 ### Prerequisites
 
 - Node 22
 - Tesseract.js v3 (npm dependency) with `eng.traineddata` available (an English traineddata is bundled at repo root)
+- [Docker](https://docs.docker.com/get-docker/), only if you want the optional `rds` storage adapter
 
 ### Install
 
-- Clone: `git clone https://github.com/dills122/MTG-Card-Analyzer.git`
-- Install deps: `npm i`
-- Seed local name dictionary (NeDB): `node ./src/db-local/bulk-insert.mjs`
+```bash
+git clone https://github.com/dills122/MTG-Card-Analyzer.git
+cd MTG-Card-Analyzer
+node scripts/setup.mjs
+```
+
+This installs deps, creates local config files, and seeds the card names dictionary. Add `--with-mysql` to also stand up local MySQL via Docker for the `rds` storage adapter. See [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) for what it does step by step, and `node scripts/verify-env.mjs` to sanity-check the result.
 
 ### First Scan
 
-After install + seed, run:
-
-```
+```bash
 # Run at the base directory of the repo
 node index.mjs scan ./test-images/PlatinumAngel.jpg
 ```
@@ -156,13 +161,7 @@ Backfiller utility instructions found [here](https://github.com/dills122/MTG-Car
 
 ### Troubleshooting
 
-- `Error: No matches found` on known cards:
-    - Usually means the local names DB is empty or pointing at the wrong path.
-    - Re-seed names: `node ./src/db-local/bulk-insert.mjs`
-    - Verify path by setting it explicitly:
-        - `CARD_NAMES_DB_PATH=/absolute/path/to/db-or-dir node index.mjs scan ./test-images/QueenMarchesa.png`
-- Seeing warnings from tesseract params:
-    - Those warnings are noisy but non-fatal in current runtime.
+Run `node scripts/verify-env.mjs` first — it checks Node version, required files, local cache writability/seeding, and (with `--with-mysql`) the MySQL connection, in one shot. Full troubleshooting guide: [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md#troubleshooting).
 
 ### Running Tests
 
@@ -227,11 +226,24 @@ pnpm check:fast
 
 # Full local gate (check:fast + tests)
 pnpm check
+
+# Sanity-check the local dev environment (Node version, required files, seeded DB)
+pnpm verify
+node scripts/verify-env.mjs --with-mysql   # same, plus checks the MySQL connection
 ```
 
 ### MySQL / RDS (Optional, Legacy)
 
-MySQL scripts and modules exist in `src/rds` and `src/data/scripts/sql` for the collection and needs-attention tables (`CardCollection`, `Card_NEED_ATTN`) -- select with `--storage-adapter rds`. The default runtime path is local-first NeDB; treat RDS as optional/legacy until sync/backup mode is formalized. Set up with `pnpm setup-db` (needs `secure.config.cjs`, see [Configuration](#configuration)). Verified against a real MySQL 8 instance as part of building this.
+MySQL scripts and modules exist in `src/rds` and `src/data/scripts/sql` for the collection and needs-attention tables (`CardCollection`, `Card_NEED_ATTN`) -- select with `--storage-adapter rds`. The default runtime path is local-first NeDB; treat RDS as optional/legacy until sync/backup mode is formalized. Verified against a real MySQL 8 instance as part of building this.
+
+```bash
+node scripts/setup.mjs --with-mysql   # one-shot: docker compose up + pnpm setup-db, matching creds
+# -- or manually --
+pnpm docker:up                        # start local MySQL (docker-compose.yml)
+pnpm setup-db                         # create tables (needs secure.config.cjs, see Configuration)
+pnpm docker:down                      # stop it (data persists in a named volume)
+docker compose down -v                # stop it AND wipe the volume
+```
 
 ### TypeScript Migration (incremental)
 
