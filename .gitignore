@@ -101,3 +101,8 @@ Thumbs.db:encryptable
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Local app config (machine-specific paths) -- see mtg.config.example.json
+mtg.config.json
+
+yarn.lock

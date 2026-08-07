@@ -2,6 +2,7 @@ import Datastore from "@dills1220/nedb";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getConfig } from "../config/index.mjs";
 
 function toDbFilePath(basePath, fileName) {
     if (!basePath) {
@@ -30,7 +31,7 @@ function resolveDbFilename() {
     const legacyPreferencesPath =
         process.platform === "darwin" ? path.join(home, "Library/Preferences") : "";
     const candidates = [
-        process.env.CARD_NAMES_DB_PATH,
+        getConfig().cardNamesDbPath,
         process.env.APPDATA,
         legacyPreferencesPath,
         process.platform !== "darwin" ? path.join(home, ".local/share") : "",
@@ -48,14 +49,32 @@ function resolveDbFilename() {
     return path.join(os.tmpdir(), "mtg-card-analyzer", "cardNames.db");
 }
 
-const dbFilename = resolveDbFilename();
+// Resolved lazily on first real use (not at import time) so config sourced from
+// CLI flags -- applied to process.env by index.mjs before the pipeline runs -- is honored.
+let dbInstance;
 
-const db = new Datastore({
-    filename: dbFilename,
-    autoload: true
-});
+function getDbInstance() {
+    if (!dbInstance) {
+        dbInstance = new Datastore({
+            filename: resolveDbFilename(),
+            autoload: true
+        });
+    }
+    return dbInstance;
+}
 
-export { db };
+const db = new Proxy(
+    {},
+    {
+        get(_target, prop) {
+            const instance = getDbInstance();
+            const value = instance[prop];
+            return typeof value === "function" ? value.bind(instance) : value;
+        }
+    }
+);
+
+export { db, resolveDbFilename };
 
 export default {
     db

@@ -2,6 +2,7 @@ import { access } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
 import processorModule from "./src/processor/index.mjs";
+import { getConfig, KNOWN_STORAGE_ADAPTERS } from "./src/config/index.mjs";
 
 const { Processor } = processorModule;
 
@@ -23,6 +24,13 @@ function buildCli(argv) {
         .description("Scan an image file and process MTG card info")
         .option("-q, --query", "Enable DB writes (off by default)", false)
         .option("-p, --pretty", "Pretty logging (on by default)", true)
+        .option(
+            "--storage-adapter <adapter>",
+            `Storage adapter to use (${KNOWN_STORAGE_ADAPTERS.join("|")})`
+        )
+        .option("--card-names-db <path>", "Path (dir or .db file) for the local card names DB")
+        .option("--card-hash-db <path>", "Path (dir or .db file) for the local card hash cache DB")
+        .option("--config <path>", "Path to a JSON config file (see mtg.config.json)")
         .action((filePath, options) => {
             parsed.filePath = filePath;
             parsed.flags = options || {};
@@ -33,6 +41,8 @@ function buildCli(argv) {
         `
 Examples:
   $ scan ./img-path --query
+  $ scan ./img-path --storage-adapter rds
+  $ scan ./img-path --card-names-db ./data --config ./mtg.config.json
 `
     );
 
@@ -87,6 +97,29 @@ export async function run(options = {}) {
 
     try {
         await ensureFileAccessible(fsAccess, filePath);
+    } catch (err) {
+        logger.log(err?.message || String(err));
+        return;
+    }
+
+    // CLI flags win over env vars / config file (see src/config/index.mjs precedence).
+    // getConfig() here both validates the flags early (bad --storage-adapter fails fast)
+    // and resolves the config file, then we bridge the result into process.env so the
+    // rest of the pipeline -- which resolves config lazily on first DB use -- picks it up.
+    try {
+        const config = getConfig({
+            storageAdapter: flags.storageAdapter,
+            cardNamesDbPath: flags.cardNamesDb,
+            cardHashDbPath: flags.cardHashDb,
+            configPath: flags.config
+        });
+        process.env.STORAGE_ADAPTER = config.storageAdapter;
+        if (config.cardNamesDbPath) {
+            process.env.CARD_NAMES_DB_PATH = config.cardNamesDbPath;
+        }
+        if (config.cardHashDbPath) {
+            process.env.CARD_HASH_DB_PATH = config.cardHashDbPath;
+        }
     } catch (err) {
         logger.log(err?.message || String(err));
         return;
