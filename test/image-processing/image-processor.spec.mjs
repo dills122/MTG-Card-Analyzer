@@ -48,6 +48,27 @@ describe("Integration::", () => {
             });
         });
 
+        it("disables preview persistence and forwards no-cache OCR options", (done) => {
+            const ocrOptions = { cacheMethod: "none", langPath: "/fixtures", gzip: false };
+            const processor = ImageProcessor.create({
+                path: FAKE_PATH_INPUT,
+                type: TYPE,
+                directory: FAKE_DIR,
+                persistArtifacts: false,
+                ocrOptions,
+                dependencies: {
+                    ocrPreprocessor: { prepareOcrVariants: stubs.preprocessStub },
+                    textExtraction: { ScanImage: stubs.textExtractionStub }
+                }
+            });
+
+            processor.extract((err) => {
+                assert.isUndefined(stubs.preprocessStub.firstCall.args[2].directory);
+                assert.include(stubs.textExtractionStub.firstCall.args[3], ocrOptions);
+                done(err);
+            });
+        });
+
         it("Should error out due to an incomplete schema", (done) => {
             let processor = () => ImageProcessor.create({});
             assert.throw(processor, Error);

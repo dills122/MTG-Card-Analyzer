@@ -17,7 +17,9 @@ const schema = joi.object().keys({
     path: joi.string().required(),
     type: joi.string().required(),
     directory: joi.string().required(),
-    logger: joi.object().optional()
+    logger: joi.object().optional(),
+    ocrOptions: joi.object().optional(),
+    persistArtifacts: joi.boolean().optional()
 });
 
 class ImageProcessor {
@@ -46,7 +48,9 @@ class ImageProcessor {
 
     cropImage() {
         return this.dependencies.ocrPreprocessor
-            .prepareOcrVariants(this.path, this.type, { directory: this.directory })
+            .prepareOcrVariants(this.path, this.type, {
+                directory: this.persistArtifacts === false ? undefined : this.directory
+            })
             .then(({ variants, previewPath }) => {
                 this.ocrVariants = variants;
                 this.imagePath = previewPath;
@@ -65,7 +69,11 @@ class ImageProcessor {
                     }
                     this.results = extractResults;
                     try {
-                        if (extractResults?.bestVariant?.buffer && this.directory) {
+                        if (
+                            this.persistArtifacts !== false &&
+                            extractResults?.bestVariant?.buffer &&
+                            this.directory
+                        ) {
                             this.imagePath = await this.persistBestVariant(
                                 extractResults.bestVariant.buffer
                             );
@@ -74,7 +82,8 @@ class ImageProcessor {
                         return reject(writeErr);
                     }
                     return resolve(this.results);
-                }
+                },
+                { logger: this.logger, ...(this.ocrOptions || {}) }
             );
         });
     }

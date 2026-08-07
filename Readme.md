@@ -14,7 +14,7 @@ Here is a test extraction:
 ### Original Card
 
 <p align="center">
-  <img width="500" height="696" src=".\src\test-images\PlatinumAngel.jpg" alt="Logo Image">
+  <img width="500" height="696" src=".\test-images\PlatinumAngel.jpg" alt="Logo Image">
 </p>
 
 ### Name Extraction
@@ -26,13 +26,13 @@ Cleaned Extracted Text: `gPlatinumAngel`
 #### Before Pre Processing
 
 <p align="center">
-  <img width="500" height="100" src=".\src\test-images\test-extractions\8170e28d-ba4a-4918-8246-0a6c7840a330.jpg" alt="Logo Image">
+  <img width="500" height="100" src=".\test-images\test-extractions\8170e28d-ba4a-4918-8246-0a6c7840a330.jpg" alt="Logo Image">
 </p>
 
 #### After Pre-Processing
 
 <p align="center">
-  <img width="500" height="100" src=".\src\test-images\test-extractions\24b0e728-dd4b-487d-aefa-26e707566130.jpg" alt="Logo Image">
+  <img width="500" height="100" src=".\test-images\test-extractions\24b0e728-dd4b-487d-aefa-26e707566130.jpg" alt="Logo Image">
 </p>
 
 ### Type Extraction
@@ -44,16 +44,16 @@ Cleaned Extracted Text: `EArtifactCreatureAngel`
 #### Before Pre-Processing
 
 <p align="center">
-  <img width="500" height="100" src=".\src\test-images\test-extractions\2312b662-a0e7-4589-bba9-62d990a6726f.jpg" alt="Logo Image">
+  <img width="500" height="100" src=".\test-images\test-extractions\2312b662-a0e7-4589-bba9-62d990a6726f.jpg" alt="Logo Image">
 </p>
 
 #### After Pre-Processing
 
 <p align="center">
-  <img width="500" height="100" src=".\src\test-images\test-extractions\19c600f5-28ae-4599-81ee-9df8058ce8df.jpg" alt="Logo Image">
+  <img width="500" height="100" src=".\test-images\test-extractions\19c600f5-28ae-4599-81ee-9df8058ce8df.jpg" alt="Logo Image">
 </p>
 
-More examples are available [here](https://github.com/dills122/mtg-card-analyzer/tree/master/src/test-images)
+More examples are available [here](https://github.com/dills122/mtg-card-analyzer/tree/master/test-images)
 
 ## Getting Up And Running
 
@@ -74,7 +74,7 @@ After install + seed, run:
 
 ```
 # Run at the base directory of the repo
-node index.mjs scan ./src/test-images/PlatinumAngel.jpg
+node index.mjs scan ./test-images/PlatinumAngel.jpg
 ```
 
 ### Current Commands
@@ -125,7 +125,7 @@ Config file is picked up from, in order: an explicit `--config <path>`, then `MT
 
 Note: MySQL/RDS credentials (host/user/password/database) are separate, in `secure.config.cjs` at repo root (loaded by [src/rds/connection.mjs](src/rds/connection.mjs)) — kept out of the general config file/repo since they're secrets, not app settings.
 
-Test images are provided at `src\test-images`
+Test images are provided at `test-images`
 
 Backfiller utility instructions found [here](https://github.com/dills122/MTG-Card-Analyzer/wiki/Backfiller)
 
@@ -135,7 +135,7 @@ Backfiller utility instructions found [here](https://github.com/dills122/MTG-Car
     - Usually means the local names DB is empty or pointing at the wrong path.
     - Re-seed names: `node ./src/db-local/bulk-insert.mjs`
     - Verify path by setting it explicitly:
-        - `CARD_NAMES_DB_PATH=/absolute/path/to/db-or-dir node index.mjs scan ./src/test-images/QueenMarchesa.png`
+        - `CARD_NAMES_DB_PATH=/absolute/path/to/db-or-dir node index.mjs scan ./test-images/QueenMarchesa.png`
 - Seeing warnings from tesseract params:
     - Those warnings are noisy but non-fatal in current runtime.
 
@@ -158,6 +158,26 @@ pnpm coverage:check
 ```
 
 No coverage thresholds are enforced yet — baseline is being established, see [#31](https://github.com/dills122/MTG-Card-Analyzer/issues/31).
+
+### OCR Regression Benchmarks
+
+The labeled, offline image regression suite covers clean scans, photo-like degradation,
+poor lighting, blur, rotation, cropping, and low resolution:
+
+```bash
+# Generate a report without failing the command for known regressions
+pnpm regression
+
+# CI-style gate: exit non-zero if any blocking fixture misses its expectations
+pnpm test:regression
+```
+
+Reports are written to `artifacts/regression/benchmark.md` and `benchmark.json`.
+Fixture labels, expected card data, and offline print references live in
+`test/regression/fixtures/manifest.json`. See
+[`docs/regression-testing.md`](docs/regression-testing.md) for the audit, manifest format,
+quality labels, and fixture workflow. Newly scaffolded images stay disabled until their
+`CHANGE_ME` values are labeled and both manifest entries are enabled.
 
 ### Quality Commands
 
