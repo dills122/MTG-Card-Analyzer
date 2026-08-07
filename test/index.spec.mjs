@@ -6,15 +6,29 @@ describe("CLI::index.mjs", () => {
     let sandbox;
     let consoleLogStub;
     let processExitStub;
+    let savedEnv;
+    const envKeys = ["STORAGE_ADAPTER", "CARD_NAMES_DB_PATH", "CARD_HASH_DB_PATH"];
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
         consoleLogStub = sandbox.stub();
         processExitStub = sandbox.stub();
+        savedEnv = {};
+        envKeys.forEach((key) => {
+            savedEnv[key] = process.env[key];
+            delete process.env[key];
+        });
     });
 
     afterEach(() => {
         sandbox.restore();
+        envKeys.forEach((key) => {
+            if (savedEnv[key] === undefined) {
+                delete process.env[key];
+            } else {
+                process.env[key] = savedEnv[key];
+            }
+        });
     });
 
     async function runCli(cliOverrides = {}, accessImpl) {
@@ -71,5 +85,45 @@ describe("CLI::index.mjs", () => {
         });
         assert.isTrue(executeStub.calledOnce);
         assert.isTrue(processExitStub.calledWith(0));
+    });
+
+    it("applies --storage-adapter / --card-names-db / --card-hash-db to the environment before running", async () => {
+        const { executeStub } = await runCli({
+            filePath: "./some-path.jpg",
+            flags: {
+                q: false,
+                query: false,
+                p: true,
+                pretty: true,
+                storageAdapter: "rds",
+                cardNamesDb: "/tmp/names.db",
+                cardHashDb: "/tmp/hashes.db"
+            }
+        });
+
+        assert.equal(process.env.STORAGE_ADAPTER, "rds");
+        assert.equal(process.env.CARD_NAMES_DB_PATH, "/tmp/names.db");
+        assert.equal(process.env.CARD_HASH_DB_PATH, "/tmp/hashes.db");
+        assert.isTrue(executeStub.calledOnce);
+        assert.isTrue(processExitStub.calledWith(0));
+    });
+
+    it("bails out with a clear error and does not run when --storage-adapter is unknown", async () => {
+        const { processorCreateStub } = await runCli({
+            filePath: "./some-path.jpg",
+            flags: {
+                q: false,
+                query: false,
+                p: true,
+                pretty: true,
+                storageAdapter: "mongo"
+            }
+        });
+
+        assert.isTrue(
+            consoleLogStub.calledWithMatch(sinon.match(/Invalid storageAdapter "mongo"/))
+        );
+        assert.isFalse(processorCreateStub.called);
+        assert.isFalse(processExitStub.called);
     });
 });

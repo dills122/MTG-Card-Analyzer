@@ -1,5 +1,6 @@
 import nedbAdapter from "./adapters/nedb-adapter.mjs";
 import rdsAdapter from "./adapters/rds-adapter.mjs";
+import { getConfig } from "../config/index.mjs";
 
 const adapterFactories = {
     nedb: nedbAdapter.createNedbAdapter,
@@ -7,7 +8,7 @@ const adapterFactories = {
 };
 
 function createStorage(params = {}) {
-    const adapterName = (params.adapterName || process.env.STORAGE_ADAPTER || "nedb").toLowerCase();
+    const adapterName = (params.adapterName || getConfig().storageAdapter).toLowerCase();
     const factory = adapterFactories[adapterName] || adapterFactories.nedb;
     return factory();
 }

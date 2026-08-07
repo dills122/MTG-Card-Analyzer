@@ -83,6 +83,10 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
     - flags:
         - `--query` or `-q`: enable additional persistence flows used by legacy paths (default `false`).
         - `--pretty` or `-p`: pretty logging (default `true`).
+        - `--storage-adapter <nedb|rds>`: storage adapter to use for this run.
+        - `--card-names-db <path>`: path (dir or `.db` file) for the local card names DB.
+        - `--card-hash-db <path>`: path (dir or `.db` file) for the local card hash cache DB.
+        - `--config <path>`: path to a JSON config file (see [Configuration](#configuration)).
 
 ### Local Storage (NeDB)
 
@@ -102,9 +106,24 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
 - The app now uses a storage abstraction layer.
 - Default adapter: `nedb`
 - Alternate adapter available: `rds` (legacy/optional)
-- Select adapter with:
-    - `STORAGE_ADAPTER=nedb` (default)
-    - `STORAGE_ADAPTER=rds`
+- Select adapter with (in order of precedence, highest wins):
+    - CLI flag: `--storage-adapter rds`
+    - env var: `STORAGE_ADAPTER=rds`
+    - config file: `{ "storageAdapter": "rds" }`
+    - default: `nedb`
+
+### Configuration
+
+All runtime settings resolve through a single config module ([src/config/index.mjs](src/config/index.mjs)). Precedence, highest wins:
+
+1. CLI flags (e.g. `--storage-adapter`, `--card-names-db`, `--card-hash-db`)
+2. Env vars (`STORAGE_ADAPTER`, `CARD_NAMES_DB_PATH`, `CARD_HASH_DB_PATH`)
+3. Config file (JSON)
+4. Built-in defaults
+
+Config file is picked up from, in order: an explicit `--config <path>`, then `MTG_CONFIG_PATH` env var, then `./mtg.config.json` (cwd), then `~/.mtg-card-analyzer/config.json`. See [mtg.config.example.json](mtg.config.example.json) for the shape — copy it to `mtg.config.json` and edit.
+
+Note: MySQL/RDS credentials (host/user/password/database) are separate, in `secure.config.cjs` at repo root (loaded by [src/rds/connection.mjs](src/rds/connection.mjs)) — kept out of the general config file/repo since they're secrets, not app settings.
 
 Test images are provided at `test-images`
 
@@ -128,6 +147,18 @@ npm test
 
 Tests stub external calls; no MySQL required.
 
+### Test Coverage
+
+```bash
+# Run tests with coverage report (text + html + lcov, written to coverage/)
+pnpm coverage
+
+# Same, but fail the run if thresholds in the "c8" package.json block aren't met
+pnpm coverage:check
+```
+
+No coverage thresholds are enforced yet — baseline is being established, see [#31](https://github.com/dills122/MTG-Card-Analyzer/issues/31).
+
 ### OCR Regression Benchmarks
 
 The labeled, offline image regression suite covers clean scans, photo-like degradation,
@@ -137,7 +168,7 @@ poor lighting, blur, rotation, cropping, and low resolution:
 # Generate a report without failing the command for known regressions
 pnpm regression
 
-# CI-style gate: exit non-zero if any fixture misses its expectations
+# CI-style gate: exit non-zero if any blocking fixture misses its expectations
 pnpm test:regression
 ```
 
