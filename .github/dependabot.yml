@@ -8,7 +8,8 @@ updates:
     - package-ecosystem: "npm" # See documentation for possible values
       directory: "/" # Location of package manifests
       schedule:
-          interval: "monthly"
+          interval: "cron"
+          cronjob: "0 9 * * mon%2" # Every other Monday at 09:00 UTC
       ignore:
           # need to handle this upgrade on its own
           - dependency-name: "tesseract.js"
