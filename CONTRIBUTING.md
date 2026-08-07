@@ -16,6 +16,20 @@ pnpm install
 
 `pnpm install` also runs `lefthook install` (via the `prepare` script), which wires up git hooks for lint-staged.
 
+## AI-Assisted Development
+
+Repository-specific guidance is tracked in `AGENTS.md` and `CLAUDE.md`. Optional shared steering,
+skills, and custom agents come from a sibling `ai-central` checkout and remain ignored local
+symlinks:
+
+```bash
+pnpm ai:setup
+pnpm ai:check
+```
+
+See `.codex/AI_CENTRAL.md` for the selected bundles, pinned revision, custom-agent list, and refresh
+workflow. A normal build does not require AI Central.
+
 ## Branching & Commits
 
 - Branch off `master`. Use a short descriptive branch name (e.g. `fix/image-too-small-error`, `feat/multi-image-scan`).
