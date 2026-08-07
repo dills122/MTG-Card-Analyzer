@@ -2,6 +2,7 @@ import Datastore from "@dills1220/nedb";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { getConfig } from "../config/index.mjs";
 
 function toDbFilePath(basePath, fileName) {
     if (!basePath) {
@@ -29,9 +30,9 @@ function resolveDbFilename() {
     const home = process.env.HOME || os.tmpdir();
     const legacyPreferencesPath =
         process.platform === "darwin" ? path.join(home, "Library/Preferences") : "";
+    const config = getConfig();
     const candidates = [
-        process.env.CARD_HASH_DB_PATH,
-        process.env.CARD_NAMES_DB_PATH,
+        config.cardHashDbPath || config.cardNamesDbPath,
         process.env.APPDATA,
         legacyPreferencesPath,
         process.platform !== "darwin" ? path.join(home, ".local/share") : "",
@@ -49,15 +50,32 @@ function resolveDbFilename() {
     return path.join(os.tmpdir(), "mtg-card-analyzer", "card-hashes.db");
 }
 
-const dbFilename = resolveDbFilename();
+// Resolved lazily on first real use (not at import time) so config sourced from
+// CLI flags -- applied to process.env by index.mjs before the pipeline runs -- is honored.
+let dbInstance;
 
-const db = new Datastore({
-    filename: dbFilename,
-    autoload: true
-});
+function getDbInstance() {
+    if (!dbInstance) {
+        dbInstance = new Datastore({
+            filename: resolveDbFilename(),
+            autoload: true
+        });
+        dbInstance.ensureIndex({ fieldName: "lookupKey", unique: true });
+        dbInstance.ensureIndex({ fieldName: "cardName" });
+    }
+    return dbInstance;
+}
 
-db.ensureIndex({ fieldName: "lookupKey", unique: true });
-db.ensureIndex({ fieldName: "cardName" });
+const db = new Proxy(
+    {},
+    {
+        get(_target, prop) {
+            const instance = getDbInstance();
+            const value = instance[prop];
+            return typeof value === "function" ? value.bind(instance) : value;
+        }
+    }
+);
 
 function toLookupKey(record) {
     const cardName = String(record.cardName || "").trim();
