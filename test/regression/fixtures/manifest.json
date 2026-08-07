@@ -1,0 +1,1154 @@
+{
+    "version": 1,
+    "description": "Offline OCR and print-matching regression fixtures. Derived cases are generated deterministically at runtime.",
+    "catalog": [
+        {
+            "name": "Pacifism",
+            "set": "BBD",
+            "setName": "Battlebond",
+            "collectorNumber": "101",
+            "typeLine": "Enchantment — Aura",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/Pacifism.jpg"
+        },
+        {
+            "name": "Fireball",
+            "set": "M12",
+            "setName": "Magic 2012",
+            "collectorNumber": "128",
+            "typeLine": "Sorcery",
+            "rarity": "uncommon",
+            "referenceImage": "../../../test-images/Fireball.jpg"
+        },
+        {
+            "name": "Platinum Angel",
+            "set": "C16",
+            "setName": "Commander 2016",
+            "collectorNumber": "214",
+            "typeLine": "Artifact Creature — Angel",
+            "rarity": "mythic",
+            "referenceImage": "../../../test-images/PlatinumAngel.jpg"
+        },
+        {
+            "name": "Shivan Dragon",
+            "set": "M19",
+            "setName": "Core Set 2019",
+            "collectorNumber": "300",
+            "typeLine": "Creature — Dragon",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/ShivanDragon.jpg"
+        },
+        {
+            "name": "Unsummon",
+            "set": "E02",
+            "setName": "Explorers of Ixalan",
+            "collectorNumber": "13",
+            "typeLine": "Instant",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/Unsummon.jpg"
+        },
+        {
+            "enabled": false,
+            "name": "Adanto Vanguard",
+            "set": "XLN",
+            "setName": "Ixalan",
+            "collectorNumber": "1",
+            "typeLine": "Creature — Vampire Soldier",
+            "rarity": "uncommon",
+            "referenceImage": "../../../test-images/AdantoVanguard.png",
+            "apiUrl": "https://scryfall.com/card/xln/1/adanto-vanguard"
+        },
+        {
+            "enabled": false,
+            "name": "Angel of Sanctions",
+            "set": "AKH",
+            "setName": "Amonkhet",
+            "collectorNumber": "1",
+            "typeLine": "Creature — Angel",
+            "rarity": "mythic",
+            "referenceImage": "../../../test-images/AngelOfSanctions.png",
+            "apiUrl": "https://scryfall.com/card/akh/1/angel-of-sanctions"
+        },
+        {
+            "enabled": false,
+            "name": "Attunement",
+            "set": "USG",
+            "setName": "Urza's Saga",
+            "collectorNumber": "61",
+            "typeLine": "Enchantment",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/Artunement.jpg",
+            "apiUrl": "https://scryfall.com/card/usg/61/attunement"
+        },
+        {
+            "enabled": false,
+            "name": "Avaricious Dragon",
+            "set": "ORI",
+            "setName": "Magic Origins",
+            "collectorNumber": "131",
+            "typeLine": "Creature — Dragon",
+            "rarity": "mythic",
+            "referenceImage": "../../../test-images/AvariciousDragon.jpg",
+            "apiUrl": "https://scryfall.com/card/ori/131/avaricious-dragon"
+        },
+        {
+            "enabled": false,
+            "name": "Meletis Charlatan",
+            "set": "THS",
+            "setName": "Theros",
+            "collectorNumber": "54",
+            "typeLine": "Creature — Human Wizard",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/MeletisCharlatan.jpg",
+            "apiUrl": "https://scryfall.com/card/ths/54/meletis-charlatan"
+        },
+        {
+            "enabled": false,
+            "name": "Mindstab Thrull",
+            "set": "FEM",
+            "setName": "Fallen Empires",
+            "collectorNumber": "40c",
+            "typeLine": "Creature — Thrull",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/MindstrabThrull.jpeg",
+            "apiUrl": "https://scryfall.com/card/fem/40c/mindstab-thrull"
+        },
+        {
+            "enabled": false,
+            "name": "Queen Marchesa",
+            "set": "PLST",
+            "setName": "The List",
+            "collectorNumber": "CN2-78",
+            "typeLine": "Legendary Creature — Human Assassin",
+            "rarity": "mythic",
+            "referenceImage": "../../../test-images/QueenMarchesa.png",
+            "apiUrl": "https://scryfall.com/card/plst/CN2-78/queen-marchesa"
+        },
+        {
+            "enabled": false,
+            "name": "CHANGE_ME",
+            "set": "CHANGE_ME",
+            "setName": "CHANGE_ME",
+            "collectorNumber": "CHANGE_ME",
+            "typeLine": "CHANGE_ME",
+            "rarity": "CHANGE_ME",
+            "referenceImage": "../../../test-images/Revegoyf.jpg"
+        },
+        {
+            "enabled": false,
+            "name": "Spellseeker",
+            "set": "BBD",
+            "setName": "Battlebond",
+            "collectorNumber": "41",
+            "typeLine": "Creature — Human Wizard",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/Spellseeker.png",
+            "apiUrl": "https://scryfall.com/card/bbd/41/spellseeker"
+        },
+        {
+            "enabled": false,
+            "name": "Thought Reflection",
+            "set": "SHM",
+            "setName": "Shadowmoor",
+            "collectorNumber": "53",
+            "typeLine": "Enchantment",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/ThoughtReflection.jpg",
+            "apiUrl": "https://scryfall.com/card/shm/53/thought-reflection"
+        },
+        {
+            "enabled": false,
+            "name": "Llanowar Elves",
+            "set": "M12",
+            "setName": "Magic 2012",
+            "collectorNumber": "182",
+            "typeLine": "Creature — Elf Druid",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/llanowarElves.jpg",
+            "apiUrl": "https://scryfall.com/card/m12/182/llanowar-elves"
+        },
+        {
+            "enabled": true,
+            "name": "Battle of Wits",
+            "set": "PLST",
+            "setName": "The List",
+            "collectorNumber": "M13-44",
+            "typeLine": "Enchantment",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/blue-1.jpg",
+            "apiUrl": "https://scryfall.com/card/plst/M13-44/battle-of-wits"
+        },
+        {
+            "enabled": true,
+            "name": "Ensoul Artifact",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "54",
+            "typeLine": "Enchantment — Aura",
+            "rarity": "uncommon",
+            "referenceImage": "../../../test-images/blue-2.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/54/ensoul-artifact"
+        },
+        {
+            "enabled": true,
+            "name": "Master of Predicaments",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "67",
+            "typeLine": "Creature — Sphinx",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/blue-3.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/67/master-of-predicaments"
+        },
+        {
+            "enabled": true,
+            "name": "Ornithopter",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "223",
+            "typeLine": "Artifact Creature — Thopter",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/colorless-1.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/223/ornithopter"
+        },
+        {
+            "enabled": true,
+            "name": "Rogue's Gloves",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "227",
+            "typeLine": "Artifact — Equipment",
+            "rarity": "uncommon",
+            "referenceImage": "../../../test-images/colorless-2.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/227/rogues-gloves"
+        },
+        {
+            "enabled": true,
+            "name": "Scorched Geyser",
+            "set": "MSC",
+            "setName": "Marvel Super Heroes Commander",
+            "collectorNumber": "264",
+            "typeLine": "Land — Island Mountain",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/land-1.jpg",
+            "apiUrl": "https://scryfall.com/card/msc/264/scorched-geyser"
+        },
+        {
+            "enabled": true,
+            "name": "Swamp",
+            "set": "M21",
+            "setName": "Core Set 2021",
+            "collectorNumber": "266",
+            "typeLine": "Basic Land — Swamp",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/land-2.jpg",
+            "apiUrl": "https://scryfall.com/card/m21/266/swamp"
+        },
+        {
+            "enabled": true,
+            "name": "Island",
+            "set": "MSH",
+            "setName": "Marvel Super Heroes",
+            "collectorNumber": "279",
+            "typeLine": "Basic Land — Island",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/land-3.jpg",
+            "apiUrl": "https://scryfall.com/card/msh/279/island"
+        },
+        {
+            "enabled": true,
+            "name": "Thriving Grove",
+            "set": "MSC",
+            "setName": "Marvel Super Heroes Commander",
+            "collectorNumber": "579",
+            "typeLine": "Land",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/land-4.jpg",
+            "apiUrl": "https://scryfall.com/card/msc/579/thriving-grove"
+        },
+        {
+            "enabled": true,
+            "name": "Writhing Chrysalis",
+            "set": "MH3",
+            "setName": "Modern Horizons 3",
+            "collectorNumber": "208",
+            "typeLine": "Creature — Eldrazi Drone",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/multi-1.jpg",
+            "apiUrl": "https://scryfall.com/card/mh3/208/writhing-chrysalis"
+        },
+        {
+            "enabled": false,
+            "name": "Ingenious Artillerist",
+            "set": "CLB",
+            "setName": "Commander Legends: Battle for Baldur's Gate",
+            "collectorNumber": "182",
+            "typeLine": "Creature — Human Artificer",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/red-1.jpg",
+            "apiUrl": "https://scryfall.com/card/clb/182/ingenious-artillerist"
+        },
+        {
+            "enabled": true,
+            "name": "Aggressive Mining",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "127",
+            "typeLine": "Enchantment",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/red-2.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/127/aggressive-mining"
+        },
+        {
+            "enabled": true,
+            "name": "Conch Horn",
+            "set": "FEM",
+            "setName": "Fallen Empires",
+            "collectorNumber": "83",
+            "typeLine": "Artifact",
+            "rarity": "rare",
+            "referenceImage": "../../../test-images/vtg-1.jpg",
+            "apiUrl": "https://scryfall.com/card/fem/83/conch-horn"
+        },
+        {
+            "enabled": true,
+            "name": "Soul Exchange",
+            "set": "FEM",
+            "setName": "Fallen Empires",
+            "collectorNumber": "43",
+            "typeLine": "Sorcery",
+            "rarity": "uncommon",
+            "referenceImage": "../../../test-images/vtg-2.jpg",
+            "apiUrl": "https://scryfall.com/card/fem/43/soul-exchange"
+        },
+        {
+            "enabled": true,
+            "name": "Ruins of Trokair",
+            "set": "PTC",
+            "setName": "Pro Tour Collector Set",
+            "collectorNumber": "ml100",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "referenceImage": "../../../test-images/vtg-3.jpg",
+            "apiUrl": "https://scryfall.com/card/ptc/ml100/ruins-of-trokair"
+        },
+        {
+            "enabled": true,
+            "name": "Worldly Tutor",
+            "set": "MIR",
+            "setName": "Mirage",
+            "collectorNumber": "255",
+            "typeLine": "Instant",
+            "rarity": "uncommon",
+            "referenceImage": "../../../test-images/vtg-4.jpg",
+            "apiUrl": "https://scryfall.com/card/mir/255/worldly-tutor"
+        },
+        {
+            "enabled": true,
+            "name": "Island",
+            "set": "MIR",
+            "setName": "Mirage",
+            "collectorNumber": "338",
+            "typeLine": "Basic Land — Island",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/vtg-5.jpg",
+            "apiUrl": "https://scryfall.com/card/mir/338/island"
+        },
+        {
+            "enabled": true,
+            "name": "Sapphire Charm",
+            "set": "MIR",
+            "setName": "Mirage",
+            "collectorNumber": "89",
+            "typeLine": "Instant",
+            "rarity": "common",
+            "referenceImage": "../../../test-images/vtg-6.jpg",
+            "apiUrl": "https://scryfall.com/card/mir/89/sapphire-charm"
+        },
+        {
+            "enabled": true,
+            "name": "Illumination",
+            "set": "MIR",
+            "setName": "Mirage",
+            "collectorNumber": "21",
+            "typeLine": "Instant",
+            "rarity": "uncommon",
+            "referenceImage": "../../../test-images/vtg-7.jpg",
+            "apiUrl": "https://scryfall.com/card/mir/21/illumination"
+        }
+    ],
+    "cases": [
+        {
+            "id": "pacifism-clean-scan",
+            "image": "../../../test-images/Pacifism.jpg",
+            "quality": "clean-scan",
+            "expected": {
+                "name": "Pacifism",
+                "set": "BBD",
+                "collectorNumber": "101",
+                "minNameScore": 0.7,
+                "maxNameCandidates": 5,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000,
+                "metadata": {
+                    "typeLine": "Enchantment — Aura",
+                    "rarity": "common"
+                }
+            }
+        },
+        {
+            "id": "pacifism-good-photo",
+            "image": "../../../test-images/Pacifism.jpg",
+            "quality": "good-photo",
+            "transform": {
+                "brightness": -0.04,
+                "contrast": -0.03
+            },
+            "expected": {
+                "name": "Pacifism",
+                "set": "BBD",
+                "collectorNumber": "101",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "pacifism-average-photo",
+            "image": "../../../test-images/Pacifism.jpg",
+            "quality": "average-photo",
+            "transform": {
+                "brightness": -0.12,
+                "contrast": -0.08,
+                "blur": 1
+            },
+            "expected": {
+                "name": "Pacifism",
+                "set": "BBD",
+                "collectorNumber": "101",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "pacifism-poor-lighting",
+            "image": "../../../test-images/Pacifism.jpg",
+            "quality": "poor-lighting",
+            "transform": {
+                "brightness": -0.35,
+                "contrast": -0.12
+            },
+            "expected": {
+                "name": "Pacifism",
+                "set": "BBD",
+                "collectorNumber": "101",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "pacifism-blur",
+            "image": "../../../test-images/Pacifism.jpg",
+            "quality": "blur",
+            "transform": {
+                "blur": 1
+            },
+            "expected": {
+                "name": "Pacifism",
+                "set": "BBD",
+                "collectorNumber": "101",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "pacifism-rotation",
+            "image": "../../../test-images/Pacifism.jpg",
+            "quality": "rotation",
+            "transform": {
+                "rotate": 0.25
+            },
+            "expected": {
+                "name": "Pacifism",
+                "set": "BBD",
+                "collectorNumber": "101",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "pacifism-cropping",
+            "image": "../../../test-images/Pacifism.jpg",
+            "quality": "cropping",
+            "transform": {
+                "crop": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 0.015,
+                    "bottom": 0.015
+                }
+            },
+            "expected": {
+                "name": "Pacifism",
+                "set": "BBD",
+                "collectorNumber": "101",
+                "minNameScore": 0.7,
+                "minPrintScore": 0.65,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "pacifism-low-resolution",
+            "image": "../../../test-images/Pacifism.jpg",
+            "quality": "low-resolution",
+            "transform": {
+                "resize": {
+                    "width": 600,
+                    "height": 836
+                }
+            },
+            "expected": {
+                "name": "Pacifism",
+                "set": "BBD",
+                "collectorNumber": "101",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "fireball-clean-scan",
+            "image": "../../../test-images/Fireball.jpg",
+            "quality": "clean-scan",
+            "expected": {
+                "name": "Fireball",
+                "set": "M12",
+                "collectorNumber": "128",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "platinum-angel-clean-scan",
+            "image": "../../../test-images/PlatinumAngel.jpg",
+            "quality": "clean-scan",
+            "expected": {
+                "name": "Platinum Angel",
+                "set": "C16",
+                "collectorNumber": "214",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "shivan-dragon-clean-scan",
+            "image": "../../../test-images/ShivanDragon.jpg",
+            "quality": "clean-scan",
+            "expected": {
+                "name": "Shivan Dragon",
+                "set": "M19",
+                "collectorNumber": "300",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "id": "unsummon-clean-scan",
+            "image": "../../../test-images/Unsummon.jpg",
+            "quality": "clean-scan",
+            "expected": {
+                "name": "Unsummon",
+                "set": "E02",
+                "collectorNumber": "13",
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "adanto-vanguard-pending",
+            "image": "../../../test-images/AdantoVanguard.png",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Adanto Vanguard",
+                "set": "XLN",
+                "collectorNumber": "1",
+                "metadata": {
+                    "typeLine": "Creature — Vampire Soldier",
+                    "rarity": "uncommon"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "angel-of-sanctions-pending",
+            "image": "../../../test-images/AngelOfSanctions.png",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Angel of Sanctions",
+                "set": "AKH",
+                "collectorNumber": "1",
+                "metadata": {
+                    "typeLine": "Creature — Angel",
+                    "rarity": "mythic"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "artunement-pending",
+            "image": "../../../test-images/Artunement.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Attunement",
+                "set": "USG",
+                "collectorNumber": "61",
+                "metadata": {
+                    "typeLine": "Enchantment",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "avaricious-dragon-pending",
+            "image": "../../../test-images/AvariciousDragon.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Avaricious Dragon",
+                "set": "ORI",
+                "collectorNumber": "131",
+                "metadata": {
+                    "typeLine": "Creature — Dragon",
+                    "rarity": "mythic"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "meletis-charlatan-pending",
+            "image": "../../../test-images/MeletisCharlatan.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Meletis Charlatan",
+                "set": "THS",
+                "collectorNumber": "54",
+                "metadata": {
+                    "typeLine": "Creature — Human Wizard",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mindstrab-thrull-pending",
+            "image": "../../../test-images/MindstrabThrull.jpeg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Mindstab Thrull",
+                "set": "FEM",
+                "collectorNumber": "40c",
+                "metadata": {
+                    "typeLine": "Creature — Thrull",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "queen-marchesa-pending",
+            "image": "../../../test-images/QueenMarchesa.png",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Queen Marchesa",
+                "set": "PLST",
+                "collectorNumber": "CN2-78",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Human Assassin",
+                    "rarity": "mythic"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "revegoyf-pending",
+            "image": "../../../test-images/Revegoyf.jpg",
+            "quality": "clean-scan",
+            "notes": "CHANGE_ME: confirm the quality label, replace expected metadata, then set enabled to true",
+            "expected": {
+                "name": "CHANGE_ME",
+                "set": "CHANGE_ME",
+                "collectorNumber": "CHANGE_ME",
+                "metadata": {
+                    "typeLine": "CHANGE_ME",
+                    "rarity": "CHANGE_ME"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "spellseeker-pending",
+            "image": "../../../test-images/Spellseeker.png",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Spellseeker",
+                "set": "BBD",
+                "collectorNumber": "41",
+                "metadata": {
+                    "typeLine": "Creature — Human Wizard",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "thought-reflection-pending",
+            "image": "../../../test-images/ThoughtReflection.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Thought Reflection",
+                "set": "SHM",
+                "collectorNumber": "53",
+                "metadata": {
+                    "typeLine": "Enchantment",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "llanowar-elves-pending",
+            "image": "../../../test-images/llanowarElves.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Llanowar Elves",
+                "set": "M12",
+                "collectorNumber": "182",
+                "metadata": {
+                    "typeLine": "Creature — Elf Druid",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "blue-1-pending",
+            "image": "../../../test-images/blue-1.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Battle of Wits",
+                "set": "PLST",
+                "collectorNumber": "M13-44",
+                "metadata": {
+                    "typeLine": "Enchantment",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "blue-2-pending",
+            "image": "../../../test-images/blue-2.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Ensoul Artifact",
+                "set": "M15",
+                "collectorNumber": "54",
+                "metadata": {
+                    "typeLine": "Enchantment — Aura",
+                    "rarity": "uncommon"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "blue-3-pending",
+            "image": "../../../test-images/blue-3.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Master of Predicaments",
+                "set": "M15",
+                "collectorNumber": "67",
+                "metadata": {
+                    "typeLine": "Creature — Sphinx",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "colorless-1-pending",
+            "image": "../../../test-images/colorless-1.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Ornithopter",
+                "set": "M15",
+                "collectorNumber": "223",
+                "metadata": {
+                    "typeLine": "Artifact Creature — Thopter",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "colorless-2-pending",
+            "image": "../../../test-images/colorless-2.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Rogue's Gloves",
+                "set": "M15",
+                "collectorNumber": "227",
+                "metadata": {
+                    "typeLine": "Artifact — Equipment",
+                    "rarity": "uncommon"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "land-1-pending",
+            "image": "../../../test-images/land-1.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Scorched Geyser",
+                "set": "MSC",
+                "collectorNumber": "264",
+                "metadata": {
+                    "typeLine": "Land — Island Mountain",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "land-2-pending",
+            "image": "../../../test-images/land-2.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Swamp",
+                "set": "M21",
+                "collectorNumber": "266",
+                "metadata": {
+                    "typeLine": "Basic Land — Swamp",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "land-3-pending",
+            "image": "../../../test-images/land-3.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Island",
+                "set": "MSH",
+                "collectorNumber": "279",
+                "metadata": {
+                    "typeLine": "Basic Land — Island",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 2,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "land-4-pending",
+            "image": "../../../test-images/land-4.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Thriving Grove",
+                "set": "MSC",
+                "collectorNumber": "579",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "multi-1-pending",
+            "image": "../../../test-images/multi-1.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Writhing Chrysalis",
+                "set": "MH3",
+                "collectorNumber": "208",
+                "metadata": {
+                    "typeLine": "Creature — Eldrazi Drone",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "red-1-pending",
+            "image": "../../../test-images/red-1.jpg",
+            "quality": "clean-scan",
+            "notes": "Disabled: 265x370 image is below the current 360x500 preprocessing minimum; tracked by GitHub issue #156",
+            "expected": {
+                "name": "Ingenious Artillerist",
+                "set": "CLB",
+                "collectorNumber": "182",
+                "metadata": {
+                    "typeLine": "Creature — Human Artificer",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "red-2-pending",
+            "image": "../../../test-images/red-2.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "expected": {
+                "name": "Aggressive Mining",
+                "set": "M15",
+                "collectorNumber": "127",
+                "metadata": {
+                    "typeLine": "Enchantment",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "blocking": false,
+            "id": "vtg-1-pending",
+            "image": "../../../test-images/vtg-1.jpg",
+            "quality": "clean-scan",
+            "notes": "Known vintage-card OCR limitation; non-blocking while tracked by GitHub issue #157",
+            "expected": {
+                "name": "Conch Horn",
+                "set": "FEM",
+                "collectorNumber": "83",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "rare"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "blocking": false,
+            "id": "vtg-2-pending",
+            "image": "../../../test-images/vtg-2.jpg",
+            "quality": "clean-scan",
+            "notes": "Known vintage-card OCR limitation; non-blocking while tracked by GitHub issue #157",
+            "expected": {
+                "name": "Soul Exchange",
+                "set": "FEM",
+                "collectorNumber": "43",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "uncommon"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "blocking": false,
+            "id": "vtg-3-pending",
+            "image": "../../../test-images/vtg-3.jpg",
+            "quality": "clean-scan",
+            "notes": "Known vintage-card OCR limitation; non-blocking while tracked by GitHub issue #157",
+            "expected": {
+                "name": "Ruins of Trokair",
+                "set": "PTC",
+                "collectorNumber": "ml100",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "blocking": false,
+            "id": "vtg-4-pending",
+            "image": "../../../test-images/vtg-4.jpg",
+            "quality": "clean-scan",
+            "notes": "Known vintage-card OCR limitation; non-blocking while tracked by GitHub issue #157",
+            "expected": {
+                "name": "Worldly Tutor",
+                "set": "MIR",
+                "collectorNumber": "255",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "uncommon"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "blocking": false,
+            "id": "vtg-5-pending",
+            "image": "../../../test-images/vtg-5.jpg",
+            "quality": "clean-scan",
+            "notes": "Known vintage-card OCR limitation; non-blocking while tracked by GitHub issue #157",
+            "expected": {
+                "name": "Island",
+                "set": "MIR",
+                "collectorNumber": "338",
+                "metadata": {
+                    "typeLine": "Basic Land — Island",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "blocking": false,
+            "id": "vtg-6-pending",
+            "image": "../../../test-images/vtg-6.jpg",
+            "quality": "clean-scan",
+            "notes": "Known vintage-card OCR limitation; non-blocking while tracked by GitHub issue #157",
+            "expected": {
+                "name": "Sapphire Charm",
+                "set": "MIR",
+                "collectorNumber": "89",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "common"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "blocking": false,
+            "id": "vtg-7-pending",
+            "image": "../../../test-images/vtg-7.jpg",
+            "quality": "clean-scan",
+            "notes": "Known vintage-card OCR limitation; non-blocking while tracked by GitHub issue #157",
+            "expected": {
+                "name": "Illumination",
+                "set": "MIR",
+                "collectorNumber": "21",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "uncommon"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        }
+    ]
+}

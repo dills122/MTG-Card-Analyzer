@@ -2,7 +2,6 @@ import _ from "lodash";
 import joi from "joi";
 import FuzzySet from "fuzzyset.js";
 import logger from "../logger/log.mjs";
-import storage from "../storage/index.mjs";
 import { cleanString } from "../util.mjs";
 
 const config = {
@@ -11,8 +10,13 @@ const config = {
     maxMatches: 5
 };
 
-const dependencies = {
-    GetNames: storage.names.getAll
+async function getStoredNames() {
+    const { default: storage } = await import("../storage/index.mjs");
+    return storage.names.getAll();
+}
+
+const defaultDependencies = {
+    GetNames: getStoredNames
 };
 
 const schema = joi.object().keys({
@@ -22,12 +26,20 @@ const schema = joi.object().keys({
 });
 
 class MatchName {
-    constructor(params) {
-        const { error: hasError } = !schema.validate(params);
-        if (hasError) {
-            throw new Error("Required params missing");
-        }
-        _.assign(this, params);
+    constructor(params = {}) {
+        const { dependencies: injectedDependencies, logger: injectedLogger, ...rest } = params;
+        const validatedSchema = joi.attempt(
+            {
+                ...rest,
+                ...(injectedLogger ? { logger: injectedLogger } : {})
+            },
+            schema
+        );
+        _.assign(this, validatedSchema);
+        this.dependencies = {
+            ...defaultDependencies,
+            ...(injectedDependencies || {})
+        };
         if (!this.logger) {
             this.logger = logger.create({
                 isPretty: false
@@ -50,7 +62,7 @@ class MatchName {
     }
 
     async gatherInitialResults() {
-        const names = await dependencies.GetNames();
+        const names = await this.dependencies.GetNames();
         const filteredNames = this.filteredNames(names);
         const fuzzy = FuzzySet(filteredNames);
         const normalizedQuery = normalizeForMatch(this.cleanText);
@@ -87,11 +99,11 @@ class MatchName {
 
 const create = (params) => new MatchName(params);
 
-export { create, dependencies, MatchName };
+export { create, defaultDependencies as dependencies, MatchName };
 
 export default {
     create,
-    dependencies,
+    dependencies: defaultDependencies,
     MatchName
 };
 

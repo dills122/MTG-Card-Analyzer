@@ -11,15 +11,17 @@ const logger = log.create({
  * @param {Buffer|string|Array} imgBuffer image buffer, path, or prepared variants
  * @param {"name"|"type"|"art"|"flavor"} type snippet type to inform PSM/whitelist
  * @param {(err: Error|null, result: {cleanText: string, dirtyText: string}|null) => void} cb callback
+ * @param {{logger?: {info: Function, error: Function}}} options runtime options
  */
-function ScanImage(imgBuffer, type, cb) {
-    logger.info(
+function ScanImage(imgBuffer, type, cb, options = {}) {
+    const scanLogger = options.logger || logger;
+    scanLogger.info(
         `extract-text::ScanImage:: Scanning Card ${Buffer.isBuffer(imgBuffer) ? "Image Buffer" : imgBuffer}`
     );
     const candidates = normalizeCandidates(imgBuffer, type);
-    Promise.all(candidates.map((candidate) => runCandidate(candidate, type)))
+    Promise.all(candidates.map((candidate) => runCandidate(candidate, type, scanLogger, options)))
         .then((results) => {
-            const best = selectBestResult(results);
+            const best = selectBestResult(results, type);
             return cb(
                 null,
                 {
@@ -33,7 +35,7 @@ function ScanImage(imgBuffer, type, cb) {
             );
         })
         .catch((err) => {
-            logger.error(err);
+            scanLogger.error(err);
             return cb(err, null, Tesseract);
         });
 }
@@ -55,20 +57,26 @@ function normalizeCandidates(input, type) {
     ];
 }
 
-async function runCandidate(candidate, type) {
+async function runCandidate(candidate, type, scanLogger, options = {}) {
     const ocrConfig = getTesseractConfig(type, candidate.psm);
     const result = await Tesseract.recognize(candidate.buffer, "eng", {
         ...ocrConfig,
+        // Tesseract v3 otherwise rewrites ./eng.traineddata for every worker. Multiple OCR
+        // variants can race and truncate the bundled model, so treat the local cache as input.
+        cacheMethod: "readOnly",
+        ...(options.cacheMethod ? { cacheMethod: options.cacheMethod } : {}),
+        ...(options.langPath ? { langPath: options.langPath } : {}),
+        ...(typeof options.gzip === "boolean" ? { gzip: options.gzip } : {}),
         logger: (message) => {
             if (message.status === "recognizing text") {
-                logger.info(`Tesseract status: ${message.status} ${message.progress}`);
+                scanLogger.info(`Tesseract status: ${message.status} ${message.progress}`);
             }
         }
     });
     const extractedText = (result && result.data && result.data.text) || result.text || "";
     const cleanedString = normalizeOcrText(extractedText);
     const confidence = (result && result.data && result.data.confidence) || 0;
-    logger.info(
+    scanLogger.info(
         `Region "${candidate.region}" => confidence ${confidence} | raw "${extractedText}" | normalized "${cleanedString}"`
     );
     return {
@@ -115,14 +123,42 @@ function normalizeOcrText(text) {
     return cleaned.toUpperCase().trim();
 }
 
-function selectBestResult(results) {
+function scoreOcrCandidate(result, type) {
+    const confidence = Number(result?.confidence) || 0;
+    if (type !== "name") {
+        return confidence;
+    }
+
+    const cleanText = result?.cleanText || "";
+    const alphanumericLength = cleanText.replace(/[^a-z0-9]/gi, "").length;
+    const words = cleanText.split(/\s+/).filter(Boolean);
+    const digitCount = (cleanText.match(/\d/g) || []).length;
+    const lineCount = String(result?.dirtyText || "")
+        .split(/\r?\n/)
+        .filter((line) => line.trim()).length;
+    const regionBonus = result?.region === "name-core" ? 8 : result?.region === "name-wide" ? 4 : 0;
+    const shortTextPenalty = Math.max(0, 4 - alphanumericLength) * 15;
+    const excessWordPenalty = Math.max(0, words.length - 5) * 5;
+    const digitPenalty = digitCount * 2;
+    const multilinePenalty = Math.max(0, lineCount - 1) * 4;
+
+    return (
+        confidence +
+        regionBonus -
+        shortTextPenalty -
+        excessWordPenalty -
+        digitPenalty -
+        multilinePenalty
+    );
+}
+
+function selectBestResult(results, type) {
     return results.reduce((best, current) => {
         if (!best) return current;
-        if (current.confidence > best.confidence) return current;
-        if (
-            current.confidence === best.confidence &&
-            current.cleanText.length > best.cleanText.length
-        ) {
+        const currentScore = scoreOcrCandidate(current, type);
+        const bestScore = scoreOcrCandidate(best, type);
+        if (currentScore > bestScore) return current;
+        if (currentScore === bestScore && current.cleanText.length > best.cleanText.length) {
             return current;
         }
         return best;
@@ -135,10 +171,12 @@ function ShutDown() {
 
 export const dependencies = { Tesseract };
 
-export { ScanImage, ShutDown };
+export { ScanImage, ShutDown, scoreOcrCandidate, selectBestResult };
 
 export default {
     ScanImage,
     ShutDown,
+    scoreOcrCandidate,
+    selectBestResult,
     dependencies
 };

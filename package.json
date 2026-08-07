@@ -11,6 +11,8 @@
     },
     "scripts": {
         "test": "mocha \"./test/**/*.spec.mjs\"",
+        "test:regression": "node scripts/run-regression.mjs",
+        "regression": "node scripts/run-regression.mjs --no-fail-on-regression",
         "lint": "eslint . --ext js,mjs",
         "lint:fix": "pnpm lint --fix",
         "lint-staged": "lint-staged",
