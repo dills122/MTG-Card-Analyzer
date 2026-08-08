@@ -159,6 +159,26 @@ describe("CLI::index.mjs", () => {
         assert.equal(process.env.LOCAL_CACHE_ENABLED, "true");
     });
 
+    it("defaults COLLECTION_ENABLED=false when --enable-collection was not passed", async () => {
+        const { processorCreateStub } = await runCli({
+            filePath: "./some-path.jpg",
+            flags: { q: false, query: false, p: true, pretty: true, enableCollection: false }
+        });
+
+        assert.equal(process.env.COLLECTION_ENABLED, "false");
+        assert.deepInclude(processorCreateStub.firstCall.args[0], { collectionEnabled: false });
+    });
+
+    it("applies COLLECTION_ENABLED=true and threads collectionEnabled to the processor when --enable-collection is passed", async () => {
+        const { processorCreateStub } = await runCli({
+            filePath: "./some-path.jpg",
+            flags: { q: false, query: false, p: true, pretty: true, enableCollection: true }
+        });
+
+        assert.equal(process.env.COLLECTION_ENABLED, "true");
+        assert.deepInclude(processorCreateStub.firstCall.args[0], { collectionEnabled: true });
+    });
+
     describe("log subcommands", () => {
         it("log dump prints table-formatted entries and exits 0", async () => {
             const dumpStub = sandbox.stub(storage.log, "dump").callsFake((opts, cb) => {
@@ -372,6 +392,16 @@ describe("CLI::index.mjs buildCli (real commander wiring)", () => {
         const parsed = buildCli(["scan", "./card.jpg", "--no-local-cache"]);
         assert.equal(parsed.flags.localCache, false);
         assert.equal(parsed.flags._localCacheExplicit, true);
+    });
+
+    it("parses `scan <file>` with enableCollection=false by default", () => {
+        const parsed = buildCli(["scan", "./card.jpg"]);
+        assert.equal(parsed.flags.enableCollection, false);
+    });
+
+    it("parses `scan <file> --enable-collection` to enableCollection=true", () => {
+        const parsed = buildCli(["scan", "./card.jpg", "--enable-collection"]);
+        assert.equal(parsed.flags.enableCollection, true);
     });
 
     it("parses `log dump --limit 5 --format json`", () => {

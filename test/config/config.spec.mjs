@@ -9,7 +9,10 @@ describe("config::index", () => {
         "STORAGE_ADAPTER",
         "CARD_NAMES_DB_PATH",
         "CARD_HASH_DB_PATH",
-        "MTG_CONFIG_PATH"
+        "MTG_CONFIG_PATH",
+        "LOCAL_CACHE_ENABLED",
+        "COLLECTION_ENABLED",
+        "DEBUG_LOGGING"
     ];
     let savedEnv;
     let tmpDir;
@@ -39,6 +42,23 @@ describe("config::index", () => {
         assert.equal(config.storageAdapter, DEFAULTS.storageAdapter);
         assert.equal(config.pretty, DEFAULTS.pretty);
         assert.equal(config.configPath, "");
+        assert.equal(config.collectionEnabled, false, "opt-in module, off by default");
+        assert.equal(config.debugLogging, false, "opt-in, off by default");
+    });
+
+    it("COLLECTION_ENABLED env var turns the collection module on", () => {
+        process.env.COLLECTION_ENABLED = "true";
+        assert.equal(getConfig().collectionEnabled, true);
+    });
+
+    it("DEBUG_LOGGING env var turns verbose ops-log capture on", () => {
+        process.env.DEBUG_LOGGING = "true";
+        assert.equal(getConfig().debugLogging, true);
+    });
+
+    it("explicit collectionEnabled override wins over the env var", () => {
+        process.env.COLLECTION_ENABLED = "true";
+        assert.equal(getConfig({ collectionEnabled: false }).collectionEnabled, false);
     });
 
     it("env vars override defaults", () => {

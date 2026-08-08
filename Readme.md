@@ -86,7 +86,8 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
 
 - `scan <filePath>` : scan a single image and output results
     - flags:
-        - `--query` or `-q`: persist results (write to the collection / needs-attention tables; default `false`, dry-run otherwise).
+        - `--query` or `-q`: persist results (write to the collection / needs-attention tables; default `false`, dry-run otherwise). Requires `--enable-collection` too -- `--query` alone is not enough.
+        - `--enable-collection`: turn on the opt-in collection/needs-attention tracking module for this run (default `false`). Not everyone scanning cards wants an inventory kept; without this, `--query` still runs the full pipeline and prints matches but persists nothing.
         - `--pretty` or `-p`: pretty logging (default `true`).
         - `--storage-adapter <nedb|rds>`: which persistence backend this run's collection/needs-attention writes go to.
         - `--card-names-db <path>`: path (dir or `.db` file) for the local card names cache.
@@ -109,7 +110,7 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
 Two deliberately separate tiers:
 
 1. **Cache tier** — always on by default (turn off with `--no-local-cache` / `LOCAL_CACHE_ENABLED=false`), always local nedb, never `STORAGE_ADAPTER`-selected. Holds the card names dictionary, the image hash cache, and the local [operations log](#operations-log). Its job is speed (skip re-querying Scryfall, skip re-hashing known cards) and local diagnostics — not being a source of truth. The names dictionary specifically is unaffected by `--no-local-cache`: it's a required local index, not an optional cache, since there's no remote alternative.
-2. **Persistence tier** — selected by `STORAGE_ADAPTER` (`nedb` | `rds`, default `nedb`). This is where your actual collection and needs-attention records live. Scanning the same card twice adds to its quantity (`delta`, default 1) rather than overwriting it — both backends compute the resulting `estValue` from the final quantity. Made a mistake, or want to correct/remove an entry by hand? `collection update`/`collection remove` (see [Current Commands](#current-commands)) go through the same tier.
+2. **Persistence tier** — selected by `STORAGE_ADAPTER` (`nedb` | `rds`, default `nedb`). This is where your actual collection and needs-attention records live. Gated behind the opt-in collection module (`--enable-collection` / `COLLECTION_ENABLED=true` / `collectionEnabled` in the config file, off by default) -- `scan --query` alone runs the full pipeline and prints matches but persists nothing until the module is also on. Explicitly running `collection update`/`remove` or `migrate` doesn't need the flag re-passed; naming those commands is itself the opt-in for that invocation. Scanning the same card twice adds to its quantity (`delta`, default 1) rather than overwriting it — both backends compute the resulting `estValue` from the final quantity. Made a mistake, or want to correct/remove an entry by hand? `collection update`/`collection remove` (see [Current Commands](#current-commands)) go through the same tier.
 
 Local cache DB files:
 
@@ -152,8 +153,8 @@ This is what issue #49 ("Transaction") became — the old model was a half-defin
 
 All runtime settings resolve through a single config module ([src/config/index.mjs](src/config/index.mjs)). Precedence, highest wins:
 
-1. CLI flags (e.g. `--storage-adapter`, `--card-names-db`, `--card-hash-db`, `--no-local-cache`)
-2. Env vars (`STORAGE_ADAPTER`, `CARD_NAMES_DB_PATH`, `CARD_HASH_DB_PATH`, `LOCAL_CACHE_ENABLED`)
+1. CLI flags (e.g. `--storage-adapter`, `--card-names-db`, `--card-hash-db`, `--no-local-cache`, `--enable-collection`)
+2. Env vars (`STORAGE_ADAPTER`, `CARD_NAMES_DB_PATH`, `CARD_HASH_DB_PATH`, `LOCAL_CACHE_ENABLED`, `COLLECTION_ENABLED`)
 3. Config file (JSON)
 4. Built-in defaults
 

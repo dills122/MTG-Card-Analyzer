@@ -26,6 +26,9 @@ const dependencies = {
 const schema = joi.object().keys({
     filePath: joi.string().min(1).required(),
     queryingEnabled: joi.boolean().default(true),
+    // Collection/needs-attention tracking is an opt-in module (see src/config/index.mjs).
+    // --query alone is not enough to write those records; this must also be true.
+    collectionEnabled: joi.boolean().default(false),
     isPretty: joi.boolean().default(true)
 });
 
@@ -88,6 +91,7 @@ class ProcessorClass {
                 })),
                 decision: this.decision,
                 queryingEnabled: this.queryingEnabled,
+                collectionEnabled: this.collectionEnabled,
                 storageAdapter: storage.adapterName,
                 error: null,
                 ...extra
@@ -182,14 +186,15 @@ class ProcessorClass {
         if (!this.queryingEnabled) {
             this.decision = "dry-run";
             this.logger.info("Final results:");
-            // Print user-facing results in a readable object format.
-            console.log(
-                inspect(this.matcherResults, {
-                    depth: null,
-                    colors: false,
-                    compact: false
-                })
+            this.printResults();
+            return;
+        }
+        if (!this.collectionEnabled) {
+            this.decision = "module-disabled";
+            this.logger.info(
+                "Collection tracking module is disabled -- nothing persisted. Enable with --enable-collection, COLLECTION_ENABLED=true, or collectionEnabled in the config file. Final results:"
             );
+            this.printResults();
             return;
         }
         if (this.matcherResults.length === 1) {
@@ -202,6 +207,18 @@ class ProcessorClass {
             this.matcherResults.map((matchResult) =>
                 this.CreateNeedsAttentionRecordAsync(matchResult)
             )
+        );
+    }
+
+    // Prints user-facing results in a readable object format -- used whenever the pipeline
+    // stops short of persisting (dry-run, or the collection module being disabled).
+    printResults() {
+        console.log(
+            inspect(this.matcherResults, {
+                depth: null,
+                colors: false,
+                compact: false
+            })
         );
     }
 
