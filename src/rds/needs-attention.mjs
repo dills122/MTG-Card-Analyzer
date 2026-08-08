@@ -1,12 +1,12 @@
-import { CreateConnection } from "./connection.mjs";
+import { createConnection } from "./connection.mjs";
 import log from "../logger/log.mjs";
 
 const logger = log.create({
     isPretty: true
 });
 
-function InsertRecord(record, cb) {
-    const connection = CreateConnection();
+function insertRecord(record, cb) {
+    const connection = createConnection();
     connection.connect((err) => {
         if (err) {
             return cb(err, null);
@@ -32,8 +32,8 @@ function InsertRecord(record, cb) {
     });
 }
 
-export { InsertRecord };
+export { insertRecord };
 
 export default {
-    InsertRecord
+    insertRecord
 };

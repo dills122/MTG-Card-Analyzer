@@ -99,8 +99,8 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
             );
         } else {
             try {
-                const { CreateConnection } = await import("../rds/connection.mjs");
-                const connection = CreateConnection();
+                const { createConnection } = await import("../rds/connection.mjs");
+                const connection = createConnection();
                 await promisify(connection.connect.bind(connection))();
                 connection.end();
                 record("MySQL connection succeeded", "pass");

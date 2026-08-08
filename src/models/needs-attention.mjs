@@ -19,7 +19,7 @@ class NeedsAttention {
         Object.assign(this, validatedSchema);
     }
 
-    Insert() {
+    insert() {
         const object = pick(this, Object.keys(schema.describe().keys));
         return storage.needsAttention.insert(object);
     }

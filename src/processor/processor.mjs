@@ -284,7 +284,7 @@ class ProcessorClass {
             possibleSets: record.sets.join(","),
             nameImage: name64Image
         });
-        await needsAttenionModel.Insert();
+        await needsAttenionModel.insert();
     }
 
     CreateCollectionsRecord(record, callback) {
@@ -331,7 +331,7 @@ class ProcessorClass {
             cardType: additionalInfo.type_line
         });
         this.logger.info("Preparing to insert record");
-        await collectionsModel.Insert();
+        await collectionsModel.insert();
     }
 }
 

@@ -7,7 +7,7 @@ import { createNedbStore } from "./create-nedb-store.mjs";
 // This is what #49 ("Transaction") became -- the old model was a half-defined mix of
 // generic-audit-log and art/flavor-match-confidence concepts that never got resolved.
 
-// Monotonic tie-breaker: two LogOperation calls can land in the same millisecond (nedb's
+// Monotonic tie-breaker: two logOperation calls can land in the same millisecond (nedb's
 // Date sort doesn't reliably order same-millisecond entries), so `loggedAt` alone isn't a
 // safe sort key. Resets on process restart, which is fine -- it only needs to disambiguate
 // within a single run.
@@ -19,7 +19,7 @@ const { getDbInstance } = createNedbStore({
 
 // entry shape: { filePath, extractedText, nameMatches, matcherResults, decision,
 //                queryingEnabled, storageAdapter, error, durationMs }
-function LogOperation(entry, cb = () => {}) {
+function logOperation(entry, cb = () => {}) {
     sequenceCounter += 1;
     const record = {
         ...entry,
@@ -29,13 +29,13 @@ function LogOperation(entry, cb = () => {}) {
     getDbInstance().insert(record, cb);
 }
 
-function GetOperations(options = {}, cb) {
+function getOperations(options = {}, cb) {
     const { limit = 50, since } = options;
     const query = since ? { loggedAt: { $gte: new Date(since) } } : {};
     getDbInstance().find(query).sort({ seq: -1 }).limit(limit).exec(cb);
 }
 
-function GetStats(cb) {
+function getStats(cb) {
     getDbInstance().find({}, (err, docs = []) => {
         if (err) {
             return cb(err);
@@ -68,10 +68,10 @@ function GetStats(cb) {
     });
 }
 
-export { LogOperation, GetOperations, GetStats };
+export { logOperation, getOperations, getStats };
 
 export default {
-    LogOperation,
-    GetOperations,
-    GetStats
+    logOperation,
+    getOperations,
+    getStats
 };

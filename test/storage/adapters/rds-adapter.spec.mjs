@@ -23,7 +23,7 @@ describe("storage/adapters::rds-adapter", () => {
     describe("collection.getQuantity", () => {
         it("resolves with the quantity, passing name/set through unchanged", async () => {
             const stub = sandbox
-                .stub(rds.Collection, "GetQuantity")
+                .stub(rds.collection, "getQuantity")
                 .callsFake((name, set, cb) => cb(null, 5));
 
             const result = await adapter.collection.getQuantity("Pacifism", "M20");
@@ -33,7 +33,7 @@ describe("storage/adapters::rds-adapter", () => {
         });
 
         it("rejects when the rds module errors", async () => {
-            sandbox.stub(rds.Collection, "GetQuantity").callsFake((name, set, cb) => {
+            sandbox.stub(rds.collection, "getQuantity").callsFake((name, set, cb) => {
                 cb(new Error("connection refused"));
             });
 
@@ -53,7 +53,7 @@ describe("storage/adapters::rds-adapter", () => {
             const record = { cardName: "Pacifism", cardSet: "M20", priceUsd: 2.5 };
             const results = { affectedRows: 1 };
             const stub = sandbox
-                .stub(rds.Collection, "UpsertRecord")
+                .stub(rds.collection, "upsertRecord")
                 .callsFake((rec, cb) => cb(null, results));
 
             const result = await adapter.collection.upsert(record);
@@ -64,7 +64,7 @@ describe("storage/adapters::rds-adapter", () => {
 
         it("rejects when the rds module errors", async () => {
             sandbox
-                .stub(rds.Collection, "UpsertRecord")
+                .stub(rds.collection, "upsertRecord")
                 .callsFake((rec, cb) => cb(new Error("connection refused")));
 
             let caught;
@@ -83,7 +83,7 @@ describe("storage/adapters::rds-adapter", () => {
             const record = { cardName: "Pacifism", extractedText: "clean" };
             const results = { insertId: 1 };
             const stub = sandbox
-                .stub(rds.NDAttn, "InsertRecord")
+                .stub(rds.needsAttention, "insertRecord")
                 .callsFake((rec, cb) => cb(null, results));
 
             const result = await adapter.needsAttention.insert(record);
@@ -94,7 +94,7 @@ describe("storage/adapters::rds-adapter", () => {
 
         it("rejects when the rds module errors", async () => {
             sandbox
-                .stub(rds.NDAttn, "InsertRecord")
+                .stub(rds.needsAttention, "insertRecord")
                 .callsFake((rec, cb) => cb(new Error("connection refused")));
 
             let caught;

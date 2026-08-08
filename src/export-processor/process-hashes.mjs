@@ -252,10 +252,13 @@ class ProcessHashes {
     }
 
     _insertCardHash(setName, hash) {
+        // isFoil/isPromo/cardUrl aren't tracked through the matcher pipeline yet, so they're
+        // left for the store's own defaults (false/"") -- same as before this was fixed to use
+        // the store's real field names instead of a PascalCase fallback chain.
         this.dependencies.CardHashes.upsert({
-            Name: this.name,
-            SetName: setName,
-            CardHash: hash
+            cardName: this.name,
+            setName,
+            cardHash: hash
         });
     }
 }

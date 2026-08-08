@@ -9,13 +9,13 @@ const { getDbInstance } = createNedbStore({
     resolveFilename: () => resolveDbFilename(getConfig().cardNamesDbPath, "needs-attention.db")
 });
 
-function Insert(record, cb) {
+function insert(record, cb) {
     const doc = { ...record, createdAt: new Date() };
     getDbInstance().insert(doc, cb);
 }
 
 // Returns every needs-attention entry -- used by the nedb->rds migration (src/migrate/).
-function GetAll(cb) {
+function getAll(cb) {
     getDbInstance().find({}, (err, docs) => {
         if (err) {
             return cb(err, null);
@@ -24,9 +24,9 @@ function GetAll(cb) {
     });
 }
 
-export { Insert, GetAll };
+export { insert, getAll };
 
 export default {
-    Insert,
-    GetAll
+    insert,
+    getAll
 };

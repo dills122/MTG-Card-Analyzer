@@ -15,7 +15,7 @@ const logger = log.create({
     isPretty: true
 });
 
-async function StringfyImagesNDAtn(imagePaths) {
+async function stringifyImagesForReview(imagePaths) {
     try {
         const flavorImage = await dependencies.base64Img(imagePaths.flavorImage);
         const artImage = await dependencies.base64Img(imagePaths.artImage);
@@ -27,7 +27,7 @@ async function StringfyImagesNDAtn(imagePaths) {
             typeImage,
             nameImage
         };
-        logger.info(`base64-img::StringfyImagesNDAtn : ${Object.keys(base64Images)}`);
+        logger.info(`base64-img::stringifyImagesForReview : ${Object.keys(base64Images)}`);
         return base64Images;
     } catch (error) {
         logger.error(error);
@@ -35,9 +35,9 @@ async function StringfyImagesNDAtn(imagePaths) {
     }
 }
 
-export { StringfyImagesNDAtn };
+export { stringifyImagesForReview };
 
 export default {
-    StringfyImagesNDAtn,
+    stringifyImagesForReview,
     dependencies
 };

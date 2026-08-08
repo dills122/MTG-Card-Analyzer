@@ -15,13 +15,13 @@ import rds from "../rds/index.mjs";
 // rejects.
 
 async function migrateCollection({ dryRun = false, force = false } = {}) {
-    const localEntries = await promisify(collectionStore.GetAll)();
+    const localEntries = await promisify(collectionStore.getAll)();
 
     const results = { total: localEntries.length, migrated: 0, skipped: 0, errors: [] };
 
     for (const entry of localEntries) {
         try {
-            const existingQty = await promisify(rds.Collection.GetQuantity)(
+            const existingQty = await promisify(rds.collection.getQuantity)(
                 entry.cardName,
                 entry.cardSet
             );
@@ -32,7 +32,7 @@ async function migrateCollection({ dryRun = false, force = false } = {}) {
             }
 
             if (!dryRun) {
-                await promisify(rds.Collection.UpsertRecord)({
+                await promisify(rds.collection.upsertRecord)({
                     cardName: entry.cardName,
                     cardType: entry.cardType,
                     cardSet: entry.cardSet,
@@ -57,7 +57,7 @@ async function migrateCollection({ dryRun = false, force = false } = {}) {
 }
 
 async function migrateNeedsAttention({ dryRun = false } = {}) {
-    const localEntries = await promisify(needsAttentionStore.GetAll)();
+    const localEntries = await promisify(needsAttentionStore.getAll)();
 
     const results = { total: localEntries.length, migrated: 0, skipped: 0, errors: [] };
 
@@ -67,7 +67,7 @@ async function migrateNeedsAttention({ dryRun = false } = {}) {
             continue;
         }
         try {
-            await promisify(rds.NDAttn.InsertRecord)({
+            await promisify(rds.needsAttention.insertRecord)({
                 cardName: entry.cardName,
                 possibleSets: entry.possibleSets,
                 extractedText: entry.extractedText,

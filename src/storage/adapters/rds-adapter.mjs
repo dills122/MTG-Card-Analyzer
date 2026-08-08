@@ -8,15 +8,15 @@ import { createCallbackAdapter } from "./create-callback-adapter.mjs";
 
 function createRdsAdapter() {
     return createCallbackAdapter("rds", {
-        collectionStore: rds.Collection,
+        collectionStore: rds.collection,
         collectionMethods: {
-            getQuantity: "GetQuantity",
-            upsert: "UpsertRecord",
-            setQuantity: "SetQuantity",
-            remove: "DeleteRecord"
+            getQuantity: "getQuantity",
+            upsert: "upsertRecord",
+            setQuantity: "setQuantity",
+            remove: "deleteRecord"
         },
-        needsAttentionStore: rds.NDAttn,
-        needsAttentionInsertMethod: "InsertRecord"
+        needsAttentionStore: rds.needsAttention,
+        needsAttentionInsertMethod: "insertRecord"
     });
 }
 

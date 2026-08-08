@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import sinon from "sinon";
 import mysql from "mysql2";
-import { InsertRecord } from "../../src/rds/needs-attention.mjs";
+import { insertRecord } from "../../src/rds/needs-attention.mjs";
 
 describe("rds::needs-attention", () => {
     let sandbox;
@@ -21,10 +21,10 @@ describe("rds::needs-attention", () => {
         sandbox.restore();
     });
 
-    it("InsertRecord targets the real Card_NEED_ATTN table with parameterized placeholders", (done) => {
+    it("insertRecord targets the real Card_NEED_ATTN table with parameterized placeholders", (done) => {
         fakeConnection.query.callsFake((sql, params, cb) => cb(null, { insertId: 1 }));
 
-        InsertRecord(
+        insertRecord(
             {
                 cardName: "Urza's Tower",
                 possibleSets: "M20,M21",

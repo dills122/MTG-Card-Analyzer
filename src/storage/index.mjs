@@ -44,7 +44,7 @@ async function getHashesByCardName(cardName) {
     if (!cacheEnabled()) {
         return [];
     }
-    const docs = await promisify(cardHashCache.GetHashes)(cardName);
+    const docs = await promisify(cardHashCache.getHashes)(cardName);
     return docs || [];
 }
 
@@ -52,14 +52,14 @@ function upsertHash(record) {
     if (!cacheEnabled()) {
         return;
     }
-    cardHashCache.InsertEntity(record);
+    cardHashCache.insertEntity(record);
 }
 
 function logOperation(entry) {
     if (!cacheEnabled()) {
         return;
     }
-    opsLog.LogOperation(entry);
+    opsLog.logOperation(entry);
 }
 
 const storage = {
@@ -78,8 +78,8 @@ const storage = {
     },
     log: {
         record: logOperation,
-        dump: promisify(opsLog.GetOperations),
-        stats: promisify(opsLog.GetStats)
+        dump: promisify(opsLog.getOperations),
+        stats: promisify(opsLog.getStats)
     },
     // Persistence tier -- STORAGE_ADAPTER-selected (nedb | rds).
     collection: {

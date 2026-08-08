@@ -21,27 +21,23 @@ function toLookupKey(record) {
     return `${cardName}::${setName}::${isFoil ? 1 : 0}::${isPromo ? 1 : 0}::${cardHash}`;
 }
 
+// Every writer (back-filler.mjs, process-hashes.mjs) sends fully camelCase fields -- no
+// PascalCase fallback needed here.
 function normalizeRecord(record = {}) {
-    const cardName = record.cardName || record.CardName || record.Name || "";
-    const setName = record.setName || record.SetName || "";
-    const cardHash = record.cardHash || record.CardHash || "";
-    const isFoil = Boolean(record.isFoil || record.IsFoil);
-    const isPromo = Boolean(record.isPromo || record.IsPromo);
-    const cardUrl = record.cardUrl || record.CardUrl || "";
     const normalized = {
-        cardName: String(cardName).trim(),
-        setName: String(setName).trim(),
-        cardHash: String(cardHash).trim(),
-        isFoil,
-        isPromo,
-        cardUrl: String(cardUrl).trim(),
+        cardName: String(record.cardName || "").trim(),
+        setName: String(record.setName || "").trim(),
+        cardHash: String(record.cardHash || "").trim(),
+        isFoil: Boolean(record.isFoil),
+        isPromo: Boolean(record.isPromo),
+        cardUrl: String(record.cardUrl || "").trim(),
         updatedAt: new Date()
     };
     normalized.lookupKey = toLookupKey(normalized);
     return normalized;
 }
 
-function InsertEntity(record) {
+function insertEntity(record) {
     const normalized = normalizeRecord(record);
     if (!normalized.cardName || !normalized.setName || !normalized.cardHash) {
         return;
@@ -54,7 +50,7 @@ function InsertEntity(record) {
     );
 }
 
-function GetHashes(name, cb) {
+function getHashes(name, cb) {
     db.find({ cardName: name }, (err, docs) => {
         if (err) {
             return cb(err);
@@ -63,10 +59,10 @@ function GetHashes(name, cb) {
     });
 }
 
-export { InsertEntity, GetHashes, db };
+export { insertEntity, getHashes, db };
 
 export default {
-    InsertEntity,
-    GetHashes,
+    insertEntity,
+    getHashes,
     db
 };

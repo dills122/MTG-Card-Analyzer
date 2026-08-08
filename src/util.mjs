@@ -14,12 +14,12 @@ function cleanString(string) {
     return cleanedString;
 }
 
-function requireF(modulePath) {
+function requireOrFalse(modulePath) {
     try {
         return require(modulePath);
         // eslint-disable-next-line no-unused-vars
     } catch (err) {
-        logInstance.error(`requireF(): The file "${modulePath}".js could not be loaded.`);
+        logInstance.error(`requireOrFalse(): The file "${modulePath}".js could not be loaded.`);
         return false;
     }
 }
@@ -71,11 +71,11 @@ function orderBy(collection, keySelectors = [], directions = []) {
     });
 }
 
-export { cleanString, requireF, round, clamp, mean, pick, omit, orderBy };
+export { cleanString, requireOrFalse, round, clamp, mean, pick, omit, orderBy };
 
 export default {
     cleanString,
-    requireF,
+    requireOrFalse,
     round,
     clamp,
     mean,

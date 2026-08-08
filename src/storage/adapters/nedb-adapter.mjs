@@ -11,13 +11,13 @@ function createNedbAdapter() {
     return createCallbackAdapter("nedb", {
         collectionStore,
         collectionMethods: {
-            getQuantity: "GetQuantity",
-            upsert: "Upsert",
-            setQuantity: "SetQuantity",
-            remove: "Remove"
+            getQuantity: "getQuantity",
+            upsert: "upsert",
+            setQuantity: "setQuantity",
+            remove: "remove"
         },
         needsAttentionStore,
-        needsAttentionInsertMethod: "Insert"
+        needsAttentionInsertMethod: "insert"
     });
 }
 
