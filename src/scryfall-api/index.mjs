@@ -1,5 +1,5 @@
-import getCardName from "./getCardName.mjs";
-import searchName from "./searchName.mjs";
+import getCardName from "./get-card-name.mjs";
+import searchName from "./search-name.mjs";
 
 export const GetCardNames = getCardName.GetCardNames;
 export const Search = searchName;

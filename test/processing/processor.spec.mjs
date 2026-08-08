@@ -57,9 +57,9 @@ describe("Integration::", () => {
             .stub(MatchProcessorInstance, "executeAsync")
             .resolves([COLLECTION_NAME]); //Empty right now and will have to be a multi call oen since in async.each
         stubs.NeedsAttentionInsertStub = sandbox
-            .stub(NeedsAttention.prototype, "insert")
+            .stub(NeedsAttention.dependencies, "insert")
             .resolves(null);
-        stubs.CollectionInsertStub = sandbox.stub(Collection.prototype, "insert").resolves(null);
+        stubs.CollectionInsertStub = sandbox.stub(Collection.dependencies, "upsert").resolves(null);
         // Never let real specs touch the actual local ops-log file (or any other real nedb
         // file on the machine running the tests) -- storage.log.record is the one dependency
         // in processor.mjs not injected via `dependencies`, so it's stubbed directly here.

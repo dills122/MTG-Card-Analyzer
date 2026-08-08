@@ -4,10 +4,10 @@ import typeMapping from "./type-mapping.mjs";
 
 export const MatchName = MatchNameModule;
 export const CheckForCreatureType = typeMapping.CheckForCreatureType;
-export const MatchTypeExport = MatchType;
+export { MatchType };
 
 export default {
-    MatchType: MatchTypeExport,
+    MatchType,
     MatchName,
     CheckForCreatureType
 };

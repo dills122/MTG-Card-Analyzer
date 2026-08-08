@@ -1,4 +1,4 @@
-// Shared native-fetch client for the Scryfall API modules (searchName.mjs, getCardName.mjs) --
+// Shared native-fetch client for the Scryfall API modules (search-name.mjs, get-card-name.mjs) --
 // both used to hand-roll their own copy of this wrapper plus an identical REQUEST_HEADERS
 // constant. One implementation now.
 //

@@ -17,23 +17,21 @@ const schema = Joi.object().keys({
     imageUrl: Joi.string().min(3).max(150).required()
 });
 
-class CardCollection {
-    constructor(params) {
-        const validatedSchema = Joi.attempt(params, schema);
-        Object.assign(this, validatedSchema);
-    }
+const dependencies = {
+    upsert: (record) => storage.collection.upsert(record)
+};
 
-    insert() {
-        const object = pick(this, Object.keys(schema.describe().keys));
-        return storage.collection.upsert(object);
-    }
+function create(params) {
+    const validated = Joi.attempt(params, schema);
+    return {
+        ...validated,
+        insert() {
+            const object = pick(this, Object.keys(schema.describe().keys));
+            return dependencies.upsert(object);
+        }
+    };
 }
 
-const create = (params) => new CardCollection(params);
+export { create, dependencies };
 
-export { create, CardCollection };
-
-export default {
-    create,
-    prototype: CardCollection.prototype
-};
+export default { create, dependencies };

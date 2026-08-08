@@ -3,6 +3,13 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { GetImageDimensions } from "./util.mjs";
 import { round } from "../util.mjs";
+import {
+    computeOtsuThreshold,
+    applyThreshold,
+    shouldInvert,
+    sharpen,
+    padAndScale
+} from "./binarize.mjs";
 
 const constants = {
     name: {
@@ -31,6 +38,15 @@ const constants = {
         heightPercent: 0.1
     },
     borderPercent: 0.0535
+};
+
+// "set-symbol" (hyphenated, the public type string) maps to the setSymbol (camelCase) key above.
+const TYPE_CONSTANTS_KEY = {
+    name: "name",
+    type: "type",
+    art: "art",
+    flavor: "flavor",
+    "set-symbol": "setSymbol"
 };
 
 // OCR-friendly pre-processing knobs; tuned for MTG card text lines.
@@ -98,48 +114,21 @@ async function buildSnippetImage(imgPath, type) {
     return img;
 }
 
+// left/top default to constants.borderPercent unless the type's own constants override them
+// (setSymbol positions from its own leftPercent/topPercent; type/art/flavor position top from
+// their own topPercent).
 function GetAlteredDimensions(dimensions, type) {
-    if (type === "name") {
-        return {
-            width: round(dimensions.width * constants.name.widthPercent),
-            height: round(dimensions.height * constants.name.heightPercent),
-            left: round(dimensions.width * constants.borderPercent),
-            top: round(dimensions.height * constants.borderPercent)
-        };
+    const key = TYPE_CONSTANTS_KEY[type];
+    if (!key) {
+        throw new Error(`Unsupported snippet type "${type}"`);
     }
-    if (type === "type") {
-        return {
-            width: round(dimensions.width * constants.type.widthPercent),
-            height: round(dimensions.height * constants.type.heightPercent),
-            left: round(dimensions.width * constants.borderPercent),
-            top: round(dimensions.height * constants.type.topPercent)
-        };
-    }
-    if (type === "art") {
-        return {
-            width: round(dimensions.width * constants.art.widthPercent),
-            height: round(dimensions.height * constants.art.heightPercent),
-            left: round(dimensions.width * constants.borderPercent),
-            top: round(dimensions.height * constants.art.topPercent)
-        };
-    }
-    if (type === "flavor") {
-        return {
-            width: round(dimensions.width * constants.flavor.widthPercent),
-            height: round(dimensions.height * constants.flavor.heightPercent),
-            left: round(dimensions.width * constants.borderPercent),
-            top: round(dimensions.height * constants.flavor.topPercent)
-        };
-    }
-    if (type === "set-symbol") {
-        return {
-            width: round(dimensions.width * constants.setSymbol.widthPercent),
-            height: round(dimensions.height * constants.setSymbol.heightPercent),
-            left: round(dimensions.width * constants.setSymbol.leftPercent),
-            top: round(dimensions.height * constants.setSymbol.topPercent)
-        };
-    }
-    throw new Error(`Unsupported snippet type "${type}"`);
+    const c = constants[key];
+    return {
+        width: round(dimensions.width * c.widthPercent),
+        height: round(dimensions.height * c.heightPercent),
+        left: round(dimensions.width * (c.leftPercent ?? constants.borderPercent)),
+        top: round(dimensions.height * (c.topPercent ?? constants.borderPercent))
+    };
 }
 
 function cropper(img, dimensions) {
@@ -155,7 +144,7 @@ async function enhanceForOcr(img) {
     const threshold = computeOtsuThreshold(img);
     img = applyThreshold(img, threshold);
 
-    if (shouldInvert(img)) {
+    if (shouldInvert(img, preprocessConfig.invertPivot)) {
         img.invert();
     }
 
@@ -164,157 +153,49 @@ async function enhanceForOcr(img) {
     img = await padAndScale(
         img,
         preprocessConfig.padding,
-        preprocessConfig.minOutputWidth,
-        preprocessConfig.scaleFactor
+        preprocessConfig.scaleFactor,
+        preprocessConfig.minOutputWidth
     );
     img = sharpen(img);
     return img;
 }
 
-function computeOtsuThreshold(img) {
-    const histogram = new Array(256).fill(0);
-    const { data, width, height } = img.bitmap;
-    const total = width * height;
-
-    for (let idx = 0; idx < data.length; idx += 4) {
-        histogram[data[idx]] += 1;
-    }
-
-    let sum = 0;
-    for (let i = 0; i < 256; i++) {
-        sum += i * histogram[i];
-    }
-
-    let sumB = 0;
-    let wB = 0;
-    let wF = 0;
-    let max = 0;
-    let threshold = 0;
-
-    for (let i = 0; i < 256; i++) {
-        wB += histogram[i];
-        if (wB === 0) continue;
-        wF = total - wB;
-        if (wF === 0) break;
-        sumB += i * histogram[i];
-        const mB = sumB / wB;
-        const mF = (sum - sumB) / wF;
-        const between = wB * wF * Math.pow(mB - mF, 2);
-        if (between > max) {
-            max = between;
-            threshold = i;
+// Dilate/erode are the same 3x3-neighborhood sweep, differing only in whether they keep the
+// brightest (dilate) or darkest (erode) neighbor.
+function morphologicalOp(img, iterations, combine, initial) {
+    let working = img.clone();
+    for (let iter = 0; iter < iterations; iter++) {
+        const source = Buffer.from(working.bitmap.data);
+        const { width, height } = working.bitmap;
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let result = initial;
+                for (let ky = -1; ky <= 1; ky++) {
+                    for (let kx = -1; kx <= 1; kx++) {
+                        const nx = x + kx;
+                        const ny = y + ky;
+                        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+                        const nIdx = (width * ny + nx) * 4;
+                        result = combine(result, source[nIdx]);
+                    }
+                }
+                const idx = (width * y + x) * 4;
+                working.bitmap.data[idx] = result;
+                working.bitmap.data[idx + 1] = result;
+                working.bitmap.data[idx + 2] = result;
+                working.bitmap.data[idx + 3] = 255;
+            }
         }
     }
-    return threshold;
-}
-
-function applyThreshold(img, threshold) {
-    const output = img.clone();
-    const { data } = output.bitmap;
-    for (let idx = 0; idx < data.length; idx += 4) {
-        const val = data[idx] < threshold ? 0 : 255;
-        data[idx] = val;
-        data[idx + 1] = val;
-        data[idx + 2] = val;
-        data[idx + 3] = 255;
-    }
-    return output;
+    return working;
 }
 
 function binaryDilate(img, iterations = 1) {
-    let working = img.clone();
-    for (let iter = 0; iter < iterations; iter++) {
-        const source = Buffer.from(working.bitmap.data);
-        const { width, height } = working.bitmap;
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let max = 0;
-                for (let ky = -1; ky <= 1; ky++) {
-                    for (let kx = -1; kx <= 1; kx++) {
-                        const nx = x + kx;
-                        const ny = y + ky;
-                        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-                        const nIdx = (width * ny + nx) * 4;
-                        const value = source[nIdx];
-                        if (value > max) {
-                            max = value;
-                        }
-                    }
-                }
-                const idx = (width * y + x) * 4;
-                working.bitmap.data[idx] = max;
-                working.bitmap.data[idx + 1] = max;
-                working.bitmap.data[idx + 2] = max;
-                working.bitmap.data[idx + 3] = 255;
-            }
-        }
-    }
-    return working;
+    return morphologicalOp(img, iterations, Math.max, 0);
 }
 
 function binaryErode(img, iterations = 1) {
-    let working = img.clone();
-    for (let iter = 0; iter < iterations; iter++) {
-        const source = Buffer.from(working.bitmap.data);
-        const { width, height } = working.bitmap;
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let min = 255;
-                for (let ky = -1; ky <= 1; ky++) {
-                    for (let kx = -1; kx <= 1; kx++) {
-                        const nx = x + kx;
-                        const ny = y + ky;
-                        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-                        const nIdx = (width * ny + nx) * 4;
-                        const value = source[nIdx];
-                        if (value < min) {
-                            min = value;
-                        }
-                    }
-                }
-                const idx = (width * y + x) * 4;
-                working.bitmap.data[idx] = min;
-                working.bitmap.data[idx + 1] = min;
-                working.bitmap.data[idx + 2] = min;
-                working.bitmap.data[idx + 3] = 255;
-            }
-        }
-    }
-    return working;
-}
-
-async function padAndScale(img, padding, minWidth) {
-    const padded = await new jimp(
-        img.bitmap.width + padding * 2,
-        img.bitmap.height + padding * 2,
-        0xffffffff
-    );
-    padded.composite(img, padding, padding);
-    const targetWidth = Math.max(
-        minWidth,
-        Math.round(padded.bitmap.width * preprocessConfig.scaleFactor)
-    );
-    padded.resize(targetWidth, jimp.AUTO);
-    return padded;
-}
-
-function shouldInvert(img) {
-    const { data, width, height } = img.bitmap;
-    let sum = 0;
-    for (let idx = 0; idx < data.length; idx += 4) {
-        sum += data[idx];
-    }
-    const mean = sum / (width * height);
-    return mean < preprocessConfig.invertPivot;
-}
-
-function sharpen(img) {
-    const kernel = [
-        [0, -1, 0],
-        [-1, 5, -1],
-        [0, -1, 0]
-    ];
-    return img.convolute(kernel);
+    return morphologicalOp(img, iterations, Math.min, 255);
 }
 
 export { GetImageSnippet, GetImageSnippetFile, GetImageSnippetTmpFile };
