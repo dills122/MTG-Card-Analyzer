@@ -3,6 +3,9 @@ import { getConfig } from "../config/index.mjs";
 import { db as namesDb } from "../db-local/db.mjs";
 import cardHashCache from "../db-local/card-hash-cache.mjs";
 import opsLog from "../db-local/ops-log.mjs";
+import log from "../logger/log.mjs";
+
+const logger = log.create({ isPretty: true });
 
 // Two distinct tiers, deliberately not the same concept:
 //
@@ -52,8 +55,11 @@ function upsertHash(record) {
         return;
     }
     // Fire-and-forget, same as before -- callers don't wait on the cache write, and a
-    // failure here shouldn't ever surface as an unhandled rejection.
-    cardHashCache.insertEntity(record).catch(() => {});
+    // failure here shouldn't ever surface as an unhandled rejection. Still worth logging:
+    // a silently-dropped hash write means future scans miss a cache hit with no trace.
+    cardHashCache.insertEntity(record).catch((err) => {
+        logger.error(`Card-hash cache write failed: ${err?.message || String(err)}`);
+    });
 }
 
 function logOperation(entry) {
@@ -61,8 +67,11 @@ function logOperation(entry) {
         return;
     }
     // Fire-and-forget, same as before -- callers don't wait on the log write, and a failure
-    // here shouldn't ever surface as an unhandled rejection.
-    opsLog.logOperation(entry).catch(() => {});
+    // here shouldn't ever surface as an unhandled rejection. Still worth logging: a silently-
+    // dropped ops-log entry means diagnostics go missing with no trace.
+    opsLog.logOperation(entry).catch((err) => {
+        logger.error(`Ops-log write failed: ${err?.message || String(err)}`);
+    });
 }
 
 const storage = {

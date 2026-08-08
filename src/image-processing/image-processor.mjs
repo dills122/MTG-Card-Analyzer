@@ -49,7 +49,8 @@ class ImageProcessor {
     cropImage() {
         return this.dependencies.ocrPreprocessor
             .prepareOcrVariants(this.path, this.type, {
-                directory: this.persistArtifacts === false ? undefined : this.directory
+                directory: this.persistArtifacts === false ? undefined : this.directory,
+                logger: this.logger
             })
             .then(({ variants, previewPath }) => {
                 this.ocrVariants = variants;
