@@ -7,8 +7,12 @@ import path from "node:path";
 // Precedence (highest wins): explicit overrides (CLI flags) > env vars > config file > defaults.
 const DEFAULTS = Object.freeze({
     storageAdapter: "nedb",
-    pretty: true,
-    querying: false,
+    // Whether a scan persists results (collection / needs-attention writes) or dry-runs.
+    // Off by default -- see --query / --no-query, and QUERYING_ENABLED.
+    queryingEnabled: false,
+    // Pretty (human-readable) logging vs plain. On by default -- see --pretty / --no-pretty,
+    // and PRETTY_LOGGING.
+    prettyLogging: true,
     cardNamesDbPath: "",
     cardHashDbPath: "",
     configPath: "",
@@ -30,6 +34,20 @@ const DEFAULTS = Object.freeze({
 });
 
 const KNOWN_STORAGE_ADAPTERS = ["nedb", "rds"];
+
+// Keys a user can actually change via `config set`/`config get` (and see listed in
+// `config list`). configPath is deliberately excluded -- it's resolution metadata (which file
+// won), not a setting itself.
+const SETTABLE_KEYS = Object.freeze({
+    storageAdapter: { type: "enum", values: KNOWN_STORAGE_ADAPTERS },
+    cardNamesDbPath: { type: "string" },
+    cardHashDbPath: { type: "string" },
+    localCacheEnabled: { type: "boolean" },
+    collectionEnabled: { type: "boolean" },
+    debugLogging: { type: "boolean" },
+    queryingEnabled: { type: "boolean" },
+    prettyLogging: { type: "boolean" }
+});
 
 function compact(obj = {}) {
     return Object.fromEntries(
@@ -83,6 +101,48 @@ function parseBoolean(value) {
     return !["false", "0", ""].includes(String(value).toLowerCase());
 }
 
+// Stricter than parseBoolean (used for env vars, where "truthy unless false/0/empty" is
+// forgiving on purpose): a value the user typed directly at `config set` should be rejected
+// if it's not unambiguously true/false, not silently coerced to true.
+function parseStrictBoolean(value) {
+    const lower = String(value).toLowerCase();
+    if (lower === "true") {
+        return true;
+    }
+    if (lower === "false") {
+        return false;
+    }
+    return undefined;
+}
+
+// Validates + coerces a raw CLI string into the right type for a settable config key.
+// Throws a message-ready Error on anything unrecognized -- callers (config-set CLI handler)
+// just need to catch and print err.message.
+function coerceSettableValue(key, rawValue) {
+    const spec = SETTABLE_KEYS[key];
+    if (!spec) {
+        throw new Error(
+            `Unknown config key "${key}". Known keys: ${Object.keys(SETTABLE_KEYS).join(", ")}`
+        );
+    }
+    if (spec.type === "boolean") {
+        const parsed = parseStrictBoolean(rawValue);
+        if (parsed === undefined) {
+            throw new Error(`"${key}" expects true or false, got "${rawValue}"`);
+        }
+        return parsed;
+    }
+    if (spec.type === "enum") {
+        if (!spec.values.includes(rawValue)) {
+            throw new Error(
+                `"${key}" must be one of: ${spec.values.join(", ")} (got "${rawValue}")`
+            );
+        }
+        return rawValue;
+    }
+    return rawValue;
+}
+
 function readEnvConfig() {
     return compact({
         storageAdapter: process.env.STORAGE_ADAPTER,
@@ -90,7 +150,9 @@ function readEnvConfig() {
         cardHashDbPath: process.env.CARD_HASH_DB_PATH,
         localCacheEnabled: parseBoolean(process.env.LOCAL_CACHE_ENABLED),
         collectionEnabled: parseBoolean(process.env.COLLECTION_ENABLED),
-        debugLogging: parseBoolean(process.env.DEBUG_LOGGING)
+        debugLogging: parseBoolean(process.env.DEBUG_LOGGING),
+        queryingEnabled: parseBoolean(process.env.QUERYING_ENABLED),
+        prettyLogging: parseBoolean(process.env.PRETTY_LOGGING)
     });
 }
 
@@ -106,27 +168,90 @@ function validate(config) {
 // overrides: highest-precedence values, meant for CLI flags passed explicitly by the caller.
 // Re-reads env/file every call (cheap, tiny JSON) so CLI flags applied at runtime are honored
 // by anything that resolves config lazily (see src/db-local/db.mjs, card-hash-cache.mjs).
-function getConfig(overrides = {}) {
+//
+// Shared by getConfig() and getConfigWithSources() (`config list`'s "value + where it came
+// from" view) so the two never drift apart on precedence.
+function resolveConfig(overrides = {}) {
     const cleanOverrides = compact(overrides);
     const configFilePath = resolveConfigFilePath(cleanOverrides.configPath);
     const fileConfig = configFilePath ? compact(readJsonFile(configFilePath)) : {};
     const envConfig = readEnvConfig();
 
-    const merged = {
+    const merged = validate({
         ...DEFAULTS,
         ...fileConfig,
         ...envConfig,
         ...cleanOverrides,
         configPath: configFilePath || ""
-    };
+    });
 
-    return validate(merged);
+    const sources = {};
+    Object.keys(DEFAULTS).forEach((key) => {
+        if (key in cleanOverrides) {
+            sources[key] = "cli";
+        } else if (key in envConfig) {
+            sources[key] = "env";
+        } else if (key in fileConfig) {
+            sources[key] = "file";
+        } else {
+            sources[key] = "default";
+        }
+    });
+
+    return { config: merged, sources };
 }
 
-export { getConfig, DEFAULTS, KNOWN_STORAGE_ADAPTERS };
+function getConfig(overrides = {}) {
+    return resolveConfig(overrides).config;
+}
+
+// For `config list`: same resolved values as getConfig(), plus where each one came from
+// (cli/env/file/default).
+function getConfigWithSources(overrides = {}) {
+    return resolveConfig(overrides);
+}
+
+// Where `config set` (no explicit --config/MTG_CONFIG_PATH) should write to: whichever file
+// is already in use per the normal read precedence, or a fresh ./mtg.config.json if nothing
+// exists yet. Deliberately does NOT fall back to creating a file under the home directory --
+// that path is only reused if it's already there.
+function resolveConfigWriteTarget(explicitPath) {
+    const existing = resolveConfigFilePath(explicitPath);
+    if (existing) {
+        return existing;
+    }
+    return (
+        explicitPath || process.env.MTG_CONFIG_PATH || path.join(process.cwd(), "mtg.config.json")
+    );
+}
+
+// Validates + writes a single key into the target config file, preserving whatever else is
+// already there. Creates the file (and its directory) if it doesn't exist yet.
+function writeConfigValue(filePath, key, rawValue) {
+    const value = coerceSettableValue(key, rawValue);
+    const existing = readJsonFile(filePath);
+    const updated = { ...existing, [key]: value };
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, `${JSON.stringify(updated, null, 4)}\n`);
+    return { key, value, filePath };
+}
+
+export {
+    getConfig,
+    getConfigWithSources,
+    resolveConfigWriteTarget,
+    writeConfigValue,
+    DEFAULTS,
+    SETTABLE_KEYS,
+    KNOWN_STORAGE_ADAPTERS
+};
 
 export default {
     getConfig,
+    getConfigWithSources,
+    resolveConfigWriteTarget,
+    writeConfigValue,
     DEFAULTS,
+    SETTABLE_KEYS,
     KNOWN_STORAGE_ADAPTERS
 };

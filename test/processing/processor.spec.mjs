@@ -325,5 +325,38 @@ describe("Integration::", () => {
             assert.isFalse(stubs.CollectionInsertStub.calledOnce);
             assert.isFalse(stubs.NeedsAttentionInsertStub.calledOnce);
         });
+
+        it("logs only name/sets per matcher result when debugLogging is off (default)", (done) => {
+            let processorInstance = Processor.create({
+                filePath: FAKE_PATH
+            });
+            processorInstance.execute((err) => {
+                assert.isTrue(stubs.LogOperationStub.calledOnce);
+                const loggedRecord = stubs.LogOperationStub.firstCall.args[0];
+                assert.isArray(loggedRecord.matcherResults);
+                assert.isNotEmpty(loggedRecord.matcherResults);
+                loggedRecord.matcherResults.forEach((result) => {
+                    assert.hasAllKeys(result, ["name", "sets"]);
+                });
+                return done(err);
+            });
+        });
+
+        it("logs setVerificationLinks per matcher result when debugLogging is on", (done) => {
+            let processorInstance = Processor.create({
+                filePath: FAKE_PATH,
+                debugLogging: true
+            });
+            processorInstance.execute((err) => {
+                assert.isTrue(stubs.LogOperationStub.calledOnce);
+                const loggedRecord = stubs.LogOperationStub.firstCall.args[0];
+                assert.isArray(loggedRecord.matcherResults);
+                assert.isNotEmpty(loggedRecord.matcherResults);
+                loggedRecord.matcherResults.forEach((result) => {
+                    assert.hasAllKeys(result, ["name", "sets", "setVerificationLinks"]);
+                });
+                return done(err);
+            });
+        });
     });
 });

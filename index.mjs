@@ -2,12 +2,19 @@ import { access } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
 import processorModule from "./src/processor/index.mjs";
-import { getConfig, KNOWN_STORAGE_ADAPTERS } from "./src/config/index.mjs";
+import {
+    getConfig,
+    getConfigWithSources,
+    resolveConfigWriteTarget,
+    writeConfigValue,
+    KNOWN_STORAGE_ADAPTERS
+} from "./src/config/index.mjs";
 import storage from "./src/storage/index.mjs";
 import migrate from "./src/migrate/nedb-to-rds.mjs";
+import diagnostics from "./src/diagnostics/index.mjs";
 
 const { Processor } = processorModule;
-const KNOWN_COMMANDS = ["scan", "log", "migrate", "collection"];
+const KNOWN_COMMANDS = ["scan", "log", "migrate", "collection", "diagnostics", "config"];
 const HELP_TOKENS = ["--help", "-h", "help"];
 
 function buildCli(argv) {
@@ -27,8 +34,16 @@ function buildCli(argv) {
         .command("scan")
         .argument("<filePath>")
         .description("Scan an image file and process MTG card info")
-        .option("-q, --query", "Enable DB writes (off by default)", false)
-        .option("-p, --pretty", "Pretty logging (on by default)", true)
+        .option(
+            "-q, --query",
+            "Enable DB writes for this run (overrides config; default false, see --no-query / QUERYING_ENABLED / queryingEnabled)"
+        )
+        .option("--no-query", "Disable DB writes for this run (overrides config)")
+        .option(
+            "-p, --pretty",
+            "Pretty logging for this run (overrides config; default true, see --no-pretty / PRETTY_LOGGING / prettyLogging)"
+        )
+        .option("--no-pretty", "Plain (non-pretty) logging for this run (overrides config)")
         .option(
             "--storage-adapter <adapter>",
             `Storage adapter to use (${KNOWN_STORAGE_ADAPTERS.join("|")})`
@@ -43,6 +58,11 @@ function buildCli(argv) {
         .option(
             "--enable-collection",
             "Enable the opt-in collection/needs-attention tracking module for this run (off by default; --query alone is not enough)",
+            false
+        )
+        .option(
+            "--debug",
+            "Capture fuller detail in the ops log for this scan (set verification links, etc) -- see `diagnostics`",
             false
         )
         .action((filePath, options, command) => {
@@ -130,21 +150,80 @@ function buildCli(argv) {
             parsed.flags = { cardName, cardSet, ...options };
         });
 
+    program
+        .command("diagnostics")
+        .description(
+            "Print an environment + recent-activity bundle for troubleshooting or filing a bug report"
+        )
+        .option("--limit <n>", "Recent ops-log entries to include", "20")
+        .option("--with-mysql", "Also check the MySQL connection (rds storage adapter)", false)
+        .option("--config <path>", "Path to a JSON config file")
+        .action((options) => {
+            parsed.command = "diagnostics";
+            parsed.flags = options || {};
+        });
+
+    const configCommand = program
+        .command("config")
+        .description(
+            "View or change settings in the JSON config file (see mtg.config.example.json)"
+        );
+
+    configCommand
+        .command("list")
+        .description("Show every known setting: resolved value and where it came from")
+        .option("--config <path>", "Path to a JSON config file")
+        .action((options) => {
+            parsed.command = "config-list";
+            parsed.flags = options || {};
+        });
+
+    configCommand
+        .command("get")
+        .description("Print one setting's resolved value")
+        .argument("<key>")
+        .option("--config <path>", "Path to a JSON config file")
+        .action((key, options) => {
+            parsed.command = "config-get";
+            parsed.flags = { key, ...options };
+        });
+
+    configCommand
+        .command("set")
+        .description("Persist a setting into the config file (validated before writing)")
+        .argument("<key>")
+        .argument("<value>")
+        .option(
+            "--config <path>",
+            "Path to a JSON config file to write to (default: whichever file is already active, or a new ./mtg.config.json)"
+        )
+        .action((key, value, options) => {
+            parsed.command = "config-set";
+            parsed.flags = { key, value, ...options };
+        });
+
     program.addHelpText(
         "after",
         `
 Examples:
   $ scan ./img-path --query
+  $ scan ./img-path --no-query
+  $ scan ./img-path --no-pretty
   $ scan ./img-path --storage-adapter rds
   $ scan ./img-path --card-names-db ./data --config ./mtg.config.json
   $ scan ./img-path --no-local-cache
   $ scan ./img-path --query --enable-collection
+  $ scan ./img-path --debug
   $ log dump --limit 20
   $ log stats
   $ migrate --to rds --dry-run
   $ migrate --to rds
   $ collection update "Pacifism" M20 --quantity 3
   $ collection remove "Pacifism" M20
+  $ diagnostics
+  $ config list
+  $ config get storageAdapter
+  $ config set queryingEnabled true
 `
     );
 
@@ -184,8 +263,8 @@ async function executeProcessor(processor) {
 // Applies CLI-flag config overrides and bridges them into process.env so the rest of the
 // pipeline -- which resolves config lazily on first DB use -- picks them up. Also validates
 // early (bad --storage-adapter fails fast here instead of deep in the pipeline). Returns the
-// resolved config on success (callers that need a value, like collectionEnabled, don't have
-// to re-resolve it) or null on error (already logged).
+// resolved config on success (callers that need a value, like collectionEnabled/debugLogging,
+// don't have to re-resolve it) or null on error (already logged).
 function applyConfigOverrides(flags, logger) {
     try {
         const config = getConfig({
@@ -194,11 +273,21 @@ function applyConfigOverrides(flags, logger) {
             cardHashDbPath: flags.cardHashDb,
             configPath: flags.config,
             localCacheEnabled: flags._localCacheExplicit ? flags.localCache : undefined,
-            collectionEnabled: flags.enableCollection || undefined
+            collectionEnabled: flags.enableCollection || undefined,
+            debugLogging: flags.debug || undefined,
+            // flags.query / flags.pretty are tri-state (undefined/true/false): commander
+            // leaves them undefined unless the user explicitly passes --query/--no-query or
+            // --pretty/--no-pretty, so an absent flag naturally falls through to config
+            // file/env/default instead of clobbering it.
+            queryingEnabled: flags.query,
+            prettyLogging: flags.pretty
         });
         process.env.STORAGE_ADAPTER = config.storageAdapter;
         process.env.LOCAL_CACHE_ENABLED = String(config.localCacheEnabled);
         process.env.COLLECTION_ENABLED = String(config.collectionEnabled);
+        process.env.DEBUG_LOGGING = String(config.debugLogging);
+        process.env.QUERYING_ENABLED = String(config.queryingEnabled);
+        process.env.PRETTY_LOGGING = String(config.prettyLogging);
         if (config.cardNamesDbPath) {
             process.env.CARD_NAMES_DB_PATH = config.cardNamesDbPath;
         }
@@ -334,6 +423,56 @@ async function runCollectionRemove(flags, logger) {
     }
 }
 
+async function runDiagnostics(flags, logger, diagnosticsFn) {
+    const config = applyConfigOverrides(flags, logger);
+    if (!config) {
+        return 1;
+    }
+    try {
+        const bundle = await diagnosticsFn({
+            limit: Number(flags.limit) || 20,
+            withMysql: Boolean(flags.withMysql)
+        });
+        logger.log(JSON.stringify(bundle, null, 2));
+        return bundle.environment.requiredFailures > 0 ? 1 : 0;
+    } catch (err) {
+        logger.log(err?.message || String(err));
+        return 1;
+    }
+}
+
+function runConfigList(flags, logger) {
+    const { config, sources } = getConfigWithSources({ configPath: flags.config });
+    const rows = Object.keys(sources).reduce((acc, key) => {
+        acc[key] = { value: config[key], source: sources[key] };
+        return acc;
+    }, {});
+    logger.log(JSON.stringify(rows, null, 2));
+    return 0;
+}
+
+function runConfigGet(flags, logger) {
+    const config = getConfig({ configPath: flags.config });
+    if (!(flags.key in config)) {
+        logger.log(`Unknown config key "${flags.key}".`);
+        return 1;
+    }
+    logger.log(JSON.stringify(config[flags.key]));
+    return 0;
+}
+
+function runConfigSet(flags, logger) {
+    try {
+        const targetPath = resolveConfigWriteTarget(flags.config);
+        const result = writeConfigValue(targetPath, flags.key, flags.value);
+        logger.log(`Set ${result.key} = ${JSON.stringify(result.value)} in ${result.filePath}`);
+        return 0;
+    } catch (err) {
+        logger.log(err?.message || String(err));
+        return 1;
+    }
+}
+
 export async function run(options = {}) {
     const {
         argv = process.argv.slice(2),
@@ -341,6 +480,7 @@ export async function run(options = {}) {
         fsAccess = access,
         processorFactory = Processor.create,
         migrateFn = migrate.migrateNedbToRds,
+        diagnosticsFn = diagnostics.gatherDiagnostics,
         exit = process.exit,
         logger = console
     } = options;
@@ -386,6 +526,26 @@ export async function run(options = {}) {
         return;
     }
 
+    if (cli.command === "diagnostics") {
+        exit(await runDiagnostics(flags, logger, diagnosticsFn));
+        return;
+    }
+
+    if (cli.command === "config-list") {
+        exit(runConfigList(flags, logger));
+        return;
+    }
+
+    if (cli.command === "config-get") {
+        exit(runConfigGet(flags, logger));
+        return;
+    }
+
+    if (cli.command === "config-set") {
+        exit(runConfigSet(flags, logger));
+        return;
+    }
+
     const filePath = cli.filePath;
     if (!filePath) {
         logger.log("Try running --help for more info");
@@ -404,13 +564,12 @@ export async function run(options = {}) {
         return;
     }
 
-    const queryingEnabled = Boolean(flags.q ?? flags.query);
-    const prettyFlag = flags.p ?? flags.pretty;
     const processor = processorFactory({
         filePath,
-        queryingEnabled,
+        queryingEnabled: config.queryingEnabled,
         collectionEnabled: config.collectionEnabled,
-        isPretty: prettyFlag === undefined ? true : Boolean(prettyFlag)
+        debugLogging: config.debugLogging,
+        isPretty: config.prettyLogging
     });
 
     try {

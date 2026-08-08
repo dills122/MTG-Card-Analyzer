@@ -30,7 +30,11 @@ const schema = joi.object().keys({
     // Collection/needs-attention tracking is an opt-in module (see src/config/index.mjs).
     // --query alone is not enough to write those records; this must also be true.
     collectionEnabled: joi.boolean().default(false),
-    isPretty: joi.boolean().default(true)
+    isPretty: joi.boolean().default(true),
+    // Verbose ops-log capture (see src/config/index.mjs) -- off by default. When on, log
+    // entries include the full match detail (set verification links) instead of just
+    // name/sets. Meant for troubleshooting, not routine use.
+    debugLogging: joi.boolean().default(false)
 });
 
 class ProcessorClass {
@@ -86,10 +90,15 @@ class ProcessorClass {
                       }
                     : null,
                 nameMatches: this.nameMatches || [],
-                matcherResults: (this.matcherResults || []).map((result) => ({
-                    name: result.name,
-                    sets: result.sets
-                })),
+                matcherResults: (this.matcherResults || []).map((result) =>
+                    this.debugLogging
+                        ? {
+                              name: result.name,
+                              sets: result.sets,
+                              setVerificationLinks: result.setVerificationLinks
+                          }
+                        : { name: result.name, sets: result.sets }
+                ),
                 decision: this.decision,
                 queryingEnabled: this.queryingEnabled,
                 collectionEnabled: this.collectionEnabled,
