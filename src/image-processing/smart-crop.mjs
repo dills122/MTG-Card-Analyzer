@@ -4,17 +4,104 @@ import path from "node:path";
 import { getImageDimensions } from "./util.mjs";
 import { round, clamp } from "../util.mjs";
 
-// Reusable region registry -- the "layer" other crop spots plug into. Only setSymbol is wired up
-// today (see smart-crop plan); name/type/rules-name style regions currently owned by
-// ocr-preprocessing.mjs can register here later without reshaping this module.
+// Reusable region registry -- the shared "layer" every crop spot plugs into. setSymbol feeds the
+// image-hash path; name/type/rules-name/default feed OCR (region templates, one or more crop
+// candidates per type -- ocr-preprocessing.mjs runs each through its own pixel preprocessing and
+// picks the best result after real OCR scoring, so these carry no confidence heuristic here).
 const regions = {
     setSymbol: {
         leftPercent: 0.78,
         topPercent: 0.535,
         widthPercent: 0.13,
         heightPercent: 0.1
-    }
+    },
+    name: [
+        {
+            key: "name-core",
+            leftPercent: 0.08,
+            topPercent: 0.05,
+            widthPercent: 0.78,
+            heightPercent: 0.065,
+            psm: "line"
+        },
+        {
+            key: "name-wide",
+            leftPercent: 0.05,
+            topPercent: 0.045,
+            widthPercent: 0.9,
+            heightPercent: 0.08,
+            psm: "line"
+        },
+        {
+            key: "top-band",
+            leftPercent: 0.05,
+            topPercent: 0.03,
+            widthPercent: 0.9,
+            heightPercent: 0.12,
+            psm: "block"
+        }
+    ],
+    type: [
+        {
+            key: "type-core",
+            leftPercent: 0.08,
+            topPercent: 0.565,
+            widthPercent: 0.78,
+            heightPercent: 0.08,
+            psm: "line"
+        },
+        {
+            key: "type-wide",
+            leftPercent: 0.05,
+            topPercent: 0.54,
+            widthPercent: 0.9,
+            heightPercent: 0.1,
+            psm: "block"
+        },
+        {
+            key: "lower-band",
+            leftPercent: 0.05,
+            topPercent: 0.6,
+            widthPercent: 0.9,
+            heightPercent: 0.14,
+            psm: "sparse"
+        }
+    ],
+    "rules-name": [
+        {
+            key: "rules-name",
+            leftPercent: 0.055,
+            topPercent: 0.57,
+            widthPercent: 0.89,
+            heightPercent: 0.31,
+            psm: "block",
+            mode: "soft"
+        }
+    ],
+    default: [
+        {
+            key: "top-strip",
+            leftPercent: 0.05,
+            topPercent: 0.05,
+            widthPercent: 0.9,
+            heightPercent: 0.15,
+            psm: "block"
+        },
+        {
+            key: "bottom-strip",
+            leftPercent: 0.05,
+            topPercent: 0.75,
+            widthPercent: 0.9,
+            heightPercent: 0.2,
+            psm: "sparse"
+        }
+    ]
 };
+
+// OCR types without a dedicated table (or unrecognized types) fall back to the default bands.
+function getRegionTemplates(type) {
+    return regions[type] || regions.default;
+}
 
 const config = {
     minSourceWidth: 360,
@@ -23,6 +110,12 @@ const config = {
     // card border/background instead of a real set-symbol icon).
     lowConfidenceStdDevThreshold: 10
 };
+
+function assertSourceSizeOk(dimensions) {
+    if (dimensions.width < config.minSourceWidth || dimensions.height < config.minSourceHeight) {
+        throw new Error("Image is to small");
+    }
+}
 
 /**
  * Crop a jimp image to a named region's percent-based geometry. Pure -- clones rather than
@@ -89,9 +182,7 @@ function cropSetSymbolFromImage(img) {
  */
 async function writeSetSymbolSnippet(imgPath, directory) {
     const dimensions = await getImageDimensions(imgPath);
-    if (dimensions.width < config.minSourceWidth || dimensions.height < config.minSourceHeight) {
-        throw new Error("Image is to small");
-    }
+    assertSourceSizeOk(dimensions);
     const img = await jimp.read(imgPath);
     const result = cropSetSymbolFromImage(img);
     if (result.lowConfidence) {
@@ -105,18 +196,22 @@ async function writeSetSymbolSnippet(imgPath, directory) {
 
 export {
     regions,
+    getRegionTemplates,
     cropRegion,
     computeGreyscaleStdDev,
     assessConfidence,
+    assertSourceSizeOk,
     cropSetSymbolFromImage,
     writeSetSymbolSnippet
 };
 
 export default {
     regions,
+    getRegionTemplates,
     cropRegion,
     computeGreyscaleStdDev,
     assessConfidence,
+    assertSourceSizeOk,
     cropSetSymbolFromImage,
     writeSetSymbolSnippet
 };

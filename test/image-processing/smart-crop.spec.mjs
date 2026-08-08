@@ -6,6 +6,7 @@ import jimp from "jimp";
 import { assert } from "chai";
 import {
     regions,
+    getRegionTemplates,
     cropRegion,
     computeGreyscaleStdDev,
     assessConfidence,
@@ -109,6 +110,40 @@ describe("Smart crop::", () => {
 
             assert.approximately(region.width / width, regions.setSymbol.widthPercent, 0.01);
             assert.approximately(region.height / height, regions.setSymbol.heightPercent, 0.01);
+            assert.equal(image.bitmap.width, region.width);
+            assert.equal(image.bitmap.height, region.height);
+        });
+    });
+
+    describe("getRegionTemplates::", () => {
+        it("returns the name templates for type 'name'", () => {
+            assert.equal(getRegionTemplates("name"), regions.name);
+        });
+
+        it("returns the type templates for type 'type'", () => {
+            assert.equal(getRegionTemplates("type"), regions.type);
+        });
+
+        it("returns the rules-name templates for type 'rules-name'", () => {
+            assert.equal(getRegionTemplates("rules-name"), regions["rules-name"]);
+        });
+
+        it("falls back to default templates for an unknown type", () => {
+            assert.equal(getRegionTemplates("unknown-type"), regions.default);
+        });
+    });
+
+    describe("cropRegion with OCR-style templates::", () => {
+        it("crops using a template that also carries key/psm/mode metadata", async () => {
+            const img = await checkerboardImage(1000, 1400);
+            const template = regions.name[0];
+
+            const { image, region } = cropRegion(img, template);
+
+            assert.equal(
+                region.width,
+                clamp(round(1000 * template.widthPercent), 1, 1000 - region.left)
+            );
             assert.equal(image.bitmap.width, region.width);
             assert.equal(image.bitmap.height, region.height);
         });
