@@ -101,9 +101,21 @@ function Upsert(record, cb) {
     });
 }
 
-export { GetQuantity, Upsert };
+// Returns every collection entry -- used by the nedb->rds migration (src/migrate/) and
+// anything else that needs the full local snapshot rather than a single lookup.
+function GetAll(cb) {
+    getDbInstance().find({}, (err, docs) => {
+        if (err) {
+            return cb(err, null);
+        }
+        return cb(null, docs || []);
+    });
+}
+
+export { GetQuantity, Upsert, GetAll };
 
 export default {
     GetQuantity,
-    Upsert
+    Upsert,
+    GetAll
 };

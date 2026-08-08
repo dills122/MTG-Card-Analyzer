@@ -207,6 +207,75 @@ describe("CLI::index.mjs", () => {
             assert.isTrue(processExitStub.calledWith(0));
         });
     });
+
+    describe("migrate subcommand", () => {
+        function fakeCliFor(flags) {
+            return { command: "migrate", filePath: "", flags, helpRequested: false };
+        }
+
+        async function runMigrateCli(flags, migrateFn) {
+            const commanderFactory = sandbox.stub().resolves(fakeCliFor(flags));
+            await run({
+                argv: [],
+                commanderFactory,
+                fsAccess: sandbox.stub().resolves(),
+                processorFactory: sandbox.stub(),
+                migrateFn,
+                exit: processExitStub,
+                logger: { log: consoleLogStub }
+            });
+        }
+
+        it("rejects an unsupported --to target without calling migrateFn", async () => {
+            const migrateFn = sandbox.stub();
+            await runMigrateCli({ to: "nedb" }, migrateFn);
+
+            assert.isFalse(migrateFn.called);
+            assert.isTrue(
+                consoleLogStub.calledWithMatch(sinon.match(/Unsupported migration target/))
+            );
+            assert.isTrue(processExitStub.calledWith(1));
+        });
+
+        it("runs the migration and exits 0 when there are no errors", async () => {
+            const migrateFn = sandbox.stub().resolves({
+                collection: { total: 2, migrated: 2, skipped: 0, errors: [] },
+                needsAttention: { total: 1, migrated: 1, skipped: 0, errors: [] }
+            });
+
+            await runMigrateCli({ to: "rds", dryRun: false, force: false }, migrateFn);
+
+            assert.isTrue(migrateFn.calledOnceWith({ dryRun: false, force: false }));
+            const printed = JSON.parse(consoleLogStub.firstCall.args[0]);
+            assert.equal(printed.collection.migrated, 2);
+            assert.isTrue(processExitStub.calledWith(0));
+        });
+
+        it("exits 1 when the migration result contains errors", async () => {
+            const migrateFn = sandbox.stub().resolves({
+                collection: {
+                    total: 1,
+                    migrated: 0,
+                    skipped: 0,
+                    errors: [{ cardName: "Pacifism", error: "connection lost" }]
+                },
+                needsAttention: { total: 0, migrated: 0, skipped: 0, errors: [] }
+            });
+
+            await runMigrateCli({ to: "rds" }, migrateFn);
+
+            assert.isTrue(processExitStub.calledWith(1));
+        });
+
+        it("exits 1 with the error message when migrateFn rejects", async () => {
+            const migrateFn = sandbox.stub().rejects(new Error("MySQL unreachable"));
+
+            await runMigrateCli({ to: "rds" }, migrateFn);
+
+            assert.isTrue(consoleLogStub.calledWithMatch(sinon.match(/MySQL unreachable/)));
+            assert.isTrue(processExitStub.calledWith(1));
+        });
+    });
 });
 
 describe("CLI::index.mjs buildCli (real commander wiring)", () => {
@@ -250,6 +319,19 @@ describe("CLI::index.mjs buildCli (real commander wiring)", () => {
 
     it("does not throw on an unknown flag", () => {
         const parsed = buildCli(["scan", "./card.jpg", "--not-a-real-flag"]);
+        assert.equal(parsed.helpRequested, true);
+    });
+
+    it("parses `migrate --to rds --dry-run`", () => {
+        const parsed = buildCli(["migrate", "--to", "rds", "--dry-run"]);
+        assert.equal(parsed.command, "migrate");
+        assert.equal(parsed.flags.to, "rds");
+        assert.equal(parsed.flags.dryRun, true);
+        assert.equal(parsed.flags.force, false);
+    });
+
+    it("does not throw when `migrate` is missing --to", () => {
+        const parsed = buildCli(["migrate"]);
         assert.equal(parsed.helpRequested, true);
     });
 });

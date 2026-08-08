@@ -101,4 +101,37 @@ describe("db-local::collection-store", () => {
         assert.equal(qtyM20, 1);
         assert.equal(qtyM21, 1);
     });
+
+    describe("GetAll", () => {
+        it("returns every collection entry", async () => {
+            const store = await freshStore();
+            await new Promise((resolve, reject) => {
+                store.Upsert({ cardName: "Pacifism", cardSet: "M20" }, (err, d) =>
+                    err ? reject(err) : resolve(d)
+                );
+            });
+            await new Promise((resolve, reject) => {
+                store.Upsert({ cardName: "Llanowar Elves", cardSet: "M20" }, (err, d) =>
+                    err ? reject(err) : resolve(d)
+                );
+            });
+
+            const all = await new Promise((resolve, reject) => {
+                store.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
+            });
+            assert.lengthOf(all, 2);
+            assert.sameMembers(
+                all.map((d) => d.cardName),
+                ["Pacifism", "Llanowar Elves"]
+            );
+        });
+
+        it("returns an empty array when nothing has been stored", async () => {
+            const store = await freshStore();
+            const all = await new Promise((resolve, reject) => {
+                store.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
+            });
+            assert.deepEqual(all, []);
+        });
+    });
 });

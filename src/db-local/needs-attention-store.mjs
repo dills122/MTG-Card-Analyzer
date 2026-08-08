@@ -22,8 +22,19 @@ function Insert(record, cb) {
     getDbInstance().insert(doc, cb);
 }
 
-export { Insert };
+// Returns every needs-attention entry -- used by the nedb->rds migration (src/migrate/).
+function GetAll(cb) {
+    getDbInstance().find({}, (err, docs) => {
+        if (err) {
+            return cb(err, null);
+        }
+        return cb(null, docs || []);
+    });
+}
+
+export { Insert, GetAll };
 
 export default {
-    Insert
+    Insert,
+    GetAll
 };
