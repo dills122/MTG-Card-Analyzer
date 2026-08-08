@@ -8,6 +8,7 @@ import imageProcessorModule from "../image-processing/image-processor.mjs";
 import matchNameModule from "../fuzzy-matching/match-name.mjs";
 import imageHashing from "../image-hashing/hash-image.mjs";
 import { materializeFixture } from "./image-fixture.mjs";
+import { resolveCardName } from "../processor/name-resolver.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const noCacheOcrOptions = Object.freeze({
@@ -190,14 +191,20 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
         timings.ocrMs = elapsedSince(stageStartedAt);
 
         stageStartedAt = performance.now();
-        const nameMatches = await dependencies.MatchName.create({
-            cleanText: ocr.cleanText,
-            dirtyText: ocr.dirtyText,
-            dependencies: {
+        const nameResolution = await resolveCardName({
+            filePath: imagePath,
+            directory,
+            ImageProcessor: dependencies.ImageProcessor,
+            MatchName: dependencies.MatchName,
+            ocrOptions: dependencies.ocrOptions,
+            persistArtifacts: false,
+            logger: silentLogger,
+            titleExtractionResults: ocr,
+            matchDependencies: {
                 GetNames: async () => context.cardNames
-            },
-            logger: silentLogger
-        }).Match();
+            }
+        });
+        const nameMatches = nameResolution.matches;
         timings.nameMatchMs = elapsedSince(stageStartedAt);
 
         const topName = nameMatches[0]?.name;

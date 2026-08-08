@@ -11,6 +11,7 @@ import Collection from "../models/card-collection.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
 import storage from "../storage/index.mjs";
 import imageToBase64 from "image-to-base64";
+import { resolveCardName } from "./name-resolver.mjs";
 
 const dependencies = {
     ImageProcessor: imageProcessing.ImageProcessor,
@@ -156,11 +157,17 @@ class ProcessorClass {
 
     async processExtractionResultsAsync() {
         this.logger.info("Matching Name");
-        const matchResults = await dependencies.MatchName.create({
-            cleanText: this.nameExtractionResults.cleanText,
-            dirtyText: this.nameExtractionResults.dirtyText
-        }).Match();
-        this.nameMatches = matchResults;
+        const resolution = await resolveCardName({
+            filePath: this.filePath,
+            directory: this.directory,
+            ImageProcessor: dependencies.ImageProcessor,
+            MatchName: dependencies.MatchName,
+            logger: this.logger,
+            titleExtractionResults: this.nameExtractionResults,
+            titleExtractionImagePath: this.nameExtractionImagePath
+        });
+        this.nameMatches = resolution.matches;
+        this.supplementalNameExtractionResults = resolution.supplementalExtractionResults;
         this.logger.info(formatMatchSummary(this.nameMatches));
     }
 

@@ -71,6 +71,17 @@ const regionTemplates = {
             psm: "sparse"
         }
     ],
+    "rules-name": [
+        {
+            key: "rules-name",
+            leftPercent: 0.055,
+            topPercent: 0.57,
+            widthPercent: 0.89,
+            heightPercent: 0.31,
+            psm: "block",
+            mode: "soft"
+        }
+    ],
     default: [
         {
             key: "top-strip",
@@ -94,7 +105,7 @@ const regionTemplates = {
 /**
  * Build OCR-ready variants for likely text regions.
  * @param {string} imgPath
- * @param {"name"|"type"} type
+ * @param {"name"|"type"|"rules-name"} type
  * @param {{directory?: string}} options
  * @returns {Promise<{variants: Array, previewPath?: string}>}
  */
@@ -136,6 +147,7 @@ function buildRegions(dimensions, type) {
     return templates.map((template) => ({
         key: template.key,
         psm: template.psm,
+        mode: template.mode,
         ...percentToPixels(template, dimensions)
     }));
 }
@@ -156,7 +168,7 @@ async function cropAndPreprocess(baseImage, region) {
         baseImage.bitmap.height
     );
     const cropped = baseImage.clone().crop(left, top, width, height);
-    return buildOcrImage(cropped);
+    return region.mode === "soft" ? buildSoftOcrImage(cropped) : buildOcrImage(cropped);
 }
 
 function clampToImage(region, width, height) {
@@ -199,6 +211,16 @@ async function buildOcrImage(img) {
 
     working = sharpen(working);
     return working;
+}
+
+async function buildSoftOcrImage(img) {
+    const working = img.clone().greyscale().normalize().contrast(0.2);
+    return padAndScale(
+        working,
+        preprocessConfig.padding,
+        preprocessConfig.scaleFactor,
+        preprocessConfig.minOutputWidth
+    );
 }
 
 async function padAndScale(img, padding, scaleFactor, minWidth) {

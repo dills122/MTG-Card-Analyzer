@@ -256,10 +256,14 @@ describe("Integration::", () => {
             processorInstance.execute((err) => {
                 assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
                 assert.deepEqual(processorInstance.directory, DIR);
-                assert.isTrue(stubs.ImageProcessorCreateStub.calledOnce);
-                assert.isTrue(stubs.ImageProcessorExtractStub.calledOnce);
-                assert.isTrue(stubs.MatchNameCreateStub.calledOnce);
-                assert.isTrue(stubs.MatchNameMatchStub.calledOnce);
+                assert.equal(stubs.ImageProcessorCreateStub.callCount, 2);
+                assert.equal(stubs.ImageProcessorExtractStub.callCount, 2);
+                assert.deepEqual(
+                    stubs.ImageProcessorCreateStub.getCalls().map((call) => call.args[0].type),
+                    ["name", "rules-name"]
+                );
+                assert.equal(stubs.MatchNameCreateStub.callCount, 2);
+                assert.equal(stubs.MatchNameMatchStub.callCount, 2);
                 assert.isTrue(err instanceof Error);
                 assert.isFalse(stubs.MatchProcessorCreateStub.calledOnce);
                 assert.isFalse(stubs.MatchProcessorExecuteStub.calledOnce);

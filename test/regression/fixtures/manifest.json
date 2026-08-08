@@ -375,6 +375,30 @@
             "rarity": "uncommon",
             "referenceImage": "../../../test-images/vtg-7.jpg",
             "apiUrl": "https://scryfall.com/card/mir/21/illumination"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "d9228c15-06d1-4701-8619-1ad08d63275a",
+            "name": "Yuna, Hope of Spira",
+            "set": "FIN",
+            "setName": "Final Fantasy",
+            "collectorNumber": "571",
+            "typeLine": "Legendary Creature — Human Cleric",
+            "rarity": "mythic",
+            "referenceImage": "../../../test-images/regression/scryfall/fin-571-yuna-hope-of-spira-d9228c15.jpg",
+            "apiUrl": "https://scryfall.com/card/fin/571/yuna-hope-of-spira?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "25ef2d44-c261-4511-b96f-85e7a291e318",
+            "name": "Vivi Ornitier",
+            "set": "FIN",
+            "setName": "Final Fantasy",
+            "collectorNumber": "570",
+            "typeLine": "Legendary Creature — Wizard",
+            "rarity": "mythic",
+            "referenceImage": "../../../test-images/regression/scryfall/fin-570-vivi-ornitier-25ef2d44.jpg",
+            "apiUrl": "https://scryfall.com/card/fin/570/vivi-ornitier?utm_source=api"
         }
     ],
     "cases": [
@@ -1144,6 +1168,44 @@
                 "metadata": {
                     "typeLine": "Instant",
                     "rarity": "uncommon"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "fin-571-yuna-hope-of-spira-d9228c15-scryfall",
+            "image": "../../../test-images/regression/scryfall/fin-571-yuna-hope-of-spira-d9228c15.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Yuna, Hope of Spira",
+                "set": "FIN",
+                "collectorNumber": "571",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Human Cleric",
+                    "rarity": "mythic"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "fin-570-vivi-ornitier-25ef2d44-scryfall",
+            "image": "../../../test-images/regression/scryfall/fin-570-vivi-ornitier-25ef2d44.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Vivi Ornitier",
+                "set": "FIN",
+                "collectorNumber": "570",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Wizard",
+                    "rarity": "mythic"
                 },
                 "minNameScore": 0.7,
                 "maxPrintCandidates": 1,
