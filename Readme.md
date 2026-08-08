@@ -3,335 +3,143 @@
 [![CI Job](https://github.com/dills122/MTG-Card-Analyzer/actions/workflows/ci.action.yml/badge.svg)](https://github.com/dills122/MTG-Card-Analyzer/actions/workflows/ci.action.yml)
 [![CodeFactor](https://www.codefactor.io/repository/github/dills122/mtg-card-analyzer/badge)](https://www.codefactor.io/repository/github/dills122/mtg-card-analyzer)
 
-A local-first MTG card scanner for OCR + fuzzy name matching + image-hash set matching. The app scans a card image, extracts the name, finds likely card prints, and uses local caching to improve match speed/quality over time.
+MTG Card Analyzer is a Node.js CLI that identifies Magic: The Gathering cards from images. It
+combines OCR, fuzzy name matching, and perceptual image hashes to find the likely card and
+printing.
 
-> Status (Feb 2026): runnable on Node 22 with Tesseract.js v3; OCR + fuzzy matching + image hashing work. The default runtime is local-first using NeDB caches.
+It is local-first: the card-name index, image-hash cache, scan history, and optional collection
+data are stored on your machine by default. No MySQL server is needed for the normal workflow.
 
-## Example
+## What it does
 
-Here is a test extraction:
+- Scans one card image at a time from the command line.
+- Extracts and normalizes the card name with Tesseract OCR.
+- Fuzzy-matches imperfect OCR against a local card-name index.
+- Compares card or set-symbol image hashes to distinguish printings.
+- Prints candidates by default, with opt-in local collection tracking.
+- Records a local operations log to help diagnose difficult scans.
 
-### Original Card
+Scans are dry runs by default: they print results without adding anything to your collection. The
+local caches and operations log still update unless you disable the local cache.
 
-<p align="center">
-  <img width="500" height="696" src=".\test-images\PlatinumAngel.jpg" alt="Logo Image">
-</p>
+## Quick start
 
-### Name Extraction
+You need:
 
-Extracted Text: `g Platinum Angel`
-
-Cleaned Extracted Text: `gPlatinumAngel`
-
-#### Before Pre Processing
-
-<p align="center">
-  <img width="500" height="100" src=".\test-images\test-extractions\8170e28d-ba4a-4918-8246-0a6c7840a330.jpg" alt="Logo Image">
-</p>
-
-#### After Pre-Processing
-
-<p align="center">
-  <img width="500" height="100" src=".\test-images\test-extractions\24b0e728-dd4b-487d-aefa-26e707566130.jpg" alt="Logo Image">
-</p>
-
-### Type Extraction
-
-Extracted Text: `E Artifact Creature —- Angel`
-
-Cleaned Extracted Text: `EArtifactCreatureAngel`
-
-#### Before Pre-Processing
-
-<p align="center">
-  <img width="500" height="100" src=".\test-images\test-extractions\2312b662-a0e7-4589-bba9-62d990a6726f.jpg" alt="Logo Image">
-</p>
-
-#### After Pre-Processing
-
-<p align="center">
-  <img width="500" height="100" src=".\test-images\test-extractions\19c600f5-28ae-4599-81ee-9df8058ce8df.jpg" alt="Logo Image">
-</p>
-
-More examples are available [here](https://github.com/dills122/mtg-card-analyzer/tree/master/test-images)
-
-## Getting Up And Running
-
-Full setup walkthrough, troubleshooting, and Docker/MySQL instructions: **[docs/LOCAL_DEV.md](docs/LOCAL_DEV.md)**. Quick version below.
-
-### Prerequisites
-
-- Node 22
-- Tesseract.js v3 (npm dependency) with `eng.traineddata` available (an English traineddata is bundled at repo root)
-- [Docker](https://docs.docker.com/get-docker/), only if you want the optional `rds` storage adapter
-
-### Install
+- [Node.js](https://nodejs.org/) 20 or newer
+- [pnpm](https://pnpm.io/installation) 8 or newer (the repository pins pnpm 10.13.1)
+- Git and a network connection for installation and the initial Scryfall card-name seed
 
 ```bash
 git clone https://github.com/dills122/MTG-Card-Analyzer.git
 cd MTG-Card-Analyzer
 node scripts/setup.mjs
-```
-
-This installs deps, creates local config files, and seeds the card names dictionary. Add `--with-mysql` to also stand up local MySQL via Docker for the `rds` storage adapter. See [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) for what it does step by step, and `node scripts/verify-env.mjs` to sanity-check the result.
-
-### First Scan
-
-```bash
-# Run at the base directory of the repo
 node index.mjs scan ./test-images/PlatinumAngel.jpg
 ```
 
-### Current Commands
+The setup script installs dependencies, creates local configuration files, and seeds the card-name
+index. It is safe to run again and does not start MySQL unless you explicitly pass `--with-mysql`.
 
-- `scan <filePath>` : scan a single image and output results
-    - flags:
-        - `--query`/`-q` or `--no-query`: persist results for this run (write to the collection / needs-attention tables) or force a dry-run, overriding config. Default `false` (dry-run) unless set via `queryingEnabled` in the config file or `QUERYING_ENABLED` env var. Requires `--enable-collection` too -- `--query` alone is not enough.
-        - `--enable-collection`: turn on the opt-in collection/needs-attention tracking module for this run (default `false`, config key `collectionEnabled` / env var `COLLECTION_ENABLED`). Not everyone scanning cards wants an inventory kept; without this, `--query` still runs the full pipeline and prints matches but persists nothing.
-        - `--pretty`/`-p` or `--no-pretty`: pretty (or plain) logging for this run, overriding config. Default `true` unless set via `prettyLogging` in the config file or `PRETTY_LOGGING` env var.
-        - `--storage-adapter <nedb|rds>`: which persistence backend this run's collection/needs-attention writes go to.
-        - `--card-names-db <path>`: path (dir or `.db` file) for the local card names cache.
-        - `--card-hash-db <path>`: path (dir or `.db` file) for the local card hash cache.
-        - `--no-local-cache`: disable the local cache (hash cache + ops log; the names dictionary is unaffected, see [Persistence Architecture](#persistence-architecture)).
-        - `--debug`: capture fuller detail (set verification links, etc) in this run's ops log entry -- see [`diagnostics`](#diagnostics--debug-logging). Off by default; turn it on for good via `debugLogging` in the config file or `DEBUG_LOGGING=true` instead of passing this every time.
-        - `--config <path>`: path to a JSON config file (see [Configuration](#configuration)).
-- `log dump` : print recent entries from the local operations log
-    - flags: `--limit <n>` (default 50), `--since <ISO date>`, `--format <table|json>` (default `table`), `--config <path>`
-- `log stats` : print aggregate stats over the local operations log (totals by decision, error count, average top match confidence)
-    - flags: `--config <path>`
-- `migrate` : one-shot migration of local nedb collection/needs-attention data to another backend (currently only `nedb -> rds`; always reads from local nedb regardless of the active `--storage-adapter`). Idempotent by default -- an entry already present on the target is skipped, not double-counted; `--force` re-migrates collection entries anyway (adds local quantity on top of whatever's already there). Needs-attention entries are always deduped by the target's own unique constraint.
-    - flags: `--to <rds>` (required), `--dry-run` (preview without writing), `--force`, `--card-names-db <path>`, `--config <path>`
-- `collection update <cardName> <cardSet>` : manually set a collection entry's quantity to an exact value (unlike scanning, this overwrites rather than adds). Errors if the entry doesn't exist -- use a scan to create one first. `estValue` is rescaled proportionally from the existing per-unit value.
-    - flags: `--quantity <n>` (required), `--storage-adapter <nedb|rds>`, `--config <path>`
-- `collection remove <cardName> <cardSet>` : delete a collection entry outright. Permanent, no confirmation prompt.
-    - flags: `--storage-adapter <nedb|rds>`, `--config <path>`
-- `diagnostics` : print a single JSON bundle for troubleshooting or filing a bug report -- app/Node/platform versions, an environment health check (same as `verify-env.mjs`), the active (sanitized) config, and recent operations-log entries. Nothing sensitive: MySQL credentials live only in `secure.config.cjs`, which this never reads. Exits non-zero if a required environment check fails.
-    - flags: `--limit <n>` (recent ops-log entries to include, default `20`), `--with-mysql` (also check the MySQL connection), `--config <path>`
-- `config list` : print every known setting -- resolved value and where it came from (`cli`/`env`/`file`/`default`).
-    - flags: `--config <path>`
-- `config get <key>` : print one setting's resolved value.
-    - flags: `--config <path>`
-- `config set <key> <value>` : validate and persist a setting into the config file (creating it if needed, merging into whatever's already there). See [Configuration](#configuration) for the list of settable keys.
-    - flags: `--config <path>` (which file to write to; defaults to whichever file is already active, or a new `./mtg.config.json`)
+If the scan does not complete, check the environment before digging into individual settings:
 
-### Persistence Architecture
+```bash
+node scripts/verify-env.mjs
+```
 
-Two deliberately separate tiers:
+See the [local setup guide](docs/LOCAL_DEV.md) for setup flags and troubleshooting.
 
-1. **Cache tier** — always on by default (turn off with `--no-local-cache` / `LOCAL_CACHE_ENABLED=false`), always local nedb, never `STORAGE_ADAPTER`-selected. Holds the card names dictionary, the image hash cache, and the local [operations log](#operations-log). Its job is speed (skip re-querying Scryfall, skip re-hashing known cards) and local diagnostics — not being a source of truth. The names dictionary specifically is unaffected by `--no-local-cache`: it's a required local index, not an optional cache, since there's no remote alternative.
-2. **Persistence tier** — selected by `STORAGE_ADAPTER` (`nedb` | `rds`, default `nedb`). This is where your actual collection and needs-attention records live. Gated behind the opt-in collection module (`--enable-collection` / `COLLECTION_ENABLED=true` / `collectionEnabled` in the config file, off by default) -- `scan --query` alone runs the full pipeline and prints matches but persists nothing until the module is also on. Explicitly running `collection update`/`remove` or `migrate` doesn't need the flag re-passed; naming those commands is itself the opt-in for that invocation. Scanning the same card twice adds to its quantity (`delta`, default 1) rather than overwriting it — both backends compute the resulting `estValue` from the final quantity. Made a mistake, or want to correct/remove an entry by hand? `collection update`/`collection remove` (see [Current Commands](#current-commands)) go through the same tier.
+## Common workflows
 
-Local cache DB files:
+### Identify a card without changing your collection
 
-- Name dictionary: env var `CARD_NAMES_DB_PATH`, file default `cardNames.db`
-- Hash cache: env var `CARD_HASH_DB_PATH` (falls back to `CARD_NAMES_DB_PATH` if unset), file default `card-hashes.db`
-- Operations log: shares the names dictionary's path, file default `operations.db`
-- Either DB path env var can be a directory (app appends the default filename) or a full `.db` file path.
+```bash
+node index.mjs scan ./path/to/card.jpg
+```
 
-Local persistence tier DB files (nedb adapter only — `rds` writes to MySQL instead):
+You can also omit the `scan` word for backward compatibility:
 
-- Collection: `collection.db`, same path resolution as the names dictionary
-- Needs-attention: `needs-attention.db`, same path resolution as the names dictionary
+```bash
+node index.mjs ./path/to/card.jpg
+```
 
-Temp image snippets are written to system temp and cleaned up per run.
+### Save successful scans to a local collection
 
-### Storage Adapter
+Collection tracking and writes are separate opt-ins. Set both once in `mtg.config.json` through the
+CLI:
 
-Select the persistence-tier adapter with (in order of precedence, highest wins):
+```bash
+node index.mjs config set collectionEnabled true
+node index.mjs config set queryingEnabled true
+node index.mjs scan ./path/to/card.jpg
+```
 
-- CLI flag: `--storage-adapter rds`
-- env var: `STORAGE_ADAPTER=rds`
-- config file: `{ "storageAdapter": "rds" }`
-- default: `nedb`
+Or enable both for only one run:
 
-`rds` is optional/legacy — see [MySQL / RDS](#mysql--rds-optional-legacy).
+```bash
+node index.mjs scan ./path/to/card.jpg --enable-collection --query
+```
 
-### Operations Log
-
-Every scan appends one entry to the local operations log (part of the cache tier, nedb, always local): input file, extracted OCR text, name-match candidates + confidence, what happened (`collection` / `needs-attention` / `no-match` / `dry-run` / `error`), and any error. Inspect it with:
+### Inspect recent scan activity
 
 ```bash
 node index.mjs log dump --limit 20
-node index.mjs log dump --format json --since 2026-01-01
 node index.mjs log stats
+node index.mjs diagnostics
 ```
 
-This is what issue #49 ("Transaction") became — the old model was a half-defined mix of a generic audit log and art/flavor-match-confidence tracking that never got finished; the art/flavor fields belong to #50 instead.
+Run `node index.mjs --help` for the command list or see the
+[CLI reference](docs/cli-reference.md) for every command and flag.
 
-### Diagnostics / Debug Logging
+## How matching works
 
-Every scan-time setting -- not just diagnostics -- follows the same rule: set it once in the config file (or an env var) if you want it on for good, and only reach for the CLI flag when you want to override that for a single run. That applies just as much to `--query`/`--pretty` as it does to `--debug` -- you shouldn't need a pile of flags on every invocation just to get your normal setup:
+1. The image is validated and likely title regions are cropped and enhanced.
+2. Tesseract extracts text from several variants; the best result is normalized.
+3. The result is fuzzy-matched against the local card-name index.
+4. Candidate printings come from Scryfall and are ranked with cached or downloaded image hashes.
+5. Results are printed and, only when enabled, written to the selected collection backend.
 
-| Setting                      | Config file key   | Env var            | Per-run CLI override                                            | Default |
-| ---------------------------- | ----------------- | ------------------ | --------------------------------------------------------------- | ------- |
-| Persist results (vs dry-run) | `queryingEnabled` | `QUERYING_ENABLED` | `--query`/`-q` (force on), `--no-query` (force off)             | `false` |
-| Pretty logging               | `prettyLogging`   | `PRETTY_LOGGING`   | `--pretty`/`-p` (force on), `--no-pretty` (force off)           | `true`  |
-| Verbose ops-log detail       | `debugLogging`    | `DEBUG_LOGGING`    | `--debug` (force on; no off-switch needed, it's off by default) | `false` |
+<p align="center">
+  <img width="320" src="test-images/PlatinumAngel.jpg" alt="Platinum Angel card used by the example scan">
+</p>
 
-`--query`/`--pretty` are tri-state on the CLI: omit the flag entirely and the config file/env var/default decides; pass `--query`/`--no-query` (or `--pretty`/`--no-pretty`) to explicitly force that run one way regardless of what the config says.
+OCR quality varies with lighting, focus, rotation, framing, and card layout. Images smaller than
+360 by 500 pixels are currently rejected. Setup and printing lookup use Scryfall, so the scanner
+is local-first rather than fully offline.
 
-`node index.mjs diagnostics` bundles an environment health check, versions, the active config (including all of the above), and recent ops-log entries into one JSON blob -- meant to be run and pasted straight into a bug report. `--limit <n>` controls how many recent operations to include (default `20`); `--with-mysql` also checks the MySQL connection.
+## Documentation
+
+| If you want to...                                                | Read...                                               |
+| ---------------------------------------------------------------- | ----------------------------------------------------- |
+| Install the project or fix a local setup problem                 | [Local development setup](docs/LOCAL_DEV.md)          |
+| Look up commands, flags, logging, migration, or collection edits | [CLI reference](docs/cli-reference.md)                |
+| Change settings or understand local database files               | [Configuration and local data](docs/configuration.md) |
+| Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                  |
+| Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)      |
+| Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                       |
+
+The default NeDB backend is the recommended path. A legacy MySQL/RDS adapter remains available for
+existing users; its setup and migration instructions live in the
+[local development guide](docs/LOCAL_DEV.md#mysql--docker) and
+[CLI reference](docs/cli-reference.md#migrate-local-data-to-mysqlrds).
+
+## Development
+
+After setup, run the standard local gate:
 
 ```bash
-# Turn debug logging (and always-persist) on for good (mtg.config.json)
-{ "debugLogging": true, "queryingEnabled": true }
-
-# ...or override for just one dry-run scan, even though config says always-persist
-node index.mjs ./card.jpg --no-query --debug
-
-# Grab a support bundle
-node index.mjs diagnostics --with-mysql
+pnpm check
 ```
 
-### Configuration
-
-All runtime settings resolve through a single config module ([src/config/index.mjs](src/config/index.mjs)). Precedence, highest wins:
-
-1. CLI flags (e.g. `--storage-adapter`, `--card-names-db`, `--card-hash-db`, `--no-local-cache`, `--enable-collection`, `--debug`, `--query`/`--no-query`, `--pretty`/`--no-pretty`) -- meant as temporary, per-run overrides, not how you'd normally run the tool day to day
-2. Env vars (`STORAGE_ADAPTER`, `CARD_NAMES_DB_PATH`, `CARD_HASH_DB_PATH`, `LOCAL_CACHE_ENABLED`, `COLLECTION_ENABLED`, `DEBUG_LOGGING`, `QUERYING_ENABLED`, `PRETTY_LOGGING`)
-3. Config file (JSON) -- the recommended place to set anything you want on every run
-4. Built-in defaults
-
-Config file is picked up from, in order: an explicit `--config <path>`, then `MTG_CONFIG_PATH` env var, then `./mtg.config.json` (cwd, gitignored -- machine-specific), then `~/.mtg-card-analyzer/config.json` (global fallback across projects). See [mtg.config.example.json](mtg.config.example.json) for the shape.
-
-Two ways to change it:
-
-- **By hand**: copy `mtg.config.example.json` to `mtg.config.json` (done automatically by `scripts/setup.mjs`) and edit the JSON directly.
-- **Via the CLI** (validated before writing): `node index.mjs config set <key> <value>`. Rejects unknown keys and invalid values (e.g. a bad `storageAdapter`, or anything but `true`/`false` for a boolean key) without touching the file. `node index.mjs config get <key>` prints one resolved value; `node index.mjs config list` prints all of them along with where each one came from (`cli`/`env`/`file`/`default`) -- handy for confirming an env var or CLI flag is actually the thing winning.
-
-Settable keys: `storageAdapter` (`nedb`\|`rds`), `cardNamesDbPath`, `cardHashDbPath`, `localCacheEnabled`, `collectionEnabled`, `debugLogging`, `queryingEnabled`, `prettyLogging`.
+That runs formatting checks, linting, type checking, and unit tests. Changes to OCR preprocessing,
+fuzzy matching, hashing, or print selection should also run:
 
 ```bash
-node index.mjs config set storageAdapter rds
-node index.mjs config get storageAdapter
-node index.mjs config list
-```
-
-Note: MySQL/RDS credentials (host/port/user/password/database) are separate, in `secure.config.cjs` at repo root (loaded by [src/rds/connection.mjs](src/rds/connection.mjs)) — kept out of the general config file/repo since they're secrets, not app settings, and `config set` never touches this file. `port` is optional, defaults to MySQL's standard port.
-
-Test images are provided at `test-images`
-
-Backfiller utility instructions found [here](https://github.com/dills122/MTG-Card-Analyzer/wiki/Backfiller)
-
-### Troubleshooting
-
-Run `node scripts/verify-env.mjs` first — it checks Node version, required files, local cache writability/seeding, and (with `--with-mysql`) the MySQL connection, in one shot. Filing an issue instead? `node index.mjs diagnostics` runs the same checks and adds versions, active config, and recent scan history in one pasteable JSON blob (see [Diagnostics / Debug Logging](#diagnostics--debug-logging)). Full troubleshooting guide: [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md#troubleshooting).
-
-### Running Tests
-
-```
-npm test
-```
-
-Tests stub external calls; no MySQL required.
-
-### Test Coverage
-
-```bash
-# Run tests with coverage report (text + html + lcov, written to coverage/)
-pnpm coverage
-
-# Same, but fail the run if thresholds in the "c8" package.json block aren't met
-pnpm coverage:check
-```
-
-No coverage thresholds are enforced yet — baseline is being established, see [#31](https://github.com/dills122/MTG-Card-Analyzer/issues/31).
-
-### OCR Regression Benchmarks
-
-The labeled, offline image regression suite covers clean scans, photo-like degradation,
-poor lighting, blur, rotation, cropping, and low resolution:
-
-```bash
-# Generate a report without failing the command for known regressions
-pnpm regression
-
-# CI-style gate: exit non-zero if any blocking fixture misses its expectations
 pnpm test:regression
 ```
 
-Reports are written to `artifacts/regression/benchmark.md` and `benchmark.json`.
-Fixture labels, expected card data, and offline print references live in
-`test/regression/fixtures/manifest.json`. See
-[`docs/regression-testing.md`](docs/regression-testing.md) for the audit, manifest format,
-quality labels, and fixture workflow. Newly scaffolded images stay disabled until their
-`CHANGE_ME` values are labeled and both manifest entries are enabled.
+The unit suite is deterministic and does not require live Scryfall or MySQL access. See
+[CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
-Import new clean-scan candidates from Scryfall by set code or release-date range:
+## License
 
-```bash
-# Preview six unused prints from two sets
-pnpm fixtures:import --set fin --set dsk --count 6 --dry-run
-
-# Preview a deterministic coverage mix across sets, colors, types, rarities, and treatments
-pnpm fixtures:import --set m12 --set m13 --set m20 --count 12 --balanced --dry-run
-
-# Download ten unused prints and append disabled review entries
-pnpm fixtures:import \
-    --released-after 2025-01-01 \
-    --released-before 2025-06-30 \
-    --count 10
-```
-
-The target manifest is automatically used to exclude existing printings. Add repeatable
-`--existing-manifest <path>` options to exclude catalogs from other checkouts or suites. See the
-[regression fixture import workflow](docs/regression-testing.md#import-clean-scans-from-scryfall)
-for balanced-selection behavior, review, activation, and safety details.
-
-### Quality Commands
-
-```bash
-# Lint only
-pnpm lint
-
-# Auto-fix lint issues where possible
-pnpm lint:fix
-
-# Check formatting
-pnpm prettier:check
-
-# Write formatting fixes
-pnpm format
-
-# Type checking (no emit)
-pnpm typecheck
-
-# Fast quality gate (lint + prettier + typecheck)
-pnpm check:fast
-
-# Full local gate (check:fast + tests)
-pnpm check
-
-# Sanity-check the local dev environment (Node version, required files, seeded DB)
-pnpm verify
-node scripts/verify-env.mjs --with-mysql   # same, plus checks the MySQL connection
-```
-
-### MySQL / RDS (Optional, Legacy)
-
-MySQL scripts and modules exist in `src/rds` and `src/data/scripts/sql` for the collection and needs-attention tables (`CardCollection`, `Card_NEED_ATTN`) -- select with `--storage-adapter rds`. The default runtime path is local-first NeDB; treat RDS as optional/legacy until sync/backup mode is formalized. Verified against a real MySQL 8 instance as part of building this.
-
-Started with `nedb` and want to move to `rds`? `node index.mjs migrate --to rds` copies your local collection/needs-attention data over (see [Current Commands](#current-commands)).
-
-```bash
-node scripts/setup.mjs --with-mysql   # one-shot: docker compose up + pnpm setup-db, matching creds
-# -- or manually --
-pnpm docker:up                        # start local MySQL (docker-compose.yml)
-pnpm setup-db                         # create tables (needs secure.config.cjs, see Configuration)
-pnpm docker:down                      # stop it (data persists in a named volume)
-docker compose down -v                # stop it AND wipe the volume
-```
-
-### TypeScript Migration (incremental)
-
-- TypeScript tooling is configured to allow JavaScript (`allowJs`) and to only typecheck (`noEmit`) so you can start migrating file-by-file.
-- Run `npm run typecheck` (or `pnpm typecheck`) to get type feedback without touching the runtime.
-- Future `.ts` files can live alongside existing `.js` under `src/` and will be picked up automatically.
-
-### Packages Under the Hood
-
-- `fuzzyset.js`
-- `image-hash`
-- `jimp`
-- `string-similarity`
-- `tesseract.js`
+MTG Card Analyzer is available under the [MIT License](LICENSE).

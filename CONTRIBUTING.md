@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for looking at MTG Card Analyzer. This doc covers how to set up, work on, and submit changes. See [README.md](README.md) for what the project does and how to run it.
+Thanks for looking at MTG Card Analyzer. This doc covers how to set up, work on, and submit changes. See [Readme.md](Readme.md) for what the project does and how to run it.
 
 ## Setup
 
@@ -66,8 +66,8 @@ Quick orientation — see individual `index.mjs` files in each folder for the pu
 - `src/image-processing/`, `src/image-analysis/` — image prep + OCR
 - `src/fuzzy-matching/`, `src/matcher/` — name/type matching + decision logic
 - `src/scryfall-api/` — Scryfall HTTP client
-- `src/db-local/` — always-on local nedb cache (names, hashes, ops log) + nedb persistence backend (collection, needs-attention)
-- `src/storage/` — the two-tier abstraction over the above; see the README's Persistence Architecture section
+- `src/db-local/` — required name index, default-on nedb cache (hashes, ops log), and local persistence backend (collection, needs-attention)
+- `src/storage/` — the two-tier abstraction over the above; see [Architecture](docs/architecture.md#storage-boundaries)
 - `src/rds/` — legacy/optional MySQL persistence backend, not used by default
 - `src/processor/` — orchestrates the end-to-end scan pipeline
 - `src/config/` — single source of truth for runtime settings (CLI flag > env var > config file > default)
