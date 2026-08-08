@@ -4,6 +4,7 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
+import textExtractionModule from "../image-analysis/extract-text.mjs";
 import imageProcessorModule from "../image-processing/image-processor.mjs";
 import matchNameModule from "../fuzzy-matching/match-name.mjs";
 import imageHashing from "../image-hashing/hash-image.mjs";
@@ -319,6 +320,7 @@ async function runRegression(manifest, options = {}) {
         MatchName: matchNameModule,
         Hash: imageHashing,
         materializeFixture,
+        createOcrSession: textExtractionModule.createOcrSession,
         ...(options.dependencies || {}),
         // Regression isolation is an invariant, not a caller-selectable optimization.
         ocrOptions: noCacheOcrOptions
@@ -339,32 +341,47 @@ async function runRegression(manifest, options = {}) {
     }));
     const context = { cardNames, catalog: activeCatalog };
     const results = [];
-    for (const fixture of selectedCases) {
-        results.push(await analyzeFixture(fixture, manifest, context, dependencies));
+    const managesOcrSession =
+        dependencies.ImageProcessor === imageProcessorModule ||
+        typeof options.dependencies?.createOcrSession === "function";
+    const ocrSession = managesOcrSession
+        ? await dependencies.createOcrSession({ ...noCacheOcrOptions, logger: silentLogger })
+        : null;
+    if (ocrSession) {
+        dependencies.ocrOptions = { ...dependencies.ocrOptions, session: ocrSession };
     }
-    return {
-        schemaVersion: 1,
-        generatedAt: new Date().toISOString(),
-        manifest: manifest.path,
-        offline: true,
-        isolation: {
-            applicationPersistence: "disabled",
-            imageHashCache: "disabled",
-            ocrCache: "disabled",
-            ocrLanguageSource: "bundled eng.traineddata",
-            temporaryArtifacts: "deleted after each case"
-        },
-        pending: {
-            catalogEntries: manifest.catalog.length - activeCatalog.length,
-            cases: manifest.cases.length - activeCases.length,
-            placeholderCases: manifest.cases.filter((fixture) =>
-                JSON.stringify(fixture).includes("CHANGE_ME")
-            ).length
-        },
-        summary: summarize(results),
-        gate: summarizeGate(results),
-        results
-    };
+
+    try {
+        for (const fixture of selectedCases) {
+            results.push(await analyzeFixture(fixture, manifest, context, dependencies));
+        }
+        return {
+            schemaVersion: 1,
+            generatedAt: new Date().toISOString(),
+            manifest: manifest.path,
+            offline: true,
+            isolation: {
+                applicationPersistence: "disabled",
+                imageHashCache: "disabled",
+                ocrCache: "disabled",
+                ocrLanguageSource: "bundled eng.traineddata",
+                ocrWorkerLifecycle: "shared process; adaptive state reset per crop",
+                temporaryArtifacts: "deleted after each case"
+            },
+            pending: {
+                catalogEntries: manifest.catalog.length - activeCatalog.length,
+                cases: manifest.cases.length - activeCases.length,
+                placeholderCases: manifest.cases.filter((fixture) =>
+                    JSON.stringify(fixture).includes("CHANGE_ME")
+                ).length
+            },
+            summary: summarize(results),
+            gate: summarizeGate(results),
+            results
+        };
+    } finally {
+        await ocrSession?.terminate();
+    }
 }
 
 export {
