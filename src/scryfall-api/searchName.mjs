@@ -1,25 +1,13 @@
 import apiConfig from "./api.config.mjs";
 import log from "../logger/log.mjs";
+import { request, REQUEST_HEADERS } from "./http-client.mjs";
 
 const logger = log.create({
     isPretty: true
 });
 
-// Native fetch (Node >=20) in place of request-promise-native. Kept as a named `request`
-// dependency (rather than exposing raw `fetch`) so callers keep dealing in response body text,
-// unchanged from before -- only the HTTP client underneath moved off a deprecated lib.
-async function request({ uri, headers }) {
-    const response = await fetch(uri, { headers });
-    return response.text();
-}
-
 const dependencies = {
     request
-};
-
-const REQUEST_HEADERS = {
-    "User-Agent": "MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)",
-    Accept: "application/json"
 };
 
 // These return a random/newest card if printed across sets

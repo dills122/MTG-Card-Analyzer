@@ -5,23 +5,13 @@ import path from "node:path";
 import { writeFile } from "node:fs/promises";
 import ocrPreprocessor from "./ocr-preprocessing.mjs";
 import { textExtraction } from "../image-analysis/index.mjs";
+import { once } from "../util.mjs";
 
 const defaultDependencies = {
     ocrPreprocessor,
     textExtraction,
     writeFile
 };
-
-// Ensures a callback only ever fires once, even if both the resolve and reject paths of the
-// wrapped promise chain somehow both settle (defensive, mirrors the previous lodash `_.once`).
-function once(fn) {
-    let called = false;
-    return (...args) => {
-        if (called) return;
-        called = true;
-        fn(...args);
-    };
-}
 
 const schema = joi.object().keys({
     path: joi.string().required(),
