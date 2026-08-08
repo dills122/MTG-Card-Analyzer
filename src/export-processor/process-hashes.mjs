@@ -5,8 +5,9 @@ import logger from "../logger/log.mjs";
 import joi from "joi";
 import storage from "../storage/index.mjs";
 import imageHashing from "../image-hashing/index.mjs";
+import imageProcessing from "../image-processing/index.mjs";
 import FileIO from "../file-io.mjs";
-import { round, clamp, orderBy, omit } from "../util.mjs";
+import { round, orderBy, omit } from "../util.mjs";
 
 const config = {
     remoteMatch: {
@@ -29,7 +30,8 @@ const defaultDependencies = {
     CardHashes: storage.hashes,
     Hash: imageHashing.Hash,
     createDirectory: FileIO.createDirectory,
-    cleanUpFiles: FileIO.cleanUpFiles
+    cleanUpFiles: FileIO.cleanUpFiles,
+    CropSetSymbol: imageProcessing.smartCrop.cropSetSymbolFromImage
 };
 
 const schema = joi.object().keys({
@@ -210,9 +212,12 @@ class ProcessHashes {
 
     async _hashRemoteSetSymbol(url, tempDirectory) {
         const image = await jimp.read(url);
-        const cropped = this._cropRemoteSetSymbol(image);
+        const cropped = this.dependencies.CropSetSymbol(image);
+        if (cropped.lowConfidence) {
+            throw new Error(`Set symbol crop is low confidence: ${cropped.reason}`);
+        }
         const tmpFilePath = path.join(tempDirectory, `${randomUUID()}.png`);
-        await cropped.writeAsync(tmpFilePath);
+        await cropped.image.writeAsync(tmpFilePath);
         return this._hashImage(tmpFilePath);
     }
 
@@ -228,20 +233,6 @@ class ProcessHashes {
                 return resolve(hash);
             });
         });
-    }
-
-    _cropRemoteSetSymbol(image) {
-        const leftPercent = 0.78;
-        const topPercent = 0.535;
-        const widthPercent = 0.13;
-        const heightPercent = 0.1;
-        const width = image.bitmap.width;
-        const height = image.bitmap.height;
-        const left = clamp(Math.round(width * leftPercent), 0, width - 1);
-        const top = clamp(Math.round(height * topPercent), 0, height - 1);
-        const cropWidth = clamp(Math.round(width * widthPercent), 1, width - left);
-        const cropHeight = clamp(Math.round(height * heightPercent), 1, height - top);
-        return image.clone().crop(left, top, cropWidth, cropHeight);
     }
 
     _insertCardHash(setName, hash) {

@@ -1,4 +1,5 @@
 import os from "os";
+import path from "node:path";
 import { assert } from "chai";
 import sinon from "sinon";
 import exportProcessor from "../../src/export-processor/index.mjs";
@@ -196,6 +197,40 @@ describe("Integration::", () => {
             assert.isTrue(stubs.symbolStub.calledOnce);
             assert.isTrue(stubs.hashImageStub.calledOnce);
             assert.equal(stubs.hashImageStub.firstCall.args[0], "http://www.fake.url/img");
+        });
+
+        it("Should fall back to full remote hash when set-symbol crop is low confidence", async () => {
+            const fixturePath = path.resolve(
+                "test-images/regression/scryfall/fin-570-vivi-ornitier-25ef2d44.jpg"
+            );
+            stubs.hashImageStub = sandbox.stub(Hash, "hashImage").callsArgWith(1, null, FAKE_HASH);
+            let hasher = ProcessHashes.create({
+                cards: [
+                    {
+                        image_uris: {
+                            normal: fixturePath
+                        },
+                        set_name: "SET_A"
+                    }
+                ],
+                localHash: CLOSE_DIFF_HASH,
+                name: "Test",
+                hashMode: "set-symbol"
+            });
+
+            stubs.createDirectoryStub = sandbox
+                .stub(hasher.dependencies, "createDirectory")
+                .resolves("/tmp/remote-hash-dir");
+            stubs.cleanupStub = sandbox.stub(hasher.dependencies, "cleanUpFiles").resolves();
+            stubs.cropStub = sandbox.stub(hasher.dependencies, "CropSetSymbol").returns({
+                lowConfidence: true,
+                reason: "flat region (stdDev 1 < 10)"
+            });
+
+            await hasher.compareRemoteImages();
+            assert.isTrue(stubs.cropStub.calledOnce);
+            assert.isTrue(stubs.hashImageStub.calledOnce);
+            assert.equal(stubs.hashImageStub.firstCall.args[0], fixturePath);
         });
     });
 });
