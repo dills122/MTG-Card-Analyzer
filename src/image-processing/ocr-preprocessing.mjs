@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import jimp from "jimp";
 import { getImageDimensions } from "./util.mjs";
-import { round, clamp } from "../util.mjs";
+import smartCrop from "./smart-crop.mjs";
 import {
     computeOtsuThreshold,
     applyThreshold,
@@ -11,10 +11,10 @@ import {
     padAndScale
 } from "./binarize.mjs";
 
-// Tuned preprocessing settings to make small MTG text pop for OCR.
+// Tuned preprocessing settings to make small MTG text pop for OCR. Crop geometry (region
+// templates, percent->pixel math, min-source-size gate) lives in smart-crop.mjs -- this module
+// only owns what happens to the pixels after the crop.
 const preprocessConfig = {
-    minSourceWidth: 360,
-    minSourceHeight: 500,
     padding: 12,
     scaleFactor: 2.75,
     minOutputWidth: 900,
@@ -22,91 +22,6 @@ const preprocessConfig = {
     brightness: 0.05,
     blur: 1,
     invertPivot: 110
-};
-
-// Region templates focus on likely text bands (top name line, lower type line, and fallbacks).
-const regionTemplates = {
-    name: [
-        {
-            key: "name-core",
-            leftPercent: 0.08,
-            topPercent: 0.05,
-            widthPercent: 0.78,
-            heightPercent: 0.065,
-            psm: "line"
-        },
-        {
-            key: "name-wide",
-            leftPercent: 0.05,
-            topPercent: 0.045,
-            widthPercent: 0.9,
-            heightPercent: 0.08,
-            psm: "line"
-        },
-        {
-            key: "top-band",
-            leftPercent: 0.05,
-            topPercent: 0.03,
-            widthPercent: 0.9,
-            heightPercent: 0.12,
-            psm: "block"
-        }
-    ],
-    type: [
-        {
-            key: "type-core",
-            leftPercent: 0.08,
-            topPercent: 0.565,
-            widthPercent: 0.78,
-            heightPercent: 0.08,
-            psm: "line"
-        },
-        {
-            key: "type-wide",
-            leftPercent: 0.05,
-            topPercent: 0.54,
-            widthPercent: 0.9,
-            heightPercent: 0.1,
-            psm: "block"
-        },
-        {
-            key: "lower-band",
-            leftPercent: 0.05,
-            topPercent: 0.6,
-            widthPercent: 0.9,
-            heightPercent: 0.14,
-            psm: "sparse"
-        }
-    ],
-    "rules-name": [
-        {
-            key: "rules-name",
-            leftPercent: 0.055,
-            topPercent: 0.57,
-            widthPercent: 0.89,
-            heightPercent: 0.31,
-            psm: "block",
-            mode: "soft"
-        }
-    ],
-    default: [
-        {
-            key: "top-strip",
-            leftPercent: 0.05,
-            topPercent: 0.05,
-            widthPercent: 0.9,
-            heightPercent: 0.15,
-            psm: "block"
-        },
-        {
-            key: "bottom-strip",
-            leftPercent: 0.05,
-            topPercent: 0.75,
-            widthPercent: 0.9,
-            heightPercent: 0.2,
-            psm: "sparse"
-        }
-    ]
 };
 
 /**
@@ -119,23 +34,18 @@ const regionTemplates = {
 async function prepareOcrVariants(imgPath, type, options = {}) {
     const { directory } = options;
     const dimensions = await getImageDimensions(imgPath);
-    if (
-        dimensions.width < preprocessConfig.minSourceWidth ||
-        dimensions.height < preprocessConfig.minSourceHeight
-    ) {
-        throw new Error("Image is to small");
-    }
+    smartCrop.assertSourceSizeOk(dimensions);
 
     const baseImage = await jimp.read(imgPath);
-    const regions = buildRegions(dimensions, type);
+    const templates = smartCrop.getRegionTemplates(type);
     const variants = [];
 
-    for (const region of regions) {
-        const processed = await cropAndPreprocess(baseImage, region);
+    for (const template of templates) {
+        const processed = await cropAndPreprocess(baseImage, template);
         const buffer = await processed.getBufferAsync(jimp.MIME_PNG);
         variants.push({
-            region: region.key,
-            psm: region.psm,
+            region: template.key,
+            psm: template.psm,
             buffer,
             image: processed
         });
@@ -149,46 +59,9 @@ async function prepareOcrVariants(imgPath, type, options = {}) {
     return { variants, previewPath };
 }
 
-function buildRegions(dimensions, type) {
-    const templates = regionTemplates[type] || regionTemplates.default;
-    return templates.map((template) => ({
-        key: template.key,
-        psm: template.psm,
-        mode: template.mode,
-        ...percentToPixels(template, dimensions)
-    }));
-}
-
-function percentToPixels(region, dimensions) {
-    return {
-        width: round(dimensions.width * region.widthPercent),
-        height: round(dimensions.height * region.heightPercent),
-        left: round(dimensions.width * region.leftPercent),
-        top: round(dimensions.height * region.topPercent)
-    };
-}
-
-async function cropAndPreprocess(baseImage, region) {
-    const { left, top, width, height } = clampToImage(
-        region,
-        baseImage.bitmap.width,
-        baseImage.bitmap.height
-    );
-    const cropped = baseImage.clone().crop(left, top, width, height);
-    return region.mode === "soft" ? buildSoftOcrImage(cropped) : buildOcrImage(cropped);
-}
-
-function clampToImage(region, width, height) {
-    const left = clamp(region.left, 0, width);
-    const top = clamp(region.top, 0, height);
-    const clampedWidth = clamp(region.width, 1, width - left);
-    const clampedHeight = clamp(region.height, 1, height - top);
-    return {
-        left,
-        top,
-        width: clampedWidth,
-        height: clampedHeight
-    };
+async function cropAndPreprocess(baseImage, template) {
+    const { image: cropped } = smartCrop.cropRegion(baseImage, template);
+    return template.mode === "soft" ? buildSoftOcrImage(cropped) : buildOcrImage(cropped);
 }
 
 /**
