@@ -304,6 +304,27 @@ describe("Integration::", () => {
             assert.isTrue(consoleLogStub.called, "still prints results, same as dry-run");
         });
 
+        it("prints concise scan results through the injected logger", async () => {
+            const output = sandbox.stub();
+            const injectedLogger = {
+                info: sandbox.stub(),
+                warn: sandbox.stub(),
+                error: sandbox.stub(),
+                output
+            };
+            const processorInstance = Processor.create({
+                filePath: FAKE_PATH,
+                queryingEnabled: false,
+                logger: injectedLogger
+            });
+
+            await processorInstance.execute();
+
+            assert.isTrue(
+                output.calledOnceWithExactly("Scan results\n\n1. Pacifism\n   Sets: SPA")
+            );
+        });
+
         it("Should reject promise execution on matching errors", async () => {
             stubs.MatchProcessorExecuteStub.restore();
             const expectedError = new Error("failed to match");

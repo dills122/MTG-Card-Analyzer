@@ -45,6 +45,9 @@ Deliberately dependency-free (only core Node modules) so it runs before `pnpm in
 
 Flags compose: `node scripts/setup.mjs --with-mysql --skip-seed` skips seeding but still sets up MySQL.
 
+Name seeding prints one start summary and one completion summary. Inserts run with bounded
+concurrency, so large Scryfall catalogs do not create an unbounded burst of database work.
+
 With `--with-mysql`, the generated `secure.config.cjs` matches `docker-compose.yml`'s actual defaults (host/port/user/password/database) so `pnpm setup-db` works immediately — it does **not** just copy the generic template (which has placeholder values and would fail to connect).
 
 ## Persistence architecture (what you're setting up)

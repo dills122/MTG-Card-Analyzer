@@ -1,29 +1,48 @@
 import { db } from "./db.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
+import { pathToFileURL } from "node:url";
+import { seedCardNames } from "./seed-card-names.mjs";
 
 const { GetCardNames } = scryfallApi;
 
-async function ExecuteBulkInsert() {
-    const names = await GetCardNames();
-    names.forEach((name) => {
-        db.insert(
-            {
-                name
-            },
-            (err) => {
-                if (!err) {
-                    console.log("local inserted");
+const dependencies = {
+    GetCardNames,
+    insertName(name) {
+        return new Promise((resolve, reject) => {
+            db.insert(
+                {
+                    name
+                },
+                (error) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
                 }
-            }
-        );
+            );
+        });
+    }
+};
+
+async function ExecuteBulkInsert(options = {}) {
+    return seedCardNames({
+        getCardNames: options.getCardNames || dependencies.GetCardNames,
+        insertName: options.insertName || dependencies.insertName,
+        logger: options.logger || console,
+        concurrency: options.concurrency
     });
 }
 
-(async () => {
-    await ExecuteBulkInsert();
-})();
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectRun) {
+    ExecuteBulkInsert().catch((error) => {
+        console.error(`Card-name seed failed: ${error?.message || String(error)}`);
+        process.exitCode = 1;
+    });
+}
 
-export { ExecuteBulkInsert };
+export { dependencies, ExecuteBulkInsert };
 
 export default {
     ExecuteBulkInsert

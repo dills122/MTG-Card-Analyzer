@@ -1,58 +1,66 @@
-import _ from "lodash";
-import bunyan from "bunyan";
+import { inspect } from "node:util";
+
+const LEVEL_COLORS = {
+    info: "\u001b[36m",
+    warn: "\u001b[33m",
+    error: "\u001b[31m"
+};
+const COLOR_RESET = "\u001b[0m";
 
 class Logger {
     constructor(params = {}) {
-        _.bindAll(this, Object.keys(Logger.prototype));
         this.isPretty = params.isPretty ?? true;
-        if (this.isPretty) {
-            this.bunyan = bunyan.createLogger({
-                level: 4,
-                name: "MTG-Processor"
-            });
-        }
+        this.sink = params.sink || console;
+        this.colors =
+            params.colors ??
+            (this.isPretty &&
+                this.sink === console &&
+                Boolean(process.stdout.isTTY) &&
+                process.env.NO_COLOR === undefined);
     }
 
     info(message, object) {
-        if (this.bunyan) {
-            this.bunyan.info(`${message}`);
-            if (object) {
-                this.bunyan.info(object);
-            }
-            return;
-        }
-        console.log(message);
-        if (object) {
-            console.log(JSON.stringify(object, null, 4));
-        }
+        this.#write("info", "log", message, object);
     }
 
     warn(message, object) {
-        if (this.bunyan) {
-            this.bunyan.warn(`${message}`);
-            if (object) {
-                this.bunyan.warn(object);
-            }
-            return;
-        }
-        console.warn(message);
-        if (object) {
-            console.warn(JSON.stringify(object, null, 4));
-        }
+        this.#write("warn", "warn", message, object);
     }
 
     error(message, object) {
-        if (this.bunyan) {
-            this.bunyan.error(`${message}`);
-            if (object) {
-                this.bunyan.error(object);
+        this.#write("error", "error", message, object);
+    }
+
+    output(message) {
+        this.sink.log(message);
+    }
+
+    #write(level, method, message, object) {
+        if (!this.isPretty) {
+            this.sink[method](message);
+            if (object !== undefined) {
+                this.sink[method](JSON.stringify(object, null, 4));
             }
             return;
         }
-        console.error(message);
-        if (object) {
-            console.error(JSON.stringify(object, null, 4));
+
+        const label = level.toUpperCase().padEnd(5);
+        const renderedLabel = this.colors ? `${LEVEL_COLORS[level]}${label}${COLOR_RESET}` : label;
+        const renderedMessage = message instanceof Error ? message.message : String(message);
+        let output = `${renderedLabel} ${renderedMessage}`;
+        if (object !== undefined) {
+            const details = inspect(object, {
+                colors: this.colors,
+                depth: 5,
+                breakLength: 100,
+                compact: false
+            })
+                .split("\n")
+                .map((line) => `      ${line}`)
+                .join("\n");
+            output += `\n${details}`;
         }
+        this.sink[method](output);
     }
 }
 

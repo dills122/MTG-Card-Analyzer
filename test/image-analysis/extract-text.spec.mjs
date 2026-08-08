@@ -187,4 +187,34 @@ describe("TextExtraction::", () => {
         await extraction;
         assert.isTrue(recognizeStub.calledTwice);
     });
+
+    it("logs one useful OCR progress heartbeat instead of every ten percent", async () => {
+        const info = sandbox.stub();
+        sandbox
+            .stub(textExtraction.dependencies.Tesseract, "recognize")
+            .callsFake(async (_buffer, _language, options) => {
+                options.logger({ status: "recognizing text", progress: 0.1 });
+                options.logger({ status: "recognizing text", progress: 0.5 });
+                options.logger({ status: "recognizing text", progress: 1 });
+                return { data: { text: "Pacifism\n", confidence: 82 } };
+            });
+
+        await new Promise((resolve, reject) => {
+            textExtraction.ScanImage(
+                [{ buffer: Buffer.from("card"), region: "name-core", psm: "line" }],
+                "name",
+                (err, result) => (err ? reject(err) : resolve(result)),
+                { logger: { info, error: sandbox.stub() } }
+            );
+        });
+
+        assert.deepEqual(
+            info.getCalls().map((call) => call.args[0]),
+            [
+                "OCR name: 1 region (name-core)",
+                "OCR name-core: 50%",
+                'OCR name-core: 82% confidence; "Pacifism" -> "PACIFISM"'
+            ]
+        );
+    });
 });

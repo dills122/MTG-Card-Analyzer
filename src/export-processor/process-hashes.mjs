@@ -59,7 +59,7 @@ class ProcessHashes {
     }
 
     async compareDbHashes() {
-        this.logger.info(`process-hashes::db-compare start name="${this.name}"`);
+        this.logger.info(`Checking local hash cache for "${this.name}"`);
         const hashes = await this.dependencies.CardHashes.getByCardName(this.name);
         const matches = [];
         hashes.forEach((dbHash) => {
@@ -79,9 +79,8 @@ class ProcessHashes {
                 );
             }
         });
-        this.logger.info(`process-hashes::db-compare matches=${matches.length}`);
+        this.logger.info(`Local hash cache matches for "${this.name}": ${matches.length}`);
         if (matches.length === 0) {
-            this.logger.info(`process-hashes::db-compare none name="${this.name}"`);
             if (this.ignoreNoDbMatch) {
                 return [];
             }
@@ -93,8 +92,9 @@ class ProcessHashes {
     }
 
     async compareRemoteImages() {
+        const imageLabel = this.cards.length === 1 ? "image" : "images";
         this.logger.info(
-            `process-hashes::remote-compare start name="${this.name}" mode=${this.hashMode} cards=${this.cards.length}`
+            `Comparing ${this.cards.length} Scryfall ${imageLabel} for "${this.name}" (${this.hashMode})`
         );
         const cards = _.map(this.cards, function (card) {
             const images = card.image_uris || {};
@@ -171,10 +171,10 @@ class ProcessHashes {
                 .slice(0, config.remoteBestGuess.maxCandidates)
                 .map((match) => _.omit(match, ["confidenceScore"]));
             this.logger.info(
-                `process-hashes::remote-compare using-best-guess name="${this.name}" candidates=${bestMatches.map((match) => match.setName).join(",")}`
+                `Using closest image matches for "${this.name}": ${bestMatches.map((match) => match.setName).join(", ")}`
             );
         }
-        this.logger.info(`process-hashes::remote-compare complete matches=${bestMatches.length}`);
+        this.logger.info(`Scryfall image matches for "${this.name}": ${bestMatches.length}`);
         return bestMatches;
     }
 
@@ -209,7 +209,7 @@ class ProcessHashes {
             return await this._hashRemoteSetSymbol(url, tempDirectory);
         } catch {
             this.logger.error(
-                `Remote set symbol crop/hash failed for ${url}; falling back to full image hash`
+                `Remote set-symbol hash failed for "${this.name}"; using full card image`
             );
             return new Promise((resolve, reject) => {
                 this.dependencies.Hash.HashImage(url, (hashErr, hash) => {
