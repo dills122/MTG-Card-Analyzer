@@ -4,9 +4,10 @@ import { Command } from "commander";
 import processorModule from "./src/processor/index.mjs";
 import { getConfig, KNOWN_STORAGE_ADAPTERS } from "./src/config/index.mjs";
 import storage from "./src/storage/index.mjs";
+import migrate from "./src/migrate/nedb-to-rds.mjs";
 
 const { Processor } = processorModule;
-const KNOWN_COMMANDS = ["scan", "log"];
+const KNOWN_COMMANDS = ["scan", "log", "migrate"];
 const HELP_TOKENS = ["--help", "-h", "help"];
 
 function buildCli(argv) {
@@ -69,6 +70,26 @@ function buildCli(argv) {
             parsed.flags = options || {};
         });
 
+    program
+        .command("migrate")
+        .description("Migrate local nedb collection/needs-attention data to another backend")
+        .requiredOption("--to <adapter>", "Target backend (currently only: rds)")
+        .option("--dry-run", "Preview what would be migrated without writing", false)
+        .option(
+            "--force",
+            "Re-migrate collection entries that already exist on the target instead of skipping them",
+            false
+        )
+        .option(
+            "--card-names-db <path>",
+            "Path (dir or .db file) for the local card names DB to migrate from"
+        )
+        .option("--config <path>", "Path to a JSON config file")
+        .action((options) => {
+            parsed.command = "migrate";
+            parsed.flags = options || {};
+        });
+
     program.addHelpText(
         "after",
         `
@@ -79,6 +100,8 @@ Examples:
   $ scan ./img-path --no-local-cache
   $ log dump --limit 20
   $ log stats
+  $ migrate --to rds --dry-run
+  $ migrate --to rds
 `
     );
 
@@ -87,8 +110,9 @@ Examples:
     } catch (err) {
         // showHelpAfterError() + exitOverride() mean commander has already printed
         // appropriate output for every commander.* error (help text, or "error: missing
-        // required argument" + usage) -- not just the explicit --help case. Swallow all of
-        // them here so run() doesn't also dump the raw CommanderError/stack on top.
+        // required argument"/"required option" + usage) -- not just the explicit --help
+        // case. Swallow all of them here so run() doesn't also dump the raw
+        // CommanderError/stack on top.
         if (err.code && err.code.startsWith("commander.")) {
             parsed.helpRequested = true;
         } else {
@@ -198,12 +222,39 @@ async function runLogStats(flags, logger) {
     return 0;
 }
 
+async function runMigrate(flags, logger, migrateFn) {
+    if (flags.to !== "rds") {
+        logger.log(
+            `Unsupported migration target "${flags.to}". Currently only "rds" is supported (nedb -> rds).`
+        );
+        return 1;
+    }
+    const err = applyConfigOverrides(flags, logger);
+    if (err) {
+        return 1;
+    }
+    try {
+        const result = await migrateFn({
+            dryRun: Boolean(flags.dryRun),
+            force: Boolean(flags.force)
+        });
+        logger.log(JSON.stringify(result, null, 2));
+        const hadErrors =
+            result.collection.errors.length > 0 || result.needsAttention.errors.length > 0;
+        return hadErrors ? 1 : 0;
+    } catch (migrateErr) {
+        logger.log(migrateErr?.message || String(migrateErr));
+        return 1;
+    }
+}
+
 export async function run(options = {}) {
     const {
         argv = process.argv.slice(2),
         commanderFactory = buildCli,
         fsAccess = access,
         processorFactory = Processor.create,
+        migrateFn = migrate.migrateNedbToRds,
         exit = process.exit,
         logger = console
     } = options;
@@ -211,7 +262,7 @@ export async function run(options = {}) {
     // Bare filepath args ("node index.mjs ./card.jpg") implicitly mean `scan` for backward
     // compatibility. Empty argv, --help/-h, and known commands must NOT get that prefix --
     // otherwise `node index.mjs --help` silently becomes `scan --help` and the top-level
-    // help (which lists `log` at all) never shows.
+    // help (which lists `log`/`migrate` at all) never shows.
     const shouldPrefixScan =
         argv.length > 0 && !KNOWN_COMMANDS.includes(argv[0]) && !HELP_TOKENS.includes(argv[0]);
     const normalizedArgv = shouldPrefixScan ? ["scan", ...argv] : argv;
@@ -231,6 +282,11 @@ export async function run(options = {}) {
 
     if (cli.command === "log-stats") {
         exit(await runLogStats(flags, logger));
+        return;
+    }
+
+    if (cli.command === "migrate") {
+        exit(await runMigrate(flags, logger, migrateFn));
         return;
     }
 

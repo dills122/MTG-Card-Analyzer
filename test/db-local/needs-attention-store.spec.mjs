@@ -58,4 +58,33 @@ describe("db-local::needs-attention-store", () => {
         });
         assert.notEqual(first._id, second._id);
     });
+
+    describe("GetAll", () => {
+        it("returns every needs-attention entry", async () => {
+            const store = await freshStore();
+            await new Promise((resolve, reject) => {
+                store.Insert({ cardName: "Pacifism", extractedText: "clean" }, (err, d) =>
+                    err ? reject(err) : resolve(d)
+                );
+            });
+            await new Promise((resolve, reject) => {
+                store.Insert({ cardName: "Fake Card", extractedText: "clean" }, (err, d) =>
+                    err ? reject(err) : resolve(d)
+                );
+            });
+
+            const all = await new Promise((resolve, reject) => {
+                store.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
+            });
+            assert.lengthOf(all, 2);
+        });
+
+        it("returns an empty array when nothing has been stored", async () => {
+            const store = await freshStore();
+            const all = await new Promise((resolve, reject) => {
+                store.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
+            });
+            assert.deepEqual(all, []);
+        });
+    });
 });

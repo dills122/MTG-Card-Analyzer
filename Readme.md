@@ -97,6 +97,8 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
     - flags: `--limit <n>` (default 50), `--since <ISO date>`, `--format <table|json>` (default `table`), `--config <path>`
 - `log stats` : print aggregate stats over the local operations log (totals by decision, error count, average top match confidence)
     - flags: `--config <path>`
+- `migrate` : one-shot migration of local nedb collection/needs-attention data to another backend (currently only `nedb -> rds`; always reads from local nedb regardless of the active `--storage-adapter`). Idempotent by default -- an entry already present on the target is skipped, not double-counted; `--force` re-migrates collection entries anyway (adds local quantity on top of whatever's already there). Needs-attention entries are always deduped by the target's own unique constraint.
+    - flags: `--to <rds>` (required), `--dry-run` (preview without writing), `--force`, `--card-names-db <path>`, `--config <path>`
 
 ### Persistence Architecture
 
@@ -235,6 +237,8 @@ node scripts/verify-env.mjs --with-mysql   # same, plus checks the MySQL connect
 ### MySQL / RDS (Optional, Legacy)
 
 MySQL scripts and modules exist in `src/rds` and `src/data/scripts/sql` for the collection and needs-attention tables (`CardCollection`, `Card_NEED_ATTN`) -- select with `--storage-adapter rds`. The default runtime path is local-first NeDB; treat RDS as optional/legacy until sync/backup mode is formalized. Verified against a real MySQL 8 instance as part of building this.
+
+Started with `nedb` and want to move to `rds`? `node index.mjs migrate --to rds` copies your local collection/needs-attention data over (see [Current Commands](#current-commands)).
 
 ```bash
 node scripts/setup.mjs --with-mysql   # one-shot: docker compose up + pnpm setup-db, matching creds
