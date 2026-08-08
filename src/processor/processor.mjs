@@ -293,18 +293,10 @@ class ProcessorClass {
         const set = record.sets[0];
         let additionalInfo;
         try {
-            additionalInfo = await new Promise((resolve, reject) => {
-                dependencies.GetAdditionalCardInfo.SearchByNameExact(
-                    record.name,
-                    "",
-                    (err, info) => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        return resolve(info);
-                    }
-                );
-            });
+            additionalInfo = await dependencies.GetAdditionalCardInfo.SearchByNameExact(
+                record.name,
+                ""
+            );
         } catch (err) {
             this.logger.error(err);
             throw err;

@@ -38,6 +38,13 @@ describe("Srcyfall Api::", () => {
             api.SearchByNameFuzzy("Fake Name", "Fake % Name")
                 .then((card) => {
                     assert.isTrue(stubs.requestStub.calledOnce);
+                    // Locks in the actual URL built -- templates.fuzzy vs templates.cardNameFuzzy
+                    // silently mismatched here before, building ".../named?fuzzy=undefinedFake Name"
+                    // with no test catching it since the stub resolved regardless of the URI passed.
+                    assert.include(
+                        stubs.requestStub.firstCall.args[0].uri,
+                        "/cards/named?fuzzy=Fake%20Name"
+                    );
                     assert.strictEqual(card.object, "list");
                     assert.deepStrictEqual(card, json);
                     done();

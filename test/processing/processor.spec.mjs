@@ -66,7 +66,7 @@ describe("Integration::", () => {
         stubs.logRecordStub = sandbox.stub(storage.log, "record");
         stubs.GetAdditionalCardInfoStub = sandbox
             .stub(GetAdditionalCardInfo, "SearchByNameExact")
-            .callsArgWith(2, null, {
+            .resolves({
                 object: "card",
                 id: "31279d7c-5246-40b2-a8c7-0be4a5f24a29",
                 oracle_id: "5f5e0b10-c8cf-450c-bfd3-bcb0528ec330",

@@ -38,7 +38,7 @@ async function SearchByNameFuzzy(exact, fuzzy = "") {
     }
     try {
         const response = await dependencies.request({
-            uri: encodeURI(`${apiConfig.templates.fuzzy}${exact}`),
+            uri: encodeURI(`${apiConfig.templates.cardNameFuzzy}${exact}`),
             headers: REQUEST_HEADERS
         });
         if (response) {
