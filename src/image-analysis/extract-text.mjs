@@ -11,13 +11,15 @@ const logger = log.create({
  * @param {Buffer|string|Array} imgBuffer image buffer, path, or prepared variants
  * @param {"name"|"type"|"art"|"flavor"} type snippet type to inform PSM/whitelist
  * @param {(err: Error|null, result: {cleanText: string, dirtyText: string}|null) => void} cb callback
- * @param {{logger?: {info: Function, error: Function}}} options runtime options
+ * @param {{logger?: {info: Function, error: Function}, session?: {recognize: Function}, cacheMethod?: string, langPath?: string, gzip?: boolean}} options runtime options
  */
 function ScanImage(imgBuffer, type, cb, options = {}) {
     const scanLogger = options.logger || logger;
     const candidates = normalizeCandidates(imgBuffer, type);
+    const regionLabel = candidates.map((candidate) => candidate.region).join(", ");
+    const regionWord = candidates.length === 1 ? "region" : "regions";
     scanLogger.info(
-        `extract-text::ScanImage:: type=${type || "unknown"} source=${describeImageSource(imgBuffer)} candidates=${summarizeCandidates(candidates)}`
+        `OCR ${type || "unknown"}: ${candidates.length} ${regionWord} (${regionLabel})`
     );
     runCandidatesSequentially(candidates, type, scanLogger, options)
         .then((results) => {
@@ -68,25 +70,30 @@ function normalizeCandidates(input, type) {
 async function runCandidate(candidate, type, scanLogger, options = {}) {
     const ocrConfig = getTesseractConfig(type, candidate.psm);
     const onProgress = buildProgressLogger(candidate.region, scanLogger);
-    const result = await Tesseract.recognize(candidate.buffer, "eng", {
-        ...ocrConfig,
-        // Tesseract v3 otherwise rewrites ./eng.traineddata for every worker. Multiple OCR
-        // variants can race and truncate the bundled model, so treat the local cache as input.
-        cacheMethod: "readOnly",
-        ...(options.cacheMethod ? { cacheMethod: options.cacheMethod } : {}),
-        ...(options.langPath ? { langPath: options.langPath } : {}),
-        ...(typeof options.gzip === "boolean" ? { gzip: options.gzip } : {}),
-        logger: (message) => {
-            if (message.status === "recognizing text") {
-                onProgress(message.progress);
-            }
-        }
-    });
+    const result = options.session
+        ? await options.session.recognize(candidate.buffer, {
+              region: candidate.region,
+              logger: scanLogger
+          })
+        : await Tesseract.recognize(candidate.buffer, "eng", {
+              ...ocrConfig,
+              // Tesseract v3 otherwise rewrites ./eng.traineddata for every worker. Multiple OCR
+              // variants can race and truncate the bundled model, so treat the local cache as input.
+              cacheMethod: "readOnly",
+              ...(options.cacheMethod ? { cacheMethod: options.cacheMethod } : {}),
+              ...(options.langPath ? { langPath: options.langPath } : {}),
+              ...(typeof options.gzip === "boolean" ? { gzip: options.gzip } : {}),
+              logger: (message) => {
+                  if (message.status === "recognizing text") {
+                      onProgress(message.progress);
+                  }
+              }
+          });
     const extractedText = (result && result.data && result.data.text) || result.text || "";
     const cleanedString = normalizeOcrText(extractedText, type);
     const confidence = (result && result.data && result.data.confidence) || 0;
     scanLogger.info(
-        `extract-text::result region=${candidate.region} confidence=${Math.round(confidence)} raw="${previewText(extractedText)}" normalized="${cleanedString}"`
+        `OCR ${candidate.region}: ${Math.round(confidence)}% confidence; "${previewText(extractedText)}" -> "${cleanedString}"`
     );
     return {
         region: candidate.region,
@@ -258,35 +265,15 @@ function scoreNameLine(line) {
     return score;
 }
 
-function describeImageSource(input) {
-    if (Array.isArray(input)) {
-        return "variant-list";
-    }
-    if (Buffer.isBuffer(input)) {
-        return "buffer";
-    }
-    if (typeof input === "string") {
-        return input;
-    }
-    return typeof input;
-}
-
-function summarizeCandidates(candidates = []) {
-    return candidates.map((candidate) => `${candidate.region}:${candidate.psm}`).join(",");
-}
-
 function buildProgressLogger(region, progressLogger = logger) {
-    let lastBucket = -1;
+    let halfwayLogged = false;
     return (progress = 0) => {
-        const bucket = Math.min(100, Math.max(0, Math.floor(Number(progress) * 100)));
-        if (bucket < 100 && bucket % 10 !== 0) {
+        const value = Number(progress);
+        if (halfwayLogged || value < 0.5 || value >= 1) {
             return;
         }
-        if (bucket === lastBucket) {
-            return;
-        }
-        lastBucket = bucket;
-        progressLogger.info(`extract-text::progress region=${region} progress=${bucket}%`);
+        halfwayLogged = true;
+        progressLogger.info(`OCR ${region}: 50%`);
     };
 }
 
@@ -305,13 +292,76 @@ function ShutDown() {
     Tesseract.terminate();
 }
 
+async function createOcrSession(options = {}) {
+    let progressLogger = () => {};
+    const worker = Tesseract.createWorker({
+        // Match ScanImage's one-shot defaults while allowing regression runs to disable caching.
+        cacheMethod: "readOnly",
+        ...(options.cacheMethod ? { cacheMethod: options.cacheMethod } : {}),
+        ...(options.langPath ? { langPath: options.langPath } : {}),
+        ...(typeof options.gzip === "boolean" ? { gzip: options.gzip } : {}),
+        logger: (message) => progressLogger(message)
+    });
+    try {
+        await worker.load();
+        await worker.loadLanguage("eng");
+        await worker.initialize("eng");
+    } catch (err) {
+        await worker.terminate().catch(() => {});
+        throw err;
+    }
+
+    let terminated = false;
+    let hasRecognized = false;
+    let operationQueue = Promise.resolve();
+    return {
+        recognize(image, recognitionOptions = {}) {
+            if (terminated) {
+                return Promise.reject(new Error("OCR session has been terminated"));
+            }
+            const operation = operationQueue.then(async () => {
+                if (hasRecognized) {
+                    // Tesseract learns adaptive character data while recognizing. Reinitialize
+                    // its API between images so fixture results remain independent of run order.
+                    await worker.initialize("eng");
+                }
+                hasRecognized = true;
+                const sessionLogger = recognitionOptions.logger || options.logger || logger;
+                const onProgress = buildProgressLogger(
+                    recognitionOptions.region || "unknown",
+                    sessionLogger
+                );
+                progressLogger = (message) => {
+                    if (message.status === "recognizing text") {
+                        onProgress(message.progress);
+                    }
+                };
+                try {
+                    return await worker.recognize(image);
+                } finally {
+                    progressLogger = () => {};
+                }
+            });
+            operationQueue = operation.catch(() => {});
+            return operation;
+        },
+        async terminate() {
+            if (terminated) return;
+            terminated = true;
+            await operationQueue;
+            await worker.terminate();
+        }
+    };
+}
+
 export const dependencies = { Tesseract };
 
-export { ScanImage, ShutDown, scoreOcrCandidate, selectBestResult };
+export { ScanImage, ShutDown, createOcrSession, scoreOcrCandidate, selectBestResult };
 
 export default {
     ScanImage,
     ShutDown,
+    createOcrSession,
     scoreOcrCandidate,
     selectBestResult,
     dependencies

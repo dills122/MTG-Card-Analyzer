@@ -16,6 +16,7 @@ describe("MatcherProcessor::", () => {
     });
 
     it("returns normalized set details when only one search result exists", (done) => {
+        const info = sandbox.stub();
         const expectedCard = {
             set_name: "M20",
             scryfall_uri: "https://scryfall.com/card/m20/1/example"
@@ -24,7 +25,8 @@ describe("MatcherProcessor::", () => {
         const hashStub = sandbox.stub(dependencies, "Hash");
         const processor = create({
             name: "Pacifism",
-            filePath: "/tmp/pacifism.jpg"
+            filePath: "/tmp/pacifism.jpg",
+            logger: { info, error: sandbox.stub() }
         });
 
         processor.execute((err, result) => {
@@ -38,21 +40,32 @@ describe("MatcherProcessor::", () => {
                     scryfallUri: "https://scryfall.com/card/m20/1/example"
                 }
             ]);
+            assert.deepEqual(
+                info.getCalls().map((call) => call.args[0]),
+                ['Searching Scryfall for "Pacifism"', 'Scryfall returned 1 printing for "Pacifism"']
+            );
             done();
         });
     });
 
     it("errors when search results are not an array", (done) => {
         const searchStub = sandbox.stub(dependencies, "Searcher").resolves({});
+        const logger = { info: sandbox.stub(), error: sandbox.stub() };
         const processor = create({
             name: "Pacifism",
-            filePath: "/tmp/pacifism.jpg"
+            filePath: "/tmp/pacifism.jpg",
+            logger
         });
 
         processor.execute((err) => {
             assert.isTrue(searchStub.calledOnce);
             assert.instanceOf(err, Error);
             assert.equal(err.message, "Error gathering results");
+            assert.isTrue(
+                logger.error.calledOnceWithExactly(
+                    'Scryfall response for "Pacifism" was not a printing list'
+                )
+            );
             done();
         });
     });

@@ -52,16 +52,22 @@ describe("Integration::", () => {
         });
 
         it("Should execute happy path for compareDbHashes", async () => {
+            const info = sandbox.stub();
             let hasher = ProcessHashes.create({
                 cards: [{}, {}],
                 localHash: CLOSE_DIFF_HASH,
-                name: "Test"
+                name: "Test",
+                logger: { info, error: sandbox.stub() }
             });
 
             const matches = await hasher.compareDbHashes();
             let match = matches[0] || {};
             assert.isTrue(stubs.getHashesStub.calledOnce);
             assert.deepEqual(match.setName, FAKE_SET);
+            assert.deepEqual(
+                info.getCalls().map((call) => call.args[0]),
+                ['Checking local hash cache for "Test"', 'Local hash cache matches for "Test": 1']
+            );
         });
 
         it("Should fail with no match found error", async () => {
@@ -132,6 +138,7 @@ describe("Integration::", () => {
             stubs.insertHashStub.restore();
             stubs.hashImageStub = sandbox.stub(Hash, "HashImage").callsArgWith(1, null, FAKE_HASH);
             stubs.insertEntityStub = sandbox.stub(CardHashes, "upsert").returns();
+            const info = sandbox.stub();
 
             let hasher = ProcessHashes.create({
                 cards: [
@@ -144,7 +151,8 @@ describe("Integration::", () => {
                 ],
                 localHash: CLOSE_DIFF_HASH,
                 name: "Test",
-                queryingEnabled: true
+                queryingEnabled: true,
+                logger: { info, error: sandbox.stub() }
             });
 
             await hasher.compareRemoteImages();
@@ -154,6 +162,10 @@ describe("Integration::", () => {
                 setName: "SET_A",
                 cardHash: FAKE_HASH
             });
+            assert.equal(
+                info.firstCall.args[0],
+                'Comparing 1 Scryfall image for "Test" (full-card)'
+            );
         });
 
         it("Should fall back to full remote hash when remote set-symbol hashing fails", async () => {

@@ -256,6 +256,78 @@ describe("Regression framework::", () => {
         ]);
     });
 
+    it("reuses one OCR session for the selected cases and terminates it after the batch", async () => {
+        const manifest = {
+            path: "/fixtures/manifest.json",
+            catalog: [
+                {
+                    name: "Pacifism",
+                    set: "BBD",
+                    collectorNumber: "101",
+                    referenceImagePath: "/fixtures/reference.jpg"
+                }
+            ],
+            cases: ["first", "second"].map((id) => ({
+                id,
+                image: `${id}.jpg`,
+                imagePath: `/fixtures/${id}.jpg`,
+                quality: "clean-scan",
+                expected: { name: "Pacifism", set: "BBD", collectorNumber: "101" }
+            }))
+        };
+        const ocrSession = {
+            recognize: async () => ({ data: { text: "Pacifism" } }),
+            terminateCalls: 0,
+            async terminate() {
+                this.terminateCalls += 1;
+            }
+        };
+        const receivedSessions = [];
+        let createSessionCalls = 0;
+
+        const report = await runRegression(manifest, {
+            dependencies: {
+                ImageProcessor: {
+                    create: ({ ocrOptions }) => {
+                        receivedSessions.push(ocrOptions.session);
+                        return {
+                            extract: (callback) =>
+                                callback(null, {
+                                    cleanText: "PACIFISM",
+                                    dirtyText: "Pacifism",
+                                    confidence: 99,
+                                    bestVariant: { region: "name-core" }
+                                })
+                        };
+                    }
+                },
+                MatchName: matchNameModule,
+                Hash: {
+                    HashImage: (_imagePath, callback) => callback(null, "fresh-hash"),
+                    CompareHash: () => ({
+                        twoBitMatches: 1,
+                        fourBitMatches: 1,
+                        stringCompare: 1
+                    })
+                },
+                materializeFixture: async (fixture) => fixture.imagePath,
+                createOcrSession: async () => {
+                    createSessionCalls += 1;
+                    return ocrSession;
+                }
+            }
+        });
+
+        assert.equal(report.summary.passed, 2);
+        assert.equal(createSessionCalls, 1);
+        assert.deepEqual(receivedSessions, [ocrSession, ocrSession]);
+        assert.equal(ocrSession.terminateCalls, 1);
+        assert.equal(
+            report.isolation.ocrWorkerLifecycle,
+            "shared process; adaptive state reset per crop"
+        );
+    });
+
     it("summarizes failures and renders all benchmark columns", () => {
         const results = [
             {

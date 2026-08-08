@@ -52,25 +52,24 @@ class MatcherProcessor {
     }
 
     async _searchAsync() {
-        this.logger.info(`matcher::search start name="${this.name}"`);
+        this.logger.info(`Searching Scryfall for "${this.name}"`);
         this.cards = await dependencies.Searcher(this.name);
     }
 
     async _processResultsAsync() {
-        const numCards = Array.isArray(this.cards) ? this.cards.length : "invalid";
-        this.logger.info(`matcher::search results name="${this.name}" count=${numCards}`);
         if (!Array.isArray(this.cards)) {
+            this.logger.error(`Scryfall response for "${this.name}" was not a printing list`);
             throw new Error("Error gathering results");
         }
         const totalCards = this.cards.length;
+        const printingLabel = totalCards === 1 ? "printing" : "printings";
+        this.logger.info(`Scryfall returned ${totalCards} ${printingLabel} for "${this.name}"`);
 
         if (totalCards === 0) {
-            this.logger.info(`matcher::search no-results name="${this.name}"`);
             return 0;
         }
 
         if (totalCards === 1) {
-            this.logger.info(`matcher::search single-result name="${this.name}"`);
             const single = this.cards[0] || {};
             const setName = single.set_name ?? "";
             this.matchResultDetails = [
@@ -82,13 +81,11 @@ class MatcherProcessor {
             return setName ? [setName] : [];
         }
 
-        this.logger.info(`matcher::search multi-results name="${this.name}" count=${totalCards}`);
         await this._hashLocalCardAsync();
         return this._processMultiSetMatchesAsync();
     }
 
     async _hashLocalCardAsync() {
-        this.logger.info(`matcher::hash local-image name="${this.name}" path="${this.filePath}"`);
         let directory;
         try {
             directory = await dependencies.CreateDirectory();
@@ -99,15 +96,13 @@ class MatcherProcessor {
         try {
             await this._hashFromSetSymbolAsync(directory);
         } catch {
-            this.logger.error(
-                `Set symbol crop/hash failed for ${this.filePath}; falling back to full card hash`
-            );
+            this.logger.error(`Set-symbol hash failed for "${this.name}"; using full card image`);
             return this._hashFromPathAsync(this.filePath);
         }
     }
 
     async _hashFromSetSymbolAsync(directory) {
-        this.logger.info(`matcher::hash set-symbol name="${this.name}" path="${this.filePath}"`);
+        this.logger.info(`Hashing set symbol for "${this.name}"`);
         try {
             const setSymbolPath = await dependencies.GetSetSymbolSnippetTmpFile(
                 this.filePath,
@@ -150,7 +145,7 @@ class MatcherProcessor {
             allowRemoteBestGuess: true
         });
         this.logger.info(
-            `matcher::hash compare-start name="${this.name}" mode=${this.hashMode || "full-card"} cardCount=${this.cards.length}`
+            `Comparing ${this.cards.length} printings for "${this.name}" using ${this.hashMode || "full-card"} hashes`
         );
         const shouldQueryCache = true;
         const dbPromise = shouldQueryCache
@@ -171,9 +166,7 @@ class MatcherProcessor {
         const mergedResults = [...new Set((db || []).concat(remote || []))];
         this.matchResults = mergedResults;
         this.matchResultDetails = this._buildMatchDetails(mergedResults);
-        this.logger.info(
-            `matcher::hash compare-complete name="${this.name}" mergedSets=${mergedResults.join(",") || "none"}`
-        );
+        this.logger.info(`Print matches for "${this.name}": ${mergedResults.join(", ") || "none"}`);
         return mergedResults;
     }
 

@@ -1,10 +1,12 @@
 import storage from "./storage/index.mjs";
 import scryfall from "./scryfall-api/index.mjs";
 import imageHashing from "./image-hashing/index.mjs";
+import log from "./logger/log.mjs";
 
 const { names: NamesStore, hashes: HashesStore } = storage;
 const { Search } = scryfall;
 const { Hash } = imageHashing;
+const logger = log.create({ isPretty: true });
 
 async function backFillCardHashes(cardName) {
     try {
@@ -35,7 +37,7 @@ async function backFillCardHashes(cardName) {
         }
         return true;
     } catch (err) {
-        console.log(err);
+        logger.error(`Unable to backfill hashes for "${cardName}": ${err?.message || String(err)}`);
         return false;
     }
 }

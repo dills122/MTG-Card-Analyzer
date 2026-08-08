@@ -67,7 +67,6 @@
     },
     "dependencies": {
         "@dills1220/nedb": "^1.9.1",
-        "bunyan": "^1.8.15",
         "clean-text-utils": "^1.3.0",
         "commander": "^15.0.0",
         "fuzzyset.js": "1.0.7",

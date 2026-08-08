@@ -50,6 +50,27 @@ node index.mjs ./path/to/card.jpg
 needs-attention records only when both resolve to `true`. Without both, the full identification
 pipeline still runs and prints its results.
 
+Pretty logging is enabled by default. It keeps pipeline detail visible with compact, aligned level
+labels, emits one OCR progress heartbeat per crop, and prints final card/set candidates without
+internal verification objects:
+
+```text
+INFO  Reading card name
+INFO  OCR name-core: 50%
+INFO  OCR name-core: 87% confidence; "Pacifism" -> "PACIFISM"
+INFO  Name candidates (1): 1. Pacifism (100%)
+
+Scan results
+
+1. Pacifism
+   Sets: Core Set 2020
+```
+
+Interactive terminals receive colored level labels; redirected output remains color-free. Use
+`--no-pretty` when another tool needs unadorned log messages. Full match verification details stay
+available through the local operations log and `--debug` instead of being dumped into routine scan
+output.
+
 ## Inspect scan activity
 
 Every scan records an operations-log entry while the local cache is enabled. Entries include the
