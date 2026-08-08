@@ -3,6 +3,13 @@ import path from "node:path";
 import jimp from "jimp";
 import { GetImageDimensions } from "./util.mjs";
 import { round, clamp } from "../util.mjs";
+import {
+    computeOtsuThreshold,
+    applyThreshold,
+    shouldInvert,
+    sharpen,
+    padAndScale
+} from "./binarize.mjs";
 
 // Tuned preprocessing settings to make small MTG text pop for OCR.
 const preprocessConfig = {
@@ -205,7 +212,7 @@ async function buildOcrImage(img) {
     const threshold = computeOtsuThreshold(working);
     working = applyThreshold(working, threshold);
 
-    if (shouldInvert(working)) {
+    if (shouldInvert(working, preprocessConfig.invertPivot)) {
         working.invert();
     }
 
@@ -221,87 +228,6 @@ async function buildSoftOcrImage(img) {
         preprocessConfig.scaleFactor,
         preprocessConfig.minOutputWidth
     );
-}
-
-async function padAndScale(img, padding, scaleFactor, minWidth) {
-    const padded = await new jimp(
-        img.bitmap.width + padding * 2,
-        img.bitmap.height + padding * 2,
-        0xffffffff
-    );
-    padded.composite(img, padding, padding);
-    const targetWidth = Math.max(minWidth, Math.round(padded.bitmap.width * scaleFactor));
-    padded.resize(targetWidth, jimp.AUTO);
-    return padded;
-}
-
-function computeOtsuThreshold(img) {
-    const histogram = new Array(256).fill(0);
-    const { data, width, height } = img.bitmap;
-    const total = width * height;
-
-    for (let idx = 0; idx < data.length; idx += 4) {
-        histogram[data[idx]] += 1;
-    }
-
-    let sum = 0;
-    for (let i = 0; i < 256; i++) {
-        sum += i * histogram[i];
-    }
-
-    let sumB = 0;
-    let wB = 0;
-    let wF = 0;
-    let max = 0;
-    let threshold = 0;
-
-    for (let i = 0; i < 256; i++) {
-        wB += histogram[i];
-        if (wB === 0) continue;
-        wF = total - wB;
-        if (wF === 0) break;
-        sumB += i * histogram[i];
-        const mB = sumB / wB;
-        const mF = (sum - sumB) / wF;
-        const between = wB * wF * Math.pow(mB - mF, 2);
-        if (between > max) {
-            max = between;
-            threshold = i;
-        }
-    }
-    return threshold;
-}
-
-function applyThreshold(img, threshold) {
-    const output = img.clone();
-    const { data } = output.bitmap;
-    for (let idx = 0; idx < data.length; idx += 4) {
-        const val = data[idx] < threshold ? 0 : 255;
-        data[idx] = val;
-        data[idx + 1] = val;
-        data[idx + 2] = val;
-        data[idx + 3] = 255;
-    }
-    return output;
-}
-
-function shouldInvert(img) {
-    const { data, width, height } = img.bitmap;
-    let sum = 0;
-    for (let idx = 0; idx < data.length; idx += 4) {
-        sum += data[idx];
-    }
-    const mean = sum / (width * height);
-    return mean < preprocessConfig.invertPivot;
-}
-
-function sharpen(img) {
-    const kernel = [
-        [0, -1, 0],
-        [-1, 5, -1],
-        [0, -1, 0]
-    ];
-    return img.convolute(kernel);
 }
 
 async function writePreview(image, directory, type, regionKey) {
