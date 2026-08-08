@@ -28,6 +28,14 @@ export default [
         }
     },
     {
+        files: ["site/public/**/*.js"],
+        languageOptions: {
+            globals: {
+                ...globals.browser
+            }
+        }
+    },
+    {
         files: ["**/*.cjs"],
         languageOptions: {
             ecmaVersion: "latest",

@@ -514,6 +514,11 @@ form {
     background: #e9eee7;
 }
 
+.drop-zone:has(+ .visually-hidden-file:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+}
+
 .upload-icon {
     display: grid;
     width: 2.75rem;
@@ -704,6 +709,10 @@ textarea[aria-invalid="true"] {
 
 .field-hint {
     color: var(--ink-soft);
+}
+
+.field-hint.is-error {
+    color: var(--danger);
 }
 
 .field-error {

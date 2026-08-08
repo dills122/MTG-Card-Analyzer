@@ -53,12 +53,25 @@ export async function autocompleteCards(value, fetchImpl) {
 }
 
 function imageUrlFor(card) {
-    if (typeof card?.image_uris?.normal === "string") return card.image_uris.normal;
+    if (typeof card?.image_uris?.normal === "string") {
+        return trustedHttpsUrl(card.image_uris.normal, "cards.scryfall.io");
+    }
     if (Array.isArray(card?.card_faces)) {
         const face = card.card_faces.find((candidate) => candidate?.image_uris?.normal);
-        if (typeof face?.image_uris?.normal === "string") return face.image_uris.normal;
+        if (typeof face?.image_uris?.normal === "string") {
+            return trustedHttpsUrl(face.image_uris.normal, "cards.scryfall.io");
+        }
     }
     return null;
+}
+
+function trustedHttpsUrl(value, hostname) {
+    try {
+        const url = new URL(value);
+        return url.protocol === "https:" && url.hostname === hostname ? url.href : null;
+    } catch {
+        return null;
+    }
 }
 
 function mapCard(card) {
@@ -73,7 +86,10 @@ function mapCard(card) {
         collectorNumber: card.collector_number,
         typeLine: card.type_line,
         rarity: card.rarity,
-        scryfallUri: typeof card.scryfall_uri === "string" ? card.scryfall_uri : null,
+        scryfallUri:
+            typeof card.scryfall_uri === "string"
+                ? trustedHttpsUrl(card.scryfall_uri, "scryfall.com")
+                : null,
         imageUrl: imageUrlFor(card)
     };
 }

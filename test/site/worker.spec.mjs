@@ -21,9 +21,14 @@ function createDependencies(fetchImpl) {
     };
 }
 
-function createSubmissionRequest() {
+function createSubmissionRequest({ turnstileToken } = {}) {
     const form = new FormData();
-    form.set("image", new File(["image-data"], "pacifism.jpg", { type: "image/jpeg" }));
+    form.set(
+        "image",
+        new File([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], "pacifism.jpg", {
+            type: "image/jpeg"
+        })
+    );
     form.set("name", "Pacifism");
     form.set("setCode", "BBD");
     form.set("setName", "Battlebond");
@@ -33,7 +38,8 @@ function createSubmissionRequest() {
     form.set("quality", "good-photo");
     form.set("sourceMode", "manual");
     form.set("consent", "yes");
-    return new Request("https://example.com/api/submissions", { method: "POST", body: form });
+    if (turnstileToken) form.set("cf-turnstile-response", turnstileToken);
+    return new Request("http://localhost/api/submissions", { method: "POST", body: form });
 }
 
 function createStorageEnvironment({ insertError } = {}) {
@@ -120,6 +126,32 @@ describe("test-data portal Worker", () => {
         });
     });
 
+    it("drops untrusted Scryfall image and provenance URLs", async () => {
+        const dependencies = createDependencies(async () =>
+            Response.json({
+                data: [
+                    {
+                        ...SAMPLE_CARD,
+                        scryfall_uri: "https://example.com/card",
+                        image_uris: { normal: "https://example.com/tracker.jpg" }
+                    }
+                ]
+            })
+        );
+
+        const response = await handleRequest(
+            new Request("https://example.com/api/cards/prints?name=Pacifism"),
+            {},
+            {},
+            dependencies
+        );
+
+        expect((await response.json()).data[0]).to.include({
+            scryfallUri: null,
+            imageUrl: null
+        });
+    });
+
     it("rejects short autocomplete queries without contacting Scryfall", async () => {
         let calls = 0;
         const dependencies = createDependencies(async () => {
@@ -162,6 +194,88 @@ describe("test-data portal Worker", () => {
         expect(state.binds[0].values).to.include("pending");
     });
 
+    it("requires a valid Turnstile token when protection is configured", async () => {
+        const { env, state } = createStorageEnvironment();
+        env.TURNSTILE_SECRET_KEY = "test-secret";
+
+        const response = await handleRequest(
+            createSubmissionRequest(),
+            env,
+            {},
+            createDependencies(fetch)
+        );
+
+        expect(response.status).to.equal(400);
+        expect((await response.json()).error.code).to.equal("verification_required");
+        expect(state.puts).to.have.length(0);
+    });
+
+    it("fails closed when Turnstile is missing outside local development", async () => {
+        const { env, state } = createStorageEnvironment();
+        const request = createSubmissionRequest();
+
+        const response = await handleRequest(
+            new Request("https://example.com/api/submissions", {
+                method: "POST",
+                body: await request.formData()
+            }),
+            env,
+            {},
+            createDependencies(fetch)
+        );
+
+        expect(response.status).to.equal(503);
+        expect((await response.json()).error.code).to.equal("verification_not_configured");
+        expect(state.puts).to.have.length(0);
+    });
+
+    it("rejects files whose bytes do not match their declared image type", async () => {
+        const { env, state } = createStorageEnvironment();
+        const request = createSubmissionRequest();
+        const form = await request.formData();
+        form.set("image", new File(["plain text"], "fake.jpg", { type: "image/jpeg" }));
+
+        const response = await handleRequest(
+            new Request("http://localhost/api/submissions", { method: "POST", body: form }),
+            env,
+            {},
+            createDependencies(fetch)
+        );
+
+        expect(response.status).to.equal(400);
+        expect((await response.json()).error.fields).to.deep.equal({
+            image: "Image contents do not match the selected file type."
+        });
+        expect(state.puts).to.have.length(0);
+    });
+
+    it("verifies Turnstile server-side before storing a protected submission", async () => {
+        const { env, state } = createStorageEnvironment();
+        env.TURNSTILE_SECRET_KEY = "test-secret";
+        let verificationRequest;
+        const dependencies = createDependencies(async (request) => {
+            verificationRequest = request;
+            return Response.json({ success: true, action: "fixture_submission" });
+        });
+
+        const response = await handleRequest(
+            createSubmissionRequest({ turnstileToken: "verified-token" }),
+            env,
+            {},
+            dependencies
+        );
+
+        expect(response.status).to.equal(201);
+        expect(verificationRequest.url).to.equal(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+        );
+        expect(await verificationRequest.clone().json()).to.include({
+            secret: "test-secret",
+            response: "verified-token"
+        });
+        expect(state.puts).to.have.length(1);
+    });
+
     it("removes the R2 object when the metadata insert fails", async () => {
         const { env, state } = createStorageEnvironment({
             insertError: new Error("D1 unavailable")
@@ -197,5 +311,8 @@ describe("test-data portal Worker", () => {
         );
 
         expect(await response.text()).to.equal("site");
+        expect(response.headers.get("content-security-policy")).to.include("default-src 'self'");
+        expect(response.headers.get("x-frame-options")).to.equal("DENY");
+        expect(response.headers.get("referrer-policy")).to.equal("no-referrer");
     });
 });

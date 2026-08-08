@@ -68,6 +68,8 @@ export function parseSubmissionForm(form) {
         errors.image = "Upload a JPEG, PNG, or WebP image.";
     } else if (image.size > MAX_IMAGE_BYTES) {
         errors.image = "Image must be 10 MiB or smaller.";
+    } else if (image.name.length > 255) {
+        errors.image = "Image filename must be 255 characters or fewer.";
     }
 
     const name = requiredText(form, "name", "Card name", 200, errors);
@@ -111,4 +113,23 @@ export function parseSubmissionForm(form) {
             notes
         }
     };
+}
+
+export function imageMatchesContentType(arrayBuffer, contentType) {
+    const bytes = new Uint8Array(arrayBuffer);
+    if (contentType === "image/jpeg") {
+        return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    }
+    if (contentType === "image/png") {
+        const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+        return signature.every((value, index) => bytes[index] === value);
+    }
+    if (contentType === "image/webp") {
+        return (
+            bytes.length >= 12 &&
+            String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+            String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+        );
+    }
+    return false;
 }

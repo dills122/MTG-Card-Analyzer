@@ -1,5 +1,10 @@
-import { parseSubmissionForm, SubmissionValidationError } from "./submission.mjs";
+import {
+    imageMatchesContentType,
+    parseSubmissionForm,
+    SubmissionValidationError
+} from "./submission.mjs";
 import { autocompleteCards, findCardPrints, ScryfallRequestError } from "./scryfall.mjs";
+import { verifyTurnstile } from "./turnstile.mjs";
 
 const INSERT_SUBMISSION = `
     INSERT INTO submissions (
@@ -12,10 +17,35 @@ const INSERT_SUBMISSION = `
     )
 `;
 
+const SECURITY_HEADERS = {
+    "content-security-policy": [
+        "default-src 'self'",
+        "base-uri 'none'",
+        "object-src 'none'",
+        "frame-ancestors 'none'",
+        "form-action 'self'",
+        "script-src 'self' https://challenges.cloudflare.com",
+        "frame-src https://challenges.cloudflare.com",
+        "connect-src 'self' https://challenges.cloudflare.com",
+        "img-src 'self' blob: data: https://cards.scryfall.io",
+        "style-src 'self'",
+        "upgrade-insecure-requests"
+    ].join("; "),
+    "permissions-policy": "camera=(), geolocation=(), microphone=()",
+    "referrer-policy": "no-referrer",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY"
+};
+
+function applySecurityHeaders(headers) {
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
+}
+
 function json(data, init = {}) {
     const headers = new Headers(init.headers);
     headers.set("content-type", "application/json; charset=utf-8");
-    headers.set("x-content-type-options", "nosniff");
+    applySecurityHeaders(headers);
     return Response.json(data, { ...init, headers });
 }
 
@@ -40,15 +70,54 @@ async function createSubmission(request, env, dependencies) {
     if (!env.SUBMISSION_IMAGES || !env.SUBMISSIONS_DB) {
         return errorResponse(503, "storage_unavailable", "Submission storage is not configured.");
     }
+    const hostname = new URL(request.url).hostname;
+    const isLocal = ["localhost", "127.0.0.1", "[::1]"].includes(hostname);
+    if (!env.TURNSTILE_SECRET_KEY && !isLocal) {
+        return errorResponse(
+            503,
+            "verification_not_configured",
+            "Submissions are unavailable until anti-spam verification is configured."
+        );
+    }
 
     let parsed;
+    let form;
     try {
-        parsed = parseSubmissionForm(await request.formData());
+        form = await request.formData();
+        parsed = parseSubmissionForm(form);
     } catch (error) {
         if (error instanceof SubmissionValidationError) {
             return errorResponse(400, "invalid_submission", error.message, error.fields);
         }
         return errorResponse(400, "invalid_form", "Submit the form as multipart form data.");
+    }
+
+    const verification = await verifyTurnstile(
+        form,
+        request,
+        env.TURNSTILE_SECRET_KEY,
+        dependencies.fetch
+    );
+    if (!verification.valid) {
+        if (verification.unavailable) {
+            return errorResponse(
+                503,
+                "verification_unavailable",
+                "Verification is temporarily unavailable. Try again."
+            );
+        }
+        return errorResponse(
+            400,
+            "verification_required",
+            "Complete the anti-spam verification and try again."
+        );
+    }
+
+    const imageBytes = await parsed.image.arrayBuffer();
+    if (!imageMatchesContentType(imageBytes, parsed.image.type)) {
+        return errorResponse(400, "invalid_submission", "Submission validation failed.", {
+            image: "Image contents do not match the selected file type."
+        });
     }
 
     const id = dependencies.randomUUID();
@@ -57,7 +126,7 @@ async function createSubmission(request, env, dependencies) {
     const key = storageKey(id, createdAt, image.type);
 
     try {
-        await env.SUBMISSION_IMAGES.put(key, await image.arrayBuffer(), {
+        await env.SUBMISSION_IMAGES.put(key, imageBytes, {
             httpMetadata: { contentType: image.type },
             customMetadata: { submissionId: id, status: "pending" }
         });
@@ -151,7 +220,16 @@ export async function handleRequest(
     if (url.pathname.startsWith("/api/")) {
         return errorResponse(404, "not_found", "API route not found.");
     }
-    if (env.ASSETS) return env.ASSETS.fetch(request);
+    if (env.ASSETS) {
+        const response = await env.ASSETS.fetch(request);
+        const headers = new Headers(response.headers);
+        applySecurityHeaders(headers);
+        return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers
+        });
+    }
     return new Response("Not found", { status: 404 });
 }
 
