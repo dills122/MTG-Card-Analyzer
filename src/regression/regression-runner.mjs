@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
-import { isDeepStrictEqual } from "node:util";
+import { isDeepStrictEqual, promisify } from "node:util";
 import textExtractionModule from "../image-analysis/extract-text.mjs";
 import imageProcessorModule from "../image-processing/image-processor.mjs";
 import matchNameModule from "../fuzzy-matching/match-name.mjs";
@@ -38,27 +38,11 @@ function extractName(imagePath, directory, dependencies) {
         persistArtifacts: false,
         logger: silentLogger
     });
-    return new Promise((resolve, reject) => {
-        extractor.extract((err, result) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(result);
-        });
-    });
+    return promisify(extractor.extract.bind(extractor))();
 }
 
 function hashImage(imagePath, dependencies) {
-    return new Promise((resolve, reject) => {
-        dependencies.Hash.HashImage(imagePath, (err, hash) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(hash);
-        });
-    });
+    return promisify(dependencies.Hash.hashImage)(imagePath);
 }
 
 function comparisonScore(comparison) {
@@ -80,7 +64,7 @@ async function rankPrintCandidates(imagePath, cards, dependencies) {
     return Promise.all(
         cards.map(async (card) => {
             const referenceHash = await hashImage(card.referenceImagePath, dependencies);
-            const comparison = dependencies.Hash.CompareHash(localHash, referenceHash);
+            const comparison = dependencies.Hash.compareHash(localHash, referenceHash);
             return {
                 card,
                 comparison,

@@ -36,7 +36,7 @@ describe("Integration::", () => {
                 directory: FAKE_DIR,
                 dependencies: {
                     ocrPreprocessor: { prepareOcrVariants: stubs.preprocessStub },
-                    textExtraction: { ScanImage: stubs.textExtractionStub }
+                    textExtraction: { scanImage: stubs.textExtractionStub }
                 }
             });
 
@@ -58,7 +58,7 @@ describe("Integration::", () => {
                 ocrOptions,
                 dependencies: {
                     ocrPreprocessor: { prepareOcrVariants: stubs.preprocessStub },
-                    textExtraction: { ScanImage: stubs.textExtractionStub }
+                    textExtraction: { scanImage: stubs.textExtractionStub }
                 }
             });
 

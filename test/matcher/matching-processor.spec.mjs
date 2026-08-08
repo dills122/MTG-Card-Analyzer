@@ -89,11 +89,11 @@ describe("MatcherProcessor::", () => {
             }
         ]);
         const hashStub = sandbox.stub(dependencies, "Hash").resolves("FAKE_LOCAL_HASH");
-        sandbox.stub(dependencies, "CreateDirectory").resolves("/tmp/set-symbol-dir");
+        sandbox.stub(dependencies, "createDirectory").resolves("/tmp/set-symbol-dir");
         sandbox
             .stub(dependencies, "GetSetSymbolSnippetTmpFile")
             .resolves("/tmp/set-symbol-dir/set-symbol.png");
-        sandbox.stub(dependencies, "CleanUpFiles").resolves();
+        sandbox.stub(dependencies, "cleanUpFiles").resolves();
         const processHashesStub = sandbox
             .stub(dependencies.HashProcessor, "create")
             .returns(processHashesInstance);
@@ -128,11 +128,11 @@ describe("MatcherProcessor::", () => {
             { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } }
         ]);
         sandbox.stub(dependencies, "Hash").resolves("FAKE_LOCAL_HASH");
-        sandbox.stub(dependencies, "CreateDirectory").resolves("/tmp/set-symbol-dir");
+        sandbox.stub(dependencies, "createDirectory").resolves("/tmp/set-symbol-dir");
         sandbox
             .stub(dependencies, "GetSetSymbolSnippetTmpFile")
             .resolves("/tmp/set-symbol-dir/set-symbol.png");
-        sandbox.stub(dependencies, "CleanUpFiles").resolves();
+        sandbox.stub(dependencies, "cleanUpFiles").resolves();
         sandbox.stub(dependencies.HashProcessor, "create").returns(processHashesInstance);
 
         const processor = create({
@@ -160,11 +160,11 @@ describe("MatcherProcessor::", () => {
             { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
         ]);
         sandbox.stub(dependencies, "Hash").resolves("FAKE_LOCAL_HASH");
-        sandbox.stub(dependencies, "CreateDirectory").resolves("/tmp/set-symbol-dir");
+        sandbox.stub(dependencies, "createDirectory").resolves("/tmp/set-symbol-dir");
         sandbox
             .stub(dependencies, "GetSetSymbolSnippetTmpFile")
             .resolves("/tmp/set-symbol-dir/set-symbol.png");
-        sandbox.stub(dependencies, "CleanUpFiles").resolves();
+        sandbox.stub(dependencies, "cleanUpFiles").resolves();
         sandbox.stub(dependencies.HashProcessor, "create").returns(processHashesInstance);
 
         const processor = create({
@@ -192,9 +192,9 @@ describe("MatcherProcessor::", () => {
             { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
         ]);
         const hashStub = sandbox.stub(dependencies, "Hash").resolves("FALLBACK_HASH");
-        sandbox.stub(dependencies, "CreateDirectory").resolves("/tmp/set-symbol-dir");
+        sandbox.stub(dependencies, "createDirectory").resolves("/tmp/set-symbol-dir");
         sandbox.stub(dependencies, "GetSetSymbolSnippetTmpFile").rejects(new Error("crop failed"));
-        sandbox.stub(dependencies, "CleanUpFiles").resolves();
+        sandbox.stub(dependencies, "cleanUpFiles").resolves();
         sandbox.stub(dependencies.HashProcessor, "create").returns(processHashesInstance);
 
         const processor = create({

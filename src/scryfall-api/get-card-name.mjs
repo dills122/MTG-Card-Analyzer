@@ -11,7 +11,7 @@ const dependencies = {
 
 const baseUrl = "https://api.scryfall.com";
 
-async function GetCardNames() {
+async function getCardNames() {
     try {
         const response = await dependencies.request({
             uri: `${baseUrl}/catalog/card-names`,
@@ -28,9 +28,9 @@ async function GetCardNames() {
     }
 }
 
-export { GetCardNames, dependencies };
+export { getCardNames, dependencies };
 
 export default {
-    GetCardNames,
+    getCardNames,
     dependencies
 };

@@ -36,8 +36,8 @@ describe("ProcessHashes fallback behavior", () => {
             allowRemoteBestGuess: true,
             dependencies: {
                 Hash: {
-                    HashImage: hashImageStub,
-                    CompareHash: compareHashStub
+                    hashImage: hashImageStub,
+                    compareHash: compareHashStub
                 },
                 CardHashes: {
                     getByCardName: sandbox.stub().resolves([]),

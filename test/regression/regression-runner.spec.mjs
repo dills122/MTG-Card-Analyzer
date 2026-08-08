@@ -151,9 +151,9 @@ describe("Regression framework::", () => {
             })
         };
         const fakeHash = {
-            HashImage: (imagePath, callback) =>
+            hashImage: (imagePath, callback) =>
                 callback(null, imagePath.includes("alternative") ? "bbbb" : "aaaa"),
-            CompareHash: (left, right) => {
+            compareHash: (left, right) => {
                 const score = left === right ? 1 : 0;
                 return {
                     twoBitMatches: score,
@@ -221,11 +221,11 @@ describe("Regression framework::", () => {
         };
         const hashCalls = [];
         const fakeHash = {
-            HashImage: (imagePath, callback) => {
+            hashImage: (imagePath, callback) => {
                 hashCalls.push(imagePath);
                 callback(null, "fresh-hash");
             },
-            CompareHash: () => ({ twoBitMatches: 1, fourBitMatches: 1, stringCompare: 1 })
+            compareHash: () => ({ twoBitMatches: 1, fourBitMatches: 1, stringCompare: 1 })
         };
 
         const report = await runRegression(manifest, {
@@ -303,8 +303,8 @@ describe("Regression framework::", () => {
                 },
                 MatchName: matchNameModule,
                 Hash: {
-                    HashImage: (_imagePath, callback) => callback(null, "fresh-hash"),
-                    CompareHash: () => ({
+                    hashImage: (_imagePath, callback) => callback(null, "fresh-hash"),
+                    compareHash: () => ({
                         twoBitMatches: 1,
                         fourBitMatches: 1,
                         stringCompare: 1

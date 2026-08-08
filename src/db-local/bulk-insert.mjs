@@ -3,10 +3,10 @@ import scryfallApi from "../scryfall-api/index.mjs";
 import { pathToFileURL } from "node:url";
 import { seedCardNames } from "./seed-card-names.mjs";
 
-const { GetCardNames } = scryfallApi;
+const { getCardNames } = scryfallApi;
 
 const dependencies = {
-    GetCardNames,
+    getCardNames,
     insertName(name) {
         return db.insert({ name });
     }
@@ -14,7 +14,7 @@ const dependencies = {
 
 async function executeBulkInsert(options = {}) {
     return seedCardNames({
-        getCardNames: options.getCardNames || dependencies.GetCardNames,
+        getCardNames: options.getCardNames || dependencies.getCardNames,
         insertName: options.insertName || dependencies.insertName,
         logger: options.logger || console,
         concurrency: options.concurrency

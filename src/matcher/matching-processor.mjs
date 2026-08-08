@@ -8,12 +8,12 @@ import imageProcessing from "../image-processing/index.mjs";
 import FileIO from "../file-io.mjs";
 
 const dependencies = {
-    Searcher: scryfallApi.Search.SearchList,
+    Searcher: scryfallApi.Search.searchList,
     HashProcessor: exportProcessor.ProcessHashes,
-    Hash: promisify(imageHashing.Hash.HashImage),
-    CreateDirectory: FileIO.CreateDirectory,
-    CleanUpFiles: FileIO.CleanUpFiles,
-    GetSetSymbolSnippetTmpFile: imageProcessing.resize.GetImageSnippetTmpFile
+    Hash: promisify(imageHashing.Hash.hashImage),
+    createDirectory: FileIO.createDirectory,
+    cleanUpFiles: FileIO.cleanUpFiles,
+    GetSetSymbolSnippetTmpFile: imageProcessing.resize.getImageSnippetTmpFile
 };
 
 const schema = joi.object().keys({
@@ -88,7 +88,7 @@ class MatcherProcessor {
     async _hashLocalCardAsync() {
         let directory;
         try {
-            directory = await dependencies.CreateDirectory();
+            directory = await dependencies.createDirectory();
         } catch {
             return this._hashFromPathAsync(this.filePath);
         }
@@ -130,7 +130,7 @@ class MatcherProcessor {
         }
         const dir = this.setSymbolDirectory;
         this.setSymbolDirectory = "";
-        dependencies.CleanUpFiles(dir).catch(() => {});
+        dependencies.cleanUpFiles(dir).catch(() => {});
     }
 
     async _processMultiSetMatchesAsync() {

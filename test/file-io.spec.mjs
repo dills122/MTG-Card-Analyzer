@@ -16,14 +16,14 @@ describe("File IO helpers", () => {
     it("writes to a random json file when no path supplied", async () => {
         const writeStub = sandbox.stub().resolves();
         const randomUUID = sandbox.stub().returns("uuid-123");
-        const { WriteToFile } = buildFileIO({
+        const { writeToFile } = buildFileIO({
             fs: { writeFile: writeStub, unlink: () => {}, mkdir: () => {}, rm: () => {} },
             promisify: () => writeStub,
             randomUUID,
             tempDirectory: "/tmp/mock"
         });
 
-        await WriteToFile({ hello: "world" });
+        await writeToFile({ hello: "world" });
 
         assert.isTrue(writeStub.calledOnce);
         const filename = writeStub.firstCall.args[0];
@@ -31,29 +31,30 @@ describe("File IO helpers", () => {
     });
 
     it("creates a directory under tmpdir using randomUUID", async () => {
-        const mkdirStub = sandbox.stub().callsArgWith(1, null);
+        const mkdirStub = sandbox.stub().resolves();
         const randomUUID = sandbox.stub().returns("uuid-abc");
-        const { CreateDirectory } = buildFileIO({
+        const { createDirectory } = buildFileIO({
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: mkdirStub, rm: () => {} },
             promisify: (fn) => fn,
             randomUUID,
             tempDirectory: "/tmp/mock"
         });
 
-        const dirPath = await CreateDirectory();
+        const dirPath = await createDirectory();
         assert.equal(dirPath, "/tmp/mock/uuid-abc");
+        assert.isTrue(mkdirStub.calledOnceWithExactly("/tmp/mock/uuid-abc"));
     });
 
     it("cleans up files via fs.rm", async () => {
         const rmStub = sandbox.stub().resolves();
-        const { CleanUpFiles } = buildFileIO({
+        const { cleanUpFiles } = buildFileIO({
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {}, rm: rmStub },
             promisify: (fn) => fn,
             randomUUID: () => "id",
             tempDirectory: "/tmp/mock"
         });
 
-        await CleanUpFiles("/tmp/mock/dir");
+        await cleanUpFiles("/tmp/mock/dir");
         assert.isTrue(
             rmStub.calledOnceWithExactly("/tmp/mock/dir", { recursive: true, force: true })
         );

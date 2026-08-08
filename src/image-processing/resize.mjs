@@ -1,7 +1,7 @@
 import jimp from "jimp";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { GetImageDimensions } from "./util.mjs";
+import { getImageDimensions } from "./util.mjs";
 import { round } from "../util.mjs";
 import {
     computeOtsuThreshold,
@@ -61,30 +61,7 @@ const preprocessConfig = {
     invertPivot: 110 // invert when mean luminance is dark; keeps white-on-black text legible
 };
 
-/**
- * Crop and preprocess a snippet, returning a JPEG buffer.
- * @param {string} imgPath path to source image
- * @param {"name"|"type"|"art"|"flavor"} type snippet type
- * @returns {Promise<Buffer>} processed image buffer
- */
-async function GetImageSnippet(imgPath, type) {
-    const img = await buildSnippetImage(imgPath, type);
-    const imgBuffer = await img.getBufferAsync("image/jpeg");
-    return imgBuffer;
-}
-
-/**
- * Crop and preprocess a snippet, writing to a new file in cwd.
- */
-async function GetImageSnippetFile(imgPath, type) {
-    const ext = path.extname(imgPath) || ".jpg";
-    const filePath = `${randomUUID()}${ext}`;
-    const img = await buildSnippetImage(imgPath, type);
-    await img.writeAsync(filePath);
-    return filePath;
-}
-
-async function GetImageSnippetTmpFile(imgPath, directory, type) {
+async function getImageSnippetTmpFile(imgPath, directory, type) {
     const ext = path.extname(imgPath) || ".jpg";
     const filePath = path.join(directory, `${randomUUID()}${ext}`);
     const img = await buildSnippetImage(imgPath, type);
@@ -96,14 +73,14 @@ async function GetImageSnippetTmpFile(imgPath, directory, type) {
  * Produce a cropped and preprocessed Jimp image ready for OCR.
  */
 async function buildSnippetImage(imgPath, type) {
-    const dimensions = await GetImageDimensions(imgPath);
+    const dimensions = await getImageDimensions(imgPath);
     if (
         dimensions.width < preprocessConfig.minSourceWidth ||
         dimensions.height < preprocessConfig.minSourceHeight
     ) {
         throw new Error("Image is to small");
     }
-    const alteredDimensions = GetAlteredDimensions(dimensions, type);
+    const alteredDimensions = getAlteredDimensions(dimensions, type);
     let img = await jimp.read(imgPath);
     img = cropper(img, alteredDimensions);
     if (type === "name" || type === "type") {
@@ -117,7 +94,7 @@ async function buildSnippetImage(imgPath, type) {
 // left/top default to constants.borderPercent unless the type's own constants override them
 // (setSymbol positions from its own leftPercent/topPercent; type/art/flavor position top from
 // their own topPercent).
-function GetAlteredDimensions(dimensions, type) {
+function getAlteredDimensions(dimensions, type) {
     const key = TYPE_CONSTANTS_KEY[type];
     if (!key) {
         throw new Error(`Unsupported snippet type "${type}"`);
@@ -198,10 +175,8 @@ function binaryErode(img, iterations = 1) {
     return morphologicalOp(img, iterations, Math.min, 255);
 }
 
-export { GetImageSnippet, GetImageSnippetFile, GetImageSnippetTmpFile };
+export { getImageSnippetTmpFile };
 
 export default {
-    GetImageSnippet,
-    GetImageSnippetFile,
-    GetImageSnippetTmpFile
+    getImageSnippetTmpFile
 };

@@ -60,7 +60,7 @@ class ImageProcessor {
 
     extractText() {
         return new Promise((resolve, reject) => {
-            this.dependencies.textExtraction.ScanImage(
+            this.dependencies.textExtraction.scanImage(
                 this.ocrVariants || this.imagePath,
                 this.type,
                 async (err, extractResults) => {

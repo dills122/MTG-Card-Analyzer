@@ -22,7 +22,7 @@ describe("TextExtraction::", () => {
     });
 
     afterEach(async () => {
-        await textExtraction.ShutDown();
+        await textExtraction.shutDown();
         sandbox.restore();
     });
 
@@ -70,7 +70,7 @@ describe("TextExtraction::", () => {
         ];
 
         const result = await new Promise((resolve, reject) => {
-            textExtraction.ScanImage(
+            textExtraction.scanImage(
                 variants,
                 "name",
                 (err, extracted) => (err ? reject(err) : resolve(extracted)),
@@ -109,7 +109,7 @@ describe("TextExtraction::", () => {
             }
         });
 
-        textExtraction.ScanImage("/tmp/fake-image.jpg", "name", (err, result) => {
+        textExtraction.scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.isNull(err);
             assert.isTrue(recognizeStub.calledOnce);
             assert.equal(createWorkerStub.firstCall.args[0].cacheMethod, "none");
@@ -124,7 +124,7 @@ describe("TextExtraction::", () => {
         const expectedErr = new Error("OCR failed");
         const recognizeStub = worker.recognize.rejects(expectedErr);
 
-        textExtraction.ScanImage("/tmp/fake-image.jpg", "name", (err, result) => {
+        textExtraction.scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.strictEqual(err, expectedErr);
             assert.isTrue(recognizeStub.calledOnce);
             assert.isNull(result);
@@ -135,7 +135,7 @@ describe("TextExtraction::", () => {
     it("allows regression runs to disable the OCR cache and use a local language model", (done) => {
         worker.recognize.resolves({ data: { text: "Pacifism" } });
 
-        textExtraction.ScanImage(
+        textExtraction.scanImage(
             "/tmp/fake-image.jpg",
             "name",
             (err) => {
@@ -191,7 +191,7 @@ describe("TextExtraction::", () => {
             }
         });
 
-        textExtraction.ScanImage("/tmp/fake-image.jpg", "name", (err, result) => {
+        textExtraction.scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.isNull(err);
             assert.isTrue(recognizeStub.calledOnce);
             assert.equal(result.cleanText, "THOUGHT REFLECTION");
@@ -225,7 +225,7 @@ describe("TextExtraction::", () => {
             { buffer: Buffer.from("b"), region: "name-core", psm: "line" }
         ];
         const result = await new Promise((resolve, reject) => {
-            textExtraction.ScanImage(variants, "name", (err, extracted) => {
+            textExtraction.scanImage(variants, "name", (err, extracted) => {
                 if (err) {
                     return reject(err);
                 }
@@ -253,7 +253,7 @@ describe("TextExtraction::", () => {
             { buffer: Buffer.from("b"), region: "name-wide", psm: "line" }
         ];
         const extraction = new Promise((resolve, reject) => {
-            textExtraction.ScanImage(variants, "name", (err, result) => {
+            textExtraction.scanImage(variants, "name", (err, result) => {
                 if (err) return reject(err);
                 return resolve(result);
             });
@@ -278,7 +278,7 @@ describe("TextExtraction::", () => {
         });
 
         await new Promise((resolve, reject) => {
-            textExtraction.ScanImage(
+            textExtraction.scanImage(
                 [{ buffer: Buffer.from("card"), region: "name-core", psm: "line" }],
                 "name",
                 (err, result) => (err ? reject(err) : resolve(result)),
@@ -304,7 +304,7 @@ describe("TextExtraction::", () => {
             .resolves({ data: { text: "Pacifism", confidence: 80 } });
 
         const result = await new Promise((resolve, reject) => {
-            textExtraction.ScanImage(
+            textExtraction.scanImage(
                 [
                     { buffer: Buffer.from("a"), region: "name-core", psm: "line" },
                     { buffer: Buffer.from("b"), region: "top-band", psm: "block" }
@@ -325,7 +325,7 @@ describe("TextExtraction::", () => {
         assert.isTrue(worker.setParameters.notCalled);
         assert.isTrue(worker.recognize.calledTwice);
 
-        await textExtraction.ShutDown();
+        await textExtraction.shutDown();
         assert.isTrue(worker.terminate.calledOnce);
     });
 });

@@ -121,28 +121,10 @@ class ProcessorClass {
         }
     }
 
-    createDirectory(callback) {
-        const execution = this.createDirectoryAsync();
-        if (typeof callback === "function") {
-            execution.then(() => callback()).catch((err) => callback(err));
-            return;
-        }
-        return execution;
-    }
-
     async createDirectoryAsync() {
         this.logger.info("Preparing temporary files");
-        const directory = await dependencies.FileIO.CreateDirectory();
+        const directory = await dependencies.FileIO.createDirectory();
         this.directory = directory;
-    }
-
-    extractName(callback) {
-        const execution = this.extractNameAsync();
-        if (typeof callback === "function") {
-            execution.then(() => callback()).catch((err) => callback(err));
-            return;
-        }
-        return execution;
     }
 
     async extractNameAsync() {
@@ -164,15 +146,6 @@ class ProcessorClass {
         this.nameExtractionResults = results;
     }
 
-    processExtractionResults(callback) {
-        const execution = this.processExtractionResultsAsync();
-        if (typeof callback === "function") {
-            execution.then(() => callback()).catch((err) => callback(err));
-            return;
-        }
-        return execution;
-    }
-
     async processExtractionResultsAsync() {
         this.logger.info("Matching card name");
         const resolution = await resolveCardName({
@@ -187,15 +160,6 @@ class ProcessorClass {
         this.nameMatches = resolution.matches;
         this.supplementalNameExtractionResults = resolution.supplementalExtractionResults;
         this.logger.info(formatMatchSummary(this.nameMatches));
-    }
-
-    attemptMatching(callback) {
-        const execution = this.attemptMatchingAsync();
-        if (typeof callback === "function") {
-            execution.then(() => callback()).catch((err) => callback(err));
-            return;
-        }
-        return execution;
     }
 
     async attemptMatchingAsync() {
@@ -257,15 +221,6 @@ class ProcessorClass {
         };
     }
 
-    CreateNeedsAttentionRecord(record, callback) {
-        const execution = this.CreateNeedsAttentionRecordAsync(record);
-        if (typeof callback === "function") {
-            execution.then(() => callback()).catch((err) => callback(err));
-            return;
-        }
-        return execution;
-    }
-
     async CreateNeedsAttentionRecordAsync(record) {
         this.logger.info(`Saving "${record.name}" for manual review`);
         const name64Image = await dependencies.Base64(this.nameExtractionImagePath);
@@ -279,32 +234,15 @@ class ProcessorClass {
         await needsAttenionModel.insert();
     }
 
-    CreateCollectionsRecord(record, callback) {
-        const execution = this.CreateCollectionsRecordAsync(record);
-        if (typeof callback === "function") {
-            execution.then(() => callback()).catch((err) => callback(err));
-            return;
-        }
-        return execution;
-    }
-
     async CreateCollectionsRecordAsync(record) {
         this.logger.info(`Saving "${record.name}" to collection`);
         const set = record.sets[0];
         let additionalInfo;
         try {
-            additionalInfo = await new Promise((resolve, reject) => {
-                dependencies.GetAdditionalCardInfo.SearchByNameExact(
-                    record.name,
-                    "",
-                    (err, info) => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        return resolve(info);
-                    }
-                );
-            });
+            additionalInfo = await dependencies.GetAdditionalCardInfo.searchByNameExact(
+                record.name,
+                ""
+            );
         } catch (err) {
             this.logger.error(err);
             throw err;

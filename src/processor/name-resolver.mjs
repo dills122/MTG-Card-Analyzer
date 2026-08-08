@@ -1,4 +1,6 @@
-function extractText({
+import { promisify } from "node:util";
+
+async function extractText({
     filePath,
     directory,
     type,
@@ -15,15 +17,8 @@ function extractText({
         ...(ocrOptions ? { ocrOptions } : {}),
         ...(typeof persistArtifacts === "boolean" ? { persistArtifacts } : {})
     });
-    return new Promise((resolve, reject) => {
-        extractor.extract((err, results) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve({ results, imagePath: extractor.imagePath });
-        });
-    });
+    const results = await promisify(extractor.extract.bind(extractor))();
+    return { results, imagePath: extractor.imagePath };
 }
 
 function matchName({ extractionResults, supplementalText, MatchName, matchDependencies, logger }) {
@@ -33,7 +28,7 @@ function matchName({ extractionResults, supplementalText, MatchName, matchDepend
         ...(supplementalText ? { supplementalText } : {}),
         ...(matchDependencies ? { dependencies: matchDependencies } : {}),
         ...(logger ? { logger } : {})
-    }).Match();
+    }).match();
 }
 
 async function resolveCardName(options) {

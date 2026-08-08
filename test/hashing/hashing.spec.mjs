@@ -17,7 +17,7 @@ describe("Hashing::", () => {
         });
         it("Should return a hash of the image", (done) => {
             const consoleLogStub = sinon.stub(console, "log");
-            Hashing.HashImage(url, (error, hash) => {
+            Hashing.hashImage(url, (error, hash) => {
                 assert.isNull(error);
                 assert.isString(hash);
                 assert.isTrue(stubs.imageHashStub.calledOnce, "Image Hash called");
@@ -35,7 +35,7 @@ describe("Hashing::", () => {
             stubs.imageHashStub = sinon
                 .stub(Hashing.dependencies, "imageHash")
                 .callsArgWith(3, {}, null);
-            Hashing.HashImage("", (error, hash) => {
+            Hashing.hashImage("", (error, hash) => {
                 assert.deepEqual(error, {});
                 assert.isUndefined(hash);
                 assert.isTrue(stubs.imageHashStub.calledOnce, "Image Hash called");
@@ -46,7 +46,7 @@ describe("Hashing::", () => {
         it("does not let a malformed remote URL break hashing", (done) => {
             const consoleLogStub = sinon.stub(console, "log");
 
-            Hashing.HashImage("http://%", (error, hash) => {
+            Hashing.hashImage("http://%", (error, hash) => {
                 assert.isNull(error);
                 assert.equal(hash, fakeHash);
                 assert.isTrue(
@@ -64,7 +64,7 @@ describe("Hashing::", () => {
         });
         it("Should return a hash comparison result", (done) => {
             const consoleLogStub = sinon.stub(console, "log");
-            let hashComparisonResults = Hashing.CompareHash(hashOne, hashTwo);
+            let hashComparisonResults = Hashing.compareHash(hashOne, hashTwo);
             assert.isObject(hashComparisonResults);
             assert.equal(hashComparisonResults.twoBitMatches, 1);
             assert.equal(hashComparisonResults.fourBitMatches, 1);

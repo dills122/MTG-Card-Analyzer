@@ -11,7 +11,7 @@ const logger = log.create({
     isPretty: true
 });
 
-function HashImage(imgUrl, cb) {
+function hashImage(imgUrl, cb) {
     logger.info(`Hashing image: ${formatImageSource(imgUrl)}`);
     dependencies.imageHash(imgUrl, 16, true, (error, data) => {
         if (error) {
@@ -21,7 +21,7 @@ function HashImage(imgUrl, cb) {
     });
 }
 
-function CompareHash(hashOne, hashTwo) {
+function compareHash(hashOne, hashTwo) {
     const HashLength = hashOne.length;
     let twoBitMatches = 0;
     let fourBitMatches = 0;
@@ -69,10 +69,10 @@ function toPercent(score) {
     return `${Math.round(Number(score) * 100)}%`;
 }
 
-export { CompareHash, HashImage };
+export { compareHash, hashImage };
 
 export default {
-    CompareHash,
-    HashImage,
+    compareHash,
+    hashImage,
     dependencies
 };

@@ -73,7 +73,7 @@ class MatchName {
         });
     }
 
-    async Match() {
+    async match() {
         await this.gatherInitialResults();
         const matches = await this.filterBulkMatches();
         if (matches.length > 0 || !normalizeForMatch(this.supplementalText || "")) {

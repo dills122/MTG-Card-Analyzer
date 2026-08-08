@@ -96,7 +96,7 @@ describe("Integration::", () => {
 
         it("Should execute happy path for compareRemoteHashes", async () => {
             stubs.hashImageStub = sandbox
-                .stub(Hash, "HashImage")
+                .stub(Hash, "hashImage")
                 .onFirstCall()
                 .callsArgWith(1, null, CLOSE_DIFF_HASH)
                 .onSecondCall()
@@ -116,7 +116,7 @@ describe("Integration::", () => {
 
         it("Should return no results for compareRemoteHashes", async () => {
             stubs.hashImageStub = sandbox
-                .stub(Hash, "HashImage")
+                .stub(Hash, "hashImage")
                 .onFirstCall()
                 .callsArgWith(1, null, CLOSE_DIFF_HASH)
                 .onSecondCall()
@@ -136,7 +136,7 @@ describe("Integration::", () => {
 
         it("Should insert remote hash records with correct set + hash mapping when querying enabled", async () => {
             stubs.insertHashStub.restore();
-            stubs.hashImageStub = sandbox.stub(Hash, "HashImage").callsArgWith(1, null, FAKE_HASH);
+            stubs.hashImageStub = sandbox.stub(Hash, "hashImage").callsArgWith(1, null, FAKE_HASH);
             stubs.insertEntityStub = sandbox.stub(CardHashes, "upsert").returns();
             const info = sandbox.stub();
 
@@ -169,7 +169,7 @@ describe("Integration::", () => {
         });
 
         it("Should fall back to full remote hash when remote set-symbol hashing fails", async () => {
-            stubs.hashImageStub = sandbox.stub(Hash, "HashImage").callsArgWith(1, null, FAKE_HASH);
+            stubs.hashImageStub = sandbox.stub(Hash, "hashImage").callsArgWith(1, null, FAKE_HASH);
             let hasher = ProcessHashes.create({
                 cards: [
                     {
@@ -185,9 +185,9 @@ describe("Integration::", () => {
             });
 
             stubs.createDirectoryStub = sandbox
-                .stub(hasher.dependencies, "CreateDirectory")
+                .stub(hasher.dependencies, "createDirectory")
                 .resolves("/tmp/remote-hash-dir");
-            stubs.cleanupStub = sandbox.stub(hasher.dependencies, "CleanUpFiles").resolves();
+            stubs.cleanupStub = sandbox.stub(hasher.dependencies, "cleanUpFiles").resolves();
             stubs.symbolStub = sandbox
                 .stub(hasher, "_hashRemoteSetSymbol")
                 .rejects(new Error("crop failed"));

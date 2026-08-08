@@ -13,7 +13,7 @@ describe("Name resolver::", () => {
         };
         const MatchName = {
             create: sinon.stub().returns({
-                Match: async () => [{ name: "Pacifism", percentage: 1 }]
+                match: async () => [{ name: "Pacifism", percentage: 1 }]
             })
         };
 
@@ -45,9 +45,9 @@ describe("Name resolver::", () => {
                 extract: (callback) => callback(null, type === "name" ? titleResults : rulesResults)
             }))
         };
-        const firstMatcher = { Match: sinon.stub().resolves([]) };
+        const firstMatcher = { match: sinon.stub().resolves([]) };
         const fallbackMatcher = {
-            Match: sinon.stub().resolves([{ name: "Yuna, Hope of Spira", percentage: 0.7375 }])
+            match: sinon.stub().resolves([{ name: "Yuna, Hope of Spira", percentage: 0.7375 }])
         };
         const MatchName = {
             create: sinon

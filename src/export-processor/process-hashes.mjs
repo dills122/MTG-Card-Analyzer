@@ -28,8 +28,8 @@ const config = {
 const defaultDependencies = {
     CardHashes: storage.hashes,
     Hash: imageHashing.Hash,
-    CreateDirectory: FileIO.CreateDirectory,
-    CleanUpFiles: FileIO.CleanUpFiles
+    createDirectory: FileIO.createDirectory,
+    cleanUpFiles: FileIO.cleanUpFiles
 };
 
 const schema = joi.object().keys({
@@ -63,7 +63,7 @@ class ProcessHashes {
         const hashes = await this.dependencies.CardHashes.getByCardName(this.name);
         const matches = [];
         hashes.forEach((dbHash) => {
-            const compareResults = this.dependencies.Hash.CompareHash(
+            const compareResults = this.dependencies.Hash.compareHash(
                 this.localHash,
                 dbHash.cardHash
             );
@@ -120,7 +120,7 @@ class ProcessHashes {
             );
             hashResults.forEach(({ setName, remoteImageHash }) => {
                 this._insertCardHash(setName, remoteImageHash);
-                const comparisonResults = this.dependencies.Hash.CompareHash(
+                const comparisonResults = this.dependencies.Hash.compareHash(
                     this.localHash,
                     remoteImageHash
                 );
@@ -185,25 +185,18 @@ class ProcessHashes {
                 done: () => {}
             };
         }
-        const directory = await this.dependencies.CreateDirectory();
+        const directory = await this.dependencies.createDirectory();
         return {
             tempDirectory: directory,
             done: () => {
-                this.dependencies.CleanUpFiles(directory).catch(() => {});
+                this.dependencies.cleanUpFiles(directory).catch(() => {});
             }
         };
     }
 
     async _hashRemoteForComparison(url, tempDirectory) {
         if (this.hashMode !== "set-symbol") {
-            return new Promise((resolve, reject) => {
-                this.dependencies.Hash.HashImage(url, (err, hash) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    return resolve(hash);
-                });
-            });
+            return this._hashImage(url);
         }
         try {
             return await this._hashRemoteSetSymbol(url, tempDirectory);
@@ -211,14 +204,7 @@ class ProcessHashes {
             this.logger.error(
                 `Remote set-symbol hash failed for "${this.name}"; using full card image`
             );
-            return new Promise((resolve, reject) => {
-                this.dependencies.Hash.HashImage(url, (hashErr, hash) => {
-                    if (hashErr) {
-                        return reject(hashErr);
-                    }
-                    return resolve(hash);
-                });
-            });
+            return this._hashImage(url);
         }
     }
 
@@ -227,8 +213,15 @@ class ProcessHashes {
         const cropped = this._cropRemoteSetSymbol(image);
         const tmpFilePath = path.join(tempDirectory, `${randomUUID()}.png`);
         await cropped.writeAsync(tmpFilePath);
+        return this._hashImage(tmpFilePath);
+    }
+
+    // Promisifies dependencies.Hash.hashImage at call time (not once at module load) so tests
+    // that sandbox.stub(Hash, "HashImage") after this class is defined keep working -- same
+    // dynamic-dispatch reasoning as src/storage/adapters/create-callback-adapter.mjs.
+    _hashImage(url) {
         return new Promise((resolve, reject) => {
-            this.dependencies.Hash.HashImage(tmpFilePath, (err, hash) => {
+            this.dependencies.Hash.hashImage(url, (err, hash) => {
                 if (err) {
                     return reject(err);
                 }

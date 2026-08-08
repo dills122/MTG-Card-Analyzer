@@ -3,12 +3,12 @@ import imageSize from "image-size";
 
 const sizeOf = promisify(imageSize);
 
-async function GetImageDimensions(imagePath) {
+async function getImageDimensions(imagePath) {
     return sizeOf(imagePath);
 }
 
-export { GetImageDimensions };
+export { getImageDimensions };
 
 export default {
-    GetImageDimensions
+    getImageDimensions
 };

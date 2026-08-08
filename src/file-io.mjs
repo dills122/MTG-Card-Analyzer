@@ -15,48 +15,42 @@ function buildFileIO(deps = defaultDeps) {
     const writeFile = deps.promisify(deps.fs.writeFile);
     const unlinkFile = deps.promisify(deps.fs.unlink);
     const rm = deps.promisify(deps.fs.rm);
+    const mkdir = deps.promisify(deps.fs.mkdir);
 
-    async function WriteToFile(contents, filePath = "") {
+    async function writeToFile(contents, filePath = "") {
         return writeFile(filePath || `${deps.randomUUID()}.json`, JSON.stringify(contents));
     }
 
-    async function DeleteFile(filePath) {
+    async function deleteFile(filePath) {
         return unlinkFile(filePath);
     }
 
-    async function CreateDirectory() {
+    async function createDirectory() {
         const dirPath = path.join(deps.tempDirectory, deps.randomUUID());
-        await new Promise((resolve, reject) => {
-            deps.fs.mkdir(dirPath, (err) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve();
-            });
-        });
+        await mkdir(dirPath);
         return dirPath;
     }
 
-    async function CleanUpFiles(directory) {
+    async function cleanUpFiles(directory) {
         return rm(directory, { recursive: true, force: true });
     }
 
     return {
-        WriteToFile,
-        DeleteFile,
-        CreateDirectory,
-        CleanUpFiles
+        writeToFile,
+        deleteFile,
+        createDirectory,
+        cleanUpFiles
     };
 }
 
-const { WriteToFile, DeleteFile, CreateDirectory, CleanUpFiles } = buildFileIO();
+const { writeToFile, deleteFile, createDirectory, cleanUpFiles } = buildFileIO();
 
 export default {
-    WriteToFile,
-    DeleteFile,
-    CreateDirectory,
-    CleanUpFiles,
+    writeToFile,
+    deleteFile,
+    createDirectory,
+    cleanUpFiles,
     buildFileIO
 };
 
-export { buildFileIO, CleanUpFiles, CreateDirectory, DeleteFile, WriteToFile };
+export { buildFileIO, cleanUpFiles, createDirectory, deleteFile, writeToFile };
