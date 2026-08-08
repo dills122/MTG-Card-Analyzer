@@ -14,6 +14,19 @@ import {
 const manifestPath = fileURLToPath(new URL("./fixtures/manifest.json", import.meta.url));
 const imageDirectory = fileURLToPath(new URL("../../test-images/", import.meta.url));
 
+async function listRelativeFiles(directory, relativeDirectory = "") {
+    const entries = await readdir(path.join(directory, relativeDirectory), { withFileTypes: true });
+    const files = await Promise.all(
+        entries.map((entry) => {
+            const relativePath = path.join(relativeDirectory, entry.name);
+            return entry.isDirectory()
+                ? listRelativeFiles(directory, relativePath)
+                : Promise.resolve([relativePath]);
+        })
+    );
+    return files.flat();
+}
+
 describe("Regression framework::", () => {
     it("loads labeled fixtures for every supported quality level", async () => {
         const manifest = await loadManifest(manifestPath);
@@ -32,10 +45,16 @@ describe("Regression framework::", () => {
             manifest.catalog.filter((card) => card.enabled === false).length
         );
 
-        const imageFiles = (await readdir(imageDirectory, { withFileTypes: true }))
+        const rootImageFiles = (await readdir(imageDirectory, { withFileTypes: true }))
             .filter((entry) => entry.isFile())
             .map((entry) => entry.name);
-        const catalogFiles = manifest.catalog.map((card) => path.basename(card.referenceImagePath));
+        const importedImageFiles = (
+            await listRelativeFiles(path.join(imageDirectory, "regression"))
+        ).map((relativePath) => path.join("regression", relativePath));
+        const imageFiles = [...rootImageFiles, ...importedImageFiles];
+        const catalogFiles = manifest.catalog.map((card) =>
+            path.relative(imageDirectory, card.referenceImagePath)
+        );
         assert.sameMembers(catalogFiles, imageFiles);
     });
 

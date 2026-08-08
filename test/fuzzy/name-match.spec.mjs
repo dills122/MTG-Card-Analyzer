@@ -116,6 +116,12 @@ describe("FuzzyMatching::", () => {
             },
             {
                 name: "Rage Reflection"
+            },
+            {
+                name: "Yuna, Hope of Spira"
+            },
+            {
+                name: "Vivi Ornitier"
             }
         ]);
     });
@@ -179,6 +185,43 @@ describe("FuzzyMatching::", () => {
             chaiAssert.isAtLeast(matches.length, 1);
             assert.equal(matches[0].name, "Thought Reflection");
             chaiAssert.isBelow(matches.length, 3);
+        });
+
+        it("should recover a showcase name from title and rules-text OCR evidence", async () => {
+            const matches = await create({
+                cleanText: "NGLFLOPE OF SPIN",
+                supplementalText: `~ Leg’endarfi Creajing; Humfinwm
+During your grn, Yuria9 and enchantment
+creatures you control have lifelink and ward
+At the beginning of your end step, return up to one target enchantment`
+            }).Match();
+
+            assert.equal(stubs.BulkNamesStub.callCount, 1);
+            assert.equal(matches[0]?.name, "Yuna, Hope of Spira");
+            chaiAssert.isAtLeast(matches[0]?.percentage || 0, 0.7);
+        });
+
+        it("should use an exact repeated rules-text name when the title OCR is unreadable", async () => {
+            const matches = await create({
+                cleanText: "WIQMTLFER",
+                supplementalText: `Add X mana in any combination, where X is Vivi Ornitier’s power.
+Whenever you cast a creature spell, put a counter on Vivi Ornitier.`
+            }).Match();
+
+            assert.equal(stubs.BulkNamesStub.callCount, 1);
+            assert.equal(matches[0]?.name, "Vivi Ornitier");
+            chaiAssert.isAtLeast(matches[0]?.percentage || 0, 0.7);
+        });
+
+        it("should recover an exact repeated rules-text name when title OCR is empty", async () => {
+            const matches = await create({
+                cleanText: "",
+                supplementalText:
+                    "Where X is Vivi Ornitier’s power. Put a counter on Vivi Ornitier."
+            }).Match();
+
+            assert.equal(stubs.BulkNamesStub.callCount, 1);
+            assert.equal(matches[0]?.name, "Vivi Ornitier");
         });
     });
 });

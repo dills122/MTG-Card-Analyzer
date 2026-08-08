@@ -9,6 +9,15 @@ const config = {
     highConfidence: 0.95,
     minConfidence: 0.7,
     maxMatches: 5,
+    supplementalEvidence: {
+        minConfidence: 0.7,
+        minScoreDelta: 0.05,
+        minFirstTokenLength: 4,
+        minFirstTokenSimilarity: 0.6,
+        maxTokenLength: 32,
+        maxTitleTokens: 32,
+        maxSupplementalTokens: 160
+    },
     disambiguation: {
         minTopPercent: 0.8,
         minTopFirstTokenSimilarity: 0.6,
@@ -30,6 +39,7 @@ const defaultDependencies = {
 const schema = joi.object().keys({
     cleanText: joi.string().allow("").required(),
     dirtyText: joi.string().optional(),
+    supplementalText: joi.string().allow("").optional(),
     logger: joi.object().optional()
 });
 
@@ -66,18 +76,28 @@ class MatchName {
 
     async Match() {
         await this.gatherInitialResults();
-        return this.filterBulkMatches();
+        const matches = await this.filterBulkMatches();
+        if (matches.length > 0 || !normalizeForMatch(this.supplementalText || "")) {
+            return matches;
+        }
+        return this.matchSupplementalEvidence();
     }
 
     async gatherInitialResults() {
         const normalizedQuery = normalizeForMatch(this.cleanText);
-        if (!normalizedQuery) {
+        const hasSupplementalEvidence = Boolean(normalizeForMatch(this.supplementalText || ""));
+        if (!normalizedQuery && !hasSupplementalEvidence) {
             this.nameLookup = {};
             this.initialResults = [];
             return;
         }
         const names = await this.dependencies.GetNames();
         const filteredNames = this.filteredNames(names);
+        this.filteredStoredNames = [...new Set(filteredNames)];
+        if (!normalizedQuery) {
+            this.initialResults = [];
+            return;
+        }
         const fuzzy = FuzzySet(filteredNames);
         const exact = this.nameLookup[normalizedQuery];
         this.initialResults = exact ? [[1, normalizedQuery]] : fuzzy.get(normalizedQuery);
@@ -148,6 +168,41 @@ class MatchName {
             .splice(0, config.maxMatches + 1)
             .map(stripInternalFields);
     }
+
+    matchSupplementalEvidence() {
+        const titleTokens = [...new Set(tokenizeLetters(this.cleanText))].slice(
+            0,
+            config.supplementalEvidence.maxTitleTokens
+        );
+        const supplementalTokens = [...new Set(tokenizeLetters(this.supplementalText))].slice(
+            0,
+            config.supplementalEvidence.maxSupplementalTokens
+        );
+        const ranked = (this.filteredStoredNames || [])
+            .map((normalizedName) => ({
+                name: this.nameLookup[normalizedName] || normalizedName,
+                percentage: _.round(
+                    calculateSupplementalEvidenceScore(
+                        normalizedName,
+                        titleTokens,
+                        supplementalTokens
+                    ),
+                    4
+                )
+            }))
+            .reduce(updateTopTwoMatches, []);
+        const [best, runnerUp] = ranked;
+        if (!best || best.percentage < config.supplementalEvidence.minConfidence) {
+            return [];
+        }
+        if (
+            runnerUp &&
+            best.percentage - runnerUp.percentage < config.supplementalEvidence.minScoreDelta
+        ) {
+            return [];
+        }
+        return [best];
+    }
 }
 
 const create = (params) => new MatchName(params);
@@ -199,6 +254,100 @@ function calculateTokenCoverage(queryTokens, candidateTokens) {
         );
     });
     return _.mean(similarities) || 0;
+}
+
+function calculateSupplementalEvidenceScore(candidateName, titleTokens, supplementalTokens) {
+    const candidateTokens = tokenizeLetters(candidateName);
+    if (
+        candidateTokens.length < 2 ||
+        candidateTokens[0].length < config.supplementalEvidence.minFirstTokenLength ||
+        !supplementalTokens.length
+    ) {
+        return 0;
+    }
+    const firstTokenSimilarity = Math.max(
+        ...supplementalTokens.map((token) => calculateEditSimilarity(candidateTokens[0], token))
+    );
+    if (firstTokenSimilarity < config.supplementalEvidence.minFirstTokenSimilarity) {
+        return 0;
+    }
+    const bestSimilarity = (candidateToken, evidenceTokens) =>
+        Math.max(
+            0,
+            ...evidenceTokens.map((evidenceToken) =>
+                calculatePartialTokenSimilarity(candidateToken, evidenceToken)
+            )
+        );
+    const repeatedNameScore = _.mean(
+        candidateTokens.map((candidateToken) => bestSimilarity(candidateToken, supplementalTokens))
+    );
+    const splitEvidenceScore = titleTokens.length
+        ? _.mean([
+              bestSimilarity(candidateTokens[0], supplementalTokens),
+              ...candidateTokens
+                  .slice(1)
+                  .map((candidateToken) => bestSimilarity(candidateToken, titleTokens))
+          ])
+        : 0;
+    return Math.max(repeatedNameScore >= 0.9 ? repeatedNameScore : 0, splitEvidenceScore);
+}
+
+function tokenizeLetters(text) {
+    return (
+        String(text || "")
+            .toUpperCase()
+            .match(/[A-Z]+/g) || []
+    ).map((token) => token.slice(0, config.supplementalEvidence.maxTokenLength));
+}
+
+function updateTopTwoMatches(topMatches, candidate) {
+    const ranked = [...topMatches, candidate].sort(
+        (left, right) => right.percentage - left.percentage || left.name.localeCompare(right.name)
+    );
+    return ranked.slice(0, 2);
+}
+
+function calculatePartialTokenSimilarity(candidateToken, evidenceToken) {
+    if (candidateToken.length < 3) {
+        return candidateToken === evidenceToken ? 1 : 0;
+    }
+    let best = 0;
+    const minWindow = Math.max(3, candidateToken.length - 1);
+    const maxWindow = candidateToken.length + 1;
+    for (let windowSize = minWindow; windowSize <= maxWindow; windowSize += 1) {
+        if (evidenceToken.length < windowSize) {
+            best = Math.max(best, calculateEditSimilarity(candidateToken, evidenceToken));
+            continue;
+        }
+        for (let index = 0; index <= evidenceToken.length - windowSize; index += 1) {
+            best = Math.max(
+                best,
+                calculateEditSimilarity(
+                    candidateToken,
+                    evidenceToken.slice(index, index + windowSize)
+                )
+            );
+        }
+    }
+    return best;
+}
+
+function calculateEditSimilarity(left, right) {
+    const row = Array.from({ length: right.length + 1 }, (_, index) => index);
+    for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+        let diagonal = row[0];
+        row[0] = leftIndex;
+        for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+            const above = row[rightIndex];
+            row[rightIndex] = Math.min(
+                row[rightIndex] + 1,
+                row[rightIndex - 1] + 1,
+                diagonal + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1)
+            );
+            diagonal = above;
+        }
+    }
+    return 1 - row[right.length] / Math.max(left.length, right.length, 1);
 }
 
 function shouldApplyDisambiguation(queryTokens, rankedResults) {
