@@ -16,8 +16,10 @@ const logger = log.create({
 function ScanImage(imgBuffer, type, cb, options = {}) {
     const scanLogger = options.logger || logger;
     const candidates = normalizeCandidates(imgBuffer, type);
+    const regionLabel = candidates.map((candidate) => candidate.region).join(", ");
+    const regionWord = candidates.length === 1 ? "region" : "regions";
     scanLogger.info(
-        `extract-text::ScanImage:: type=${type || "unknown"} source=${describeImageSource(imgBuffer)} candidates=${summarizeCandidates(candidates)}`
+        `OCR ${type || "unknown"}: ${candidates.length} ${regionWord} (${regionLabel})`
     );
     runCandidatesSequentially(candidates, type, scanLogger, options)
         .then((results) => {
@@ -86,7 +88,7 @@ async function runCandidate(candidate, type, scanLogger, options = {}) {
     const cleanedString = normalizeOcrText(extractedText, type);
     const confidence = (result && result.data && result.data.confidence) || 0;
     scanLogger.info(
-        `extract-text::result region=${candidate.region} confidence=${Math.round(confidence)} raw="${previewText(extractedText)}" normalized="${cleanedString}"`
+        `OCR ${candidate.region}: ${Math.round(confidence)}% confidence; "${previewText(extractedText)}" -> "${cleanedString}"`
     );
     return {
         region: candidate.region,
@@ -258,35 +260,15 @@ function scoreNameLine(line) {
     return score;
 }
 
-function describeImageSource(input) {
-    if (Array.isArray(input)) {
-        return "variant-list";
-    }
-    if (Buffer.isBuffer(input)) {
-        return "buffer";
-    }
-    if (typeof input === "string") {
-        return input;
-    }
-    return typeof input;
-}
-
-function summarizeCandidates(candidates = []) {
-    return candidates.map((candidate) => `${candidate.region}:${candidate.psm}`).join(",");
-}
-
 function buildProgressLogger(region, progressLogger = logger) {
-    let lastBucket = -1;
+    let halfwayLogged = false;
     return (progress = 0) => {
-        const bucket = Math.min(100, Math.max(0, Math.floor(Number(progress) * 100)));
-        if (bucket < 100 && bucket % 10 !== 0) {
+        const value = Number(progress);
+        if (halfwayLogged || value < 0.5 || value >= 1) {
             return;
         }
-        if (bucket === lastBucket) {
-            return;
-        }
-        lastBucket = bucket;
-        progressLogger.info(`extract-text::progress region=${region} progress=${bucket}%`);
+        halfwayLogged = true;
+        progressLogger.info(`OCR ${region}: 50%`);
     };
 }
 

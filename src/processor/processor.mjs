@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { callbackify, inspect } from "node:util";
+import { callbackify } from "node:util";
 import joi from "joi";
 import logger from "../logger/log.mjs";
 import imageProcessing from "../image-processing/index.mjs";
@@ -12,6 +12,7 @@ import scryfallApi from "../scryfall-api/index.mjs";
 import storage from "../storage/index.mjs";
 import imageToBase64 from "image-to-base64";
 import { resolveCardName } from "./name-resolver.mjs";
+import { formatScanResults } from "../console/format-scan-results.mjs";
 
 const dependencies = {
     ImageProcessor: imageProcessing.ImageProcessor,
@@ -39,15 +40,18 @@ const schema = joi.object().keys({
 
 class ProcessorClass {
     constructor(params) {
-        const validatedSchema = joi.attempt(params, schema);
+        const { logger: injectedLogger, ...processorParams } = params;
+        const validatedSchema = joi.attempt(processorParams, schema);
         _.assign(this, validatedSchema);
         this.imagePaths = {};
         this.extractedText = {};
         this.matcherResults = [];
         this.decision = "unknown";
-        this.logger = logger.create({
-            isPretty: this.isPretty
-        });
+        this.logger =
+            injectedLogger ||
+            logger.create({
+                isPretty: this.isPretty
+            });
     }
 
     execute(callback) {
@@ -122,7 +126,7 @@ class ProcessorClass {
     }
 
     async createDirectoryAsync() {
-        this.logger.info("Creating Directory");
+        this.logger.info("Preparing temporary files");
         const directory = await dependencies.FileIO.CreateDirectory();
         this.directory = directory;
     }
@@ -137,7 +141,7 @@ class ProcessorClass {
     }
 
     async extractNameAsync() {
-        this.logger.info("Extracting Name");
+        this.logger.info("Reading card name");
         const extractor = dependencies.ImageProcessor.create({
             path: this.filePath,
             type: "name",
@@ -165,7 +169,7 @@ class ProcessorClass {
     }
 
     async processExtractionResultsAsync() {
-        this.logger.info("Matching Name");
+        this.logger.info("Matching card name");
         const resolution = await resolveCardName({
             filePath: this.filePath,
             directory: this.directory,
@@ -190,7 +194,10 @@ class ProcessorClass {
     }
 
     async attemptMatchingAsync() {
-        this.logger.info(`Attempting Matching with ${this.nameMatches.length} candidate names`);
+        const candidateLabel = this.nameMatches.length === 1 ? "candidate" : "candidates";
+        this.logger.info(
+            `Checking printings for ${this.nameMatches.length} name ${candidateLabel}`
+        );
         const matchResults = await Promise.all(
             this.nameMatches.map((match) => this._attemptMatch(match))
         );
@@ -201,14 +208,13 @@ class ProcessorClass {
         }
         if (!this.queryingEnabled) {
             this.decision = "dry-run";
-            this.logger.info("Final results:");
             this.printResults();
             return;
         }
         if (!this.collectionEnabled) {
             this.decision = "module-disabled";
             this.logger.info(
-                "Collection tracking module is disabled -- nothing persisted. Enable with --enable-collection, COLLECTION_ENABLED=true, or collectionEnabled in the config file. Final results:"
+                "Collection tracking disabled; scan results were not saved. Enable with --enable-collection."
             );
             this.printResults();
             return;
@@ -226,16 +232,9 @@ class ProcessorClass {
         );
     }
 
-    // Prints user-facing results in a readable object format -- used whenever the pipeline
-    // stops short of persisting (dry-run, or the collection module being disabled).
+    // Prints user-facing results without internal matching and verification fields.
     printResults() {
-        console.log(
-            inspect(this.matcherResults, {
-                depth: null,
-                colors: false,
-                compact: false
-            })
-        );
+        this.logger.output(formatScanResults(this.matcherResults));
     }
 
     _attemptMatch(match) {
@@ -338,7 +337,7 @@ class ProcessorClass {
 
 function formatMatchSummary(matches = []) {
     if (!matches.length) {
-        return "Matches returned (0): none";
+        return "Name candidates (0): none";
     }
 
     const summarized = matches.map((match, index) => {
@@ -348,7 +347,7 @@ function formatMatchSummary(matches = []) {
         return `${index + 1}. ${name} (${displayPercent}%)`;
     });
 
-    return `Matches returned (${matches.length}): ${summarized.join(" | ")}`;
+    return `Name candidates (${matches.length}): ${summarized.join(" | ")}`;
 }
 
 export const create = (params) => new ProcessorClass(params);
