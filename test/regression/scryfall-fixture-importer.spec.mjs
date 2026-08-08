@@ -11,7 +11,8 @@ import { selectBalancedCards } from "../../src/regression/balanced-card-selector
 import {
     buildCardSearchUrl,
     downloadImage,
-    fetchCardPages
+    fetchCardPages,
+    fetchResultCount
 } from "../../src/scryfall-api/regression-fixtures.mjs";
 
 describe("Scryfall regression fixture importer", () => {
@@ -23,13 +24,29 @@ describe("Scryfall regression fixture importer", () => {
                 releasedBefore: undefined,
                 count: 4,
                 maxPages: 20,
-                balanced: false
+                balanced: false,
+                seed: undefined
             });
         });
 
         it("enables balanced selection explicitly", () => {
             assert.isTrue(
                 normalizeImportOptions({ sets: ["fin"], count: 4, balanced: true }).balanced
+            );
+        });
+
+        it("accepts an explicit seed for reproducible selection", () => {
+            assert.equal(normalizeImportOptions({ sets: ["fin"], count: 4, seed: "7" }).seed, 7);
+        });
+
+        it("rejects a negative or non-integer seed", () => {
+            assert.throws(
+                () => normalizeImportOptions({ sets: ["fin"], count: 4, seed: "-1" }),
+                "seed must be an integer"
+            );
+            assert.throws(
+                () => normalizeImportOptions({ sets: ["fin"], count: 4, seed: "1.5" }),
+                "seed must be an integer"
             );
         });
 
@@ -156,6 +173,35 @@ describe("Scryfall regression fixture importer", () => {
 
             assert.deepEqual(cards, [{ id: "enough" }]);
             assert.equal(requests, 1);
+        });
+
+        it("starts pagination at a given page instead of always page one", async () => {
+            const requests = [];
+            const cards = await fetchCardPages("https://api.scryfall.com/cards/search?q=test", {
+                maxPages: 1,
+                startPage: 4,
+                fetchImpl: async (url) => {
+                    requests.push(url);
+                    return jsonResponse({ object: "list", data: [{ id: "page-four" }] });
+                },
+                wait: async () => {}
+            });
+
+            assert.deepEqual(cards, [{ id: "page-four" }]);
+            assert.equal(new URL(requests[0]).searchParams.get("page"), "4");
+        });
+
+        it("reports total cards and page size for a search", async () => {
+            const meta = await fetchResultCount("https://api.scryfall.com/cards/search?q=test", {
+                fetchImpl: async () =>
+                    jsonResponse({
+                        object: "list",
+                        total_cards: 351,
+                        data: [{ id: "one" }, { id: "two" }]
+                    })
+            });
+
+            assert.deepEqual(meta, { totalCards: 351, pageSize: 2 });
         });
 
         it("rejects an untrusted pagination URL", async () => {
@@ -389,6 +435,7 @@ describe("Scryfall regression fixture importer", () => {
                     count: 1
                 },
                 {
+                    fetchResultCount: singlePageMeta,
                     fetchCardPages: async (_url, options) => {
                         assert.isFunction(options.shouldStop);
                         return cards;
@@ -453,6 +500,7 @@ describe("Scryfall regression fixture importer", () => {
                     dryRun: true
                 },
                 {
+                    fetchResultCount: singlePageMeta,
                     fetchCardPages: async (_url, options) => {
                         fetchOptions = options;
                         return [
@@ -506,6 +554,7 @@ describe("Scryfall regression fixture importer", () => {
                     dryRun: true
                 },
                 {
+                    fetchResultCount: singlePageMeta,
                     fetchCardPages: async () => [
                         card({ id: "known-id", name: "Known", set: "fin", collector: "7" }),
                         card({ id: "other-id", name: "Other", set: "fin", collector: "8" })
@@ -540,6 +589,7 @@ describe("Scryfall regression fixture importer", () => {
                         count: 2
                     },
                     {
+                        fetchResultCount: singlePageMeta,
                         fetchCardPages: async () => [
                             card({
                                 id: "existing-id",
@@ -556,6 +606,149 @@ describe("Scryfall regression fixture importer", () => {
             assert.instanceOf(error, Error);
             assert.include(error.message, "Found 0 new printable cards; requested 2");
             assert.deepEqual(JSON.parse(await readFile(manifestPath, "utf8")), originalManifest);
+        });
+
+        it("starts on a random result page instead of always the newest set", async () => {
+            const manifestPath = path.join(directory, "manifest.json");
+            await writeManifest(manifestPath, emptyManifest());
+            const requestedPages = [];
+
+            await importScryfallFixtures(
+                {
+                    manifestPath,
+                    imageDirectory: path.join(directory, "images"),
+                    releasedAfter: "2000-01-01",
+                    count: 1,
+                    dryRun: true
+                },
+                {
+                    // 20 pages of 175 results each: enough range for the random pick to
+                    // land away from page one.
+                    fetchResultCount: async () => ({ totalCards: 3500, pageSize: 175 }),
+                    fetchCardPages: async (_url, options) => {
+                        requestedPages.push(options.startPage);
+                        return [card({ id: "hit", name: "Hit", set: "fin", collector: "1" })];
+                    },
+                    random: () => 0.5 // -> page 1 + floor(0.5 * 20) = page 11
+                }
+            );
+
+            assert.deepEqual(requestedPages, [11]);
+        });
+
+        it("wraps back to page one when the random start runs off the end", async () => {
+            const manifestPath = path.join(directory, "manifest.json");
+            await writeManifest(manifestPath, emptyManifest());
+            const requestedPages = [];
+
+            const result = await importScryfallFixtures(
+                {
+                    manifestPath,
+                    imageDirectory: path.join(directory, "images"),
+                    releasedAfter: "2000-01-01",
+                    count: 1,
+                    dryRun: true
+                },
+                {
+                    // 4 pages total; random start lands on the last page, which alone
+                    // holds no new usable card, forcing a wrap to page one.
+                    fetchResultCount: async () => ({ totalCards: 700, pageSize: 175 }),
+                    fetchCardPages: async (_url, options) => {
+                        requestedPages.push(options.startPage);
+                        if (options.startPage === 4) {
+                            return [
+                                card({
+                                    id: "unprintable",
+                                    name: "",
+                                    set: "fin",
+                                    collector: "1"
+                                })
+                            ];
+                        }
+                        return [
+                            card({ id: "wrapped", name: "Wrapped", set: "fin", collector: "2" })
+                        ];
+                    },
+                    random: () => 0.99 // -> page 1 + floor(0.99 * 4) = page 4 (last page)
+                }
+            );
+
+            assert.deepEqual(requestedPages, [4, 1]);
+            assert.deepEqual(
+                result.added.map((entry) => entry.scryfallId),
+                ["wrapped"]
+            );
+        });
+
+        it("shuffles the candidate pool so repeated imports don't return the same order", async () => {
+            const manifestPath = path.join(directory, "manifest.json");
+            await writeManifest(manifestPath, emptyManifest());
+            const cards = [
+                card({ id: "a", name: "Card A", set: "fin", collector: "1" }),
+                card({ id: "b", name: "Card B", set: "fin", collector: "2" }),
+                card({ id: "c", name: "Card C", set: "fin", collector: "3" })
+            ];
+
+            const result = await importScryfallFixtures(
+                {
+                    manifestPath,
+                    imageDirectory: path.join(directory, "images"),
+                    sets: ["fin"],
+                    count: 3,
+                    dryRun: true
+                },
+                {
+                    fetchResultCount: singlePageMeta,
+                    fetchCardPages: async () => cards,
+                    // forces a swap of the first and last candidate so the result isn't
+                    // just the fetch order echoed back
+                    random: (() => {
+                        const values = [0.1, 0.9];
+                        let i = 0;
+                        return () => values[i++ % values.length];
+                    })()
+                }
+            );
+
+            assert.notDeepEqual(
+                result.added.map((entry) => entry.scryfallId),
+                ["a", "b", "c"]
+            );
+            assert.sameMembers(
+                result.added.map((entry) => entry.scryfallId),
+                ["a", "b", "c"]
+            );
+        });
+
+        it("reproduces the same selection for the same seed", async () => {
+            const manifestPath = path.join(directory, "manifest.json");
+            await writeManifest(manifestPath, emptyManifest());
+            const cards = [
+                card({ id: "a", name: "Card A", set: "fin", collector: "1" }),
+                card({ id: "b", name: "Card B", set: "fin", collector: "2" }),
+                card({ id: "c", name: "Card C", set: "fin", collector: "3" })
+            ];
+
+            const runOnce = () =>
+                importScryfallFixtures(
+                    {
+                        manifestPath,
+                        imageDirectory: path.join(directory, "images"),
+                        sets: ["fin"],
+                        count: 3,
+                        seed: 42,
+                        dryRun: true
+                    },
+                    { fetchResultCount: singlePageMeta, fetchCardPages: async () => cards }
+                );
+
+            const first = await runOnce();
+            const second = await runOnce();
+
+            assert.deepEqual(
+                first.added.map((entry) => entry.scryfallId),
+                second.added.map((entry) => entry.scryfallId)
+            );
         });
     });
 });
@@ -653,4 +846,11 @@ function jsonResponse(value) {
         status: 200,
         headers: { "Content-Type": "application/json" }
     });
+}
+
+// A fetchResultCount stub reporting a single-page result set, so importer tests that
+// don't care about page randomization keep their pre-randomization deterministic
+// fetchCardPages behavior (startPage always resolves to 1).
+async function singlePageMeta() {
+    return { totalCards: 1, pageSize: 1 };
 }

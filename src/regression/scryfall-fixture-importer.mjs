@@ -4,6 +4,7 @@ import {
     buildCardSearchUrl,
     downloadImage,
     fetchCardPages,
+    fetchResultCount,
     imageUrlForCard
 } from "../scryfall-api/regression-fixtures.mjs";
 import { cardCoverage, selectBalancedCards } from "./balanced-card-selector.mjs";
@@ -11,8 +12,36 @@ import { cardCoverage, selectBalancedCards } from "./balanced-card-selector.mjs"
 const DEFAULT_MAX_PAGES = 20;
 const MAX_COUNT = 100;
 const MAX_PAGES = 100;
+const MAX_SEED = 2 ** 32 - 1;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SET_CODE_PATTERN = /^[a-z0-9]{2,6}$/i;
+
+// mulberry32: small, fast, seedable PRNG. Not cryptographic; only used to pick a
+// random Scryfall result page and shuffle candidates so repeated imports over the
+// same wide query stop landing on the same set every time.
+function mulberry32(seed) {
+    let state = seed >>> 0;
+    return function random() {
+        state |= 0;
+        state = (state + 0x6d2b79f5) | 0;
+        let t = Math.imul(state ^ (state >>> 15), 1 | state);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function createRng(seed) {
+    return seed === undefined ? Math.random : mulberry32(seed);
+}
+
+function shuffle(items, rng) {
+    const shuffled = items.slice();
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(rng() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
 
 function parsePositiveInteger(value, label, maximum) {
     const number = Number(value);
@@ -34,6 +63,15 @@ function normalizeSetCodes(values = []) {
         }
     }
     return [...new Set(setCodes)].sort();
+}
+
+function validateSeed(value) {
+    if (value === undefined) return undefined;
+    const number = Number(value);
+    if (!Number.isSafeInteger(number) || number < 0 || number > MAX_SEED) {
+        throw new Error(`seed must be an integer from 0 to ${MAX_SEED}`);
+    }
+    return number;
 }
 
 function validateDate(value, label) {
@@ -79,7 +117,8 @@ function normalizeImportOptions(options) {
             "max-pages",
             MAX_PAGES
         ),
-        balanced: options.balanced === true
+        balanced: options.balanced === true,
+        seed: validateSeed(options.seed)
     };
 }
 
@@ -255,12 +294,56 @@ async function importScryfallFixtures(options, overrides = {}) {
     }
 
     const fetchCardPages = overrides.fetchCardPages || defaultDependencies.fetchCardPages;
-    const fetchOptions = { maxPages: selection.maxPages };
+    const fetchResultCount = overrides.fetchResultCount || defaultDependencies.fetchResultCount;
+    const rng = overrides.random || createRng(selection.seed);
+    const searchUrl = buildCardSearchUrl(selection);
+
+    // Scryfall always returns matches newest-first. A wide query (broad set list or
+    // release-date range) has far more pages than maxPages ever walks, so starting at
+    // page 1 every run returns the same newest set every time. Land on a random page
+    // instead, then wrap back to page 1 if we run off the end before filling the budget.
+    const { totalCards, pageSize } = await fetchResultCount(searchUrl, {
+        fetchImpl: overrides.fetchImpl
+    });
+    const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(totalCards / pageSize)) : 1;
+    const startPage = totalPages > 1 ? 1 + Math.floor(rng() * totalPages) : 1;
+
+    const fetchOptions = {
+        maxPages: selection.maxPages,
+        startPage,
+        fetchImpl: overrides.fetchImpl
+    };
     if (!selection.balanced) {
         fetchOptions.shouldStop = (collectedCards) =>
             hasEnoughNewPrintableCards(collectedCards, existing, selection.count);
     }
-    const cards = await fetchCardPages(buildCardSearchUrl(selection), fetchOptions);
+    let cards = await fetchCardPages(searchUrl, fetchOptions);
+
+    const pagesUsed = pageSize > 0 ? Math.ceil(cards.length / pageSize) : cards.length > 0 ? 1 : 0;
+    const ranOffTheEnd = startPage > 1 && startPage - 1 + pagesUsed >= totalPages;
+    const budgetRemains = pagesUsed < selection.maxPages;
+    const stillWant = selection.balanced
+        ? budgetRemains
+        : !hasEnoughNewPrintableCards(cards, existing, selection.count);
+    if (ranOffTheEnd && budgetRemains && stillWant) {
+        const priorCards = cards;
+        const wrapOptions = {
+            maxPages: selection.maxPages - pagesUsed,
+            startPage: 1,
+            fetchImpl: overrides.fetchImpl
+        };
+        if (!selection.balanced) {
+            wrapOptions.shouldStop = (collectedCards) =>
+                hasEnoughNewPrintableCards(
+                    [...priorCards, ...collectedCards],
+                    existing,
+                    selection.count
+                );
+        }
+        const wrapped = await fetchCardPages(searchUrl, wrapOptions);
+        cards = priorCards.concat(wrapped);
+    }
+
     const candidates = [];
     const candidateIdentities = new Set();
     let excludedExisting = 0;
@@ -286,9 +369,10 @@ async function importScryfallFixtures(options, overrides = {}) {
         if (!selection.balanced && candidates.length === selection.count) break;
     }
 
+    const shuffledCandidates = shuffle(candidates, rng);
     const selected = selection.balanced
-        ? selectBalancedCards(candidates, selection.count)
-        : candidates.slice(0, selection.count);
+        ? selectBalancedCards(shuffledCandidates, selection.count)
+        : shuffledCandidates.slice(0, selection.count);
 
     if (selected.length < selection.count) {
         throw new Error(
@@ -353,6 +437,7 @@ async function importScryfallFixtures(options, overrides = {}) {
 
 const defaultDependencies = {
     fetchCardPages,
+    fetchResultCount,
     downloadImage
 };
 

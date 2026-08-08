@@ -41,6 +41,7 @@ function buildProgram() {
         )
         .option("--max-pages <number>", "maximum Scryfall result pages", "20")
         .option("--balanced", "diversify selected prints across coverage categories", false)
+        .option("--seed <number>", "seed the random page/shuffle selection for a reproducible run")
         .option("--dry-run", "show selected prints without writing images or manifest", false);
 }
 
@@ -58,6 +59,7 @@ async function main(argv = process.argv, overrides = {}) {
         count: options.count,
         maxPages: options.maxPages,
         balanced: options.balanced,
+        seed: options.seed,
         dryRun: options.dryRun
     });
 
