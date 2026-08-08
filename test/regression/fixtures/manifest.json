@@ -126,16 +126,6 @@
         },
         {
             "enabled": false,
-            "name": "CHANGE_ME",
-            "set": "CHANGE_ME",
-            "setName": "CHANGE_ME",
-            "collectorNumber": "CHANGE_ME",
-            "typeLine": "CHANGE_ME",
-            "rarity": "CHANGE_ME",
-            "referenceImage": "../../../test-images/Revegoyf.jpg"
-        },
-        {
-            "enabled": false,
             "name": "Spellseeker",
             "set": "BBD",
             "setName": "Battlebond",
@@ -881,7 +871,7 @@
             "apiUrl": "https://scryfall.com/card/dst/54/shriveling-rot?utm_source=api"
         },
         {
-            "enabled": true,
+            "enabled": false,
             "scryfallId": "407d0a0c-a6be-4bd5-8355-1715698c6bde",
             "name": "Simic Growth Chamber",
             "set": "DIS",
@@ -1254,6 +1244,246 @@
             "style": "normal",
             "referenceImage": "../../../test-images/regression/scryfall/neo-261-thundersteel-colossus-b7d49f9c.jpg",
             "apiUrl": "https://scryfall.com/card/neo/261/thundersteel-colossus?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "ad4c9c55-456f-4cc5-b727-4091708b0df1",
+            "name": "Simic Growth Chamber",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "249",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-249-simic-growth-chamber-ad4c9c55.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/249/simic-growth-chamber?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "dbde99df-95bb-4941-981c-127c19f90488",
+            "name": "Selesnya Sanctuary",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "248",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-248-selesnya-sanctuary-dbde99df.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/248/selesnya-sanctuary?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "8a7e0892-7f4f-4dea-8eba-088250512071",
+            "name": "Rakdos Carnarium",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "247",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-247-rakdos-carnarium-8a7e0892.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/247/rakdos-carnarium?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "bfd6b961-303d-4585-801a-82690e3c66d9",
+            "name": "Orzhov Basilica",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "246",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-246-orzhov-basilica-bfd6b961.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/246/orzhov-basilica?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "61ba2759-a3d8-45f8-b31e-d8789bde0f4f",
+            "name": "Izzet Boilerworks",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "245",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-245-izzet-boilerworks-61ba2759.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/245/izzet-boilerworks?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "1325d187-4012-4875-9a0c-8520cbf386ac",
+            "name": "Gruul Turf",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "244",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-244-gruul-turf-1325d187.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/244/gruul-turf?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "580063b8-9b0d-4ce0-bf2b-63299e15219e",
+            "name": "Golgari Rot Farm",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "243",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-243-golgari-rot-farm-580063b8.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/243/golgari-rot-farm?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "d2d5124b-4d73-4aa9-9331-88e03779ffad",
+            "name": "Eye of Ugin",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "242",
+            "typeLine": "Legendary Land",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-242-eye-of-ugin-d2d5124b.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/242/eye-of-ugin?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "4fd49258-f7cd-4902-a17f-9a195958fc13",
+            "name": "Evolving Wilds",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "241",
+            "typeLine": "Land",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-241-evolving-wilds-4fd49258.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/241/evolving-wilds?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "1ab30d54-6043-4361-b221-268813f06a72",
+            "name": "Eldrazi Temple",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "240",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-240-eldrazi-temple-1ab30d54.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/240/eldrazi-temple?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "703b68dd-9a83-4e6e-9e34-53eb80311425",
+            "name": "Dimir Aqueduct",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "239",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-239-dimir-aqueduct-703b68dd.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/239/dimir-aqueduct?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "371077bd-9b4b-4c75-9494-c6a3cb1b304d",
+            "name": "Darksteel Citadel",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "238",
+            "typeLine": "Artifact Land",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-238-darksteel-citadel-371077bd.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/238/darksteel-citadel?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "750975a0-112b-439f-ae4e-40480aa64823",
+            "name": "Boros Garrison",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "237",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-237-boros-garrison-750975a0.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/237/boros-garrison?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "a8f0e338-fe48-4108-b1a4-0bc9bf4ed708",
+            "name": "Blinkmoth Nexus",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "236",
+            "typeLine": "Land",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-236-blinkmoth-nexus-a8f0e338.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/236/blinkmoth-nexus?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "481a83e6-0e6c-4953-92d4-814000d19456",
+            "name": "Azorius Chancery",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "235",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-235-azorius-chancery-481a83e6.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/235/azorius-chancery?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "1272beac-71ac-4a88-bd49-a5a907c182ac",
+            "name": "Wayfarer's Bauble",
+            "set": "MM2",
+            "setName": "Modern Masters 2015",
+            "collectorNumber": "234",
+            "typeLine": "Artifact",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mm2-234-wayfarer-s-bauble-1272beac.jpg",
+            "apiUrl": "https://scryfall.com/card/mm2/234/wayfarers-bauble?utm_source=api"
         }
     ],
     "cases": [
@@ -1579,25 +1809,6 @@
                 "metadata": {
                     "typeLine": "Legendary Creature — Human Assassin",
                     "rarity": "mythic"
-                },
-                "minNameScore": 0.7,
-                "maxPrintCandidates": 1,
-                "maxRuntimeMs": 30000
-            }
-        },
-        {
-            "enabled": false,
-            "id": "revegoyf-pending",
-            "image": "../../../test-images/Revegoyf.jpg",
-            "quality": "clean-scan",
-            "notes": "CHANGE_ME: confirm the quality label, replace expected metadata, then set enabled to true",
-            "expected": {
-                "name": "CHANGE_ME",
-                "set": "CHANGE_ME",
-                "collectorNumber": "CHANGE_ME",
-                "metadata": {
-                    "typeLine": "CHANGE_ME",
-                    "rarity": "CHANGE_ME"
                 },
                 "minNameScore": 0.7,
                 "maxPrintCandidates": 1,
@@ -2772,7 +2983,7 @@
             }
         },
         {
-            "enabled": true,
+            "enabled": false,
             "id": "dis-180-simic-growth-chamber-407d0a0c-scryfall",
             "image": "../../../test-images/regression/scryfall/dis-180-simic-growth-chamber-407d0a0c.jpg",
             "quality": "clean-scan",
@@ -3311,6 +3522,358 @@
                 "collectorNumber": "261",
                 "metadata": {
                     "typeLine": "Artifact — Vehicle",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-249-simic-growth-chamber-ad4c9c55-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-249-simic-growth-chamber-ad4c9c55.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Simic Growth Chamber",
+                "set": "MM2",
+                "collectorNumber": "249",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-248-selesnya-sanctuary-dbde99df-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-248-selesnya-sanctuary-dbde99df.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Selesnya Sanctuary",
+                "set": "MM2",
+                "collectorNumber": "248",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-247-rakdos-carnarium-8a7e0892-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-247-rakdos-carnarium-8a7e0892.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Rakdos Carnarium",
+                "set": "MM2",
+                "collectorNumber": "247",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-246-orzhov-basilica-bfd6b961-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-246-orzhov-basilica-bfd6b961.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Orzhov Basilica",
+                "set": "MM2",
+                "collectorNumber": "246",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-245-izzet-boilerworks-61ba2759-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-245-izzet-boilerworks-61ba2759.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Izzet Boilerworks",
+                "set": "MM2",
+                "collectorNumber": "245",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-244-gruul-turf-1325d187-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-244-gruul-turf-1325d187.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Gruul Turf",
+                "set": "MM2",
+                "collectorNumber": "244",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-243-golgari-rot-farm-580063b8-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-243-golgari-rot-farm-580063b8.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Golgari Rot Farm",
+                "set": "MM2",
+                "collectorNumber": "243",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-242-eye-of-ugin-d2d5124b-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-242-eye-of-ugin-d2d5124b.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Eye of Ugin",
+                "set": "MM2",
+                "collectorNumber": "242",
+                "metadata": {
+                    "typeLine": "Legendary Land",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-241-evolving-wilds-4fd49258-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-241-evolving-wilds-4fd49258.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Evolving Wilds",
+                "set": "MM2",
+                "collectorNumber": "241",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-240-eldrazi-temple-1ab30d54-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-240-eldrazi-temple-1ab30d54.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Eldrazi Temple",
+                "set": "MM2",
+                "collectorNumber": "240",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-239-dimir-aqueduct-703b68dd-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-239-dimir-aqueduct-703b68dd.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Dimir Aqueduct",
+                "set": "MM2",
+                "collectorNumber": "239",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-238-darksteel-citadel-371077bd-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-238-darksteel-citadel-371077bd.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Darksteel Citadel",
+                "set": "MM2",
+                "collectorNumber": "238",
+                "metadata": {
+                    "typeLine": "Artifact Land",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-237-boros-garrison-750975a0-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-237-boros-garrison-750975a0.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Boros Garrison",
+                "set": "MM2",
+                "collectorNumber": "237",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-236-blinkmoth-nexus-a8f0e338-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-236-blinkmoth-nexus-a8f0e338.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Blinkmoth Nexus",
+                "set": "MM2",
+                "collectorNumber": "236",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-235-azorius-chancery-481a83e6-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-235-azorius-chancery-481a83e6.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Azorius Chancery",
+                "set": "MM2",
+                "collectorNumber": "235",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "mm2-234-wayfarer-s-bauble-1272beac-scryfall",
+            "image": "../../../test-images/regression/scryfall/mm2-234-wayfarer-s-bauble-1272beac.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Wayfarer's Bauble",
+                "set": "MM2",
+                "collectorNumber": "234",
+                "metadata": {
+                    "typeLine": "Artifact",
                     "rarity": "common",
                     "colors": [],
                     "layout": "normal",

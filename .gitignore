@@ -117,3 +117,6 @@ $RECYCLE.BIN/
 mtg.config.json
 
 yarn.lock
+
+.wrangler
+.terraform
