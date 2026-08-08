@@ -27,6 +27,7 @@ function formatBenchmarkReport(report) {
         `- CI gate: ${report.gate?.failed === 0 ? "PASS" : "FAIL"} (${report.gate?.passed || 0}/${report.gate?.total || 0} blocking fixtures passed)`,
         `- Non-blocking fixtures: ${report.gate?.nonBlocking || 0} (${report.gate?.nonBlockingFailed || 0} failed)`,
         `- Disabled fixtures: ${report.pending?.cases || 0}`,
+        `- Undersized-input fixtures: ${report.summary.undersizedInputs || 0}`,
         `- Fixtures containing CHANGE_ME: ${report.pending?.placeholderCases || 0}`,
         `- Total runtime: ${report.summary.totalRuntimeMs} ms`,
         `- Mean runtime: ${report.summary.meanRuntimeMs} ms`,
@@ -58,9 +59,12 @@ function formatBenchmarkReport(report) {
             : `${result.blocking === false ? "NON-BLOCKING FAIL" : "FAIL"}: ${result.failures
                   .map(markdownCell)
                   .join("; ")}`;
+        const ocrOutputLabel = result.ocr.upscaled
+            ? `${result.ocr.cleanText} (undersized source, upscaled ${result.ocr.upscaleFactor.toFixed(2)}x)`
+            : result.ocr.cleanText;
         lines.push(
             `| ${markdownCell(result.id)} | ${markdownCell(result.quality)} | ${markdownCell(
-                result.ocr.cleanText
+                ocrOutputLabel
             )} | ${markdownCell(nameMatch?.name || "—")} (${
                 nameMatch ? Math.round(nameMatch.percentage * 10000) / 100 : 0
             }%) | ${result.nameCandidateCount} | ${result.printCandidateCount} | ${markdownCell(

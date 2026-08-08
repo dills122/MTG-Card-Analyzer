@@ -32,19 +32,32 @@ const preprocessConfig = {
  * @param {string} imgPath
  * @param {"name"|"type"|"rules-name"} type
  * @param {{directory?: string}} options
- * @returns {Promise<{variants: Array, previewPath?: string}>}
+ * @returns {Promise<{variants: Array, previewPath?: string, sourceSizing: {upscaleFactor: number, upscaled: boolean}}>}
  */
 async function prepareOcrVariants(imgPath, type, options = {}) {
     const { directory, logger = defaultLogger } = options;
     const dimensions = await getImageDimensions(imgPath);
-    smartCrop.assertSourceSizeOk(dimensions);
+    const sourceSizing = smartCrop.assertOcrSourceSizeOk(dimensions);
+    if (sourceSizing.upscaled) {
+        logger.warn(
+            `OCR source image ${dimensions.width}x${dimensions.height} is below the standard minimum; ` +
+                `proceeding ${sourceSizing.upscaleFactor.toFixed(2)}x undersized (see issue #156)`
+        );
+    }
 
     const baseImage = await jimp.read(imgPath);
     const templates = smartCrop.getRegionTemplates(type);
     const variants = [];
 
     for (const template of templates) {
-        const processed = await cropAndPreprocess(baseImage, template);
+        const processed = await cropAndPreprocess(baseImage, template, {
+            // Hard Otsu thresholding + invert + sharpen (buildOcrImage) assumes real per-pixel
+            // detail to binarize; on a source that's already been stretched past its native
+            // resolution, that detail is interpolated noise, and thresholding it destroys
+            // character shapes rather than clarifying them. The soft profile (contrast only,
+            // no threshold) reads noticeably better on undersized sources -- see issue #156.
+            lowResolutionSource: sourceSizing.upscaled
+        });
         const buffer = await processed.getBufferAsync(jimp.MIME_PNG);
         variants.push({
             region: template.key,
@@ -60,12 +73,13 @@ async function prepareOcrVariants(imgPath, type, options = {}) {
         logger.info(`Wrote OCR preview crop for "${type}": ${previewPath}`);
     }
 
-    return { variants, previewPath };
+    return { variants, previewPath, sourceSizing };
 }
 
-async function cropAndPreprocess(baseImage, template) {
+async function cropAndPreprocess(baseImage, template, options = {}) {
     const { image: cropped } = smartCrop.cropRegion(baseImage, template);
-    return template.mode === "soft" ? buildSoftOcrImage(cropped) : buildOcrImage(cropped);
+    const useSoftProfile = template.mode === "soft" || options.lowResolutionSource;
+    return useSoftProfile ? buildSoftOcrImage(cropped) : buildOcrImage(cropped);
 }
 
 /**

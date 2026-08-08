@@ -16,6 +16,7 @@ const noCacheOcrOptions = Object.freeze({
 
 const silentLogger = {
     info: () => {},
+    warn: () => {},
     error: () => {}
 };
 
@@ -206,7 +207,11 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
                 cleanText: ocr.cleanText,
                 dirtyText: ocr.dirtyText,
                 confidence: ocr.confidence || 0,
-                variant: ocr.bestVariant?.region || ""
+                variant: ocr.bestVariant?.region || "",
+                // Whether the source image was below the standard OCR minimum and had to be
+                // processed through the undersized-input path (see GitHub issue #156).
+                upscaled: Boolean(ocr.sourceSizing?.upscaled),
+                upscaleFactor: ocr.sourceSizing?.upscaleFactor || 1
             },
             nameMatches,
             nameCandidateCount: nameMatches.length,
@@ -233,7 +238,14 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
             blocking: fixture.blocking !== false,
             sourceImage: fixture.image,
             expected: fixture.expected,
-            ocr: { cleanText: "", dirtyText: "", confidence: 0, variant: "" },
+            ocr: {
+                cleanText: "",
+                dirtyText: "",
+                confidence: 0,
+                variant: "",
+                upscaled: false,
+                upscaleFactor: 1
+            },
             nameMatches: [],
             nameCandidateCount: 0,
             printCandidateCount: 0,
@@ -270,6 +282,9 @@ function summarize(results) {
         passed,
         failed: results.length - passed,
         passRate: results.length ? Math.round((passed / results.length) * 10000) / 100 : 0,
+        // Fixtures whose source image was below the standard OCR minimum and went through the
+        // undersized-input path instead of being rejected outright (see GitHub issue #156).
+        undersizedInputs: results.filter((result) => result.ocr.upscaled).length,
         totalRuntimeMs: Math.round(runtimes.reduce((sum, runtime) => sum + runtime, 0) * 100) / 100,
         meanRuntimeMs: results.length
             ? Math.round(

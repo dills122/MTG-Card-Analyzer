@@ -52,9 +52,10 @@ class ImageProcessor {
                 directory: this.persistArtifacts === false ? undefined : this.directory,
                 logger: this.logger
             })
-            .then(({ variants, previewPath }) => {
+            .then(({ variants, previewPath, sourceSizing }) => {
                 this.ocrVariants = variants;
                 this.imagePath = previewPath;
+                this.sourceSizing = sourceSizing;
                 return variants;
             });
     }
@@ -69,6 +70,9 @@ class ImageProcessor {
                         return reject(err);
                     }
                     this.results = extractResults;
+                    if (this.sourceSizing) {
+                        this.results.sourceSizing = this.sourceSizing;
+                    }
                     try {
                         if (
                             this.persistArtifacts !== false &&
