@@ -99,13 +99,17 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
     - flags: `--config <path>`
 - `migrate` : one-shot migration of local nedb collection/needs-attention data to another backend (currently only `nedb -> rds`; always reads from local nedb regardless of the active `--storage-adapter`). Idempotent by default -- an entry already present on the target is skipped, not double-counted; `--force` re-migrates collection entries anyway (adds local quantity on top of whatever's already there). Needs-attention entries are always deduped by the target's own unique constraint.
     - flags: `--to <rds>` (required), `--dry-run` (preview without writing), `--force`, `--card-names-db <path>`, `--config <path>`
+- `collection update <cardName> <cardSet>` : manually set a collection entry's quantity to an exact value (unlike scanning, this overwrites rather than adds). Errors if the entry doesn't exist -- use a scan to create one first. `estValue` is rescaled proportionally from the existing per-unit value.
+    - flags: `--quantity <n>` (required), `--storage-adapter <nedb|rds>`, `--config <path>`
+- `collection remove <cardName> <cardSet>` : delete a collection entry outright. Permanent, no confirmation prompt.
+    - flags: `--storage-adapter <nedb|rds>`, `--config <path>`
 
 ### Persistence Architecture
 
 Two deliberately separate tiers:
 
 1. **Cache tier** — always on by default (turn off with `--no-local-cache` / `LOCAL_CACHE_ENABLED=false`), always local nedb, never `STORAGE_ADAPTER`-selected. Holds the card names dictionary, the image hash cache, and the local [operations log](#operations-log). Its job is speed (skip re-querying Scryfall, skip re-hashing known cards) and local diagnostics — not being a source of truth. The names dictionary specifically is unaffected by `--no-local-cache`: it's a required local index, not an optional cache, since there's no remote alternative.
-2. **Persistence tier** — selected by `STORAGE_ADAPTER` (`nedb` | `rds`, default `nedb`). This is where your actual collection and needs-attention records live. Scanning the same card twice adds to its quantity (`delta`, default 1) rather than overwriting it — both backends compute the resulting `estValue` from the final quantity.
+2. **Persistence tier** — selected by `STORAGE_ADAPTER` (`nedb` | `rds`, default `nedb`). This is where your actual collection and needs-attention records live. Scanning the same card twice adds to its quantity (`delta`, default 1) rather than overwriting it — both backends compute the resulting `estValue` from the final quantity. Made a mistake, or want to correct/remove an entry by hand? `collection update`/`collection remove` (see [Current Commands](#current-commands)) go through the same tier.
 
 Local cache DB files:
 

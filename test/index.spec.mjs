@@ -276,6 +276,87 @@ describe("CLI::index.mjs", () => {
             assert.isTrue(processExitStub.calledWith(1));
         });
     });
+
+    describe("collection subcommands", () => {
+        it("collection update sets quantity and exits 0", async () => {
+            const setQuantityStub = sandbox
+                .stub(storage.collection, "setQuantity")
+                .resolves({ cardName: "Pacifism", quantity: 5 });
+
+            await runCli({
+                command: "collection-update",
+                flags: { cardName: "Pacifism", cardSet: "M20", quantity: "5" }
+            });
+
+            assert.isTrue(setQuantityStub.calledOnceWith("Pacifism", "M20", 5));
+            assert.isTrue(processExitStub.calledWith(0));
+        });
+
+        it("collection update rejects a non-numeric --quantity without calling storage", async () => {
+            const setQuantityStub = sandbox.stub(storage.collection, "setQuantity");
+
+            await runCli({
+                command: "collection-update",
+                flags: { cardName: "Pacifism", cardSet: "M20", quantity: "notanumber" }
+            });
+
+            assert.isFalse(setQuantityStub.called);
+            assert.isTrue(consoleLogStub.calledWithMatch(sinon.match(/--quantity must be/)));
+            assert.isTrue(processExitStub.calledWith(1));
+        });
+
+        it("collection update rejects a negative --quantity without calling storage", async () => {
+            const setQuantityStub = sandbox.stub(storage.collection, "setQuantity");
+
+            await runCli({
+                command: "collection-update",
+                flags: { cardName: "Pacifism", cardSet: "M20", quantity: "-1" }
+            });
+
+            assert.isFalse(setQuantityStub.called);
+            assert.isTrue(processExitStub.calledWith(1));
+        });
+
+        it("collection update exits 1 with the error message when the entry doesn't exist", async () => {
+            sandbox
+                .stub(storage.collection, "setQuantity")
+                .rejects(new Error("No collection entry"));
+
+            await runCli({
+                command: "collection-update",
+                flags: { cardName: "Nonexistent", cardSet: "XYZ", quantity: "5" }
+            });
+
+            assert.isTrue(consoleLogStub.calledWithMatch(sinon.match(/No collection entry/)));
+            assert.isTrue(processExitStub.calledWith(1));
+        });
+
+        it("collection remove deletes the entry and exits 0", async () => {
+            const removeStub = sandbox
+                .stub(storage.collection, "remove")
+                .resolves({ cardName: "Pacifism", cardSet: "M20" });
+
+            await runCli({
+                command: "collection-remove",
+                flags: { cardName: "Pacifism", cardSet: "M20" }
+            });
+
+            assert.isTrue(removeStub.calledOnceWith("Pacifism", "M20"));
+            assert.isTrue(processExitStub.calledWith(0));
+        });
+
+        it("collection remove exits 1 when nothing matched", async () => {
+            sandbox.stub(storage.collection, "remove").resolves(null);
+
+            await runCli({
+                command: "collection-remove",
+                flags: { cardName: "Nonexistent", cardSet: "XYZ" }
+            });
+
+            assert.isTrue(consoleLogStub.calledWithMatch(sinon.match(/No collection entry/)));
+            assert.isTrue(processExitStub.calledWith(1));
+        });
+    });
 });
 
 describe("CLI::index.mjs buildCli (real commander wiring)", () => {
@@ -332,6 +413,26 @@ describe("CLI::index.mjs buildCli (real commander wiring)", () => {
 
     it("does not throw when `migrate` is missing --to", () => {
         const parsed = buildCli(["migrate"]);
+        assert.equal(parsed.helpRequested, true);
+    });
+
+    it("parses `collection update <name> <set> --quantity 3`", () => {
+        const parsed = buildCli(["collection", "update", "Pacifism", "M20", "--quantity", "3"]);
+        assert.equal(parsed.command, "collection-update");
+        assert.equal(parsed.flags.cardName, "Pacifism");
+        assert.equal(parsed.flags.cardSet, "M20");
+        assert.equal(parsed.flags.quantity, "3");
+    });
+
+    it("parses `collection remove <name> <set>`", () => {
+        const parsed = buildCli(["collection", "remove", "Pacifism", "M20"]);
+        assert.equal(parsed.command, "collection-remove");
+        assert.equal(parsed.flags.cardName, "Pacifism");
+        assert.equal(parsed.flags.cardSet, "M20");
+    });
+
+    it("does not throw when `collection update` is missing --quantity", () => {
+        const parsed = buildCli(["collection", "update", "Pacifism", "M20"]);
         assert.equal(parsed.helpRequested, true);
     });
 });

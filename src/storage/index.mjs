@@ -95,7 +95,9 @@ const storage = {
     // Persistence tier -- STORAGE_ADAPTER-selected (nedb | rds).
     collection: {
         getQuantity: (...args) => getAdapter().collection.getQuantity(...args),
-        upsert: (...args) => getAdapter().collection.upsert(...args)
+        upsert: (...args) => getAdapter().collection.upsert(...args),
+        setQuantity: (...args) => getAdapter().collection.setQuantity(...args),
+        remove: (...args) => getAdapter().collection.remove(...args)
     },
     needsAttention: {
         insert: (...args) => getAdapter().needsAttention.insert(...args)

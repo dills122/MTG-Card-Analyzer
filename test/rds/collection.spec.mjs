@@ -1,7 +1,13 @@
 import { assert } from "chai";
 import sinon from "sinon";
 import mysql from "mysql2";
-import { GetQuantity, InsertRecord, UpsertRecord } from "../../src/rds/collection.mjs";
+import {
+    GetQuantity,
+    InsertRecord,
+    UpsertRecord,
+    SetQuantity,
+    DeleteRecord
+} from "../../src/rds/collection.mjs";
 
 describe("rds::collection", () => {
     let sandbox;
@@ -112,5 +118,68 @@ describe("rds::collection", () => {
                 done();
             }
         );
+    });
+
+    describe("SetQuantity", () => {
+        it("assigns estValue before quantity in the SET list (order matters -- see comment in source)", (done) => {
+            fakeConnection.query.callsFake((sql, params, cb) => cb(null, { affectedRows: 1 }));
+
+            SetQuantity("Urza's Tower", "M20", 10, (err) => {
+                assert.isNull(err);
+                const [sql, params] = fakeConnection.query.firstCall.args;
+                assert.notInclude(sql, "Urza's Tower");
+                const estValueIdx = sql.indexOf("estValue =");
+                const quantityIdx = sql.indexOf("quantity = ?");
+                assert.isBelow(
+                    estValueIdx,
+                    quantityIdx,
+                    "estValue must be assigned before quantity or it reads the already-updated value"
+                );
+                assert.deepEqual(params, [10, 10, "Urza's Tower", "M20"]);
+                done();
+            });
+        });
+
+        it("errors when no row matched (affectedRows === 0)", (done) => {
+            fakeConnection.query.callsFake((sql, params, cb) => cb(null, { affectedRows: 0 }));
+
+            SetQuantity("Nonexistent", "XYZ", 5, (err) => {
+                assert.instanceOf(err, Error);
+                assert.match(err.message, /No collection entry/);
+                done();
+            });
+        });
+    });
+
+    describe("DeleteRecord", () => {
+        it("selects with explicit camelCase aliases (not SELECT *, which returns PascalCase column names)", (done) => {
+            const row = { cardName: "Urza's Tower", cardSet: "M20", quantity: 2 };
+            fakeConnection.query.onFirstCall().callsFake((sql, params, cb) => cb(null, [row]));
+            fakeConnection.query.onSecondCall().callsFake((sql, params, cb) => cb(null, {}));
+
+            DeleteRecord("Urza's Tower", "M20", (err, removed) => {
+                assert.isNull(err);
+                assert.deepEqual(removed, row);
+                const [selectSql] = fakeConnection.query.firstCall.args;
+                assert.notMatch(selectSql, /SELECT \*/);
+                const [deleteSql] = fakeConnection.query.secondCall.args;
+                assert.match(deleteSql, /^DELETE FROM CardCollection/);
+                done();
+            });
+        });
+
+        it("returns null (no error) when nothing matches", (done) => {
+            fakeConnection.query.callsFake((sql, params, cb) => cb(null, []));
+
+            DeleteRecord("Nonexistent", "XYZ", (err, removed) => {
+                assert.isNull(err);
+                assert.isNull(removed);
+                assert.isTrue(
+                    fakeConnection.query.calledOnce,
+                    "should not issue a DELETE when nothing was found"
+                );
+                done();
+            });
+        });
     });
 });

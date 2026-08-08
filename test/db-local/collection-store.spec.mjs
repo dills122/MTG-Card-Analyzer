@@ -134,4 +134,70 @@ describe("db-local::collection-store", () => {
             assert.deepEqual(all, []);
         });
     });
+
+    describe("SetQuantity", () => {
+        it("overwrites quantity and rescales estValue proportionally", async () => {
+            const store = await freshStore();
+            const record = { cardName: "Pacifism", cardSet: "M20", priceUsd: 2.5 };
+            await new Promise((resolve, reject) => {
+                store.Upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
+            });
+            await new Promise((resolve, reject) => {
+                store.Upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
+            }); // quantity=2, estValue=5
+
+            const updated = await new Promise((resolve, reject) => {
+                store.SetQuantity("Pacifism", "M20", 10, (err, d) =>
+                    err ? reject(err) : resolve(d)
+                );
+            });
+            assert.equal(updated.quantity, 10);
+            assert.equal(updated.estValue, 25, "(5/2)*10 = 25");
+        });
+
+        it("errors on a card/set that doesn't exist -- won't silently create one", async () => {
+            const store = await freshStore();
+            let caught;
+            try {
+                await new Promise((resolve, reject) => {
+                    store.SetQuantity("Nonexistent", "XYZ", 5, (err, d) =>
+                        err ? reject(err) : resolve(d)
+                    );
+                });
+            } catch (err) {
+                caught = err;
+            }
+            assert.instanceOf(caught, Error);
+            assert.match(caught.message, /No collection entry/);
+        });
+    });
+
+    describe("Remove", () => {
+        it("deletes the entry and returns the removed doc", async () => {
+            const store = await freshStore();
+            await new Promise((resolve, reject) => {
+                store.Upsert({ cardName: "Pacifism", cardSet: "M20" }, (err, d) =>
+                    err ? reject(err) : resolve(d)
+                );
+            });
+
+            const removed = await new Promise((resolve, reject) => {
+                store.Remove("Pacifism", "M20", (err, d) => (err ? reject(err) : resolve(d)));
+            });
+            assert.equal(removed.cardName, "Pacifism");
+
+            const qty = await new Promise((resolve, reject) => {
+                store.GetQuantity("Pacifism", "M20", (err, q) => (err ? reject(err) : resolve(q)));
+            });
+            assert.equal(qty, 0);
+        });
+
+        it("returns null (no error) when nothing matches", async () => {
+            const store = await freshStore();
+            const removed = await new Promise((resolve, reject) => {
+                store.Remove("Nonexistent", "XYZ", (err, d) => (err ? reject(err) : resolve(d)));
+            });
+            assert.isNull(removed);
+        });
+    });
 });

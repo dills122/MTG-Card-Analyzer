@@ -27,6 +27,28 @@ function upsertCollection(record) {
     });
 }
 
+function setQuantity(name, set, quantity) {
+    return new Promise((resolve, reject) => {
+        rds.Collection.SetQuantity(name, set, quantity, (err, results) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(results);
+        });
+    });
+}
+
+function removeCollection(name, set) {
+    return new Promise((resolve, reject) => {
+        rds.Collection.DeleteRecord(name, set, (err, results) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(results);
+        });
+    });
+}
+
 function insertNeedsAttention(record) {
     return new Promise((resolve, reject) => {
         rds.NDAttn.InsertRecord(record, (err, results) => {
@@ -43,7 +65,9 @@ function createRdsAdapter() {
         adapterName: "rds",
         collection: {
             getQuantity,
-            upsert: upsertCollection
+            upsert: upsertCollection,
+            setQuantity,
+            remove: removeCollection
         },
         needsAttention: {
             insert: insertNeedsAttention
