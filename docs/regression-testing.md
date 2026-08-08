@@ -65,10 +65,12 @@ pnpm test:regression --quality clean-scan --quality low-resolution
 pnpm test:regression --manifest ./path/manifest.json --output ./path/reports
 ```
 
-Execution is sequential so OCR timing and CPU contention are easier to compare between runs. Run
-multiple fixture IDs or quality groups in the same command to reuse that invocation's worker; a
-separate command starts a separate worker. The generated `artifacts/regression` directory is
-ignored by Git.
+Execution stays sequential to keep OCR timings and CPU contention comparable.
+
+Run multiple fixture IDs or quality groups in one command to reuse its worker.
+Each separate command starts a new worker.
+
+The generated `artifacts/regression` directory is ignored by Git.
 
 ## Manifest
 
