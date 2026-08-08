@@ -44,11 +44,26 @@ describe("db-local::card-hash-cache", () => {
             cardHash: "abc123",
             isFoil: true,
             isPromo: false,
-            cardUrl: "https://example.test/card.jpg"
+            cardUrl: "https://example.test/card.jpg",
+            hashMode: "full-card"
         });
         assert.equal(hashes[0].lookupKey, "Pacifism::Core Set 2020::1::0::abc123");
         assert.instanceOf(hashes[0].createdAt, Date);
         assert.instanceOf(hashes[0].updatedAt, Date);
+    });
+
+    it("preserves an explicit hashMode instead of defaulting it", async () => {
+        const cache = await freshCache();
+
+        await cache.insertEntity({
+            cardName: "Pacifism",
+            setName: "M20",
+            cardHash: "abc123",
+            hashMode: "set-symbol"
+        });
+        const [hash] = await cache.getHashes("Pacifism");
+
+        assert.equal(hash.hashMode, "set-symbol");
     });
 
     it("upserts the same printing/hash instead of duplicating it", async () => {

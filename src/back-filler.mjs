@@ -29,7 +29,8 @@ async function backFillCardHashes(cardName) {
                 setName: card.set_name,
                 isFoil: card.foil ? true : false,
                 isPromo: card.promo ? true : false,
-                cardHash
+                cardHash,
+                hashMode: "full-card"
             });
         }
         cardHashes = [...new Set(cardHashes)];

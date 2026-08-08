@@ -62,7 +62,18 @@ class ProcessHashes {
 
     async compareDbHashes() {
         this.logger.info(`Checking local hash cache for "${this.name}"`);
-        const hashes = await this.dependencies.CardHashes.getByCardName(this.name);
+        const hashMode = this.hashMode || "full-card";
+        const allHashes = await this.dependencies.CardHashes.getByCardName(this.name);
+        // A stored hash computed in a different mode (full-card vs set-symbol) measures something
+        // different than this.localHash -- comparing across modes is apples-to-oranges, so treat
+        // a mode mismatch as "no usable cached hash," not "compare it anyway."
+        const hashes = allHashes.filter((dbHash) => (dbHash.hashMode || "full-card") === hashMode);
+        const skippedForModeMismatch = allHashes.length - hashes.length;
+        if (skippedForModeMismatch > 0) {
+            this.logger.info(
+                `Skipped ${skippedForModeMismatch} cached hash(es) for "${this.name}": hashMode mismatch (expected ${hashMode})`
+            );
+        }
         const matches = [];
         hashes.forEach((dbHash) => {
             const compareResults = this.dependencies.Hash.compareHash(
@@ -242,7 +253,8 @@ class ProcessHashes {
         this.dependencies.CardHashes.upsert({
             cardName: this.name,
             setName,
-            cardHash: hash
+            cardHash: hash,
+            hashMode: this.hashMode
         });
     }
 }
