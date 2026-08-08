@@ -6,6 +6,7 @@ import {
     fetchCardPages,
     imageUrlForCard
 } from "../scryfall-api/regression-fixtures.mjs";
+import { cardCoverage, selectBalancedCards } from "./balanced-card-selector.mjs";
 
 const DEFAULT_MAX_PAGES = 20;
 const MAX_COUNT = 100;
@@ -77,7 +78,8 @@ function normalizeImportOptions(options) {
             options.maxPages ?? DEFAULT_MAX_PAGES,
             "max-pages",
             MAX_PAGES
-        )
+        ),
+        balanced: options.balanced === true
     };
 }
 
@@ -157,13 +159,14 @@ function normalizeCard(card) {
     }
     const imageUrl = imageUrlForCard(card);
     if (!imageUrl) return undefined;
+    const coverage = cardCoverage(card);
     return {
         id: card.id,
         name: card.name,
         set: card.set.toUpperCase(),
         setName: card.set_name,
         collectorNumber: card.collector_number,
-        typeLine: typeof card.type_line === "string" ? card.type_line : "Unknown",
+        ...coverage,
         rarity: typeof card.rarity === "string" ? card.rarity : "unknown",
         apiUrl: typeof card.scryfall_uri === "string" ? card.scryfall_uri : card.uri,
         imageUrl
@@ -186,6 +189,9 @@ function fixtureEntries(card, manifestPath, imagePath) {
             collectorNumber: card.collectorNumber,
             typeLine: card.typeLine,
             rarity: card.rarity,
+            colors: card.colors,
+            layout: card.layout,
+            style: card.style,
             referenceImage: relativeImage,
             apiUrl: card.apiUrl
         },
@@ -201,7 +207,10 @@ function fixtureEntries(card, manifestPath, imagePath) {
                 collectorNumber: card.collectorNumber,
                 metadata: {
                     typeLine: card.typeLine,
-                    rarity: card.rarity
+                    rarity: card.rarity,
+                    colors: card.colors,
+                    layout: card.layout,
+                    style: card.style
                 },
                 minNameScore: 0.7,
                 maxPrintCandidates: 1,
@@ -246,13 +255,14 @@ async function importScryfallFixtures(options, overrides = {}) {
     }
 
     const fetchCardPages = overrides.fetchCardPages || defaultDependencies.fetchCardPages;
-    const cards = await fetchCardPages(buildCardSearchUrl(selection), {
-        maxPages: selection.maxPages,
-        shouldStop: (collectedCards) =>
-            hasEnoughNewPrintableCards(collectedCards, existing, selection.count)
-    });
-    const selected = [];
-    const selectedIdentities = new Set();
+    const fetchOptions = { maxPages: selection.maxPages };
+    if (!selection.balanced) {
+        fetchOptions.shouldStop = (collectedCards) =>
+            hasEnoughNewPrintableCards(collectedCards, existing, selection.count);
+    }
+    const cards = await fetchCardPages(buildCardSearchUrl(selection), fetchOptions);
+    const candidates = [];
+    const candidateIdentities = new Set();
     let excludedExisting = 0;
     let skippedUnprintable = 0;
 
@@ -265,16 +275,20 @@ async function importScryfallFixtures(options, overrides = {}) {
         const identities = printIdentities(card);
         if (
             identities.some(
-                (identity) => existing.has(identity) || selectedIdentities.has(identity)
+                (identity) => existing.has(identity) || candidateIdentities.has(identity)
             )
         ) {
             excludedExisting += 1;
             continue;
         }
-        selected.push(card);
-        for (const identity of identities) selectedIdentities.add(identity);
-        if (selected.length === selection.count) break;
+        candidates.push(card);
+        for (const identity of identities) candidateIdentities.add(identity);
+        if (!selection.balanced && candidates.length === selection.count) break;
     }
+
+    const selected = selection.balanced
+        ? selectBalancedCards(candidates, selection.count)
+        : candidates.slice(0, selection.count);
 
     if (selected.length < selection.count) {
         throw new Error(
@@ -287,7 +301,13 @@ async function importScryfallFixtures(options, overrides = {}) {
         scryfallId: card.id,
         name: card.name,
         set: card.set,
-        collectorNumber: card.collectorNumber
+        collectorNumber: card.collectorNumber,
+        colors: card.colors,
+        colorCategory: card.colorCategory,
+        primaryType: card.primaryType,
+        layout: card.layout,
+        style: card.style,
+        rarity: card.rarity
     }));
     if (options.dryRun) {
         return { added, excludedExisting, skippedUnprintable, dryRun: true };

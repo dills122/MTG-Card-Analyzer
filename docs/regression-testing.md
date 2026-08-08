@@ -175,6 +175,13 @@ matching catalog and clean-scan case entries:
 # Preview newest prints from several sets without writing files
 pnpm fixtures:import --set fin --set dsk --count 6 --dry-run
 
+# Preview a deterministic coverage mix instead of collector-number ordering
+pnpm fixtures:import \
+    --set m12 --set m13 --set m20 \
+    --count 12 \
+    --balanced \
+    --dry-run
+
 # Import prints whose sets were released in a date range
 pnpm fixtures:import \
     --released-after 2025-01-01 \
@@ -189,10 +196,18 @@ pnpm fixtures:import \
 ```
 
 Choose either one or more `--set` values or release-date bounds. Set values may be repeated or
-comma-separated. Results use unique printings, newest first. The target manifest's catalog is
-always used as the existing-card list; each repeatable `--existing-manifest` adds another catalog
-to that exclusion set. Prints match by Scryfall ID when available and by set plus collector number,
-so older manifest entries without an ID are still excluded.
+comma-separated. Results use unique printings and default to newest-first order. Add `--balanced`
+to fetch the bounded candidate pool and greedily favor underrepresented sets, color categories,
+primary card types, rarities, layouts, and treatments. Balanced selection is deterministic for the
+same Scryfall response, prefers non-basic cards, and selects at most one basic land. Its dry-run
+output lists the coverage categories for every card and summarizes the number of distinct values.
+It also prefers a new card name over another printing of a name already selected in that run.
+
+The target manifest's catalog is always used as the existing-card list; each repeatable
+`--existing-manifest` adds another catalog to that exclusion set. Prints match by Scryfall ID when
+available and by set plus collector number, so older manifest entries without an ID are still
+excluded. New catalog and expected-metadata entries retain the selected card's colors, layout, and
+derived treatment style so the coverage intent remains visible after import.
 
 The command writes images under `test-images/regression/scryfall/` and atomically updates
 `test/regression/fixtures/manifest.json`. Imported catalog and case entries are disabled to preserve
@@ -205,11 +220,12 @@ the review-first fixture policy. To finish an import:
 4. Run the new case by ID and inspect both benchmark reports.
 5. Adjust thresholds from repeated evidence, then run the full unit and regression gates.
 
-The importer accepts at most 100 cards per run, follows at most 20 result pages by default, stops
-as soon as enough unused printable cards are found, spaces API page requests by 125 ms, and rejects
-oversized or non-JPEG downloads. Use `--max-pages` only when a selection contains many already
-tracked or multi-face prints. Scryfall asks API clients to stay below 10 requests per second and to
-send identifying request headers; see their
+The importer accepts at most 100 cards per run, follows at most 20 result pages by default, spaces
+API page requests by 125 ms, and rejects oversized or non-JPEG downloads. Newest-first mode stops
+as soon as enough unused printable cards are found; balanced mode reads the bounded result pool
+before choosing. Use `--max-pages` only when a selection contains many already tracked or
+multi-face prints. Scryfall asks API clients to stay below 10 requests per second and to send
+identifying request headers; see their
 [API access guidance](https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17).
 
 ### Add a captured image manually

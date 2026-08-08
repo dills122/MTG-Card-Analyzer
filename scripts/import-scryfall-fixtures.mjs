@@ -40,6 +40,7 @@ function buildProgram() {
             []
         )
         .option("--max-pages <number>", "maximum Scryfall result pages", "20")
+        .option("--balanced", "diversify selected prints across coverage categories", false)
         .option("--dry-run", "show selected prints without writing images or manifest", false);
 }
 
@@ -56,12 +57,24 @@ async function main(argv = process.argv, overrides = {}) {
         releasedBefore: options.releasedBefore,
         count: options.count,
         maxPages: options.maxPages,
+        balanced: options.balanced,
         dryRun: options.dryRun
     });
 
     writeLine(`${result.dryRun ? "Would import" : "Imported"} ${result.added.length} fixture(s):`);
     for (const card of result.added) {
-        writeLine(`- ${card.set}/${card.collectorNumber} ${card.name}`);
+        const coverage = options.balanced
+            ? ` [${card.colorCategory}; ${card.primaryType}; ${card.layout}; ${card.style}; ${card.rarity}]`
+            : "";
+        writeLine(`- ${card.set}/${card.collectorNumber} ${card.name}${coverage}`);
+    }
+    if (options.balanced) {
+        const uniqueCount = (key) => new Set(result.added.map((card) => card[key])).size;
+        writeLine(
+            `Coverage: sets=${uniqueCount("set")}, color categories=${uniqueCount("colorCategory")}, ` +
+                `types=${uniqueCount("primaryType")}, layouts=${uniqueCount("layout")}, ` +
+                `styles=${uniqueCount("style")}, rarities=${uniqueCount("rarity")}`
+        );
     }
     writeLine(`Excluded existing prints: ${result.excludedExisting}`);
     writeLine(`Skipped cards without usable front JPEGs: ${result.skippedUnprintable}`);

@@ -7,6 +7,7 @@ import {
     normalizeCard,
     normalizeImportOptions
 } from "../../src/regression/scryfall-fixture-importer.mjs";
+import { selectBalancedCards } from "../../src/regression/balanced-card-selector.mjs";
 import {
     buildCardSearchUrl,
     downloadImage,
@@ -21,8 +22,15 @@ describe("Scryfall regression fixture importer", () => {
                 releasedAfter: undefined,
                 releasedBefore: undefined,
                 count: 4,
-                maxPages: 20
+                maxPages: 20,
+                balanced: false
             });
+        });
+
+        it("enables balanced selection explicitly", () => {
+            assert.isTrue(
+                normalizeImportOptions({ sets: ["fin"], count: 4, balanced: true }).balanced
+            );
         });
 
         it("accepts a bounded release-date range", () => {
@@ -235,6 +243,118 @@ describe("Scryfall regression fixture importer", () => {
         assert.isUndefined(normalizeCard(malformed));
     });
 
+    describe("selectBalancedCards", () => {
+        it("deterministically spreads selections across coverage categories", () => {
+            const candidates = [
+                card({
+                    id: "basic-land",
+                    name: "Forest",
+                    set: "m20",
+                    collector: "280",
+                    typeLine: "Basic Land — Forest"
+                }),
+                card({ id: "white", name: "White", set: "m20", collector: "1", colors: ["W"] }),
+                card({
+                    id: "blue",
+                    name: "Blue",
+                    set: "m20",
+                    collector: "2",
+                    colors: ["U"],
+                    typeLine: "Instant",
+                    rarity: "uncommon"
+                }),
+                card({
+                    id: "black-showcase",
+                    name: "Black",
+                    set: "spm",
+                    collector: "3",
+                    colors: ["B"],
+                    frameEffects: ["showcase"],
+                    rarity: "rare"
+                }),
+                card({
+                    id: "red-borderless",
+                    name: "Red",
+                    set: "spm",
+                    collector: "4",
+                    colors: ["R"],
+                    typeLine: "Sorcery",
+                    borderColor: "borderless"
+                }),
+                card({
+                    id: "green-full-art",
+                    name: "Green",
+                    set: "m12",
+                    collector: "5",
+                    colors: ["G"],
+                    typeLine: "Enchantment",
+                    fullArt: true,
+                    rarity: "mythic"
+                }),
+                card({
+                    id: "colorless",
+                    name: "Colorless",
+                    set: "m12",
+                    collector: "6",
+                    typeLine: "Artifact",
+                    rarity: "rare"
+                })
+            ].map(normalizeCard);
+
+            const first = selectBalancedCards(candidates, 6);
+            const second = selectBalancedCards(candidates, 6);
+
+            assert.deepEqual(
+                first.map((entry) => entry.id),
+                second.map((entry) => entry.id)
+            );
+            assert.isAtLeast(new Set(first.map((entry) => entry.set)).size, 3);
+            assert.isAtLeast(new Set(first.map((entry) => entry.colorCategory)).size, 5);
+            assert.isAtLeast(new Set(first.map((entry) => entry.primaryType)).size, 4);
+            assert.isAtLeast(new Set(first.map((entry) => entry.style)).size, 3);
+            assert.isAtMost(first.filter((entry) => entry.isBasicLand).length, 1);
+        });
+
+        it("never selects more than one basic land", () => {
+            const candidates = [
+                card({
+                    id: "forest",
+                    name: "Forest",
+                    set: "m20",
+                    collector: "280",
+                    typeLine: "Basic Land — Forest"
+                }),
+                card({
+                    id: "island",
+                    name: "Island",
+                    set: "m20",
+                    collector: "281",
+                    typeLine: "Basic Land — Island"
+                }),
+                card({ id: "spell", name: "Spell", set: "m20", collector: "1" })
+            ].map(normalizeCard);
+
+            assert.lengthOf(selectBalancedCards(candidates, 3), 2);
+            assert.lengthOf(
+                selectBalancedCards(candidates, 3).filter((entry) => entry.isBasicLand),
+                1
+            );
+        });
+
+        it("prefers a new card name over another printing of a selected name", () => {
+            const candidates = [
+                card({ id: "first-print", name: "Shared Name", set: "m20", collector: "1" }),
+                card({ id: "second-print", name: "Shared Name", set: "m13", collector: "2" }),
+                card({ id: "unique", name: "Unique Name", set: "m13", collector: "3" })
+            ].map(normalizeCard);
+
+            assert.deepEqual(
+                selectBalancedCards(candidates, 2).map((entry) => entry.id),
+                ["first-print", "unique"]
+            );
+        });
+    });
+
     describe("importScryfallFixtures", () => {
         let directory;
 
@@ -269,7 +389,10 @@ describe("Scryfall regression fixture importer", () => {
                     count: 1
                 },
                 {
-                    fetchCardPages: async () => cards,
+                    fetchCardPages: async (_url, options) => {
+                        assert.isFunction(options.shouldStop);
+                        return cards;
+                    },
                     downloadImage: async (url, destination) => {
                         downloads.push({ url, destination });
                         await writeFile(destination, "image bytes");
@@ -290,6 +413,9 @@ describe("Scryfall regression fixture importer", () => {
                 set: "FIN",
                 setName: "Final Fantasy",
                 collectorNumber: "42",
+                colors: ["U"],
+                layout: "normal",
+                style: "normal",
                 referenceImage: "../test-images/scryfall/fin-42-fresh-card-new-id.jpg"
             });
             assert.deepInclude(manifest.cases[1], {
@@ -303,6 +429,59 @@ describe("Scryfall regression fixture importer", () => {
                 set: "FIN",
                 collectorNumber: "42"
             });
+            assert.deepEqual(manifest.cases[1].expected.metadata, {
+                typeLine: "Creature — Test",
+                rarity: "common",
+                colors: ["U"],
+                layout: "normal",
+                style: "normal"
+            });
+        });
+
+        it("fetches the bounded candidate pool before balanced selection", async () => {
+            const manifestPath = path.join(directory, "manifest.json");
+            await writeManifest(manifestPath, emptyManifest());
+            let fetchOptions;
+
+            const result = await importScryfallFixtures(
+                {
+                    manifestPath,
+                    imageDirectory: path.join(directory, "images"),
+                    sets: ["m20", "spm"],
+                    count: 2,
+                    balanced: true,
+                    dryRun: true
+                },
+                {
+                    fetchCardPages: async (_url, options) => {
+                        fetchOptions = options;
+                        return [
+                            card({
+                                id: "forest",
+                                name: "Forest",
+                                set: "m20",
+                                collector: "280",
+                                typeLine: "Basic Land — Forest"
+                            }),
+                            card({ id: "white", name: "White", set: "m20", collector: "1" }),
+                            card({
+                                id: "showcase",
+                                name: "Showcase",
+                                set: "spm",
+                                collector: "2",
+                                colors: ["B"],
+                                frameEffects: ["showcase"]
+                            })
+                        ];
+                    }
+                }
+            );
+
+            assert.notProperty(fetchOptions, "shouldStop");
+            assert.sameMembers(
+                result.added.map((entry) => entry.scryfallId),
+                ["white", "showcase"]
+            );
         });
 
         it("excludes prints listed in extra existing manifests", async () => {
@@ -381,7 +560,19 @@ describe("Scryfall regression fixture importer", () => {
     });
 });
 
-function card({ id, name, set, collector }) {
+function card({
+    id,
+    name,
+    set,
+    collector,
+    colors = ["U"],
+    typeLine = "Creature — Test",
+    rarity = "common",
+    layout = "normal",
+    frameEffects = [],
+    borderColor = "black",
+    fullArt = false
+}) {
     return {
         id,
         name,
@@ -390,8 +581,13 @@ function card({ id, name, set, collector }) {
         set,
         set_name: set === "fin" ? "Final Fantasy" : "Old Set",
         collector_number: collector,
-        type_line: "Creature — Test",
-        rarity: "common",
+        colors,
+        type_line: typeLine,
+        rarity,
+        layout,
+        frame_effects: frameEffects,
+        border_color: borderColor,
+        full_art: fullArt,
         scryfall_uri: `https://scryfall.com/card/${set}/${collector}`,
         image_uris: {
             normal: `https://cards.scryfall.io/normal/${id}.jpg`

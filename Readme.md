@@ -216,6 +216,9 @@ Import new clean-scan candidates from Scryfall by set code or release-date range
 # Preview six unused prints from two sets
 pnpm fixtures:import --set fin --set dsk --count 6 --dry-run
 
+# Preview a deterministic coverage mix across sets, colors, types, rarities, and treatments
+pnpm fixtures:import --set m12 --set m13 --set m20 --count 12 --balanced --dry-run
+
 # Download ten unused prints and append disabled review entries
 pnpm fixtures:import \
     --released-after 2025-01-01 \
@@ -226,7 +229,7 @@ pnpm fixtures:import \
 The target manifest is automatically used to exclude existing printings. Add repeatable
 `--existing-manifest <path>` options to exclude catalogs from other checkouts or suites. See the
 [regression fixture import workflow](docs/regression-testing.md#import-clean-scans-from-scryfall)
-for review, activation, and safety details.
+for balanced-selection behavior, review, activation, and safety details.
 
 ### Quality Commands
 

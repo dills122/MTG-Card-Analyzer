@@ -18,6 +18,7 @@ describe("import-scryfall-fixtures CLI", () => {
                 "first.json",
                 "--existing-manifest",
                 "second.json",
+                "--balanced",
                 "--dry-run"
             ])
             .opts();
@@ -25,6 +26,7 @@ describe("import-scryfall-fixtures CLI", () => {
         assert.deepEqual(options.set, ["fin,dsk", "tdm"]);
         assert.equal(options.count, "6");
         assert.deepEqual(options.existingManifest, ["first.json", "second.json"]);
+        assert.isTrue(options.balanced);
         assert.isTrue(options.dryRun);
     });
 
@@ -41,7 +43,8 @@ describe("import-scryfall-fixtures CLI", () => {
                 "--released-before",
                 "2025-06-30",
                 "--count",
-                "2"
+                "2",
+                "--balanced"
             ],
             {
                 importer: async (options) => {
@@ -52,13 +55,23 @@ describe("import-scryfall-fixtures CLI", () => {
                                 name: "Card One",
                                 set: "ONE",
                                 collectorNumber: "1",
-                                scryfallId: "one"
+                                scryfallId: "one",
+                                colorCategory: "W",
+                                primaryType: "Creature",
+                                layout: "normal",
+                                style: "normal",
+                                rarity: "common"
                             },
                             {
                                 name: "Card Two",
                                 set: "TWO",
                                 collectorNumber: "2",
-                                scryfallId: "two"
+                                scryfallId: "two",
+                                colorCategory: "U",
+                                primaryType: "Instant",
+                                layout: "transform",
+                                style: "showcase",
+                                rarity: "rare"
                             }
                         ],
                         excludedExisting: 3,
@@ -75,11 +88,16 @@ describe("import-scryfall-fixtures CLI", () => {
             releasedAfter: "2025-01-01",
             releasedBefore: "2025-06-30",
             count: "2",
+            balanced: true,
             dryRun: false
         });
         assert.strictEqual(result.added.length, 2);
         assert.include(output[0], "Imported 2 fixture(s)");
-        assert.include(output.join("\n"), "ONE/1 Card One");
+        assert.include(output.join("\n"), "ONE/1 Card One [W; Creature; normal; normal; common]");
+        assert.include(
+            output.join("\n"),
+            "Coverage: sets=2, color categories=2, types=2, layouts=2, styles=2, rarities=2"
+        );
         assert.include(output.join("\n"), "Excluded existing prints: 3");
     });
 });
