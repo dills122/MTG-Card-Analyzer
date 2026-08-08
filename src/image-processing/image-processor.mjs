@@ -1,4 +1,3 @@
-import _ from "lodash";
 import joi from "joi";
 import logger from "../logger/log.mjs";
 import { randomUUID } from "node:crypto";
@@ -13,6 +12,17 @@ const defaultDependencies = {
     writeFile
 };
 
+// Ensures a callback only ever fires once, even if both the resolve and reject paths of the
+// wrapped promise chain somehow both settle (defensive, mirrors the previous lodash `_.once`).
+function once(fn) {
+    let called = false;
+    return (...args) => {
+        if (called) return;
+        called = true;
+        fn(...args);
+    };
+}
+
 const schema = joi.object().keys({
     path: joi.string().required(),
     type: joi.string().required(),
@@ -26,7 +36,7 @@ class ImageProcessor {
     constructor(params = {}) {
         const { dependencies, logger: injectedLogger, ...rest } = params;
         const validatedSchema = joi.attempt(rest, schema);
-        _.assign(this, validatedSchema);
+        Object.assign(this, validatedSchema);
         this.dependencies = {
             ...defaultDependencies,
             ...(dependencies || {})
@@ -39,7 +49,7 @@ class ImageProcessor {
     }
 
     extract(callback) {
-        const done = _.once(callback);
+        const done = once(callback);
         this.cropImage()
             .then(() => this.extractText())
             .then((results) => done(null, results))

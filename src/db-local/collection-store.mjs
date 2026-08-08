@@ -1,7 +1,7 @@
 import Datastore from "@dills1220/nedb";
-import _ from "lodash";
 import { getConfig } from "../config/index.mjs";
 import { resolveDbFilename } from "./resolve-db-path.mjs";
+import { round } from "../util.mjs";
 
 // Local (nedb) backend for the "real persistence" tier -- your actual card collection.
 // Distinct from the always-on cache tier (names/hashes/ops-log): this only gets used when
@@ -56,7 +56,7 @@ function Upsert(record, cb) {
         // estValue tracks the whole stack's worth, not just the copy just added -- computed
         // here (not by the caller) since this is the one place that knows the final quantity.
         const estValue =
-            typeof priceUsd === "number" ? _.round(priceUsd * quantity, 4) : rest.estValue;
+            typeof priceUsd === "number" ? round(priceUsd * quantity, 4) : rest.estValue;
 
         if (existing) {
             return db.update(
@@ -131,7 +131,7 @@ function SetQuantity(name, set, quantity, cb) {
 
         const estValue =
             typeof existing.estValue === "number" && existing.quantity > 0
-                ? _.round((existing.estValue / existing.quantity) * quantity, 4)
+                ? round((existing.estValue / existing.quantity) * quantity, 4)
                 : existing.estValue;
         const now = new Date();
 

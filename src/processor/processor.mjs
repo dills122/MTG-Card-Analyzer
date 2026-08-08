@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { inspect } from "node:util";
 import { readFile } from "node:fs/promises";
 import joi from "joi";
@@ -12,6 +11,7 @@ import Collection from "../models/card-collection.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
 import storage from "../storage/index.mjs";
 import { resolveCardName } from "./name-resolver.mjs";
+import { round } from "../util.mjs";
 
 // Native fs.readFile + Buffer in place of image-to-base64.
 async function base64EncodeImage(imagePath) {
@@ -46,7 +46,7 @@ const schema = joi.object().keys({
 class ProcessorClass {
     constructor(params) {
         const validatedSchema = joi.attempt(params, schema);
-        _.assign(this, validatedSchema);
+        Object.assign(this, validatedSchema);
         this.imagePaths = {};
         this.extractedText = {};
         this.matcherResults = [];
@@ -201,7 +201,7 @@ class ProcessorClass {
             this.nameMatches.map((match) => this._attemptMatch(match))
         );
         this.matcherResults.push(...matchResults);
-        if (_.isEmpty(this.matcherResults)) {
+        if (this.matcherResults.length === 0) {
             this.decision = "no-match";
             throw new Error("No matches found");
         }
@@ -341,9 +341,9 @@ function formatMatchSummary(matches = []) {
     }
 
     const summarized = matches.map((match, index) => {
-        const name = _.get(match, "name", "unknown");
-        const rawPercent = Number(_.get(match, "percentage", 0));
-        const displayPercent = _.round(rawPercent <= 1 ? rawPercent * 100 : rawPercent, 1);
+        const name = match?.name ?? "unknown";
+        const rawPercent = Number(match?.percentage ?? 0);
+        const displayPercent = round(rawPercent <= 1 ? rawPercent * 100 : rawPercent, 1);
         return `${index + 1}. ${name} (${displayPercent}%)`;
     });
 

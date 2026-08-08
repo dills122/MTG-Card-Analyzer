@@ -1,6 +1,5 @@
 import async from "async";
 import joi from "joi";
-import _ from "lodash";
 import { callbackify } from "node:util";
 import logger from "../logger/log.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
@@ -31,7 +30,7 @@ class MatcherProcessor {
         if (hasError) {
             throw new Error("Required params missing");
         }
-        _.assign(this, params);
+        Object.assign(this, params);
         if (!this.logger) {
             this.logger = logger.create({
                 isPretty: true
@@ -55,9 +54,9 @@ class MatcherProcessor {
     }
 
     _processResults(callback) {
-        const numCards = _.isArray(this.cards) ? this.cards.length : "invalid";
+        const numCards = Array.isArray(this.cards) ? this.cards.length : "invalid";
         this.logger.info(`matcher::search results name="${this.name}" count=${numCards}`);
-        if (!_.isArray(this.cards)) {
+        if (!Array.isArray(this.cards)) {
             return callback(new Error("Error gathering results"));
         }
         const totalCards = this.cards.length;
@@ -70,11 +69,11 @@ class MatcherProcessor {
         if (totalCards === 1) {
             this.logger.info(`matcher::search single-result name="${this.name}"`);
             const single = this.cards[0] || {};
-            const setName = _.get(single, "set_name", "");
+            const setName = single.set_name ?? "";
             this.matchResultDetails = [
                 {
                     setName,
-                    scryfallUri: _.get(single, "scryfall_uri", "") || _.get(single, "uri", "")
+                    scryfallUri: single.scryfall_uri || single.uri || ""
                 }
             ];
             return callback(null, setName ? [setName] : []);
@@ -185,7 +184,7 @@ class MatcherProcessor {
             .compareRemoteImages()
             .then((results) => this._processHashResults(results));
         const [db, remote] = await Promise.all([dbPromise, remotePromise]);
-        const mergedResults = _.uniq((db || []).concat(remote || []));
+        const mergedResults = [...new Set((db || []).concat(remote || []))];
         this.matchResults = mergedResults;
         this.matchResultDetails = this._buildMatchDetails(mergedResults);
         this.logger.info(
@@ -197,13 +196,13 @@ class MatcherProcessor {
     _buildMatchDetails(setNames = []) {
         const cardBySet = new Map();
         (this.cards || []).forEach((card) => {
-            const setName = _.get(card, "set_name", "");
+            const setName = card.set_name ?? "";
             if (!setName || cardBySet.has(setName)) {
                 return;
             }
             cardBySet.set(setName, {
                 setName,
-                scryfallUri: _.get(card, "scryfall_uri", "") || _.get(card, "uri", "")
+                scryfallUri: card.scryfall_uri || card.uri || ""
             });
         });
 
@@ -219,15 +218,15 @@ class MatcherProcessor {
     }
 
     _processHashResults(hashResults) {
-        if (_.isEmpty(hashResults)) {
+        if (!hashResults || hashResults.length === 0) {
             return []; // No set to return
         }
 
         if (hashResults.length > 1) {
-            return _.map(hashResults, "setName");
+            return hashResults.map((result) => result.setName);
         }
         const matchObject = hashResults[0] || {};
-        return [_.get(matchObject, "setName", "")];
+        return [matchObject.setName ?? ""];
     }
 }
 

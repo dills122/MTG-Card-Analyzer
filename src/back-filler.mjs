@@ -1,4 +1,3 @@
-import _ from "lodash";
 import storage from "./storage/index.mjs";
 import scryfall from "./scryfall-api/index.mjs";
 import imageHashing from "./image-hashing/index.mjs";
@@ -30,7 +29,7 @@ async function backFillCardHashes(cardName) {
                 cardHash
             });
         }
-        cardHashes = _.uniq(cardHashes);
+        cardHashes = [...new Set(cardHashes)];
         if (cardHashes.length > 0) {
             cardHashes.forEach((hash) => HashesStore.upsert(hash));
         }

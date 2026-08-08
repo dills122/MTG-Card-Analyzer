@@ -1,4 +1,3 @@
-import _ from "lodash";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import jimp from "jimp";
@@ -7,6 +6,7 @@ import joi from "joi";
 import storage from "../storage/index.mjs";
 import imageHashing from "../image-hashing/index.mjs";
 import FileIO from "../file-io.mjs";
+import { round, clamp, orderBy, omit } from "../util.mjs";
 
 const config = {
     remoteMatch: {
@@ -46,7 +46,7 @@ class ProcessHashes {
     constructor(params = {}) {
         const { dependencies, logger: injectedLogger, ...rest } = params;
         const validatedSchema = joi.attempt(rest, schema);
-        _.assign(this, validatedSchema);
+        Object.assign(this, validatedSchema);
         this.dependencies = {
             ...defaultDependencies,
             ...(dependencies || {})
@@ -96,7 +96,7 @@ class ProcessHashes {
         this.logger.info(
             `process-hashes::remote-compare start name="${this.name}" mode=${this.hashMode} cards=${this.cards.length}`
         );
-        const cards = _.map(this.cards, function (card) {
+        const cards = this.cards.map((card) => {
             const images = card.image_uris || {};
             return {
                 imgUrl: images.normal || images.large,
@@ -124,7 +124,7 @@ class ProcessHashes {
                     this.localHash,
                     remoteImageHash
                 );
-                if (!_.isEmpty(comparisonResults)) {
+                if (Object.keys(comparisonResults).length > 0) {
                     comparisonResultsList.push(
                         Object.assign(comparisonResults, {
                             setName
@@ -136,7 +136,7 @@ class ProcessHashes {
             done();
         }
         const matchValues = config.remoteMatch;
-        let bestMatches = _.filter(comparisonResultsList, function (match) {
+        let bestMatches = comparisonResultsList.filter((match) => {
             return (
                 match.twoBitMatches >= matchValues.twoBit &&
                 match.fourBitMatches >= matchValues.fourBit &&
@@ -145,13 +145,13 @@ class ProcessHashes {
         });
         if (
             this.allowRemoteBestGuess &&
-            _.isEmpty(bestMatches) &&
-            !_.isEmpty(comparisonResultsList)
+            bestMatches.length === 0 &&
+            comparisonResultsList.length > 0
         ) {
-            const sortedByScore = _.orderBy(
+            const sortedByScore = orderBy(
                 comparisonResultsList.map((match) => ({
                     ...match,
-                    confidenceScore: _.round(
+                    confidenceScore: round(
                         match.stringCompare * 0.5 +
                             match.twoBitMatches * 0.3 +
                             match.fourBitMatches * 0.2,
@@ -169,7 +169,7 @@ class ProcessHashes {
                         config.remoteBestGuess.minScoreDeltaFromTop
                 )
                 .slice(0, config.remoteBestGuess.maxCandidates)
-                .map((match) => _.omit(match, ["confidenceScore"]));
+                .map((match) => omit(match, ["confidenceScore"]));
             this.logger.info(
                 `process-hashes::remote-compare using-best-guess name="${this.name}" candidates=${bestMatches.map((match) => match.setName).join(",")}`
             );
@@ -244,10 +244,10 @@ class ProcessHashes {
         const heightPercent = 0.1;
         const width = image.bitmap.width;
         const height = image.bitmap.height;
-        const left = _.clamp(Math.round(width * leftPercent), 0, width - 1);
-        const top = _.clamp(Math.round(height * topPercent), 0, height - 1);
-        const cropWidth = _.clamp(Math.round(width * widthPercent), 1, width - left);
-        const cropHeight = _.clamp(Math.round(height * heightPercent), 1, height - top);
+        const left = clamp(Math.round(width * leftPercent), 0, width - 1);
+        const top = clamp(Math.round(height * topPercent), 0, height - 1);
+        const cropWidth = clamp(Math.round(width * widthPercent), 1, width - left);
+        const cropHeight = clamp(Math.round(height * heightPercent), 1, height - top);
         return image.clone().crop(left, top, cropWidth, cropHeight);
     }
 

@@ -1,9 +1,10 @@
-import _ from "lodash";
 import bunyan from "bunyan";
 
+// Methods are arrow-function class fields (not prototype methods) so they stay bound to the
+// instance when passed around detached -- e.g. `const log = logger.info` -- without needing a
+// separate bind step in the constructor.
 class Logger {
     constructor(params = {}) {
-        _.bindAll(this, Object.keys(Logger.prototype));
         this.isPretty = params.isPretty ?? true;
         if (this.isPretty) {
             this.bunyan = bunyan.createLogger({
@@ -13,7 +14,7 @@ class Logger {
         }
     }
 
-    info(message, object) {
+    info = (message, object) => {
         if (this.bunyan) {
             this.bunyan.info(`${message}`);
             if (object) {
@@ -25,9 +26,9 @@ class Logger {
         if (object) {
             console.log(JSON.stringify(object, null, 4));
         }
-    }
+    };
 
-    warn(message, object) {
+    warn = (message, object) => {
         if (this.bunyan) {
             this.bunyan.warn(`${message}`);
             if (object) {
@@ -39,9 +40,9 @@ class Logger {
         if (object) {
             console.warn(JSON.stringify(object, null, 4));
         }
-    }
+    };
 
-    error(message, object) {
+    error = (message, object) => {
         if (this.bunyan) {
             this.bunyan.error(`${message}`);
             if (object) {
@@ -53,7 +54,7 @@ class Logger {
         if (object) {
             console.error(JSON.stringify(object, null, 4));
         }
-    }
+    };
 }
 
 export const create = (params) => new Logger(params);
