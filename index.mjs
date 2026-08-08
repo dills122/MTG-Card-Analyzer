@@ -7,6 +7,7 @@ import storage from "./src/storage/index.mjs";
 
 const { Processor } = processorModule;
 const KNOWN_COMMANDS = ["scan", "log"];
+const HELP_TOKENS = ["--help", "-h", "help"];
 
 function buildCli(argv) {
     const program = new Command();
@@ -84,7 +85,11 @@ Examples:
     try {
         program.parse(argv, { from: "user" });
     } catch (err) {
-        if (err.code === "commander.helpDisplayed") {
+        // showHelpAfterError() + exitOverride() mean commander has already printed
+        // appropriate output for every commander.* error (help text, or "error: missing
+        // required argument" + usage) -- not just the explicit --help case. Swallow all of
+        // them here so run() doesn't also dump the raw CommanderError/stack on top.
+        if (err.code && err.code.startsWith("commander.")) {
             parsed.helpRequested = true;
         } else {
             throw err;
@@ -203,13 +208,19 @@ export async function run(options = {}) {
         logger = console
     } = options;
 
-    const normalizedArgv = KNOWN_COMMANDS.includes(argv[0]) ? argv : ["scan", ...argv];
+    // Bare filepath args ("node index.mjs ./card.jpg") implicitly mean `scan` for backward
+    // compatibility. Empty argv, --help/-h, and known commands must NOT get that prefix --
+    // otherwise `node index.mjs --help` silently becomes `scan --help` and the top-level
+    // help (which lists `log` at all) never shows.
+    const shouldPrefixScan =
+        argv.length > 0 && !KNOWN_COMMANDS.includes(argv[0]) && !HELP_TOKENS.includes(argv[0]);
+    const normalizedArgv = shouldPrefixScan ? ["scan", ...argv] : argv;
 
     const cli = await commanderFactory(normalizedArgv);
     const flags = cli.flags || {};
 
     if (cli.helpRequested) {
-        logger.log("Try running --help for more info");
+        // commander already printed the relevant help/usage/error text itself.
         return;
     }
 

@@ -235,4 +235,75 @@ describe("CLI::index.mjs buildCli (real commander wiring)", () => {
         const parsed = buildCli(["log", "stats"]);
         assert.equal(parsed.command, "log-stats");
     });
+
+    it("does not throw on empty argv -- commander shows top-level help instead", () => {
+        const parsed = buildCli([]);
+        assert.equal(parsed.helpRequested, true);
+    });
+
+    it("does not throw on `scan` with a missing required filePath argument", () => {
+        // Regression: commander.missingArgument used to propagate as a raw uncaught
+        // CommanderError instead of being handled the same way as --help.
+        const parsed = buildCli(["scan"]);
+        assert.equal(parsed.helpRequested, true);
+    });
+
+    it("does not throw on an unknown flag", () => {
+        const parsed = buildCli(["scan", "./card.jpg", "--not-a-real-flag"]);
+        assert.equal(parsed.helpRequested, true);
+    });
+});
+
+describe("CLI::index.mjs run() argv normalization (real buildCli)", () => {
+    let sandbox;
+    let processExitStub;
+
+    beforeEach(() => {
+        sandbox = sinon.createSandbox();
+        processExitStub = sandbox.stub();
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    async function runReal(argv) {
+        const consoleLogStub = sandbox.stub();
+        const processorCreateStub = sandbox.stub().returns({
+            execute: sandbox.stub().callsFake((cb) => cb && cb())
+        });
+        await run({
+            argv,
+            fsAccess: sandbox.stub().resolves(),
+            processorFactory: processorCreateStub,
+            exit: processExitStub,
+            logger: { log: consoleLogStub }
+        });
+        return { consoleLogStub, processorCreateStub };
+    }
+
+    it("bare invoke (no args) does not crash and does not invoke the processor", async () => {
+        const { processorCreateStub } = await runReal([]);
+        assert.isFalse(processorCreateStub.called);
+        assert.isFalse(processExitStub.called);
+    });
+
+    it("--help does not get silently prefixed into `scan --help`", async () => {
+        // Commander writes help straight to process.stdout, bypassing the injected logger --
+        // capture the real stream to verify the top-level command list (scan + log) is shown,
+        // not just scan's own options.
+        const writeStub = sandbox.stub(process.stdout, "write");
+        await runReal(["--help"]);
+        const printed = writeStub
+            .getCalls()
+            .map((call) => call.args[0])
+            .join("");
+        assert.match(printed, /log\s+Inspect the local operations log/);
+    });
+
+    it("an unknown flag does not crash the process", async () => {
+        const { processorCreateStub } = await runReal(["scan", "./x.jpg", "--not-a-real-flag"]);
+        assert.isFalse(processorCreateStub.called);
+        assert.isFalse(processExitStub.called);
+    });
 });
