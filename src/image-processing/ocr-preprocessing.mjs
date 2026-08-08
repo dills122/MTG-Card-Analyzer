@@ -1,8 +1,8 @@
-import _ from "lodash";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import jimp from "jimp";
 import { GetImageDimensions } from "./util.mjs";
+import { round, clamp } from "../util.mjs";
 
 // Tuned preprocessing settings to make small MTG text pop for OCR.
 const preprocessConfig = {
@@ -154,10 +154,10 @@ function buildRegions(dimensions, type) {
 
 function percentToPixels(region, dimensions) {
     return {
-        width: _.round(dimensions.width * region.widthPercent),
-        height: _.round(dimensions.height * region.heightPercent),
-        left: _.round(dimensions.width * region.leftPercent),
-        top: _.round(dimensions.height * region.topPercent)
+        width: round(dimensions.width * region.widthPercent),
+        height: round(dimensions.height * region.heightPercent),
+        left: round(dimensions.width * region.leftPercent),
+        top: round(dimensions.height * region.topPercent)
     };
 }
 
@@ -172,10 +172,10 @@ async function cropAndPreprocess(baseImage, region) {
 }
 
 function clampToImage(region, width, height) {
-    const left = _.clamp(region.left, 0, width);
-    const top = _.clamp(region.top, 0, height);
-    const clampedWidth = _.clamp(region.width, 1, width - left);
-    const clampedHeight = _.clamp(region.height, 1, height - top);
+    const left = clamp(region.left, 0, width);
+    const top = clamp(region.top, 0, height);
+    const clampedWidth = clamp(region.width, 1, width - left);
+    const clampedHeight = clamp(region.height, 1, height - top);
     return {
         left,
         top,

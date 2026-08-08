@@ -26,7 +26,7 @@ describe("db-local::needs-attention-store", () => {
     it("inserts a record and stamps createdAt", async () => {
         const store = await freshStore();
         const doc = await new Promise((resolve, reject) => {
-            store.Insert(
+            store.insert(
                 {
                     cardName: "Pacifism",
                     extractedText: "clean",
@@ -51,10 +51,10 @@ describe("db-local::needs-attention-store", () => {
             possibleSets: "M20,M21"
         };
         const first = await new Promise((resolve, reject) => {
-            store.Insert(record, (err, d) => (err ? reject(err) : resolve(d)));
+            store.insert(record, (err, d) => (err ? reject(err) : resolve(d)));
         });
         const second = await new Promise((resolve, reject) => {
-            store.Insert(record, (err, d) => (err ? reject(err) : resolve(d)));
+            store.insert(record, (err, d) => (err ? reject(err) : resolve(d)));
         });
         assert.notEqual(first._id, second._id);
     });
@@ -63,18 +63,18 @@ describe("db-local::needs-attention-store", () => {
         it("returns every needs-attention entry", async () => {
             const store = await freshStore();
             await new Promise((resolve, reject) => {
-                store.Insert({ cardName: "Pacifism", extractedText: "clean" }, (err, d) =>
+                store.insert({ cardName: "Pacifism", extractedText: "clean" }, (err, d) =>
                     err ? reject(err) : resolve(d)
                 );
             });
             await new Promise((resolve, reject) => {
-                store.Insert({ cardName: "Fake Card", extractedText: "clean" }, (err, d) =>
+                store.insert({ cardName: "Fake Card", extractedText: "clean" }, (err, d) =>
                     err ? reject(err) : resolve(d)
                 );
             });
 
             const all = await new Promise((resolve, reject) => {
-                store.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
+                store.getAll((err, docs) => (err ? reject(err) : resolve(docs)));
             });
             assert.lengthOf(all, 2);
         });
@@ -82,7 +82,7 @@ describe("db-local::needs-attention-store", () => {
         it("returns an empty array when nothing has been stored", async () => {
             const store = await freshStore();
             const all = await new Promise((resolve, reject) => {
-                store.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
+                store.getAll((err, docs) => (err ? reject(err) : resolve(docs)));
             });
             assert.deepEqual(all, []);
         });

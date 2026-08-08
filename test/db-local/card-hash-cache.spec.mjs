@@ -17,7 +17,7 @@ describe("db-local::card-hash-cache", () => {
 
     function insert(cache, record) {
         return new Promise((resolve, reject) => {
-            cache.InsertEntity(record, (error) => (error ? reject(error) : resolve()));
+            cache.insertEntity(record, (error) => (error ? reject(error) : resolve()));
         });
     }
 
@@ -42,7 +42,7 @@ describe("db-local::card-hash-cache", () => {
             CardUrl: " https://example.test/card.jpg "
         });
         const hashes = await new Promise((resolve, reject) => {
-            cache.GetHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
+            cache.getHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
         });
 
         assert.lengthOf(hashes, 1);
@@ -65,13 +65,13 @@ describe("db-local::card-hash-cache", () => {
 
         await insert(cache, record);
         const firstInsert = await new Promise((resolve, reject) => {
-            cache.GetHashes("Pacifism", (error, docs) =>
+            cache.getHashes("Pacifism", (error, docs) =>
                 error ? reject(error) : resolve(docs[0])
             );
         });
         await insert(cache, { ...record, cardUrl: "https://example.test/new.jpg" });
         const hashes = await new Promise((resolve, reject) => {
-            cache.GetHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
+            cache.getHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
         });
 
         assert.lengthOf(hashes, 1);
@@ -82,9 +82,9 @@ describe("db-local::card-hash-cache", () => {
     it("ignores incomplete cache records", async () => {
         const cache = await freshCache();
 
-        cache.InsertEntity({ cardName: "Pacifism", setName: "M20" });
+        cache.insertEntity({ cardName: "Pacifism", setName: "M20" });
         const hashes = await new Promise((resolve, reject) => {
-            cache.GetHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
+            cache.getHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
         });
 
         assert.deepEqual(hashes, []);

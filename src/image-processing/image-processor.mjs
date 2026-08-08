@@ -1,4 +1,3 @@
-import _ from "lodash";
 import joi from "joi";
 import logger from "../logger/log.mjs";
 import { randomUUID } from "node:crypto";
@@ -6,6 +5,7 @@ import path from "node:path";
 import { writeFile } from "node:fs/promises";
 import ocrPreprocessor from "./ocr-preprocessing.mjs";
 import { textExtraction } from "../image-analysis/index.mjs";
+import { once } from "../util.mjs";
 
 const defaultDependencies = {
     ocrPreprocessor,
@@ -26,7 +26,7 @@ class ImageProcessor {
     constructor(params = {}) {
         const { dependencies, logger: injectedLogger, ...rest } = params;
         const validatedSchema = joi.attempt(rest, schema);
-        _.assign(this, validatedSchema);
+        Object.assign(this, validatedSchema);
         this.dependencies = {
             ...defaultDependencies,
             ...(dependencies || {})
@@ -39,7 +39,7 @@ class ImageProcessor {
     }
 
     extract(callback) {
-        const done = _.once(callback);
+        const done = once(callback);
         this.cropImage()
             .then(() => this.extractText())
             .then((results) => done(null, results))

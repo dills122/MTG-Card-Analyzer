@@ -1,7 +1,5 @@
-import async from "async";
 import joi from "joi";
-import _ from "lodash";
-import { callbackify } from "node:util";
+import { promisify } from "node:util";
 import logger from "../logger/log.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
 import exportProcessor from "../export-processor/index.mjs";
@@ -10,9 +8,9 @@ import imageProcessing from "../image-processing/index.mjs";
 import FileIO from "../file-io.mjs";
 
 const dependencies = {
-    Searcher: callbackify(scryfallApi.Search.SearchList),
+    Searcher: scryfallApi.Search.SearchList,
     HashProcessor: exportProcessor.ProcessHashes,
-    Hash: imageHashing.Hash.HashImage,
+    Hash: promisify(imageHashing.Hash.HashImage),
     CreateDirectory: FileIO.CreateDirectory,
     CleanUpFiles: FileIO.CleanUpFiles,
     GetSetSymbolSnippetTmpFile: imageProcessing.resize.GetImageSnippetTmpFile
@@ -31,7 +29,7 @@ class MatcherProcessor {
         if (hasError) {
             throw new Error("Required params missing");
         }
-        _.assign(this, params);
+        Object.assign(this, params);
         if (!this.logger) {
             this.logger = logger.create({
                 isPretty: true
@@ -39,103 +37,91 @@ class MatcherProcessor {
         }
     }
 
-    execute(cb) {
-        async.waterfall([(next) => this._search(next), (next) => this._processResults(next)], cb);
+    execute(callback) {
+        const execution = this.executeAsync();
+        if (typeof callback === "function") {
+            execution.then((result) => callback(null, result)).catch((err) => callback(err));
+            return;
+        }
+        return execution;
     }
 
-    _search(callback) {
+    async executeAsync() {
+        await this._searchAsync();
+        return this._processResultsAsync();
+    }
+
+    async _searchAsync() {
         this.logger.info(`Searching Scryfall for "${this.name}"`);
-        dependencies.Searcher(this.name, (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            this.cards = results;
-            return callback();
-        });
+        this.cards = await dependencies.Searcher(this.name);
     }
 
-    _processResults(callback) {
-        if (!_.isArray(this.cards)) {
+    async _processResultsAsync() {
+        if (!Array.isArray(this.cards)) {
             this.logger.error(`Scryfall response for "${this.name}" was not a printing list`);
-            return callback(new Error("Error gathering results"));
+            throw new Error("Error gathering results");
         }
         const totalCards = this.cards.length;
         const printingLabel = totalCards === 1 ? "printing" : "printings";
         this.logger.info(`Scryfall returned ${totalCards} ${printingLabel} for "${this.name}"`);
 
         if (totalCards === 0) {
-            return callback(null, 0);
+            return 0;
         }
 
         if (totalCards === 1) {
             const single = this.cards[0] || {};
-            const setName = _.get(single, "set_name", "");
+            const setName = single.set_name ?? "";
             this.matchResultDetails = [
                 {
                     setName,
-                    scryfallUri: _.get(single, "scryfall_uri", "") || _.get(single, "uri", "")
+                    scryfallUri: single.scryfall_uri || single.uri || ""
                 }
             ];
-            return callback(null, setName ? [setName] : []);
+            return setName ? [setName] : [];
         }
 
-        async.waterfall(
-            [(next) => this._hashLocalCard(next), (next) => this._processMultiSetMatches(next)],
-            callback
-        );
+        await this._hashLocalCardAsync();
+        return this._processMultiSetMatchesAsync();
     }
 
-    _hashLocalCard(callback) {
-        dependencies
-            .CreateDirectory()
-            .then((directory) => {
-                this.setSymbolDirectory = directory;
-                this._hashFromSetSymbol(directory, (hashErr) => {
-                    if (hashErr) {
-                        this.logger.error(
-                            `Set-symbol hash failed for "${this.name}"; using full card image`
-                        );
-                        return this._hashFromPath(this.filePath, callback);
-                    }
-                    return callback();
-                });
-            })
-            .catch(() => {
-                return this._hashFromPath(this.filePath, callback);
-            });
+    async _hashLocalCardAsync() {
+        let directory;
+        try {
+            directory = await dependencies.CreateDirectory();
+        } catch {
+            return this._hashFromPathAsync(this.filePath);
+        }
+        this.setSymbolDirectory = directory;
+        try {
+            await this._hashFromSetSymbolAsync(directory);
+        } catch {
+            this.logger.error(`Set-symbol hash failed for "${this.name}"; using full card image`);
+            return this._hashFromPathAsync(this.filePath);
+        }
     }
 
-    _hashFromSetSymbol(directory, callback) {
+    async _hashFromSetSymbolAsync(directory) {
         this.logger.info(`Hashing set symbol for "${this.name}"`);
-        dependencies
-            .GetSetSymbolSnippetTmpFile(this.filePath, directory, "set-symbol")
-            .then((setSymbolPath) => {
-                this.setSymbolImagePath = setSymbolPath;
-                dependencies.Hash(setSymbolPath, (err, hash) => {
-                    this._cleanupSetSymbolDirectory();
-                    if (err) {
-                        return callback(err);
-                    }
-                    this.hashMode = "set-symbol";
-                    this.localHash = hash;
-                    return callback();
-                });
-            })
-            .catch((err) => {
-                this._cleanupSetSymbolDirectory();
-                return callback(err);
-            });
+        try {
+            const setSymbolPath = await dependencies.GetSetSymbolSnippetTmpFile(
+                this.filePath,
+                directory,
+                "set-symbol"
+            );
+            this.setSymbolImagePath = setSymbolPath;
+            const hash = await dependencies.Hash(setSymbolPath);
+            this.hashMode = "set-symbol";
+            this.localHash = hash;
+        } finally {
+            this._cleanupSetSymbolDirectory();
+        }
     }
 
-    _hashFromPath(filePath, callback) {
-        dependencies.Hash(filePath, (err, hash) => {
-            if (err) {
-                return callback(err);
-            }
-            this.hashMode = "full-card";
-            this.localHash = hash;
-            return callback();
-        });
+    async _hashFromPathAsync(filePath) {
+        const hash = await dependencies.Hash(filePath);
+        this.hashMode = "full-card";
+        this.localHash = hash;
     }
 
     _cleanupSetSymbolDirectory() {
@@ -145,11 +131,6 @@ class MatcherProcessor {
         const dir = this.setSymbolDirectory;
         this.setSymbolDirectory = "";
         dependencies.CleanUpFiles(dir).catch(() => {});
-    }
-
-    _processMultiSetMatches(callback) {
-        const execution = this._processMultiSetMatchesAsync();
-        execution.then((results) => callback(null, results)).catch((err) => callback(err));
     }
 
     async _processMultiSetMatchesAsync() {
@@ -182,7 +163,7 @@ class MatcherProcessor {
             .compareRemoteImages()
             .then((results) => this._processHashResults(results));
         const [db, remote] = await Promise.all([dbPromise, remotePromise]);
-        const mergedResults = _.uniq((db || []).concat(remote || []));
+        const mergedResults = [...new Set((db || []).concat(remote || []))];
         this.matchResults = mergedResults;
         this.matchResultDetails = this._buildMatchDetails(mergedResults);
         this.logger.info(`Print matches for "${this.name}": ${mergedResults.join(", ") || "none"}`);
@@ -192,13 +173,13 @@ class MatcherProcessor {
     _buildMatchDetails(setNames = []) {
         const cardBySet = new Map();
         (this.cards || []).forEach((card) => {
-            const setName = _.get(card, "set_name", "");
+            const setName = card.set_name ?? "";
             if (!setName || cardBySet.has(setName)) {
                 return;
             }
             cardBySet.set(setName, {
                 setName,
-                scryfallUri: _.get(card, "scryfall_uri", "") || _.get(card, "uri", "")
+                scryfallUri: card.scryfall_uri || card.uri || ""
             });
         });
 
@@ -214,15 +195,15 @@ class MatcherProcessor {
     }
 
     _processHashResults(hashResults) {
-        if (_.isEmpty(hashResults)) {
+        if (!hashResults || hashResults.length === 0) {
             return []; // No set to return
         }
 
         if (hashResults.length > 1) {
-            return _.map(hashResults, "setName");
+            return hashResults.map((result) => result.setName);
         }
         const matchObject = hashResults[0] || {};
-        return [_.get(matchObject, "setName", "")];
+        return [matchObject.setName ?? ""];
     }
 }
 

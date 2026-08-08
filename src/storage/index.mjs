@@ -1,3 +1,4 @@
+import { promisify } from "node:util";
 import storageFactory from "./create-storage.mjs";
 import { getConfig } from "../config/index.mjs";
 import { db as namesDb } from "../db-local/db.mjs";
@@ -34,43 +35,31 @@ function cacheEnabled() {
     return getConfig().localCacheEnabled;
 }
 
-function getAllNames() {
-    return new Promise((resolve, reject) => {
-        namesDb.find({}, (err, docs) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve(docs || []);
-        });
-    });
+async function getAllNames() {
+    const docs = await promisify(namesDb.find)({});
+    return docs || [];
 }
 
-function getHashesByCardName(cardName) {
+async function getHashesByCardName(cardName) {
     if (!cacheEnabled()) {
-        return Promise.resolve([]);
+        return [];
     }
-    return new Promise((resolve, reject) => {
-        cardHashCache.GetHashes(cardName, (err, docs) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve(docs || []);
-        });
-    });
+    const docs = await promisify(cardHashCache.getHashes)(cardName);
+    return docs || [];
 }
 
 function upsertHash(record) {
     if (!cacheEnabled()) {
         return;
     }
-    cardHashCache.InsertEntity(record);
+    cardHashCache.insertEntity(record);
 }
 
 function logOperation(entry) {
     if (!cacheEnabled()) {
         return;
     }
-    opsLog.LogOperation(entry);
+    opsLog.logOperation(entry);
 }
 
 const storage = {
@@ -89,8 +78,8 @@ const storage = {
     },
     log: {
         record: logOperation,
-        dump: (...args) => opsLog.GetOperations(...args),
-        stats: (...args) => opsLog.GetStats(...args)
+        dump: promisify(opsLog.getOperations),
+        stats: promisify(opsLog.getStats)
     },
     // Persistence tier -- STORAGE_ADAPTER-selected (nedb | rds).
     collection: {

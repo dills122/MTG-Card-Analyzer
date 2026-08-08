@@ -1,7 +1,6 @@
 import os from "os";
 import { assert } from "chai";
 import sinon from "sinon";
-import _ from "lodash";
 import exportProcessor from "../../src/export-processor/index.mjs";
 import storage from "../../src/storage/index.mjs";
 import imageHashing from "../../src/image-hashing/index.mjs";
@@ -112,11 +111,7 @@ describe("Integration::", () => {
             const matches = await hasher.compareRemoteImages();
             assert.isTrue(stubs.hashImageStub.calledTwice);
             assert.isTrue(stubs.insertHashStub.calledTwice);
-            assert.isTrue(
-                _.filter(matches, {
-                    setName: FAKE_SET
-                }).length === 2
-            );
+            assert.isTrue(matches.filter((match) => match.setName === FAKE_SET).length === 2);
         });
 
         it("Should return no results for compareRemoteHashes", async () => {
@@ -136,11 +131,7 @@ describe("Integration::", () => {
             const matches = await hasher.compareRemoteImages();
             assert.isTrue(stubs.hashImageStub.calledTwice);
             assert.isTrue(stubs.insertHashStub.calledTwice);
-            assert.isTrue(
-                _.filter(matches, {
-                    setName: FAKE_SET
-                }).length === 0
-            );
+            assert.isTrue(matches.filter((match) => match.setName === FAKE_SET).length === 0);
         });
 
         it("Should insert remote hash records with correct set + hash mapping when querying enabled", async () => {
@@ -167,9 +158,9 @@ describe("Integration::", () => {
             await hasher.compareRemoteImages();
             assert.isTrue(stubs.insertEntityStub.calledOnce);
             assert.deepEqual(stubs.insertEntityStub.firstCall.args[0], {
-                Name: "Test",
-                SetName: "SET_A",
-                CardHash: FAKE_HASH
+                cardName: "Test",
+                setName: "SET_A",
+                cardHash: FAKE_HASH
             });
             assert.equal(
                 info.firstCall.args[0],

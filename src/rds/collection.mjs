@@ -1,12 +1,12 @@
-import { CreateConnection } from "./connection.mjs";
+import { createConnection } from "./connection.mjs";
 import log from "../logger/log.mjs";
 
 const logger = log.create({
     isPretty: true
 });
 
-function GetQuantity(name, set, cb) {
-    const connection = CreateConnection();
+function getQuantity(name, set, cb) {
+    const connection = createConnection();
     connection.connect((err) => {
         if (err) {
             return cb(err, null);
@@ -26,8 +26,8 @@ function GetQuantity(name, set, cb) {
     });
 }
 
-function InsertRecord(record, cb) {
-    const connection = CreateConnection();
+function insertRecord(record, cb) {
+    const connection = createConnection();
     connection.connect((err) => {
         if (err) {
             return cb(err, null);
@@ -51,8 +51,8 @@ function InsertRecord(record, cb) {
 // same "scanned another copy" semantics as the nedb-backed collection-store. Uses MySQL's
 // native upsert (CardCollection has a UNIQUE(cardName, cardSet) constraint) instead of a
 // separate SELECT-then-branch, so it's atomic at the DB level.
-function UpsertRecord(record, cb) {
-    const connection = CreateConnection();
+function upsertRecord(record, cb) {
+    const connection = createConnection();
     const delta = record.delta ?? 1;
     // estValue tracks the whole stack's worth. MySQL evaluates ON DUPLICATE KEY UPDATE's SET
     // list left-to-right, and a column already assigned earlier in the list is read back at
@@ -106,11 +106,11 @@ function UpsertRecord(record, cb) {
 //
 // The estValue expression MUST be assigned before quantity in the SET list: MySQL evaluates
 // UPDATE's SET list left-to-right, and a column already assigned earlier is read at its NEW
-// value by later expressions in the same statement -- same rule that bit UpsertRecord's
+// value by later expressions in the same statement -- same rule that bit upsertRecord's
 // estValue expression. Verified against a real MySQL 8 instance: reversing this order silently
 // computes a no-op ratio instead of the intended rescale.
-function SetQuantity(name, set, quantity, cb) {
-    const connection = CreateConnection();
+function setQuantity(name, set, quantity, cb) {
+    const connection = createConnection();
     connection.connect((err) => {
         if (err) {
             return cb(err, null);
@@ -138,8 +138,8 @@ function SetQuantity(name, set, quantity, cb) {
 
 // Deletes a collection entry outright. Returns the removed row (or null if nothing matched)
 // so callers can report what was actually removed.
-function DeleteRecord(name, set, cb) {
-    const connection = CreateConnection();
+function deleteRecord(name, set, cb) {
+    const connection = createConnection();
     connection.connect((err) => {
         if (err) {
             return cb(err, null);
@@ -176,12 +176,12 @@ function DeleteRecord(name, set, cb) {
     });
 }
 
-export { GetQuantity, InsertRecord, UpsertRecord, SetQuantity, DeleteRecord };
+export { getQuantity, insertRecord, upsertRecord, setQuantity, deleteRecord };
 
 export default {
-    GetQuantity,
-    InsertRecord,
-    UpsertRecord,
-    SetQuantity,
-    DeleteRecord
+    getQuantity,
+    insertRecord,
+    upsertRecord,
+    setQuantity,
+    deleteRecord
 };

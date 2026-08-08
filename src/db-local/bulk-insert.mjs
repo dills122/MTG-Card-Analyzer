@@ -25,7 +25,7 @@ const dependencies = {
     }
 };
 
-async function ExecuteBulkInsert(options = {}) {
+async function executeBulkInsert(options = {}) {
     return seedCardNames({
         getCardNames: options.getCardNames || dependencies.GetCardNames,
         insertName: options.insertName || dependencies.insertName,
@@ -36,14 +36,14 @@ async function ExecuteBulkInsert(options = {}) {
 
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isDirectRun) {
-    ExecuteBulkInsert().catch((error) => {
+    executeBulkInsert().catch((error) => {
         console.error(`Card-name seed failed: ${error?.message || String(error)}`);
         process.exitCode = 1;
     });
 }
 
-export { dependencies, ExecuteBulkInsert };
+export { dependencies, executeBulkInsert };
 
 export default {
-    ExecuteBulkInsert
+    executeBulkInsert
 };

@@ -1,5 +1,4 @@
-import _ from "lodash";
-import { callbackify } from "node:util";
+import { readFile } from "node:fs/promises";
 import joi from "joi";
 import logger from "../logger/log.mjs";
 import imageProcessing from "../image-processing/index.mjs";
@@ -10,9 +9,15 @@ import NeedsAttention from "../models/needs-attention.mjs";
 import Collection from "../models/card-collection.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
 import storage from "../storage/index.mjs";
-import imageToBase64 from "image-to-base64";
 import { resolveCardName } from "./name-resolver.mjs";
 import { formatScanResults } from "../console/format-scan-results.mjs";
+import { round } from "../util.mjs";
+
+// Native fs.readFile + Buffer in place of image-to-base64.
+async function base64EncodeImage(imagePath) {
+    const buffer = await readFile(imagePath);
+    return buffer.toString("base64");
+}
 
 const dependencies = {
     ImageProcessor: imageProcessing.ImageProcessor,
@@ -22,7 +27,7 @@ const dependencies = {
     NeedsAttention,
     Collection,
     GetAdditionalCardInfo: scryfallApi.Search,
-    Base64: callbackify(imageToBase64)
+    Base64: base64EncodeImage
 };
 
 const schema = joi.object().keys({
@@ -42,7 +47,7 @@ class ProcessorClass {
     constructor(params) {
         const { logger: injectedLogger, ...processorParams } = params;
         const validatedSchema = joi.attempt(processorParams, schema);
-        _.assign(this, validatedSchema);
+        Object.assign(this, validatedSchema);
         this.imagePaths = {};
         this.extractedText = {};
         this.matcherResults = [];
@@ -202,7 +207,7 @@ class ProcessorClass {
             this.nameMatches.map((match) => this._attemptMatch(match))
         );
         this.matcherResults.push(...matchResults);
-        if (_.isEmpty(this.matcherResults)) {
+        if (this.matcherResults.length === 0) {
             this.decision = "no-match";
             throw new Error("No matches found");
         }
@@ -237,25 +242,19 @@ class ProcessorClass {
         this.logger.output(formatScanResults(this.matcherResults));
     }
 
-    _attemptMatch(match) {
+    async _attemptMatch(match) {
         const matchProcessor = dependencies.MatchProcessor.create({
             name: match.name,
             filePath: this.filePath,
             queryingEnabled: this.queryingEnabled,
             logger: this.logger
         });
-        return new Promise((resolve, reject) => {
-            matchProcessor.execute((err, results) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve({
-                    name: match.name,
-                    sets: results,
-                    setVerificationLinks: matchProcessor.matchResultDetails || []
-                });
-            });
-        });
+        const results = await matchProcessor.executeAsync();
+        return {
+            name: match.name,
+            sets: results,
+            setVerificationLinks: matchProcessor.matchResultDetails || []
+        };
     }
 
     CreateNeedsAttentionRecord(record, callback) {
@@ -269,14 +268,7 @@ class ProcessorClass {
 
     async CreateNeedsAttentionRecordAsync(record) {
         this.logger.info(`Saving "${record.name}" for manual review`);
-        const name64Image = await new Promise((resolve, reject) => {
-            dependencies.Base64(this.nameExtractionImagePath, (err, encodedImage) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve(encodedImage);
-            });
-        });
+        const name64Image = await dependencies.Base64(this.nameExtractionImagePath);
         const needsAttenionModel = dependencies.NeedsAttention.create({
             cardName: record.name,
             extractedText: this.nameExtractionResults.cleanText,
@@ -284,7 +276,7 @@ class ProcessorClass {
             possibleSets: record.sets.join(","),
             nameImage: name64Image
         });
-        await needsAttenionModel.Insert();
+        await needsAttenionModel.insert();
     }
 
     CreateCollectionsRecord(record, callback) {
@@ -330,7 +322,7 @@ class ProcessorClass {
             priceUsd: Number(additionalInfo.prices.usd) || 0,
             cardType: additionalInfo.type_line
         });
-        await collectionsModel.Insert();
+        await collectionsModel.insert();
     }
 }
 
@@ -340,9 +332,9 @@ function formatMatchSummary(matches = []) {
     }
 
     const summarized = matches.map((match, index) => {
-        const name = _.get(match, "name", "unknown");
-        const rawPercent = Number(_.get(match, "percentage", 0));
-        const displayPercent = _.round(rawPercent <= 1 ? rawPercent * 100 : rawPercent, 1);
+        const name = match?.name ?? "unknown";
+        const rawPercent = Number(match?.percentage ?? 0);
+        const displayPercent = round(rawPercent <= 1 ? rawPercent * 100 : rawPercent, 1);
         return `${index + 1}. ${name} (${displayPercent}%)`;
     });
 

@@ -17,11 +17,10 @@ describe("File IO helpers", () => {
         const writeStub = sandbox.stub().resolves();
         const randomUUID = sandbox.stub().returns("uuid-123");
         const { WriteToFile } = buildFileIO({
-            fs: { writeFile: writeStub, unlink: () => {}, mkdir: () => {} },
+            fs: { writeFile: writeStub, unlink: () => {}, mkdir: () => {}, rm: () => {} },
             promisify: () => writeStub,
             randomUUID,
-            tempDirectory: "/tmp/mock",
-            rimrafLib: () => {}
+            tempDirectory: "/tmp/mock"
         });
 
         await WriteToFile({ hello: "world" });
@@ -35,72 +34,28 @@ describe("File IO helpers", () => {
         const mkdirStub = sandbox.stub().callsArgWith(1, null);
         const randomUUID = sandbox.stub().returns("uuid-abc");
         const { CreateDirectory } = buildFileIO({
-            fs: { writeFile: () => {}, unlink: () => {}, mkdir: mkdirStub },
+            fs: { writeFile: () => {}, unlink: () => {}, mkdir: mkdirStub, rm: () => {} },
             promisify: (fn) => fn,
             randomUUID,
-            tempDirectory: "/tmp/mock",
-            rimrafLib: () => {}
+            tempDirectory: "/tmp/mock"
         });
 
         const dirPath = await CreateDirectory();
         assert.equal(dirPath, "/tmp/mock/uuid-abc");
     });
 
-    it("creates a directory under tmpdir when used as a promise", async () => {
-        const mkdirStub = sandbox.stub().callsArgWith(1, null);
-        const randomUUID = sandbox.stub().returns("uuid-prom");
-        const { CreateDirectory } = buildFileIO({
-            fs: { writeFile: () => {}, unlink: () => {}, mkdir: mkdirStub },
-            promisify: (fn) => fn,
-            randomUUID,
-            tempDirectory: "/tmp/mock",
-            rimrafLib: () => {}
-        });
-
-        const dirPath = await CreateDirectory();
-        assert.equal(dirPath, "/tmp/mock/uuid-prom");
-    });
-
-    it("cleans up files via promise-based rimraf", async () => {
-        const rimrafStub = sandbox.stub().returns(Promise.resolve());
+    it("cleans up files via fs.rm", async () => {
+        const rmStub = sandbox.stub().resolves();
         const { CleanUpFiles } = buildFileIO({
-            fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {} },
+            fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {}, rm: rmStub },
             promisify: (fn) => fn,
             randomUUID: () => "id",
-            tempDirectory: "/tmp/mock",
-            rimrafLib: rimrafStub
+            tempDirectory: "/tmp/mock"
         });
 
         await CleanUpFiles("/tmp/mock/dir");
-        assert.isTrue(rimrafStub.calledOnce);
-    });
-
-    it("cleans up files via callback-based rimraf", async () => {
-        function legacyRimraf(_path, cb) {
-            cb();
-        }
-        const { CleanUpFiles } = buildFileIO({
-            fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {} },
-            promisify: (fn) => fn,
-            randomUUID: () => "id",
-            tempDirectory: "/tmp/mock",
-            rimrafLib: legacyRimraf
-        });
-
-        await CleanUpFiles("/tmp/mock/dir");
-    });
-
-    it("cleans up files as a promise", async () => {
-        const rimrafStub = sandbox.stub().returns(Promise.resolve());
-        const { CleanUpFiles } = buildFileIO({
-            fs: { writeFile: () => {}, unlink: () => {}, mkdir: () => {} },
-            promisify: (fn) => fn,
-            randomUUID: () => "id",
-            tempDirectory: "/tmp/mock",
-            rimrafLib: rimrafStub
-        });
-
-        await CleanUpFiles("/tmp/mock/dir");
-        assert.isTrue(rimrafStub.calledOnceWithExactly("/tmp/mock/dir"));
+        assert.isTrue(
+            rmStub.calledOnceWithExactly("/tmp/mock/dir", { recursive: true, force: true })
+        );
     });
 });

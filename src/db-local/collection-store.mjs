@@ -1,30 +1,22 @@
-import Datastore from "@dills1220/nedb";
-import _ from "lodash";
 import { getConfig } from "../config/index.mjs";
 import { resolveDbFilename } from "./resolve-db-path.mjs";
+import { round } from "../util.mjs";
+import { createNedbStore } from "./create-nedb-store.mjs";
 
 // Local (nedb) backend for the "real persistence" tier -- your actual card collection.
 // Distinct from the always-on cache tier (names/hashes/ops-log): this only gets used when
 // STORAGE_ADAPTER=nedb (the default), same as the rds backend does when STORAGE_ADAPTER=rds.
 
-let dbInstance;
-
-function getDbInstance() {
-    if (!dbInstance) {
-        dbInstance = new Datastore({
-            filename: resolveDbFilename(getConfig().cardNamesDbPath, "collection.db"),
-            autoload: true
-        });
-        dbInstance.ensureIndex({ fieldName: "lookupKey", unique: true });
-    }
-    return dbInstance;
-}
+const { getDbInstance } = createNedbStore({
+    resolveFilename: () => resolveDbFilename(getConfig().cardNamesDbPath, "collection.db"),
+    indexes: [{ fieldName: "lookupKey", unique: true }]
+});
 
 function toLookupKey(cardName, cardSet) {
     return `${String(cardName || "").trim()}::${String(cardSet || "").trim()}`;
 }
 
-function GetQuantity(name, set, cb) {
+function getQuantity(name, set, cb) {
     getDbInstance().findOne({ lookupKey: toLookupKey(name, set) }, (err, doc) => {
         if (err) {
             return cb(err, null);
@@ -41,7 +33,7 @@ function GetQuantity(name, set, cb) {
 // concurrent inserts could both see "not found"), but this app processes one scan per
 // process invocation with no other locking anywhere else -- consistent with the existing
 // concurrency model, not a new risk.
-function Upsert(record, cb) {
+function upsert(record, cb) {
     const { cardName, cardSet, delta = 1, priceUsd, ...rest } = record;
     const lookupKey = toLookupKey(cardName, cardSet);
     const db = getDbInstance();
@@ -56,7 +48,7 @@ function Upsert(record, cb) {
         // estValue tracks the whole stack's worth, not just the copy just added -- computed
         // here (not by the caller) since this is the one place that knows the final quantity.
         const estValue =
-            typeof priceUsd === "number" ? _.round(priceUsd * quantity, 4) : rest.estValue;
+            typeof priceUsd === "number" ? round(priceUsd * quantity, 4) : rest.estValue;
 
         if (existing) {
             return db.update(
@@ -103,7 +95,7 @@ function Upsert(record, cb) {
 
 // Returns every collection entry -- used by the nedb->rds migration (src/migrate/) and
 // anything else that needs the full local snapshot rather than a single lookup.
-function GetAll(cb) {
+function getAll(cb) {
     getDbInstance().find({}, (err, docs) => {
         if (err) {
             return cb(err, null);
@@ -113,11 +105,11 @@ function GetAll(cb) {
 }
 
 // Manual correction -- sets quantity to an exact value instead of adding to it (unlike
-// Upsert, which is what scans call). Errors if the entry doesn't exist; use a scan (or
-// Upsert directly) to create one. estValue is rescaled proportionally from the existing
+// upsert, which is what scans call). Errors if the entry doesn't exist; use a scan (or
+// upsert directly) to create one. estValue is rescaled proportionally from the existing
 // per-unit value when possible (we don't persist priceUsd itself, only the last computed
 // estValue), otherwise left as-is rather than guessing.
-function SetQuantity(name, set, quantity, cb) {
+function setQuantity(name, set, quantity, cb) {
     const db = getDbInstance();
     const lookupKey = toLookupKey(name, set);
 
@@ -131,7 +123,7 @@ function SetQuantity(name, set, quantity, cb) {
 
         const estValue =
             typeof existing.estValue === "number" && existing.quantity > 0
-                ? _.round((existing.estValue / existing.quantity) * quantity, 4)
+                ? round((existing.estValue / existing.quantity) * quantity, 4)
                 : existing.estValue;
         const now = new Date();
 
@@ -151,7 +143,7 @@ function SetQuantity(name, set, quantity, cb) {
 
 // Deletes a collection entry outright. Returns the removed doc (or null if nothing matched)
 // so callers can report what was actually removed.
-function Remove(name, set, cb) {
+function remove(name, set, cb) {
     const db = getDbInstance();
     const lookupKey = toLookupKey(name, set);
 
@@ -171,12 +163,12 @@ function Remove(name, set, cb) {
     });
 }
 
-export { GetQuantity, Upsert, GetAll, SetQuantity, Remove };
+export { getQuantity, upsert, getAll, setQuantity, remove };
 
 export default {
-    GetQuantity,
-    Upsert,
-    GetAll,
-    SetQuantity,
-    Remove
+    getQuantity,
+    upsert,
+    getAll,
+    setQuantity,
+    remove
 };

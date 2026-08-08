@@ -1,7 +1,7 @@
-import _ from "lodash";
 import stringSimilarity from "string-similarity";
 import { imageHash } from "image-hash";
 import log from "../logger/log.mjs";
+import { round } from "../util.mjs";
 
 export const dependencies = {
     imageHash
@@ -38,9 +38,9 @@ function CompareHash(hashOne, hashTwo) {
         }
     });
     const comparisonResults = {
-        twoBitMatches: _.round(twoBitMatches / (HashLength / 2), 2),
-        fourBitMatches: _.round(fourBitMatches / (HashLength / 4), 2),
-        stringCompare: _.round(stringSimilarity.compareTwoStrings(hashOne, hashTwo), 2)
+        twoBitMatches: round(twoBitMatches / (HashLength / 2), 2),
+        fourBitMatches: round(fourBitMatches / (HashLength / 4), 2),
+        stringCompare: round(stringSimilarity.compareTwoStrings(hashOne, hashTwo), 2)
     };
     logger.info(
         `Hash similarity: 2-bit ${toPercent(comparisonResults.twoBitMatches)}, 4-bit ${toPercent(comparisonResults.fourBitMatches)}, text ${toPercent(comparisonResults.stringCompare)}`

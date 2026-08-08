@@ -1,6 +1,6 @@
-import _ from "lodash";
 import Joi from "joi";
 import storage from "../storage/index.mjs";
+import { pick } from "../util.mjs";
 
 // "I scanned another copy" semantics: delta adds to whatever quantity already exists for
 // this cardName+cardSet (default 1), it does not overwrite it. See src/storage/index.mjs
@@ -20,11 +20,11 @@ const schema = Joi.object().keys({
 class CardCollection {
     constructor(params) {
         const validatedSchema = Joi.attempt(params, schema);
-        _.assign(this, validatedSchema);
+        Object.assign(this, validatedSchema);
     }
 
-    Insert() {
-        const object = _.pick(this, Object.keys(schema.describe().keys));
+    insert() {
+        const object = pick(this, Object.keys(schema.describe().keys));
         return storage.collection.upsert(object);
     }
 }

@@ -1,6 +1,6 @@
-import _ from "lodash";
 import Joi from "joi";
 import storage from "../storage/index.mjs";
+import { pick } from "../util.mjs";
 
 const schema = Joi.object().keys({
     cardName: Joi.string().min(3).max(50).optional(),
@@ -16,11 +16,11 @@ const schema = Joi.object().keys({
 class NeedsAttention {
     constructor(params) {
         const validatedSchema = Joi.attempt(params, schema);
-        _.assign(this, validatedSchema);
+        Object.assign(this, validatedSchema);
     }
 
-    Insert() {
-        const object = _.pick(this, Object.keys(schema.describe().keys));
+    insert() {
+        const object = pick(this, Object.keys(schema.describe().keys));
         return storage.needsAttention.insert(object);
     }
 }

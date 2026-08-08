@@ -28,7 +28,7 @@ describe("db-local::collection-store", () => {
     it("inserts a new record with quantity = delta on first upsert", async () => {
         const store = await freshStore();
         const doc = await new Promise((resolve, reject) => {
-            store.Upsert(
+            store.upsert(
                 { cardName: "Pacifism", cardSet: "M20", cardType: "Enchantment" },
                 (err, d) => (err ? reject(err) : resolve(d))
             );
@@ -41,15 +41,15 @@ describe("db-local::collection-store", () => {
         const store = await freshStore();
         const record = { cardName: "Pacifism", cardSet: "M20", cardType: "Enchantment" };
         await new Promise((resolve, reject) => {
-            store.Upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
+            store.upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
         });
         const second = await new Promise((resolve, reject) => {
-            store.Upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
+            store.upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
         });
         assert.equal(second.quantity, 2);
 
         const qty = await new Promise((resolve, reject) => {
-            store.GetQuantity("Pacifism", "M20", (err, q) => (err ? reject(err) : resolve(q)));
+            store.getQuantity("Pacifism", "M20", (err, q) => (err ? reject(err) : resolve(q)));
         });
         assert.equal(qty, 2);
     });
@@ -63,19 +63,19 @@ describe("db-local::collection-store", () => {
             priceUsd: 2.5
         };
         await new Promise((resolve, reject) => {
-            store.Upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
+            store.upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
         });
         const second = await new Promise((resolve, reject) => {
-            store.Upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
+            store.upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
         });
         assert.equal(second.quantity, 2);
         assert.equal(second.estValue, 5, "2 copies at $2.50 = $5.00");
     });
 
-    it("GetQuantity returns 0 for a card/set that was never inserted", async () => {
+    it("getQuantity returns 0 for a card/set that was never inserted", async () => {
         const store = await freshStore();
         const qty = await new Promise((resolve, reject) => {
-            store.GetQuantity("Nonexistent", "XYZ", (err, q) => (err ? reject(err) : resolve(q)));
+            store.getQuantity("Nonexistent", "XYZ", (err, q) => (err ? reject(err) : resolve(q)));
         });
         assert.equal(qty, 0);
     });
@@ -83,20 +83,20 @@ describe("db-local::collection-store", () => {
     it("treats different cardSet values as separate stacks", async () => {
         const store = await freshStore();
         await new Promise((resolve, reject) => {
-            store.Upsert({ cardName: "Pacifism", cardSet: "M20" }, (err, d) =>
+            store.upsert({ cardName: "Pacifism", cardSet: "M20" }, (err, d) =>
                 err ? reject(err) : resolve(d)
             );
         });
         await new Promise((resolve, reject) => {
-            store.Upsert({ cardName: "Pacifism", cardSet: "M21" }, (err, d) =>
+            store.upsert({ cardName: "Pacifism", cardSet: "M21" }, (err, d) =>
                 err ? reject(err) : resolve(d)
             );
         });
         const qtyM20 = await new Promise((resolve, reject) => {
-            store.GetQuantity("Pacifism", "M20", (err, q) => (err ? reject(err) : resolve(q)));
+            store.getQuantity("Pacifism", "M20", (err, q) => (err ? reject(err) : resolve(q)));
         });
         const qtyM21 = await new Promise((resolve, reject) => {
-            store.GetQuantity("Pacifism", "M21", (err, q) => (err ? reject(err) : resolve(q)));
+            store.getQuantity("Pacifism", "M21", (err, q) => (err ? reject(err) : resolve(q)));
         });
         assert.equal(qtyM20, 1);
         assert.equal(qtyM21, 1);
@@ -106,18 +106,18 @@ describe("db-local::collection-store", () => {
         it("returns every collection entry", async () => {
             const store = await freshStore();
             await new Promise((resolve, reject) => {
-                store.Upsert({ cardName: "Pacifism", cardSet: "M20" }, (err, d) =>
+                store.upsert({ cardName: "Pacifism", cardSet: "M20" }, (err, d) =>
                     err ? reject(err) : resolve(d)
                 );
             });
             await new Promise((resolve, reject) => {
-                store.Upsert({ cardName: "Llanowar Elves", cardSet: "M20" }, (err, d) =>
+                store.upsert({ cardName: "Llanowar Elves", cardSet: "M20" }, (err, d) =>
                     err ? reject(err) : resolve(d)
                 );
             });
 
             const all = await new Promise((resolve, reject) => {
-                store.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
+                store.getAll((err, docs) => (err ? reject(err) : resolve(docs)));
             });
             assert.lengthOf(all, 2);
             assert.sameMembers(
@@ -129,25 +129,25 @@ describe("db-local::collection-store", () => {
         it("returns an empty array when nothing has been stored", async () => {
             const store = await freshStore();
             const all = await new Promise((resolve, reject) => {
-                store.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
+                store.getAll((err, docs) => (err ? reject(err) : resolve(docs)));
             });
             assert.deepEqual(all, []);
         });
     });
 
-    describe("SetQuantity", () => {
+    describe("setQuantity", () => {
         it("overwrites quantity and rescales estValue proportionally", async () => {
             const store = await freshStore();
             const record = { cardName: "Pacifism", cardSet: "M20", priceUsd: 2.5 };
             await new Promise((resolve, reject) => {
-                store.Upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
+                store.upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
             });
             await new Promise((resolve, reject) => {
-                store.Upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
+                store.upsert(record, (err, d) => (err ? reject(err) : resolve(d)));
             }); // quantity=2, estValue=5
 
             const updated = await new Promise((resolve, reject) => {
-                store.SetQuantity("Pacifism", "M20", 10, (err, d) =>
+                store.setQuantity("Pacifism", "M20", 10, (err, d) =>
                     err ? reject(err) : resolve(d)
                 );
             });
@@ -160,7 +160,7 @@ describe("db-local::collection-store", () => {
             let caught;
             try {
                 await new Promise((resolve, reject) => {
-                    store.SetQuantity("Nonexistent", "XYZ", 5, (err, d) =>
+                    store.setQuantity("Nonexistent", "XYZ", 5, (err, d) =>
                         err ? reject(err) : resolve(d)
                     );
                 });
@@ -176,18 +176,18 @@ describe("db-local::collection-store", () => {
         it("deletes the entry and returns the removed doc", async () => {
             const store = await freshStore();
             await new Promise((resolve, reject) => {
-                store.Upsert({ cardName: "Pacifism", cardSet: "M20" }, (err, d) =>
+                store.upsert({ cardName: "Pacifism", cardSet: "M20" }, (err, d) =>
                     err ? reject(err) : resolve(d)
                 );
             });
 
             const removed = await new Promise((resolve, reject) => {
-                store.Remove("Pacifism", "M20", (err, d) => (err ? reject(err) : resolve(d)));
+                store.remove("Pacifism", "M20", (err, d) => (err ? reject(err) : resolve(d)));
             });
             assert.equal(removed.cardName, "Pacifism");
 
             const qty = await new Promise((resolve, reject) => {
-                store.GetQuantity("Pacifism", "M20", (err, q) => (err ? reject(err) : resolve(q)));
+                store.getQuantity("Pacifism", "M20", (err, q) => (err ? reject(err) : resolve(q)));
             });
             assert.equal(qty, 0);
         });
@@ -195,7 +195,7 @@ describe("db-local::collection-store", () => {
         it("returns null (no error) when nothing matches", async () => {
             const store = await freshStore();
             const removed = await new Promise((resolve, reject) => {
-                store.Remove("Nonexistent", "XYZ", (err, d) => (err ? reject(err) : resolve(d)));
+                store.remove("Nonexistent", "XYZ", (err, d) => (err ? reject(err) : resolve(d)));
             });
             assert.isNull(removed);
         });

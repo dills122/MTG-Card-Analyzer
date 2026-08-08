@@ -1,8 +1,8 @@
-import _ from "lodash";
 import jimp from "jimp";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { GetImageDimensions } from "./util.mjs";
+import { round } from "../util.mjs";
 
 const constants = {
     name: {
@@ -101,42 +101,42 @@ async function buildSnippetImage(imgPath, type) {
 function GetAlteredDimensions(dimensions, type) {
     if (type === "name") {
         return {
-            width: _.round(dimensions.width * constants.name.widthPercent),
-            height: _.round(dimensions.height * constants.name.heightPercent),
-            left: _.round(dimensions.width * constants.borderPercent),
-            top: _.round(dimensions.height * constants.borderPercent)
+            width: round(dimensions.width * constants.name.widthPercent),
+            height: round(dimensions.height * constants.name.heightPercent),
+            left: round(dimensions.width * constants.borderPercent),
+            top: round(dimensions.height * constants.borderPercent)
         };
     }
     if (type === "type") {
         return {
-            width: _.round(dimensions.width * constants.type.widthPercent),
-            height: _.round(dimensions.height * constants.type.heightPercent),
-            left: _.round(dimensions.width * constants.borderPercent),
-            top: _.round(dimensions.height * constants.type.topPercent)
+            width: round(dimensions.width * constants.type.widthPercent),
+            height: round(dimensions.height * constants.type.heightPercent),
+            left: round(dimensions.width * constants.borderPercent),
+            top: round(dimensions.height * constants.type.topPercent)
         };
     }
     if (type === "art") {
         return {
-            width: _.round(dimensions.width * constants.art.widthPercent),
-            height: _.round(dimensions.height * constants.art.heightPercent),
-            left: _.round(dimensions.width * constants.borderPercent),
-            top: _.round(dimensions.height * constants.art.topPercent)
+            width: round(dimensions.width * constants.art.widthPercent),
+            height: round(dimensions.height * constants.art.heightPercent),
+            left: round(dimensions.width * constants.borderPercent),
+            top: round(dimensions.height * constants.art.topPercent)
         };
     }
     if (type === "flavor") {
         return {
-            width: _.round(dimensions.width * constants.flavor.widthPercent),
-            height: _.round(dimensions.height * constants.flavor.heightPercent),
-            left: _.round(dimensions.width * constants.borderPercent),
-            top: _.round(dimensions.height * constants.flavor.topPercent)
+            width: round(dimensions.width * constants.flavor.widthPercent),
+            height: round(dimensions.height * constants.flavor.heightPercent),
+            left: round(dimensions.width * constants.borderPercent),
+            top: round(dimensions.height * constants.flavor.topPercent)
         };
     }
     if (type === "set-symbol") {
         return {
-            width: _.round(dimensions.width * constants.setSymbol.widthPercent),
-            height: _.round(dimensions.height * constants.setSymbol.heightPercent),
-            left: _.round(dimensions.width * constants.setSymbol.leftPercent),
-            top: _.round(dimensions.height * constants.setSymbol.topPercent)
+            width: round(dimensions.width * constants.setSymbol.widthPercent),
+            height: round(dimensions.height * constants.setSymbol.heightPercent),
+            left: round(dimensions.width * constants.setSymbol.leftPercent),
+            top: round(dimensions.height * constants.setSymbol.topPercent)
         };
     }
     throw new Error(`Unsupported snippet type "${type}"`);

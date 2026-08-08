@@ -26,7 +26,7 @@ describe("models::card-collection", () => {
             imageUrl: "https://example.com/pacifism.png"
         });
 
-        const result = await model.Insert();
+        const result = await model.insert();
 
         assert.deepEqual(result, { quantity: 1 });
         assert.isTrue(upsertStub.calledOnce);
@@ -49,7 +49,7 @@ describe("models::card-collection", () => {
 
         let caughtError;
         try {
-            await model.Insert();
+            await model.insert();
         } catch (err) {
             caughtError = err;
         }

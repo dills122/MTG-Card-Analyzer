@@ -2,11 +2,11 @@ import { assert } from "chai";
 import sinon from "sinon";
 import mysql from "mysql2";
 import {
-    GetQuantity,
-    InsertRecord,
-    UpsertRecord,
-    SetQuantity,
-    DeleteRecord
+    getQuantity,
+    insertRecord,
+    upsertRecord,
+    setQuantity,
+    deleteRecord
 } from "../../src/rds/collection.mjs";
 
 describe("rds::collection", () => {
@@ -27,10 +27,10 @@ describe("rds::collection", () => {
         sandbox.restore();
     });
 
-    it("GetQuantity uses parameterized placeholders, not string interpolation", (done) => {
+    it("getQuantity uses parameterized placeholders, not string interpolation", (done) => {
         fakeConnection.query.callsFake((sql, params, cb) => cb(null, [{ quantity: 3 }]));
 
-        GetQuantity("Urza's Tower", "M20", (err, quantity) => {
+        getQuantity("Urza's Tower", "M20", (err, quantity) => {
             assert.isNull(err);
             assert.equal(quantity, 3);
             const [sql, params] = fakeConnection.query.firstCall.args;
@@ -41,10 +41,10 @@ describe("rds::collection", () => {
         });
     });
 
-    it("InsertRecord uses parameterized placeholders, not string interpolation", (done) => {
+    it("insertRecord uses parameterized placeholders, not string interpolation", (done) => {
         fakeConnection.query.callsFake((sql, params, cb) => cb(null, { insertId: 1 }));
 
-        InsertRecord({ cardName: "Urza's Tower", cardSet: "M20", quantity: 2 }, (err) => {
+        insertRecord({ cardName: "Urza's Tower", cardSet: "M20", quantity: 2 }, (err) => {
             assert.isNull(err);
             const [sql, params] = fakeConnection.query.firstCall.args;
             assert.notInclude(sql, "Urza's Tower", "card name must not be interpolated into SQL");
@@ -54,10 +54,10 @@ describe("rds::collection", () => {
         });
     });
 
-    it("UpsertRecord uses parameterized placeholders and MySQL's native ON DUPLICATE KEY UPDATE", (done) => {
+    it("upsertRecord uses parameterized placeholders and MySQL's native ON DUPLICATE KEY UPDATE", (done) => {
         fakeConnection.query.callsFake((sql, params, cb) => cb(null, { affectedRows: 1 }));
 
-        UpsertRecord(
+        upsertRecord(
             {
                 cardName: "Urza's Tower",
                 cardType: "Land",
@@ -95,10 +95,10 @@ describe("rds::collection", () => {
         );
     });
 
-    it("UpsertRecord defaults estValue to VALUES(estValue) when priceUsd is not given", (done) => {
+    it("upsertRecord defaults estValue to VALUES(estValue) when priceUsd is not given", (done) => {
         fakeConnection.query.callsFake((sql, params, cb) => cb(null, { affectedRows: 1 }));
 
-        UpsertRecord(
+        upsertRecord(
             {
                 cardName: "Urza's Tower",
                 cardType: "Land",
@@ -120,11 +120,11 @@ describe("rds::collection", () => {
         );
     });
 
-    describe("SetQuantity", () => {
+    describe("setQuantity", () => {
         it("assigns estValue before quantity in the SET list (order matters -- see comment in source)", (done) => {
             fakeConnection.query.callsFake((sql, params, cb) => cb(null, { affectedRows: 1 }));
 
-            SetQuantity("Urza's Tower", "M20", 10, (err) => {
+            setQuantity("Urza's Tower", "M20", 10, (err) => {
                 assert.isNull(err);
                 const [sql, params] = fakeConnection.query.firstCall.args;
                 assert.notInclude(sql, "Urza's Tower");
@@ -143,7 +143,7 @@ describe("rds::collection", () => {
         it("errors when no row matched (affectedRows === 0)", (done) => {
             fakeConnection.query.callsFake((sql, params, cb) => cb(null, { affectedRows: 0 }));
 
-            SetQuantity("Nonexistent", "XYZ", 5, (err) => {
+            setQuantity("Nonexistent", "XYZ", 5, (err) => {
                 assert.instanceOf(err, Error);
                 assert.match(err.message, /No collection entry/);
                 done();
@@ -151,13 +151,13 @@ describe("rds::collection", () => {
         });
     });
 
-    describe("DeleteRecord", () => {
+    describe("deleteRecord", () => {
         it("selects with explicit camelCase aliases (not SELECT *, which returns PascalCase column names)", (done) => {
             const row = { cardName: "Urza's Tower", cardSet: "M20", quantity: 2 };
             fakeConnection.query.onFirstCall().callsFake((sql, params, cb) => cb(null, [row]));
             fakeConnection.query.onSecondCall().callsFake((sql, params, cb) => cb(null, {}));
 
-            DeleteRecord("Urza's Tower", "M20", (err, removed) => {
+            deleteRecord("Urza's Tower", "M20", (err, removed) => {
                 assert.isNull(err);
                 assert.deepEqual(removed, row);
                 const [selectSql] = fakeConnection.query.firstCall.args;
@@ -171,7 +171,7 @@ describe("rds::collection", () => {
         it("returns null (no error) when nothing matches", (done) => {
             fakeConnection.query.callsFake((sql, params, cb) => cb(null, []));
 
-            DeleteRecord("Nonexistent", "XYZ", (err, removed) => {
+            deleteRecord("Nonexistent", "XYZ", (err, removed) => {
                 assert.isNull(err);
                 assert.isNull(removed);
                 assert.isTrue(

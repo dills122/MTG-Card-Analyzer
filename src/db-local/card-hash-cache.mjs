@@ -1,38 +1,16 @@
-import Datastore from "@dills1220/nedb";
 import { getConfig } from "../config/index.mjs";
 import { resolveDbFilename as resolvePath } from "./resolve-db-path.mjs";
+import { createNedbStore } from "./create-nedb-store.mjs";
 
 function resolveDbFilename() {
     const config = getConfig();
     return resolvePath(config.cardHashDbPath || config.cardNamesDbPath, "card-hashes.db");
 }
 
-// Resolved lazily on first real use (not at import time) so config sourced from
-// CLI flags -- applied to process.env by index.mjs before the pipeline runs -- is honored.
-let dbInstance;
-
-function getDbInstance() {
-    if (!dbInstance) {
-        dbInstance = new Datastore({
-            filename: resolveDbFilename(),
-            autoload: true
-        });
-        dbInstance.ensureIndex({ fieldName: "lookupKey", unique: true });
-        dbInstance.ensureIndex({ fieldName: "cardName" });
-    }
-    return dbInstance;
-}
-
-const db = new Proxy(
-    {},
-    {
-        get(_target, prop) {
-            const instance = getDbInstance();
-            const value = instance[prop];
-            return typeof value === "function" ? value.bind(instance) : value;
-        }
-    }
-);
+const { db } = createNedbStore({
+    resolveFilename: resolveDbFilename,
+    indexes: [{ fieldName: "lookupKey", unique: true }, { fieldName: "cardName" }]
+});
 
 function toLookupKey(record) {
     const cardName = String(record.cardName || "").trim();
@@ -43,6 +21,9 @@ function toLookupKey(record) {
     return `${cardName}::${setName}::${isFoil ? 1 : 0}::${isPromo ? 1 : 0}::${cardHash}`;
 }
 
+// Every current writer (back-filler.mjs, process-hashes.mjs) sends fully camelCase fields, but
+// this cache accepts legacy/PascalCase field names defensively too (see
+// test/db-local/card-hash-cache.spec.mjs) -- keep the fallback.
 function normalizeRecord(record = {}) {
     const cardName = record.cardName || record.CardName || record.Name || "";
     const setName = record.setName || record.SetName || "";
@@ -63,7 +44,7 @@ function normalizeRecord(record = {}) {
     return normalized;
 }
 
-function InsertEntity(record, callback = () => {}) {
+function insertEntity(record, callback = () => {}) {
     const normalized = normalizeRecord(record);
     if (!normalized.cardName || !normalized.setName || !normalized.cardHash) {
         callback(null, 0);
@@ -80,7 +61,7 @@ function InsertEntity(record, callback = () => {}) {
     });
 }
 
-function GetHashes(name, cb) {
+function getHashes(name, cb) {
     db.find({ cardName: name }, (err, docs) => {
         if (err) {
             return cb(err);
@@ -89,10 +70,10 @@ function GetHashes(name, cb) {
     });
 }
 
-export { InsertEntity, GetHashes, db };
+export { insertEntity, getHashes, db };
 
 export default {
-    InsertEntity,
-    GetHashes,
+    insertEntity,
+    getHashes,
     db
 };

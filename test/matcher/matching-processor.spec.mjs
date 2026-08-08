@@ -21,9 +21,7 @@ describe("MatcherProcessor::", () => {
             set_name: "M20",
             scryfall_uri: "https://scryfall.com/card/m20/1/example"
         };
-        const searchStub = sandbox
-            .stub(dependencies, "Searcher")
-            .callsArgWith(1, null, [expectedCard]);
+        const searchStub = sandbox.stub(dependencies, "Searcher").resolves([expectedCard]);
         const hashStub = sandbox.stub(dependencies, "Hash");
         const processor = create({
             name: "Pacifism",
@@ -51,7 +49,7 @@ describe("MatcherProcessor::", () => {
     });
 
     it("errors when search results are not an array", (done) => {
-        const searchStub = sandbox.stub(dependencies, "Searcher").callsArgWith(1, null, {});
+        const searchStub = sandbox.stub(dependencies, "Searcher").resolves({});
         const logger = { info: sandbox.stub(), error: sandbox.stub() };
         const processor = create({
             name: "Pacifism",
@@ -78,7 +76,7 @@ describe("MatcherProcessor::", () => {
             compareRemoteImages: () => Promise.resolve([{ setName: "M21" }, { setName: "M20" }])
         };
 
-        const searchStub = sandbox.stub(dependencies, "Searcher").callsArgWith(1, null, [
+        const searchStub = sandbox.stub(dependencies, "Searcher").resolves([
             {
                 set_name: "M20",
                 image_uris: { normal: "https://example.com/m20.jpg" },
@@ -90,9 +88,7 @@ describe("MatcherProcessor::", () => {
                 scryfall_uri: "https://scryfall.com/card/m21/1/example"
             }
         ]);
-        const hashStub = sandbox
-            .stub(dependencies, "Hash")
-            .callsArgWith(1, null, "FAKE_LOCAL_HASH");
+        const hashStub = sandbox.stub(dependencies, "Hash").resolves("FAKE_LOCAL_HASH");
         sandbox.stub(dependencies, "CreateDirectory").resolves("/tmp/set-symbol-dir");
         sandbox
             .stub(dependencies, "GetSetSymbolSnippetTmpFile")
@@ -127,11 +123,11 @@ describe("MatcherProcessor::", () => {
             compareRemoteImages: () => Promise.resolve([{ setName: "M21" }])
         };
 
-        sandbox.stub(dependencies, "Searcher").callsArgWith(1, null, [
+        sandbox.stub(dependencies, "Searcher").resolves([
             { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } },
             { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } }
         ]);
-        sandbox.stub(dependencies, "Hash").callsArgWith(1, null, "FAKE_LOCAL_HASH");
+        sandbox.stub(dependencies, "Hash").resolves("FAKE_LOCAL_HASH");
         sandbox.stub(dependencies, "CreateDirectory").resolves("/tmp/set-symbol-dir");
         sandbox
             .stub(dependencies, "GetSetSymbolSnippetTmpFile")
@@ -159,11 +155,11 @@ describe("MatcherProcessor::", () => {
             compareRemoteImages: () => Promise.resolve([{ setName: "M22" }])
         };
 
-        sandbox.stub(dependencies, "Searcher").callsArgWith(1, null, [
+        sandbox.stub(dependencies, "Searcher").resolves([
             { set_name: "M22", image_uris: { normal: "https://example.com/m22.jpg" } },
             { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
         ]);
-        sandbox.stub(dependencies, "Hash").callsArgWith(1, null, "FAKE_LOCAL_HASH");
+        sandbox.stub(dependencies, "Hash").resolves("FAKE_LOCAL_HASH");
         sandbox.stub(dependencies, "CreateDirectory").resolves("/tmp/set-symbol-dir");
         sandbox
             .stub(dependencies, "GetSetSymbolSnippetTmpFile")
@@ -191,11 +187,11 @@ describe("MatcherProcessor::", () => {
             compareRemoteImages: () => Promise.resolve([{ setName: "M21" }])
         };
 
-        sandbox.stub(dependencies, "Searcher").callsArgWith(1, null, [
+        sandbox.stub(dependencies, "Searcher").resolves([
             { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } },
             { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
         ]);
-        const hashStub = sandbox.stub(dependencies, "Hash").callsArgWith(1, null, "FALLBACK_HASH");
+        const hashStub = sandbox.stub(dependencies, "Hash").resolves("FALLBACK_HASH");
         sandbox.stub(dependencies, "CreateDirectory").resolves("/tmp/set-symbol-dir");
         sandbox.stub(dependencies, "GetSetSymbolSnippetTmpFile").rejects(new Error("crop failed"));
         sandbox.stub(dependencies, "CleanUpFiles").resolves();

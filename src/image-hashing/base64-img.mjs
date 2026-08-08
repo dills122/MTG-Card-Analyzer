@@ -1,5 +1,11 @@
-import base64Img from "image-to-base64";
+import { readFile } from "node:fs/promises";
 import log from "../logger/log.mjs";
+
+// Native fs.readFile + Buffer in place of image-to-base64.
+async function base64Img(imagePath) {
+    const buffer = await readFile(imagePath);
+    return buffer.toString("base64");
+}
 
 export const dependencies = {
     base64Img
@@ -9,7 +15,7 @@ const logger = log.create({
     isPretty: true
 });
 
-async function StringfyImagesNDAtn(imagePaths) {
+async function stringifyImagesForReview(imagePaths) {
     try {
         const flavorImage = await dependencies.base64Img(imagePaths.flavorImage);
         const artImage = await dependencies.base64Img(imagePaths.artImage);
@@ -29,9 +35,9 @@ async function StringfyImagesNDAtn(imagePaths) {
     }
 }
 
-export { StringfyImagesNDAtn };
+export { stringifyImagesForReview };
 
 export default {
-    StringfyImagesNDAtn,
+    stringifyImagesForReview,
     dependencies
 };

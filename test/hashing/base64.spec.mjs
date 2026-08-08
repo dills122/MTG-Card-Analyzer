@@ -4,7 +4,7 @@ import sinon from "sinon";
 
 describe("Base64::", () => {
     let stubs = {};
-    describe("StringfyImagesNDAtn::", () => {
+    describe("stringifyImagesForReview::", () => {
         const base64Str = "QVNGRERTRlNBRkFTREZTREZTREZTRg==";
         beforeEach(() => {
             stubs.base64Stub = sinon.stub(Base64.dependencies, "base64Img").resolves(base64Str);
@@ -13,7 +13,7 @@ describe("Base64::", () => {
             sinon.restore();
         });
         it("Should return a hash of the image", (done) => {
-            Base64.StringfyImagesNDAtn({
+            Base64.stringifyImagesForReview({
                 flavorImage: "",
                 artImage: "",
                 typeImage: "",

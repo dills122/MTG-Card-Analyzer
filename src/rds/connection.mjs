@@ -1,5 +1,5 @@
 import mysql from "mysql2";
-import { requireF } from "../util.mjs";
+import { requireOrFalse } from "../util.mjs";
 
 // Resolved lazily, only when a connection is actually attempted -- not at import time.
 // This module is imported unconditionally (both storage adapters are wired up regardless
@@ -9,12 +9,12 @@ let secureConfig;
 
 function getSecureConfig() {
     if (!secureConfig) {
-        secureConfig = requireF("../secure.config.cjs") || { rds: {} };
+        secureConfig = requireOrFalse("../secure.config.cjs") || { rds: {} };
     }
     return secureConfig;
 }
 
-function CreateConnection() {
+function createConnection() {
     const config = getSecureConfig();
     return mysql.createConnection({
         host: config.rds.host,
@@ -25,8 +25,8 @@ function CreateConnection() {
     });
 }
 
-export { CreateConnection };
+export { createConnection };
 
 export default {
-    CreateConnection
+    createConnection
 };

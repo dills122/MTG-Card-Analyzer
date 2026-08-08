@@ -1,9 +1,8 @@
-import _ from "lodash";
 import joi from "joi";
 import FuzzySet from "fuzzyset.js";
 import stringSimilarity from "string-similarity";
 import logger from "../logger/log.mjs";
-import { cleanString } from "../util.mjs";
+import { cleanString, round, mean, orderBy } from "../util.mjs";
 
 const config = {
     highConfidence: 0.95,
@@ -53,7 +52,7 @@ class MatchName {
             },
             schema
         );
-        _.assign(this, validatedSchema);
+        Object.assign(this, validatedSchema);
         this.dependencies = {
             ...defaultDependencies,
             ...(injectedDependencies || {})
@@ -109,7 +108,7 @@ class MatchName {
     async filterBulkMatches() {
         const query = normalizeForMatch(this.cleanText);
         const queryTokens = tokenize(query);
-        const scoredResults = _.map(this.initialResults, (match) => {
+        const scoredResults = this.initialResults.map((match) => {
             const [namePercent, nameMatch] = match;
             const candidateName = this.nameLookup[nameMatch] || nameMatch;
             const normalizedCandidate = normalizeForMatch(candidateName);
@@ -119,7 +118,7 @@ class MatchName {
                 candidateTokens
             );
             const tokenCoverage = calculateTokenCoverage(queryTokens, candidateTokens);
-            const score = _.round(
+            const score = round(
                 namePercent * 0.6 + tokenCoverage * 0.3 + firstTokenSimilarity * 0.1,
                 4
             );
@@ -130,7 +129,7 @@ class MatchName {
                 _firstTokenSimilarity: firstTokenSimilarity
             };
         });
-        const rankedResults = _.orderBy(
+        const rankedResults = orderBy(
             scoredResults,
             ["_score", "percentage", "name"],
             ["desc", "desc", "asc"]
@@ -156,7 +155,7 @@ class MatchName {
             }
         }
 
-        const highConfidenceMatches = _.filter(rankedResults, (item) => {
+        const highConfidenceMatches = rankedResults.filter((item) => {
             return item.percentage >= config.highConfidence;
         });
 
@@ -164,7 +163,8 @@ class MatchName {
             return highConfidenceMatches.splice(0, config.maxMatches + 1).map(stripInternalFields);
         }
 
-        return _.filter(rankedResults, (item) => item.percentage >= config.minConfidence)
+        return rankedResults
+            .filter((item) => item.percentage >= config.minConfidence)
             .splice(0, config.maxMatches + 1)
             .map(stripInternalFields);
     }
@@ -181,7 +181,7 @@ class MatchName {
         const ranked = (this.filteredStoredNames || [])
             .map((normalizedName) => ({
                 name: this.nameLookup[normalizedName] || normalizedName,
-                percentage: _.round(
+                percentage: round(
                     calculateSupplementalEvidenceScore(
                         normalizedName,
                         titleTokens,
@@ -248,12 +248,12 @@ function calculateTokenCoverage(queryTokens, candidateTokens) {
     }
     const similarities = queryTokens.map((queryToken) => {
         return (
-            _.max(
-                candidateTokens.map((candidateToken) => similarity(queryToken, candidateToken))
+            Math.max(
+                ...candidateTokens.map((candidateToken) => similarity(queryToken, candidateToken))
             ) || 0
         );
     });
-    return _.mean(similarities) || 0;
+    return mean(similarities) || 0;
 }
 
 function calculateSupplementalEvidenceScore(candidateName, titleTokens, supplementalTokens) {
@@ -278,11 +278,11 @@ function calculateSupplementalEvidenceScore(candidateName, titleTokens, suppleme
                 calculatePartialTokenSimilarity(candidateToken, evidenceToken)
             )
         );
-    const repeatedNameScore = _.mean(
+    const repeatedNameScore = mean(
         candidateTokens.map((candidateToken) => bestSimilarity(candidateToken, supplementalTokens))
     );
     const splitEvidenceScore = titleTokens.length
-        ? _.mean([
+        ? mean([
               bestSimilarity(candidateTokens[0], supplementalTokens),
               ...candidateTokens
                   .slice(1)

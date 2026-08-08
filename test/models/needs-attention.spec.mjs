@@ -25,7 +25,7 @@ describe("models::needs-attention", () => {
             possibleSets: "M20,M21"
         });
 
-        const result = await model.Insert();
+        const result = await model.insert();
 
         assert.deepEqual(result, { _id: "abc" });
         assert.isTrue(insertStub.calledOnce);
@@ -45,7 +45,7 @@ describe("models::needs-attention", () => {
 
         let caughtError;
         try {
-            await model.Insert();
+            await model.insert();
         } catch (err) {
             caughtError = err;
         }

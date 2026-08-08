@@ -52,18 +52,18 @@ describe("Integration::", () => {
         stubs.MatchProcessorCreateStub = sandbox
             .stub(MatchProcessor, "create")
             .returns(MatchProcessorInstance);
-        MatchProcessorInstance.execute = new Function();
+        MatchProcessorInstance.executeAsync = new Function();
         stubs.MatchProcessorExecuteStub = sandbox
-            .stub(MatchProcessorInstance, "execute")
-            .callsArgWith(0, null, [COLLECTION_NAME]); //Empty right now and will have to be a multi call oen since in async.each
+            .stub(MatchProcessorInstance, "executeAsync")
+            .resolves([COLLECTION_NAME]); //Empty right now and will have to be a multi call oen since in async.each
         stubs.NeedsAttentionInsertStub = sandbox
-            .stub(NeedsAttention.prototype, "Insert")
+            .stub(NeedsAttention.prototype, "insert")
             .resolves(null);
-        stubs.CollectionInsertStub = sandbox.stub(Collection.prototype, "Insert").resolves(null);
+        stubs.CollectionInsertStub = sandbox.stub(Collection.prototype, "insert").resolves(null);
         // Never let real specs touch the actual local ops-log file (or any other real nedb
         // file on the machine running the tests) -- storage.log.record is the one dependency
         // in processor.mjs not injected via `dependencies`, so it's stubbed directly here.
-        stubs.LogOperationStub = sandbox.stub(storage.log, "record");
+        stubs.logRecordStub = sandbox.stub(storage.log, "record");
         stubs.GetAdditionalCardInfoStub = sandbox
             .stub(GetAdditionalCardInfo, "SearchByNameExact")
             .callsArgWith(2, null, {
@@ -175,9 +175,7 @@ describe("Integration::", () => {
                         "https://www.cardhoarder.com/cards/72963?affiliate_id=scryfall\u0026ref=card-profile\u0026utm_campaign=affiliate\u0026utm_medium=card\u0026utm_source=scryfall"
                 }
             }); //Need to mock out the desired card
-        stubs.Base64Stub = sandbox
-            .stub(Processor.dependencies, "Base64")
-            .callsArgWith(1, null, NAME_BASE_64);
+        stubs.Base64Stub = sandbox.stub(Processor.dependencies, "Base64").resolves(NAME_BASE_64);
     });
 
     afterEach(() => {
@@ -225,8 +223,8 @@ describe("Integration::", () => {
                 }
             ]);
             stubs.MatchProcessorExecuteStub = sandbox
-                .stub(MatchProcessorInstance, "execute")
-                .callsArgWith(0, null, [COLLECTION_NAME, COLLECTION_NAME_TWO]); //Empty right now and will have to be a multi call oen since in async.each
+                .stub(MatchProcessorInstance, "executeAsync")
+                .resolves([COLLECTION_NAME, COLLECTION_NAME_TWO]); //Empty right now and will have to be a multi call oen since in async.each
 
             let processorInstance = Processor.create({
                 filePath: FAKE_PATH,
@@ -329,8 +327,8 @@ describe("Integration::", () => {
             stubs.MatchProcessorExecuteStub.restore();
             const expectedError = new Error("failed to match");
             stubs.MatchProcessorExecuteStub = sandbox
-                .stub(MatchProcessorInstance, "execute")
-                .callsArgWith(0, expectedError);
+                .stub(MatchProcessorInstance, "executeAsync")
+                .rejects(expectedError);
 
             let processorInstance = Processor.create({
                 filePath: FAKE_PATH
@@ -352,8 +350,8 @@ describe("Integration::", () => {
                 filePath: FAKE_PATH
             });
             processorInstance.execute((err) => {
-                assert.isTrue(stubs.LogOperationStub.calledOnce);
-                const loggedRecord = stubs.LogOperationStub.firstCall.args[0];
+                assert.isTrue(stubs.logRecordStub.calledOnce);
+                const loggedRecord = stubs.logRecordStub.firstCall.args[0];
                 assert.isArray(loggedRecord.matcherResults);
                 assert.isNotEmpty(loggedRecord.matcherResults);
                 loggedRecord.matcherResults.forEach((result) => {
@@ -369,8 +367,8 @@ describe("Integration::", () => {
                 debugLogging: true
             });
             processorInstance.execute((err) => {
-                assert.isTrue(stubs.LogOperationStub.calledOnce);
-                const loggedRecord = stubs.LogOperationStub.firstCall.args[0];
+                assert.isTrue(stubs.logRecordStub.calledOnce);
+                const loggedRecord = stubs.logRecordStub.firstCall.args[0];
                 assert.isArray(loggedRecord.matcherResults);
                 assert.isNotEmpty(loggedRecord.matcherResults);
                 loggedRecord.matcherResults.forEach((result) => {

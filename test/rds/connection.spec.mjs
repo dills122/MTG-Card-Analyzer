@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import sinon from "sinon";
 import mysql from "mysql2";
-import { CreateConnection } from "../../src/rds/connection.mjs";
+import { createConnection } from "../../src/rds/connection.mjs";
 
 describe("rds::connection", () => {
     let sandbox;
@@ -18,7 +18,7 @@ describe("rds::connection", () => {
         const fakeConnection = {};
         sandbox.stub(mysql, "createConnection").returns(fakeConnection);
 
-        assert.doesNotThrow(() => CreateConnection());
+        assert.doesNotThrow(() => createConnection());
         const [config] = mysql.createConnection.firstCall.args;
         assert.deepEqual(config, {
             host: undefined,
