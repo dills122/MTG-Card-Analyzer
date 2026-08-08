@@ -4,6 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import {
     buildCardSearchUrl,
+    downloadImage,
+    fetchCardPages,
     importScryfallFixtures,
     normalizeImportOptions
 } from "../../src/regression/scryfall-fixture-importer.mjs";
@@ -76,6 +78,107 @@ describe("Scryfall regression fixture importer", () => {
         assert.equal(url.searchParams.get("unique"), "prints");
         assert.equal(url.searchParams.get("order"), "released");
         assert.equal(url.searchParams.get("dir"), "desc");
+    });
+
+    describe("Scryfall HTTP boundary", () => {
+        it("follows trusted pagination with request pacing", async () => {
+            const requests = [];
+            const waits = [];
+            const responses = [
+                jsonResponse({
+                    object: "list",
+                    data: [{ id: "one" }],
+                    has_more: true,
+                    next_page: "https://api.scryfall.com/cards/search?page=2&q=test"
+                }),
+                jsonResponse({
+                    object: "list",
+                    data: [{ id: "two" }],
+                    has_more: false
+                })
+            ];
+
+            const cards = await fetchCardPages("https://api.scryfall.com/cards/search?q=test", {
+                maxPages: 5,
+                fetchImpl: async (url, options) => {
+                    requests.push({ url, options });
+                    return responses.shift();
+                },
+                wait: async (milliseconds) => waits.push(milliseconds)
+            });
+
+            assert.deepEqual(cards, [{ id: "one" }, { id: "two" }]);
+            assert.lengthOf(requests, 2);
+            assert.equal(requests[0].options.headers.Accept, "application/json");
+            assert.match(requests[0].options.headers["User-Agent"], /MTG-Card-Analyzer/);
+            assert.deepEqual(waits, [125]);
+        });
+
+        it("rejects an untrusted pagination URL", async () => {
+            let error;
+            try {
+                await fetchCardPages("https://api.scryfall.com/cards/search?q=test", {
+                    maxPages: 2,
+                    fetchImpl: async () =>
+                        jsonResponse({
+                            object: "list",
+                            data: [],
+                            has_more: true,
+                            next_page: "https://example.com/cards/search?page=2"
+                        }),
+                    wait: async () => {}
+                });
+            } catch (caught) {
+                error = caught;
+            }
+
+            assert.instanceOf(error, Error);
+            assert.include(error.message, "Untrusted Scryfall API URL");
+        });
+
+        it("downloads a bounded JPEG image", async () => {
+            const destination = path.join(
+                await mkdtemp(path.join(os.tmpdir(), "mtg-scryfall-download-")),
+                "card.jpg"
+            );
+            try {
+                await downloadImage("https://cards.scryfall.io/normal/card.jpg", destination, {
+                    fetchImpl: async () =>
+                        new Response(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), {
+                            status: 200,
+                            headers: { "Content-Type": "image/jpeg" }
+                        })
+                });
+                assert.deepEqual(
+                    [...new Uint8Array(await readFile(destination))],
+                    [0xff, 0xd8, 0xff, 0xd9]
+                );
+            } finally {
+                await rm(path.dirname(destination), { recursive: true, force: true });
+            }
+        });
+
+        it("rejects a non-image download", async () => {
+            let error;
+            try {
+                await downloadImage(
+                    "https://cards.scryfall.io/normal/card.jpg",
+                    path.join(os.tmpdir(), "must-not-write.jpg"),
+                    {
+                        fetchImpl: async () =>
+                            new Response("not an image", {
+                                status: 200,
+                                headers: { "Content-Type": "text/plain" }
+                            })
+                    }
+                );
+            } catch (caught) {
+                error = caught;
+            }
+
+            assert.instanceOf(error, Error);
+            assert.include(error.message, "Expected JPEG image from Scryfall");
+        });
     });
 
     describe("importScryfallFixtures", () => {
@@ -293,4 +396,11 @@ async function writeManifest(manifestPath, manifest) {
     const { mkdir } = await import("node:fs/promises");
     await mkdir(path.dirname(manifestPath), { recursive: true });
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 4)}\n`);
+}
+
+function jsonResponse(value) {
+    return new Response(JSON.stringify(value), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+    });
 }

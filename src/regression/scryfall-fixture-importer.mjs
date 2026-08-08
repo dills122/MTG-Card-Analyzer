@@ -5,8 +5,16 @@ const SCRYFALL_API_ORIGIN = "https://api.scryfall.com";
 const DEFAULT_MAX_PAGES = 20;
 const MAX_COUNT = 100;
 const MAX_PAGES = 100;
+const REQUEST_DELAY_MS = 125;
+const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_API_RESPONSE_BYTES = 12 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SET_CODE_PATTERN = /^[a-z0-9]{2,6}$/i;
+const REQUEST_HEADERS = {
+    "User-Agent": "MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)",
+    Accept: "application/json"
+};
 
 function parsePositiveInteger(value, label, maximum) {
     const number = Number(value);
@@ -82,6 +90,131 @@ function buildCardSearchUrl(options) {
     url.searchParams.set("order", "released");
     url.searchParams.set("dir", "desc");
     return url.href;
+}
+
+function trustedUrl(value, expectedOrigin, label) {
+    let url;
+    try {
+        url = new URL(value);
+    } catch {
+        throw new Error(`Invalid ${label} URL`);
+    }
+    if (url.protocol !== "https:" || url.origin !== expectedOrigin) {
+        throw new Error(`Untrusted ${label} URL: ${url.origin}`);
+    }
+    return url;
+}
+
+async function readBoundedBody(response, maximumBytes, label) {
+    const contentLength = Number(response.headers.get("content-length"));
+    if (Number.isFinite(contentLength) && contentLength > maximumBytes) {
+        throw new Error(`${label} exceeds ${maximumBytes} bytes`);
+    }
+    if (!response.body) throw new Error(`${label} response body is empty`);
+
+    const chunks = [];
+    let total = 0;
+    const reader = response.body.getReader();
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            total += value.byteLength;
+            if (total > maximumBytes) {
+                await reader.cancel();
+                throw new Error(`${label} exceeds ${maximumBytes} bytes`);
+            }
+            chunks.push(value);
+        }
+    } finally {
+        reader.releaseLock();
+    }
+
+    const bytes = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+        bytes.set(chunk, offset);
+        offset += chunk.byteLength;
+    }
+    return bytes;
+}
+
+async function request(url, options = {}) {
+    const fetchImpl = options.fetchImpl || globalThis.fetch;
+    const response = await fetchImpl(url, {
+        headers: options.headers,
+        redirect: "error",
+        signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS)
+    });
+    if (!response.ok) {
+        throw new Error(`Scryfall request failed with HTTP ${response.status}`);
+    }
+    return response;
+}
+
+async function fetchCardPages(searchUrl, options = {}) {
+    const maxPages = parsePositiveInteger(
+        options.maxPages ?? DEFAULT_MAX_PAGES,
+        "max-pages",
+        MAX_PAGES
+    );
+    const wait =
+        options.wait ||
+        ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
+    const cards = [];
+    let nextUrl = trustedUrl(searchUrl, SCRYFALL_API_ORIGIN, "Scryfall API").href;
+
+    for (let page = 0; page < maxPages && nextUrl; page += 1) {
+        if (page > 0) await wait(REQUEST_DELAY_MS);
+        const response = await request(nextUrl, {
+            fetchImpl: options.fetchImpl,
+            headers: REQUEST_HEADERS
+        });
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.toLowerCase().includes("application/json")) {
+            throw new Error("Expected JSON response from Scryfall API");
+        }
+        const bytes = await readBoundedBody(
+            response,
+            MAX_API_RESPONSE_BYTES,
+            "Scryfall API response"
+        );
+        let pageData;
+        try {
+            pageData = JSON.parse(new TextDecoder().decode(bytes));
+        } catch (error) {
+            throw new Error("Scryfall API returned invalid JSON", { cause: error });
+        }
+        if (pageData?.object !== "list" || !Array.isArray(pageData.data)) {
+            throw new Error("Scryfall API response is not a card list");
+        }
+        cards.push(...pageData.data);
+        nextUrl = pageData.has_more
+            ? trustedUrl(pageData.next_page, SCRYFALL_API_ORIGIN, "Scryfall API").href
+            : undefined;
+    }
+    return cards;
+}
+
+async function downloadImage(imageUrl, destination, options = {}) {
+    const trustedImage = imageUrlForCard({ image_uris: { normal: imageUrl } });
+    if (!trustedImage) throw new Error("Untrusted Scryfall image URL");
+    const response = await request(trustedImage, {
+        fetchImpl: options.fetchImpl,
+        headers: {
+            ...REQUEST_HEADERS,
+            Accept: "image/jpeg"
+        }
+    });
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.toLowerCase().startsWith("image/jpeg")) {
+        throw new Error("Expected JPEG image from Scryfall");
+    }
+    const bytes = await readBoundedBody(response, MAX_IMAGE_BYTES, "Scryfall image");
+    if (bytes.length < 3 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) {
+        throw new Error("Scryfall download is not a valid JPEG image");
+    }
+    await writeFile(destination, bytes, { flag: "wx" });
 }
 
 async function readManifestJson(manifestPath) {
@@ -334,16 +467,14 @@ async function importScryfallFixtures(options, overrides = {}) {
 }
 
 const defaultDependencies = {
-    fetchCardPages: async () => {
-        throw new Error("Scryfall page fetching is not implemented");
-    },
-    downloadImage: async () => {
-        throw new Error("Scryfall image downloading is not implemented");
-    }
+    fetchCardPages,
+    downloadImage
 };
 
 export {
     buildCardSearchUrl,
+    downloadImage,
+    fetchCardPages,
     importScryfallFixtures,
     manifestPrintIdentities,
     normalizeCard,
