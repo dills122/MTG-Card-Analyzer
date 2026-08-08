@@ -2,9 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { DEFAULT_OCR_MODEL_PATH } from "../image-analysis/ocr-model.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "../..");
+const unsupportedOcrParameters = ["enable_new_segsearch", "save_raw_choices"];
+
+function findUnsupportedOcrParameters(model) {
+    return unsupportedOcrParameters.filter((parameter) => model.includes(Buffer.from(parameter)));
+}
 
 // Sanity-checks the environment is actually usable, not just "file exists". Shared by
 // scripts/verify-env.mjs (dev setup) and `node index.mjs diagnostics` (support bundle) --
@@ -36,14 +42,21 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
         record(`Node ${process.versions.node} -- this project targets Node >=20`, "fail");
     }
 
-    const traineddataPath = path.join(repoRoot, "eng.traineddata");
-    if (fs.existsSync(traineddataPath)) {
-        record("eng.traineddata present at repo root", "pass");
+    if (fs.existsSync(DEFAULT_OCR_MODEL_PATH)) {
+        const model = fs.readFileSync(DEFAULT_OCR_MODEL_PATH);
+        const unsupportedParameters = findUnsupportedOcrParameters(model);
+        if (unsupportedParameters.length === 0) {
+            record("English OCR model available (patched eng.traineddata)", "pass");
+        } else {
+            record(
+                `English OCR model contains unsupported parameters: ${unsupportedParameters.join(
+                    ", "
+                )}`,
+                "fail"
+            );
+        }
     } else {
-        record(
-            "eng.traineddata missing at repo root -- OCR will fail. See README prerequisites.",
-            "fail"
-        );
+        record("English OCR model missing at repo root -- restore eng.traineddata.", "fail");
     }
 
     const testImage = path.join(repoRoot, "test-images/PlatinumAngel.jpg");
@@ -113,6 +126,6 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
     return { checks, requiredFailures, warnings };
 }
 
-export { runEnvironmentCheck };
+export { findUnsupportedOcrParameters, runEnvironmentCheck };
 
 export default { runEnvironmentCheck };

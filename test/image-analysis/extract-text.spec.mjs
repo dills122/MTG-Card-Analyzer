@@ -4,34 +4,40 @@ import textExtraction from "../../src/image-analysis/extract-text.mjs";
 
 describe("TextExtraction::", () => {
     let sandbox;
+    let worker;
+    let createWorkerStub;
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
+        worker = {
+            load: sandbox.stub().resolves(),
+            loadLanguage: sandbox.stub().resolves(),
+            initialize: sandbox.stub().resolves(),
+            recognize: sandbox.stub().resolves({ data: { text: "Pacifism", confidence: 80 } }),
+            setParameters: sandbox.stub().resolves(),
+            terminate: sandbox.stub().resolves()
+        };
+        createWorkerStub = sandbox.stub(textExtraction.dependencies.Tesseract, "createWorker");
+        createWorkerStub.returns(worker);
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await textExtraction.ShutDown();
         sandbox.restore();
     });
 
     it("reuses one worker while resetting adaptive OCR state between images", async () => {
-        const worker = {
-            load: sandbox.stub().resolves(),
-            loadLanguage: sandbox.stub().resolves(),
-            initialize: sandbox.stub().resolves(),
-            recognize: sandbox.stub().resolves({ data: { text: "Pacifism" } }),
-            terminate: sandbox.stub().resolves()
-        };
-        const createWorkerStub = sandbox
-            .stub(textExtraction.dependencies.Tesseract, "createWorker")
-            .returns(worker);
-
         const session = await textExtraction.createOcrSession({
             cacheMethod: "none",
             langPath: "/fixtures",
             gzip: false
         });
-        await session.recognize("/tmp/first.jpg", { region: "name-core" });
-        await session.recognize("/tmp/second.jpg", { region: "name-wide" });
+        await session.recognize("/tmp/first.jpg", {
+            region: "name-core"
+        });
+        await session.recognize("/tmp/second.jpg", {
+            region: "name-wide"
+        });
         await session.terminate();
 
         assert.isTrue(createWorkerStub.calledOnce);
@@ -44,6 +50,7 @@ describe("TextExtraction::", () => {
         assert.isTrue(worker.loadLanguage.calledOnceWithExactly("eng"));
         assert.equal(worker.initialize.callCount, 2);
         assert.isTrue(worker.initialize.alwaysCalledWithExactly("eng"));
+        assert.isTrue(worker.setParameters.notCalled);
         assert.deepEqual(worker.recognize.args, [["/tmp/first.jpg"], ["/tmp/second.jpg"]]);
         assert.isBelow(worker.recognize.firstCall.callId, worker.initialize.secondCall.callId);
         assert.isBelow(worker.initialize.secondCall.callId, worker.recognize.secondCall.callId);
@@ -76,17 +83,12 @@ describe("TextExtraction::", () => {
         assert.equal(session.recognize.firstCall.args[1].region, "name-core");
         assert.equal(session.recognize.secondCall.args[1].region, "name-wide");
         assert.isTrue(oneShotRecognize.notCalled);
+        assert.isTrue(createWorkerStub.notCalled);
     });
 
     it("terminates a worker when OCR session initialization fails", async () => {
         const expectedError = new Error("language initialization failed");
-        const worker = {
-            load: sandbox.stub().resolves(),
-            loadLanguage: sandbox.stub().rejects(expectedError),
-            initialize: sandbox.stub().resolves(),
-            terminate: sandbox.stub().resolves()
-        };
-        sandbox.stub(textExtraction.dependencies.Tesseract, "createWorker").returns(worker);
+        worker.loadLanguage.rejects(expectedError);
 
         let actualError;
         try {
@@ -97,22 +99,20 @@ describe("TextExtraction::", () => {
 
         assert.strictEqual(actualError, expectedError);
         assert.isTrue(worker.terminate.calledOnce);
-        assert.isTrue(worker.initialize.notCalled);
+        assert.isTrue(worker.recognize.notCalled);
     });
 
     it("returns clean and raw OCR text from tesseract recognize", (done) => {
-        const recognizeStub = sandbox
-            .stub(textExtraction.dependencies.Tesseract, "recognize")
-            .resolves({
-                data: {
-                    text: "  Pacifism!! \n"
-                }
-            });
+        const recognizeStub = worker.recognize.resolves({
+            data: {
+                text: "  Pacifism!! \n"
+            }
+        });
 
         textExtraction.ScanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.isNull(err);
             assert.isTrue(recognizeStub.calledOnce);
-            assert.equal(recognizeStub.firstCall.args[2].cacheMethod, "readOnly");
+            assert.equal(createWorkerStub.firstCall.args[0].cacheMethod, "none");
             assert.equal(result.cleanText, "PACIFISM");
             assert.equal(result.dirtyText, "  Pacifism!! \n");
             assert.containsAllKeys(result, ["confidence", "bestVariant", "candidates"]);
@@ -122,9 +122,7 @@ describe("TextExtraction::", () => {
 
     it("returns OCR error when tesseract recognize rejects", (done) => {
         const expectedErr = new Error("OCR failed");
-        const recognizeStub = sandbox
-            .stub(textExtraction.dependencies.Tesseract, "recognize")
-            .rejects(expectedErr);
+        const recognizeStub = worker.recognize.rejects(expectedErr);
 
         textExtraction.ScanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.strictEqual(err, expectedErr);
@@ -135,16 +133,14 @@ describe("TextExtraction::", () => {
     });
 
     it("allows regression runs to disable the OCR cache and use a local language model", (done) => {
-        const recognizeStub = sandbox
-            .stub(textExtraction.dependencies.Tesseract, "recognize")
-            .resolves({ data: { text: "Pacifism" } });
+        worker.recognize.resolves({ data: { text: "Pacifism" } });
 
         textExtraction.ScanImage(
             "/tmp/fake-image.jpg",
             "name",
             (err) => {
                 assert.isNull(err);
-                assert.include(recognizeStub.firstCall.args[2], {
+                assert.include(createWorkerStub.firstCall.args[0], {
                     cacheMethod: "none",
                     langPath: "/fixtures",
                     gzip: false
@@ -188,14 +184,12 @@ describe("TextExtraction::", () => {
     });
 
     it("normalizes ligatures/diacritics and drops noisy tokens for name extraction", (done) => {
-        const recognizeStub = sandbox
-            .stub(textExtraction.dependencies.Tesseract, "recognize")
-            .resolves({
-                data: {
-                    text: "m\nThought Reﬂection éggg\n‘V' t, ”I“ . . 1 \\\\K‘ 'g‘r .\n",
-                    confidence: 53
-                }
-            });
+        const recognizeStub = worker.recognize.resolves({
+            data: {
+                text: "m\nThought Reﬂection éggg\n‘V' t, ”I“ . . 1 \\\\K‘ 'g‘r .\n",
+                confidence: 53
+            }
+        });
 
         textExtraction.ScanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.isNull(err);
@@ -210,8 +204,7 @@ describe("TextExtraction::", () => {
     });
 
     it("prefers cleaner name candidate over noisier high-confidence band", async () => {
-        const recognizeStub = sandbox
-            .stub(textExtraction.dependencies.Tesseract, "recognize")
+        const recognizeStub = worker.recognize
             .onFirstCall()
             .resolves({
                 data: {
@@ -244,13 +237,12 @@ describe("TextExtraction::", () => {
         assert.equal(result.bestVariant.region, "name-core");
     });
 
-    it("processes OCR variants sequentially to protect the shared trained-data cache", async () => {
+    it("processes OCR variants sequentially through the shared worker", async () => {
         let resolveFirst;
         const firstResult = new Promise((resolve) => {
             resolveFirst = resolve;
         });
-        const recognizeStub = sandbox
-            .stub(textExtraction.dependencies.Tesseract, "recognize")
+        const recognizeStub = worker.recognize
             .onFirstCall()
             .returns(firstResult)
             .onSecondCall()
@@ -277,14 +269,13 @@ describe("TextExtraction::", () => {
 
     it("logs one useful OCR progress heartbeat instead of every ten percent", async () => {
         const info = sandbox.stub();
-        sandbox
-            .stub(textExtraction.dependencies.Tesseract, "recognize")
-            .callsFake(async (_buffer, _language, options) => {
-                options.logger({ status: "recognizing text", progress: 0.1 });
-                options.logger({ status: "recognizing text", progress: 0.5 });
-                options.logger({ status: "recognizing text", progress: 1 });
-                return { data: { text: "Pacifism\n", confidence: 82 } };
-            });
+        worker.recognize.callsFake(async () => {
+            const progressLogger = createWorkerStub.firstCall.args[0].logger;
+            progressLogger({ status: "recognizing text", progress: 0.1 });
+            progressLogger({ status: "recognizing text", progress: 0.5 });
+            progressLogger({ status: "recognizing text", progress: 1 });
+            return { data: { text: "Pacifism\n", confidence: 82 } };
+        });
 
         await new Promise((resolve, reject) => {
             textExtraction.ScanImage(
@@ -303,5 +294,38 @@ describe("TextExtraction::", () => {
                 'OCR name-core: 82% confidence; "Pacifism" -> "PACIFISM"'
             ]
         );
+    });
+
+    it("reuses one worker for each candidate and terminates it on shutdown", async () => {
+        worker.recognize
+            .onFirstCall()
+            .resolves({ data: { text: "Pacifism", confidence: 82 } })
+            .onSecondCall()
+            .resolves({ data: { text: "Pacifism", confidence: 80 } });
+
+        const result = await new Promise((resolve, reject) => {
+            textExtraction.ScanImage(
+                [
+                    { buffer: Buffer.from("a"), region: "name-core", psm: "line" },
+                    { buffer: Buffer.from("b"), region: "top-band", psm: "block" }
+                ],
+                "name",
+                (err, extracted) => (err ? reject(err) : resolve(extracted)),
+                { cacheMethod: "none", langPath: "/fixtures", gzip: false }
+            );
+        });
+
+        assert.equal(result.cleanText, "PACIFISM");
+        assert.isTrue(createWorkerStub.calledOnce);
+        assert.include(createWorkerStub.firstCall.args[0], {
+            cacheMethod: "none",
+            langPath: "/fixtures",
+            gzip: false
+        });
+        assert.isTrue(worker.setParameters.notCalled);
+        assert.isTrue(worker.recognize.calledTwice);
+
+        await textExtraction.ShutDown();
+        assert.isTrue(worker.terminate.calledOnce);
     });
 });

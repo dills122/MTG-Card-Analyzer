@@ -2,7 +2,6 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
-import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import textExtractionModule from "../image-analysis/extract-text.mjs";
 import imageProcessorModule from "../image-processing/image-processor.mjs";
@@ -11,11 +10,8 @@ import imageHashing from "../image-hashing/hash-image.mjs";
 import { materializeFixture } from "./image-fixture.mjs";
 import { resolveCardName } from "../processor/name-resolver.mjs";
 
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const noCacheOcrOptions = Object.freeze({
-    cacheMethod: "none",
-    langPath: repositoryRoot,
-    gzip: false
+    cacheMethod: "none"
 });
 
 const silentLogger = {
@@ -364,7 +360,7 @@ async function runRegression(manifest, options = {}) {
                 applicationPersistence: "disabled",
                 imageHashCache: "disabled",
                 ocrCache: "disabled",
-                ocrLanguageSource: "bundled eng.traineddata",
+                ocrLanguageSource: "patched bundled eng.traineddata",
                 ocrWorkerLifecycle: "shared process; adaptive state reset per crop",
                 temporaryArtifacts: "deleted after each case"
             },

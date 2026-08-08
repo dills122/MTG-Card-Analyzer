@@ -12,8 +12,8 @@ The existing scan path already had strong reusable pieces:
 - `src/image-processing/ocr-preprocessing.mjs` crops three likely name regions and applies
   grayscale, normalization, scaling, thresholding, inversion, and sharpening.
 - `src/image-analysis/extract-text.mjs` runs Tesseract on those variants and selects the
-  highest-confidence OCR result. The audit also found that Tesseract v3's default cache mode
-  could race while rewriting the bundled `eng.traineddata`; OCR now opens that cache read-only.
+  highest-confidence OCR result. One bounded Tesseract worker loads the reviewed English model;
+  its obsolete `enable_new_segsearch` and `save_raw_choices` directives are disabled in place.
 - `src/fuzzy-matching/match-name.mjs` applies the production fuzzy-name thresholds.
 - `src/image-hashing/hash-image.mjs` provides the production perceptual hash and comparison
   metrics.
@@ -31,11 +31,11 @@ the same OCR, fuzzy matcher, and hash implementation while keeping the input cor
 Every regression case is evaluated with cold application state. Image hashes are recomputed for
 both the fixture and every candidate reference image; the runner has no in-memory or persistent
 hash cache. Fixture names are injected before the fuzzy matcher can initialize NeDB. Tesseract
-runs with `cacheMethod: none` and reads the repository's bundled `eng.traineddata` directly, so it
-neither reads nor writes an OCR cache. One initialized Tesseract worker is shared sequentially by
-all selected cases and terminated after the run. This avoids loading the OCR engine and language
-model for every crop. The worker's adaptive recognition state is reset before each crop. OCR
-results remain independent of earlier fixtures, and the persistent language-data cache stays off.
+runs with `cacheMethod: none` and reads the bundled `eng.traineddata`, so it neither reads nor writes
+an OCR cache. One initialized Tesseract worker is shared sequentially by all selected cases and
+terminated after the run. This avoids loading the OCR engine and language model for every crop. The
+worker's adaptive recognition state is reset before each crop. OCR results remain independent of
+earlier fixtures, and the persistent language-data cache stays off.
 Unnecessary OCR previews are disabled. Synthetic transformations use a per-case temporary
 directory only when needed, and that directory is deleted after the case. The Markdown and JSON
 benchmark reports are the only durable files written by the runner.
