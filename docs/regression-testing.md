@@ -205,15 +205,24 @@ pnpm fixtures:import \
     --set fin \
     --count 5 \
     --existing-manifest ../other-checkout/test/regression/fixtures/manifest.json
+
+# Re-run an identical selection later (debugging, or reproducing a CI failure)
+pnpm fixtures:import --set fin --set dsk --count 6 --seed 20260808 --dry-run
 ```
 
 Choose either one or more `--set` values or release-date bounds. Set values may be repeated or
-comma-separated. Results use unique printings and default to newest-first order. Add `--balanced`
-to fetch the bounded candidate pool and greedily favor underrepresented sets, color categories,
-primary card types, rarities, layouts, and treatments. Balanced selection is deterministic for the
-same Scryfall response, prefers non-basic cards, and selects at most one basic land. Its dry-run
-output lists the coverage categories for every card and summarizes the number of distinct values.
-It also prefers a new card name over another printing of a name already selected in that run.
+comma-separated. Results use unique printings ordered newest-first within each fetched result page,
+but each run lands on a random page of the full result set (wrapping back to page one if the random
+start runs off the end) and shuffles the candidate pool before selecting. This is deliberate: a wide
+`--set` list or release-date range can span thousands of prints, and always starting at page one
+would return the same newest set on every run. Pass `--seed <number>` to make the random page and
+shuffle reproducible across runs (same seed, same inputs, same selection). Add `--balanced` to fetch
+the bounded candidate pool and greedily favor underrepresented sets, color categories, primary card
+types, rarities, layouts, and treatments; it draws from the same randomized pool, so vary `--seed`
+(or omit it) to get a different balanced mix. Balanced selection prefers non-basic cards and selects
+at most one basic land. Its dry-run output lists the coverage categories for every card and
+summarizes the number of distinct values. It also prefers a new card name over another printing of a
+name already selected in that run.
 
 The target manifest's catalog is always used as the existing-card list; each repeatable
 `--existing-manifest` adds another catalog to that exclusion set. Prints match by Scryfall ID when
@@ -232,11 +241,12 @@ the review-first fixture policy. To finish an import:
 4. Run the new case by ID and inspect both benchmark reports.
 5. Adjust thresholds from repeated evidence, then run the full unit and regression gates.
 
-The importer accepts at most 100 cards per run, follows at most 20 result pages by default, spaces
-API page requests by 125 ms, and rejects oversized or non-JPEG downloads. Newest-first mode stops
-as soon as enough unused printable cards are found; balanced mode reads the bounded result pool
-before choosing. Use `--max-pages` only when a selection contains many already tracked or
-multi-face prints. Scryfall asks API clients to stay below 10 requests per second and to send
+The importer accepts at most 100 cards per run, follows at most 20 result pages by default from its
+randomly chosen start page, spaces API page requests by 125 ms, and rejects oversized or non-JPEG
+downloads. Newest-first mode stops as soon as enough unused printable cards are found; balanced mode
+reads the bounded result pool before choosing. Use `--max-pages` only when a selection contains many
+already tracked or multi-face prints, or when a small `--set` list needs a wider search window to
+wrap all the way around. Scryfall asks API clients to stay below 10 requests per second and to send
 identifying request headers; see their
 [API access guidance](https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17).
 
