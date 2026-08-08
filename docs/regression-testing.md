@@ -166,6 +166,54 @@ become available.
 
 ## Add a fixture
 
+### Import clean scans from Scryfall
+
+Use the importer to select recent card prints, download Scryfall's normal front JPEG, and append
+matching catalog and clean-scan case entries:
+
+```bash
+# Preview newest prints from several sets without writing files
+pnpm fixtures:import --set fin --set dsk --count 6 --dry-run
+
+# Import prints whose sets were released in a date range
+pnpm fixtures:import \
+    --released-after 2025-01-01 \
+    --released-before 2025-06-30 \
+    --count 10
+
+# Exclude prints tracked by another regression manifest too
+pnpm fixtures:import \
+    --set fin \
+    --count 5 \
+    --existing-manifest ../other-checkout/test/regression/fixtures/manifest.json
+```
+
+Choose either one or more `--set` values or release-date bounds. Set values may be repeated or
+comma-separated. Results use unique printings, newest first. The target manifest's catalog is
+always used as the existing-card list; each repeatable `--existing-manifest` adds another catalog
+to that exclusion set. Prints match by Scryfall ID when available and by set plus collector number,
+so older manifest entries without an ID are still excluded.
+
+The command writes images under `test-images/regression/scryfall/` and atomically updates
+`test/regression/fixtures/manifest.json`. Imported catalog and case entries are disabled to preserve
+the review-first fixture policy. To finish an import:
+
+1. Review the downloaded image and Scryfall metadata.
+2. Find the new entries with
+   `rg -n "Imported from Scryfall" test/regression/fixtures/manifest.json`.
+3. Set both the catalog and case `enabled` fields to `true`.
+4. Run the new case by ID and inspect both benchmark reports.
+5. Adjust thresholds from repeated evidence, then run the full unit and regression gates.
+
+The importer accepts at most 100 cards per run, follows at most 20 result pages by default, stops
+as soon as enough unused printable cards are found, spaces API page requests by 125 ms, and rejects
+oversized or non-JPEG downloads. Use `--max-pages` only when a selection contains many already
+tracked or multi-face prints. Scryfall asks API clients to stay below 10 requests per second and to
+send identifying request headers; see their
+[API access guidance](https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17).
+
+### Add a captured image manually
+
 1. Put the original image in the root-level `test-images/` directory.
 2. Find the matching disabled catalog and case entries by searching for `CHANGE_ME`:
 

@@ -210,6 +210,24 @@ Fixture labels, expected card data, and offline print references live in
 quality labels, and fixture workflow. Newly scaffolded images stay disabled until their
 `CHANGE_ME` values are labeled and both manifest entries are enabled.
 
+Import new clean-scan candidates from Scryfall by set code or release-date range:
+
+```bash
+# Preview six unused prints from two sets
+pnpm fixtures:import --set fin --set dsk --count 6 --dry-run
+
+# Download ten unused prints and append disabled review entries
+pnpm fixtures:import \
+    --released-after 2025-01-01 \
+    --released-before 2025-06-30 \
+    --count 10
+```
+
+The target manifest is automatically used to exclude existing printings. Add repeatable
+`--existing-manifest <path>` options to exclude catalogs from other checkouts or suites. See the
+[regression fixture import workflow](docs/regression-testing.md#import-clean-scans-from-scryfall)
+for review, activation, and safety details.
+
 ### Quality Commands
 
 ```bash
