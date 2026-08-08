@@ -146,18 +146,15 @@ class MatcherProcessor {
         this.logger.info(
             `Comparing ${this.cards.length} printings for "${this.name}" using ${this.hashMode || "full-card"} hashes`
         );
-        const shouldQueryCache = true;
-        const dbPromise = shouldQueryCache
-            ? processHashes
-                  .compareDbHashes()
-                  .then((results) => this._processHashResults(results))
-                  .catch(() => {
-                      this.logger.error(
-                          `DB hash lookup failed for ${this.name}; continuing with remote-only results`
-                      );
-                      return [];
-                  })
-            : Promise.resolve([]);
+        const dbPromise = processHashes
+            .compareDbHashes()
+            .then((results) => this._processHashResults(results))
+            .catch(() => {
+                this.logger.error(
+                    `DB hash lookup failed for ${this.name}; continuing with remote-only results`
+                );
+                return [];
+            });
         const remotePromise = processHashes
             .compareRemoteImages()
             .then((results) => this._processHashResults(results));

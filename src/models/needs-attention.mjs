@@ -1,6 +1,9 @@
 import Joi from "joi";
 import storage from "../storage/index.mjs";
 import { pick } from "../util.mjs";
+import log from "../logger/log.mjs";
+
+const logger = log.create({ isPretty: true });
 
 const schema = Joi.object().keys({
     cardName: Joi.string().min(3).max(50).optional(),
@@ -21,9 +24,16 @@ function create(params) {
     const validated = Joi.attempt(params, schema);
     return {
         ...validated,
-        insert() {
+        async insert() {
             const object = pick(this, Object.keys(schema.describe().keys));
-            return dependencies.insert(object);
+            try {
+                return await dependencies.insert(object);
+            } catch (err) {
+                logger.error(
+                    `Needs-attention write failed for "${object.cardName || "unknown"}": ${err?.message || String(err)}`
+                );
+                throw err;
+            }
         }
     };
 }

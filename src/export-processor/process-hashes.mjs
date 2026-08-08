@@ -97,9 +97,7 @@ class ProcessHashes {
             if (this.ignoreNoDbMatch) {
                 return [];
             }
-            throw {
-                error: "No Matches Found"
-            };
+            throw new Error("No Matches Found");
         }
         return matches;
     }

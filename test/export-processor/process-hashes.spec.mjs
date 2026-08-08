@@ -115,9 +115,8 @@ describe("Integration::", () => {
                 caughtError = err;
             }
             assert.isTrue(stubs.getHashesStub.calledOnce);
-            assert.deepEqual(caughtError, {
-                error: "No Matches Found"
-            });
+            assert.instanceOf(caughtError, Error);
+            assert.equal(caughtError.message, "No Matches Found");
         });
 
         it("Should fail to validate schema", () => {
