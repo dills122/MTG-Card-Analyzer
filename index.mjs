@@ -301,6 +301,20 @@ function applyConfigOverrides(flags, logger) {
     }
 }
 
+// Wraps a run* handler with the "resolve config or bail with exit code 1" preamble every
+// config-driven subcommand needs. Not used by runMigrate: its --to validation has to run
+// before config resolution (and the process.env side effects that come with it), so it keeps
+// the check inline instead.
+function withConfig(handler) {
+    return async (flags, logger, ...rest) => {
+        const config = applyConfigOverrides(flags, logger);
+        if (!config) {
+            return 1;
+        }
+        return handler(config, flags, logger, ...rest);
+    };
+}
+
 function formatOperationsTable(entries) {
     if (!entries.length) {
         return "No operations logged yet.";
@@ -328,11 +342,7 @@ function formatOperationsTable(entries) {
     return [line(header), ...rows.map(line)].join("\n");
 }
 
-async function runLogDump(flags, logger) {
-    const config = applyConfigOverrides(flags, logger);
-    if (!config) {
-        return 1;
-    }
+const runLogDump = withConfig(async (config, flags, logger) => {
     const entries =
         (await storage.log.dump({ limit: Number(flags.limit) || 50, since: flags.since })) || [];
     if (flags.format === "json") {
@@ -341,17 +351,13 @@ async function runLogDump(flags, logger) {
         logger.log(formatOperationsTable(entries));
     }
     return 0;
-}
+});
 
-async function runLogStats(flags, logger) {
-    const config = applyConfigOverrides(flags, logger);
-    if (!config) {
-        return 1;
-    }
+const runLogStats = withConfig(async (config, flags, logger) => {
     const stats = await storage.log.stats();
     logger.log(JSON.stringify(stats, null, 2));
     return 0;
-}
+});
 
 async function runMigrate(flags, logger, migrateFn) {
     if (flags.to !== "rds") {
@@ -379,11 +385,7 @@ async function runMigrate(flags, logger, migrateFn) {
     }
 }
 
-async function runCollectionUpdate(flags, logger) {
-    const config = applyConfigOverrides(flags, logger);
-    if (!config) {
-        return 1;
-    }
+const runCollectionUpdate = withConfig(async (config, flags, logger) => {
     const quantity = Number(flags.quantity);
     if (!Number.isFinite(quantity) || quantity < 0) {
         logger.log(`--quantity must be a non-negative number, got "${flags.quantity}"`);
@@ -397,13 +399,9 @@ async function runCollectionUpdate(flags, logger) {
         logger.log(updateErr?.message || String(updateErr));
         return 1;
     }
-}
+});
 
-async function runCollectionRemove(flags, logger) {
-    const config = applyConfigOverrides(flags, logger);
-    if (!config) {
-        return 1;
-    }
+const runCollectionRemove = withConfig(async (config, flags, logger) => {
     try {
         const removed = await storage.collection.remove(flags.cardName, flags.cardSet);
         if (!removed) {
@@ -416,13 +414,9 @@ async function runCollectionRemove(flags, logger) {
         logger.log(removeErr?.message || String(removeErr));
         return 1;
     }
-}
+});
 
-async function runDiagnostics(flags, logger, diagnosticsFn) {
-    const config = applyConfigOverrides(flags, logger);
-    if (!config) {
-        return 1;
-    }
+const runDiagnostics = withConfig(async (config, flags, logger, diagnosticsFn) => {
     try {
         const bundle = await diagnosticsFn({
             limit: Number(flags.limit) || 20,
@@ -434,7 +428,7 @@ async function runDiagnostics(flags, logger, diagnosticsFn) {
         logger.log(err?.message || String(err));
         return 1;
     }
-}
+});
 
 function runConfigList(flags, logger) {
     const { config, sources } = getConfigWithSources({ configPath: flags.config });
