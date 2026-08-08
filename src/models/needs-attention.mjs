@@ -13,23 +13,21 @@ const schema = Joi.object().keys({
     possibleSets: Joi.string().min(3).required()
 });
 
-class NeedsAttention {
-    constructor(params) {
-        const validatedSchema = Joi.attempt(params, schema);
-        Object.assign(this, validatedSchema);
-    }
+const dependencies = {
+    insert: (record) => storage.needsAttention.insert(record)
+};
 
-    insert() {
-        const object = pick(this, Object.keys(schema.describe().keys));
-        return storage.needsAttention.insert(object);
-    }
+function create(params) {
+    const validated = Joi.attempt(params, schema);
+    return {
+        ...validated,
+        insert() {
+            const object = pick(this, Object.keys(schema.describe().keys));
+            return dependencies.insert(object);
+        }
+    };
 }
 
-const create = (params) => new NeedsAttention(params);
+export { create, dependencies };
 
-export { create, NeedsAttention };
-
-export default {
-    create,
-    prototype: NeedsAttention.prototype
-};
+export default { create, dependencies };
