@@ -1,3 +1,5 @@
+<!-- markdownlint-disable-file MD013 MD043 -->
+
 # Regression fixture expansion experiment — August 2026
 
 This experiment expands clean-scan end-to-end coverage in batches of five. Each batch is imported

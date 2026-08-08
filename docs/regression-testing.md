@@ -26,17 +26,21 @@ also depends on a separately seeded NeDB database. The regression runner therefo
 names from the fixture catalog and compares against local reference images. This exercises
 the same OCR, fuzzy matcher, and hash implementation while keeping the input corpus fixed.
 
+<!-- markdownlint-disable MD013 -->
+
 Every regression case is evaluated with cold application state. Image hashes are recomputed for
 both the fixture and every candidate reference image; the runner has no in-memory or persistent
 hash cache. Fixture names are injected before the fuzzy matcher can initialize NeDB. Tesseract
 runs with `cacheMethod: none` and reads the repository's bundled `eng.traineddata` directly, so it
 neither reads nor writes an OCR cache. One initialized Tesseract worker is shared sequentially by
 all selected cases and terminated after the run. This avoids loading the OCR engine and language
-model for every crop. The worker's adaptive recognition state is reset before each crop, so OCR
-results do not depend on earlier fixtures, and the persistent language-data cache remains off.
+model for every crop. The worker's adaptive recognition state is reset before each crop. OCR
+results remain independent of earlier fixtures, and the persistent language-data cache stays off.
 Unnecessary OCR previews are disabled. Synthetic transformations use a per-case temporary
 directory only when needed, and that directory is deleted after the case. The Markdown and JSON
 benchmark reports are the only durable files written by the runner.
+
+<!-- markdownlint-enable MD013 -->
 
 Images below 360 by 500 pixels are rejected by current production preprocessing. Keep
 low-resolution fixtures above that hard boundary unless the expected result is the validation
