@@ -2,7 +2,14 @@ import { assert } from "chai";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getConfig, DEFAULTS } from "../../src/config/index.mjs";
+import {
+    getConfig,
+    getConfigWithSources,
+    resolveConfigWriteTarget,
+    writeConfigValue,
+    DEFAULTS,
+    SETTABLE_KEYS
+} from "../../src/config/index.mjs";
 
 describe("config::index", () => {
     const envKeys = [
@@ -12,7 +19,9 @@ describe("config::index", () => {
         "MTG_CONFIG_PATH",
         "LOCAL_CACHE_ENABLED",
         "COLLECTION_ENABLED",
-        "DEBUG_LOGGING"
+        "DEBUG_LOGGING",
+        "QUERYING_ENABLED",
+        "PRETTY_LOGGING"
     ];
     let savedEnv;
     let tmpDir;
@@ -40,7 +49,7 @@ describe("config::index", () => {
     it("returns defaults when nothing else is set", () => {
         const config = getConfig();
         assert.equal(config.storageAdapter, DEFAULTS.storageAdapter);
-        assert.equal(config.pretty, DEFAULTS.pretty);
+        assert.equal(config.prettyLogging, DEFAULTS.prettyLogging);
         assert.equal(config.configPath, "");
         assert.equal(config.collectionEnabled, false, "opt-in module, off by default");
         assert.equal(config.debugLogging, false, "opt-in, off by default");
@@ -113,5 +122,206 @@ describe("config::index", () => {
         const missingFile = path.join(tmpDir, "does-not-exist.json");
         const config = getConfig({ configPath: missingFile });
         assert.equal(config.storageAdapter, DEFAULTS.storageAdapter);
+    });
+
+    it("debugLogging defaults to false", () => {
+        const config = getConfig();
+        assert.equal(config.debugLogging, DEFAULTS.debugLogging);
+        assert.equal(config.debugLogging, false);
+    });
+
+    it("debugLogging can be turned on via config file", () => {
+        const configFile = path.join(tmpDir, "mtg.config.json");
+        fs.writeFileSync(configFile, JSON.stringify({ debugLogging: true }));
+        const config = getConfig({ configPath: configFile });
+        assert.equal(config.debugLogging, true);
+    });
+
+    it("DEBUG_LOGGING env var overrides the config file", () => {
+        process.env.DEBUG_LOGGING = "true";
+        const configFile = path.join(tmpDir, "mtg.config.json");
+        fs.writeFileSync(configFile, JSON.stringify({ debugLogging: false }));
+        const config = getConfig({ configPath: configFile });
+        assert.equal(config.debugLogging, true);
+    });
+
+    it("DEBUG_LOGGING=false env var is honored, not treated as unset", () => {
+        process.env.DEBUG_LOGGING = "false";
+        const config = getConfig({ debugLogging: undefined });
+        assert.equal(config.debugLogging, false);
+    });
+
+    it("an explicit debugLogging override (CLI) wins over the env var", () => {
+        process.env.DEBUG_LOGGING = "true";
+        const config = getConfig({ debugLogging: false });
+        assert.equal(config.debugLogging, false, "explicit override should win over env var");
+    });
+
+    it("queryingEnabled defaults to false, prettyLogging defaults to true", () => {
+        const config = getConfig();
+        assert.equal(config.queryingEnabled, DEFAULTS.queryingEnabled);
+        assert.equal(config.queryingEnabled, false);
+        assert.equal(config.prettyLogging, DEFAULTS.prettyLogging);
+        assert.equal(config.prettyLogging, true);
+    });
+
+    it("queryingEnabled/prettyLogging can be set via the config file", () => {
+        const configFile = path.join(tmpDir, "mtg.config.json");
+        fs.writeFileSync(
+            configFile,
+            JSON.stringify({ queryingEnabled: true, prettyLogging: false })
+        );
+        const config = getConfig({ configPath: configFile });
+        assert.equal(config.queryingEnabled, true);
+        assert.equal(config.prettyLogging, false);
+    });
+
+    it("QUERYING_ENABLED/PRETTY_LOGGING env vars override the config file", () => {
+        process.env.QUERYING_ENABLED = "true";
+        process.env.PRETTY_LOGGING = "false";
+        const configFile = path.join(tmpDir, "mtg.config.json");
+        fs.writeFileSync(
+            configFile,
+            JSON.stringify({ queryingEnabled: false, prettyLogging: true })
+        );
+        const config = getConfig({ configPath: configFile });
+        assert.equal(config.queryingEnabled, true);
+        assert.equal(config.prettyLogging, false);
+    });
+
+    it("explicit queryingEnabled/prettyLogging overrides (CLI, tri-state) win over the env var", () => {
+        process.env.QUERYING_ENABLED = "true";
+        process.env.PRETTY_LOGGING = "true";
+        const config = getConfig({ queryingEnabled: false, prettyLogging: false });
+        assert.equal(config.queryingEnabled, false);
+        assert.equal(config.prettyLogging, false);
+    });
+
+    it("an undefined queryingEnabled/prettyLogging override (flag not passed) does not clobber config", () => {
+        const configFile = path.join(tmpDir, "mtg.config.json");
+        fs.writeFileSync(configFile, JSON.stringify({ queryingEnabled: true }));
+        const config = getConfig({
+            configPath: configFile,
+            queryingEnabled: undefined,
+            prettyLogging: undefined
+        });
+        assert.equal(config.queryingEnabled, true);
+        assert.equal(config.prettyLogging, DEFAULTS.prettyLogging);
+    });
+
+    describe("getConfigWithSources (`config list`)", () => {
+        it("labels every unset key as default", () => {
+            const { config, sources } = getConfigWithSources();
+            assert.equal(config.storageAdapter, DEFAULTS.storageAdapter);
+            Object.keys(DEFAULTS).forEach((key) => {
+                assert.equal(sources[key], "default", `expected ${key} to be sourced default`);
+            });
+        });
+
+        it("labels a config-file value as file, an env value as env, an override as cli", () => {
+            process.env.DEBUG_LOGGING = "true";
+            const configFile = path.join(tmpDir, "mtg.config.json");
+            fs.writeFileSync(configFile, JSON.stringify({ storageAdapter: "rds" }));
+
+            const { sources } = getConfigWithSources({
+                configPath: configFile,
+                queryingEnabled: true
+            });
+
+            assert.equal(sources.storageAdapter, "file");
+            assert.equal(sources.debugLogging, "env");
+            assert.equal(sources.queryingEnabled, "cli");
+            assert.equal(sources.prettyLogging, "default");
+        });
+    });
+
+    describe("resolveConfigWriteTarget (`config set` target file)", () => {
+        it("uses the explicit path when given", () => {
+            const target = resolveConfigWriteTarget("/explicit/path.json");
+            assert.equal(target, "/explicit/path.json");
+        });
+
+        it("reuses an already-existing resolved config file when no explicit path is given", () => {
+            const configFile = path.join(tmpDir, "mtg.config.json");
+            fs.writeFileSync(configFile, "{}");
+            process.env.MTG_CONFIG_PATH = configFile;
+
+            const target = resolveConfigWriteTarget();
+
+            assert.equal(target, configFile);
+        });
+
+        it("falls back to MTG_CONFIG_PATH when nothing exists there yet", () => {
+            const missingFile = path.join(tmpDir, "does-not-exist-yet.json");
+            process.env.MTG_CONFIG_PATH = missingFile;
+
+            const target = resolveConfigWriteTarget();
+
+            assert.equal(target, missingFile);
+        });
+    });
+
+    describe("writeConfigValue (`config set`)", () => {
+        it("creates the file with the single key when nothing exists yet", () => {
+            const configFile = path.join(tmpDir, "mtg.config.json");
+            const result = writeConfigValue(configFile, "storageAdapter", "rds");
+
+            assert.deepEqual(result, { key: "storageAdapter", value: "rds", filePath: configFile });
+            assert.deepEqual(JSON.parse(fs.readFileSync(configFile, "utf8")), {
+                storageAdapter: "rds"
+            });
+        });
+
+        it("merges into an existing file, preserving other keys", () => {
+            const configFile = path.join(tmpDir, "mtg.config.json");
+            fs.writeFileSync(configFile, JSON.stringify({ storageAdapter: "rds" }));
+
+            writeConfigValue(configFile, "debugLogging", "true");
+
+            assert.deepEqual(JSON.parse(fs.readFileSync(configFile, "utf8")), {
+                storageAdapter: "rds",
+                debugLogging: true
+            });
+        });
+
+        it("coerces boolean keys strictly (true/false only)", () => {
+            const configFile = path.join(tmpDir, "mtg.config.json");
+            writeConfigValue(configFile, "queryingEnabled", "true");
+            assert.deepEqual(JSON.parse(fs.readFileSync(configFile, "utf8")), {
+                queryingEnabled: true
+            });
+
+            assert.throws(
+                () => writeConfigValue(configFile, "queryingEnabled", "yes"),
+                /expects true or false/
+            );
+        });
+
+        it("rejects an unknown storageAdapter without writing", () => {
+            const configFile = path.join(tmpDir, "mtg.config.json");
+            assert.throws(
+                () => writeConfigValue(configFile, "storageAdapter", "mongo"),
+                /must be one of: nedb, rds/
+            );
+            assert.isFalse(fs.existsSync(configFile));
+        });
+
+        it("rejects an unknown config key", () => {
+            const configFile = path.join(tmpDir, "mtg.config.json");
+            assert.throws(
+                () => writeConfigValue(configFile, "bogusKey", "x"),
+                /Unknown config key "bogusKey"/
+            );
+        });
+
+        it("does not allow setting configPath -- it's resolution metadata, not a real setting", () => {
+            assert.isFalse("configPath" in SETTABLE_KEYS);
+        });
+
+        it("creates parent directories that don't exist yet", () => {
+            const nestedPath = path.join(tmpDir, "nested", "dir", "mtg.config.json");
+            writeConfigValue(nestedPath, "storageAdapter", "nedb");
+            assert.isTrue(fs.existsSync(nestedPath));
+        });
     });
 });

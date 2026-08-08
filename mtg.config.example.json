@@ -3,5 +3,8 @@
     "cardNamesDbPath": "",
     "cardHashDbPath": "",
     "localCacheEnabled": true,
-    "collectionEnabled": false
+    "collectionEnabled": false,
+    "queryingEnabled": false,
+    "prettyLogging": true,
+    "debugLogging": false
 }

@@ -86,13 +86,14 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
 
 - `scan <filePath>` : scan a single image and output results
     - flags:
-        - `--query` or `-q`: persist results (write to the collection / needs-attention tables; default `false`, dry-run otherwise). Requires `--enable-collection` too -- `--query` alone is not enough.
-        - `--enable-collection`: turn on the opt-in collection/needs-attention tracking module for this run (default `false`). Not everyone scanning cards wants an inventory kept; without this, `--query` still runs the full pipeline and prints matches but persists nothing.
-        - `--pretty` or `-p`: pretty logging (default `true`).
+        - `--query`/`-q` or `--no-query`: persist results for this run (write to the collection / needs-attention tables) or force a dry-run, overriding config. Default `false` (dry-run) unless set via `queryingEnabled` in the config file or `QUERYING_ENABLED` env var. Requires `--enable-collection` too -- `--query` alone is not enough.
+        - `--enable-collection`: turn on the opt-in collection/needs-attention tracking module for this run (default `false`, config key `collectionEnabled` / env var `COLLECTION_ENABLED`). Not everyone scanning cards wants an inventory kept; without this, `--query` still runs the full pipeline and prints matches but persists nothing.
+        - `--pretty`/`-p` or `--no-pretty`: pretty (or plain) logging for this run, overriding config. Default `true` unless set via `prettyLogging` in the config file or `PRETTY_LOGGING` env var.
         - `--storage-adapter <nedb|rds>`: which persistence backend this run's collection/needs-attention writes go to.
         - `--card-names-db <path>`: path (dir or `.db` file) for the local card names cache.
         - `--card-hash-db <path>`: path (dir or `.db` file) for the local card hash cache.
         - `--no-local-cache`: disable the local cache (hash cache + ops log; the names dictionary is unaffected, see [Persistence Architecture](#persistence-architecture)).
+        - `--debug`: capture fuller detail (set verification links, etc) in this run's ops log entry -- see [`diagnostics`](#diagnostics--debug-logging). Off by default; turn it on for good via `debugLogging` in the config file or `DEBUG_LOGGING=true` instead of passing this every time.
         - `--config <path>`: path to a JSON config file (see [Configuration](#configuration)).
 - `log dump` : print recent entries from the local operations log
     - flags: `--limit <n>` (default 50), `--since <ISO date>`, `--format <table|json>` (default `table`), `--config <path>`
@@ -104,6 +105,14 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
     - flags: `--quantity <n>` (required), `--storage-adapter <nedb|rds>`, `--config <path>`
 - `collection remove <cardName> <cardSet>` : delete a collection entry outright. Permanent, no confirmation prompt.
     - flags: `--storage-adapter <nedb|rds>`, `--config <path>`
+- `diagnostics` : print a single JSON bundle for troubleshooting or filing a bug report -- app/Node/platform versions, an environment health check (same as `verify-env.mjs`), the active (sanitized) config, and recent operations-log entries. Nothing sensitive: MySQL credentials live only in `secure.config.cjs`, which this never reads. Exits non-zero if a required environment check fails.
+    - flags: `--limit <n>` (recent ops-log entries to include, default `20`), `--with-mysql` (also check the MySQL connection), `--config <path>`
+- `config list` : print every known setting -- resolved value and where it came from (`cli`/`env`/`file`/`default`).
+    - flags: `--config <path>`
+- `config get <key>` : print one setting's resolved value.
+    - flags: `--config <path>`
+- `config set <key> <value>` : validate and persist a setting into the config file (creating it if needed, merging into whatever's already there). See [Configuration](#configuration) for the list of settable keys.
+    - flags: `--config <path>` (which file to write to; defaults to whichever file is already active, or a new `./mtg.config.json`)
 
 ### Persistence Architecture
 
@@ -149,18 +158,56 @@ node index.mjs log stats
 
 This is what issue #49 ("Transaction") became — the old model was a half-defined mix of a generic audit log and art/flavor-match-confidence tracking that never got finished; the art/flavor fields belong to #50 instead.
 
+### Diagnostics / Debug Logging
+
+Every scan-time setting -- not just diagnostics -- follows the same rule: set it once in the config file (or an env var) if you want it on for good, and only reach for the CLI flag when you want to override that for a single run. That applies just as much to `--query`/`--pretty` as it does to `--debug` -- you shouldn't need a pile of flags on every invocation just to get your normal setup:
+
+| Setting                      | Config file key   | Env var            | Per-run CLI override                                            | Default |
+| ---------------------------- | ----------------- | ------------------ | --------------------------------------------------------------- | ------- |
+| Persist results (vs dry-run) | `queryingEnabled` | `QUERYING_ENABLED` | `--query`/`-q` (force on), `--no-query` (force off)             | `false` |
+| Pretty logging               | `prettyLogging`   | `PRETTY_LOGGING`   | `--pretty`/`-p` (force on), `--no-pretty` (force off)           | `true`  |
+| Verbose ops-log detail       | `debugLogging`    | `DEBUG_LOGGING`    | `--debug` (force on; no off-switch needed, it's off by default) | `false` |
+
+`--query`/`--pretty` are tri-state on the CLI: omit the flag entirely and the config file/env var/default decides; pass `--query`/`--no-query` (or `--pretty`/`--no-pretty`) to explicitly force that run one way regardless of what the config says.
+
+`node index.mjs diagnostics` bundles an environment health check, versions, the active config (including all of the above), and recent ops-log entries into one JSON blob -- meant to be run and pasted straight into a bug report. `--limit <n>` controls how many recent operations to include (default `20`); `--with-mysql` also checks the MySQL connection.
+
+```bash
+# Turn debug logging (and always-persist) on for good (mtg.config.json)
+{ "debugLogging": true, "queryingEnabled": true }
+
+# ...or override for just one dry-run scan, even though config says always-persist
+node index.mjs ./card.jpg --no-query --debug
+
+# Grab a support bundle
+node index.mjs diagnostics --with-mysql
+```
+
 ### Configuration
 
 All runtime settings resolve through a single config module ([src/config/index.mjs](src/config/index.mjs)). Precedence, highest wins:
 
-1. CLI flags (e.g. `--storage-adapter`, `--card-names-db`, `--card-hash-db`, `--no-local-cache`, `--enable-collection`)
-2. Env vars (`STORAGE_ADAPTER`, `CARD_NAMES_DB_PATH`, `CARD_HASH_DB_PATH`, `LOCAL_CACHE_ENABLED`, `COLLECTION_ENABLED`)
-3. Config file (JSON)
+1. CLI flags (e.g. `--storage-adapter`, `--card-names-db`, `--card-hash-db`, `--no-local-cache`, `--enable-collection`, `--debug`, `--query`/`--no-query`, `--pretty`/`--no-pretty`) -- meant as temporary, per-run overrides, not how you'd normally run the tool day to day
+2. Env vars (`STORAGE_ADAPTER`, `CARD_NAMES_DB_PATH`, `CARD_HASH_DB_PATH`, `LOCAL_CACHE_ENABLED`, `COLLECTION_ENABLED`, `DEBUG_LOGGING`, `QUERYING_ENABLED`, `PRETTY_LOGGING`)
+3. Config file (JSON) -- the recommended place to set anything you want on every run
 4. Built-in defaults
 
-Config file is picked up from, in order: an explicit `--config <path>`, then `MTG_CONFIG_PATH` env var, then `./mtg.config.json` (cwd), then `~/.mtg-card-analyzer/config.json`. See [mtg.config.example.json](mtg.config.example.json) for the shape — copy it to `mtg.config.json` and edit.
+Config file is picked up from, in order: an explicit `--config <path>`, then `MTG_CONFIG_PATH` env var, then `./mtg.config.json` (cwd, gitignored -- machine-specific), then `~/.mtg-card-analyzer/config.json` (global fallback across projects). See [mtg.config.example.json](mtg.config.example.json) for the shape.
 
-Note: MySQL/RDS credentials (host/port/user/password/database) are separate, in `secure.config.cjs` at repo root (loaded by [src/rds/connection.mjs](src/rds/connection.mjs)) — kept out of the general config file/repo since they're secrets, not app settings. `port` is optional, defaults to MySQL's standard port.
+Two ways to change it:
+
+- **By hand**: copy `mtg.config.example.json` to `mtg.config.json` (done automatically by `scripts/setup.mjs`) and edit the JSON directly.
+- **Via the CLI** (validated before writing): `node index.mjs config set <key> <value>`. Rejects unknown keys and invalid values (e.g. a bad `storageAdapter`, or anything but `true`/`false` for a boolean key) without touching the file. `node index.mjs config get <key>` prints one resolved value; `node index.mjs config list` prints all of them along with where each one came from (`cli`/`env`/`file`/`default`) -- handy for confirming an env var or CLI flag is actually the thing winning.
+
+Settable keys: `storageAdapter` (`nedb`\|`rds`), `cardNamesDbPath`, `cardHashDbPath`, `localCacheEnabled`, `collectionEnabled`, `debugLogging`, `queryingEnabled`, `prettyLogging`.
+
+```bash
+node index.mjs config set storageAdapter rds
+node index.mjs config get storageAdapter
+node index.mjs config list
+```
+
+Note: MySQL/RDS credentials (host/port/user/password/database) are separate, in `secure.config.cjs` at repo root (loaded by [src/rds/connection.mjs](src/rds/connection.mjs)) — kept out of the general config file/repo since they're secrets, not app settings, and `config set` never touches this file. `port` is optional, defaults to MySQL's standard port.
 
 Test images are provided at `test-images`
 
@@ -168,7 +215,7 @@ Backfiller utility instructions found [here](https://github.com/dills122/MTG-Car
 
 ### Troubleshooting
 
-Run `node scripts/verify-env.mjs` first — it checks Node version, required files, local cache writability/seeding, and (with `--with-mysql`) the MySQL connection, in one shot. Full troubleshooting guide: [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md#troubleshooting).
+Run `node scripts/verify-env.mjs` first — it checks Node version, required files, local cache writability/seeding, and (with `--with-mysql`) the MySQL connection, in one shot. Filing an issue instead? `node index.mjs diagnostics` runs the same checks and adds versions, active config, and recent scan history in one pasteable JSON blob (see [Diagnostics / Debug Logging](#diagnostics--debug-logging)). Full troubleshooting guide: [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md#troubleshooting).
 
 ### Running Tests
 
