@@ -1,5 +1,11 @@
-import base64Img from "image-to-base64";
+import { readFile } from "node:fs/promises";
 import log from "../logger/log.mjs";
+
+// Native fs.readFile + Buffer in place of image-to-base64.
+async function base64Img(imagePath) {
+    const buffer = await readFile(imagePath);
+    return buffer.toString("base64");
+}
 
 export const dependencies = {
     base64Img

@@ -1,5 +1,6 @@
 import _ from "lodash";
-import { callbackify, inspect } from "node:util";
+import { inspect } from "node:util";
+import { readFile } from "node:fs/promises";
 import joi from "joi";
 import logger from "../logger/log.mjs";
 import imageProcessing from "../image-processing/index.mjs";
@@ -10,8 +11,13 @@ import NeedsAttention from "../models/needs-attention.mjs";
 import Collection from "../models/card-collection.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
 import storage from "../storage/index.mjs";
-import imageToBase64 from "image-to-base64";
 import { resolveCardName } from "./name-resolver.mjs";
+
+// Native fs.readFile + Buffer in place of image-to-base64.
+async function base64EncodeImage(imagePath) {
+    const buffer = await readFile(imagePath);
+    return buffer.toString("base64");
+}
 
 const dependencies = {
     ImageProcessor: imageProcessing.ImageProcessor,
@@ -21,7 +27,7 @@ const dependencies = {
     NeedsAttention,
     Collection,
     GetAdditionalCardInfo: scryfallApi.Search,
-    Base64: callbackify(imageToBase64)
+    Base64: base64EncodeImage
 };
 
 const schema = joi.object().keys({
@@ -270,14 +276,7 @@ class ProcessorClass {
 
     async CreateNeedsAttentionRecordAsync(record) {
         this.logger.info("Creating Needs Attention Record");
-        const name64Image = await new Promise((resolve, reject) => {
-            dependencies.Base64(this.nameExtractionImagePath, (err, encodedImage) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve(encodedImage);
-            });
-        });
+        const name64Image = await dependencies.Base64(this.nameExtractionImagePath);
         const needsAttenionModel = dependencies.NeedsAttention.create({
             cardName: record.name,
             extractedText: this.nameExtractionResults.cleanText,

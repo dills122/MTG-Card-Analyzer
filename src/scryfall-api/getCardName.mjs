@@ -1,9 +1,15 @@
-import request from "request-promise-native";
 import log from "../logger/log.mjs";
 
 const logger = log.create({
     isPretty: true
 });
+
+// Native fetch (Node >=20) in place of request-promise-native -- see searchName.mjs for the
+// same pattern.
+async function request({ uri, headers }) {
+    const response = await fetch(uri, { headers });
+    return response.text();
+}
 
 const dependencies = {
     request

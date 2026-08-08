@@ -175,9 +175,7 @@ describe("Integration::", () => {
                         "https://www.cardhoarder.com/cards/72963?affiliate_id=scryfall\u0026ref=card-profile\u0026utm_campaign=affiliate\u0026utm_medium=card\u0026utm_source=scryfall"
                 }
             }); //Need to mock out the desired card
-        stubs.Base64Stub = sandbox
-            .stub(Processor.dependencies, "Base64")
-            .callsArgWith(1, null, NAME_BASE_64);
+        stubs.Base64Stub = sandbox.stub(Processor.dependencies, "Base64").resolves(NAME_BASE_64);
     });
 
     afterEach(() => {
