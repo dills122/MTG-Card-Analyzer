@@ -13,7 +13,7 @@ const dependencies = {
     Hash: promisify(imageHashing.Hash.hashImage),
     createDirectory: FileIO.createDirectory,
     cleanUpFiles: FileIO.cleanUpFiles,
-    GetSetSymbolSnippetTmpFile: imageProcessing.resize.getImageSnippetTmpFile
+    GetSetSymbolSnippetTmpFile: imageProcessing.smartCrop.writeSetSymbolSnippet
 };
 
 const schema = joi.object().keys({
@@ -106,8 +106,7 @@ class MatcherProcessor {
         try {
             const setSymbolPath = await dependencies.GetSetSymbolSnippetTmpFile(
                 this.filePath,
-                directory,
-                "set-symbol"
+                directory
             );
             this.setSymbolImagePath = setSymbolPath;
             const hash = await dependencies.Hash(setSymbolPath);
