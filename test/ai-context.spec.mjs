@@ -6,10 +6,18 @@ import path from "node:path";
 import {
     ensureSymlink,
     evaluatePin,
+    getAiCentralSelection,
     resolveAiCentralLayout
 } from "../scripts/setup-ai-context.mjs";
 
 describe("AI Central setup", () => {
+    it("selects the repository's OpenTofu steering and skill bundle", () => {
+        expect(getAiCentralSelection()).to.deep.equal({
+            profiles: ["base", "javascript-typescript", "infrastructure-opentofu"],
+            bundles: ["core", "brevity", "engineering", "planning", "infra", "workflow"]
+        });
+    });
+
     it("accepts either the AI Central root or templates directory", () => {
         expect(resolveAiCentralLayout("/tmp/example/ai-central", "/tmp/project")).to.deep.equal({
             aiCentralRoot: "/tmp/example/ai-central",

@@ -1,0 +1,8 @@
+cloudflare_account_id = "00000000000000000000000000000000"
+
+d1_database_name = "mtg-card-analyzer-submissions"
+r2_bucket_name   = "mtg-card-analyzer-submissions"
+
+# Set location hints only after choosing the data locality intentionally.
+# d1_primary_location_hint = "enam"
+# r2_location              = "enam"

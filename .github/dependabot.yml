@@ -13,3 +13,14 @@ updates:
       ignore:
           # need to handle this upgrade on its own
           - dependency-name: "tesseract.js"
+    - package-ecosystem: "terraform"
+      directory: "/infra/cloudflare"
+      schedule:
+          interval: "weekly"
+          day: "wednesday"
+          time: "05:30"
+          timezone: "Etc/UTC"
+      open-pull-requests-limit: 2
+      labels:
+          - "dependencies"
+          - "infrastructure"

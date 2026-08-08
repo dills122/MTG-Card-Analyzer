@@ -1,0 +1,5 @@
+bucket = "replace-with-private-r2-state-bucket"
+key    = "mtg-card-analyzer/portal/opentofu.tfstate"
+endpoints = {
+  s3 = "https://replace-with-account-id.r2.cloudflarestorage.com"
+}

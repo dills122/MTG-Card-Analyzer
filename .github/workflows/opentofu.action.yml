@@ -1,0 +1,72 @@
+name: OpenTofu Static Validation
+
+on:
+    pull_request:
+        paths:
+            - ".github/workflows/opentofu.action.yml"
+            - ".github/dependabot.yml"
+            - ".gitignore"
+            - ".codex/steering/infrastructure-opentofu-steering.md"
+            - "infra/cloudflare/**"
+            - "package.json"
+    push:
+        branches:
+            - master
+            - main
+        paths:
+            - ".github/workflows/opentofu.action.yml"
+            - ".github/dependabot.yml"
+            - ".gitignore"
+            - ".codex/steering/infrastructure-opentofu-steering.md"
+            - "infra/cloudflare/**"
+            - "package.json"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: opentofu-static-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    validate:
+        name: OpenTofu Static Validation
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        env:
+            TF_IN_AUTOMATION: "1"
+            TF_INPUT: "0"
+            TF_VAR_cloudflare_account_id: "00000000000000000000000000000000"
+            TF_VAR_state_encryption_passphrase: "offline-validation-only-not-for-state"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+              with:
+                  persist-credentials: false
+
+            - name: Setup pinned OpenTofu
+              uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2
+              with:
+                  tofu_version_file: infra/cloudflare/.opentofu-version
+                  tofu_wrapper: false
+
+            - name: Check OpenTofu formatting
+              run: tofu fmt -check -recursive infra/cloudflare
+
+            - name: Initialize without the remote backend
+              working-directory: infra/cloudflare
+              run: tofu init -backend=false -lockfile=readonly -no-color
+
+            - name: Validate portal infrastructure
+              working-directory: infra/cloudflare
+              run: tofu validate -no-color
+
+            - name: Verify multi-platform provider lock file
+              working-directory: infra/cloudflare
+              run: |
+                  tofu providers lock \
+                    -platform=linux_amd64 \
+                    -platform=darwin_arm64 \
+                    -platform=darwin_amd64
+                  git diff --exit-code -- .terraform.lock.hcl

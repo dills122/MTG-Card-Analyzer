@@ -50,6 +50,14 @@ typings/
 .vite/
 .vitest/
 .wrangler/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+**/.plans/
+**/backend.hcl
+**/terraform.tfvars
+**/*.auto.tfvars
 .next/
 .nuxt/
 .svelte-kit/

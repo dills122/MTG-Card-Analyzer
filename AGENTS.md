@@ -26,6 +26,8 @@ Before changing behavior, read:
 - `.codex/steering/repository-steering.md` for ownership boundaries
 - `.codex/steering/testing-quality-gates-steering.md` for verification requirements
 - `.codex/steering/javascript-typescript-steering.md` for shared JS/TS guidance
+- `.codex/steering/infrastructure-opentofu-steering.md` for Cloudflare/OpenTofu ownership, state,
+  and validation rules
 
 The root instructions and project-owned steering files take precedence over linked AI Central
 content when they conflict.
@@ -42,6 +44,8 @@ Primary areas:
 - `src/scryfall-api/`: external Scryfall boundary
 - `src/storage/` and `src/db-local/`: storage abstraction and local NeDB persistence
 - `src/rds/`: optional legacy MySQL/RDS adapter; do not make it a default dependency
+- `site/`: project site, contribution form, Worker API, and Wrangler deployment boundary
+- `infra/cloudflare/`: OpenTofu-owned D1/R2 resources and encrypted remote-state contract
 - `test/` and `test-images/`: deterministic behavior tests and committed image fixtures
 
 Keep pure matching decisions separate from image, network, filesystem, and database adapters. When
@@ -106,6 +110,7 @@ ESM JavaScript with incremental TypeScript checking through `allowJs` and `check
 - Coverage: `pnpm coverage:check`
 - Refresh local AI links: `pnpm ai:setup`
 - Validate AI integration: `pnpm ai:check`
+- Validate Cloudflare IaC: `pnpm infra:fmt:check && pnpm infra:init && pnpm infra:validate`
 
 ## AI Central Integration
 

@@ -13,6 +13,7 @@ Real, tracked, repository-specific files:
 - `.codex/ai-central-pin.json`
 - `.codex/steering/repository-steering.md`
 - `.codex/steering/testing-quality-gates-steering.md`
+- `.codex/steering/infrastructure-opentofu-steering.md`
 - `scripts/setup-ai-context.mjs` and its tests
 
 Local, ignored symlinks:
@@ -29,15 +30,16 @@ tests, or override the verification gates.
 
 ## Installed Selection
 
-- Profiles: `base`, `javascript-typescript`
-- Skill bundles: `core`, `brevity`, `engineering`, `planning`, `workflow`
+- Profiles: `base`, `javascript-typescript`, `infrastructure-opentofu`
+- Skill bundles: `core`, `brevity`, `engineering`, `planning`, `infra`, `workflow`
 - Additional Caveman skill: `cavecrew`
 - Custom agents: `cavecrew-investigator`, `cavecrew-builder`, `cavecrew-reviewer`, `code-reviewer`,
   `security-auditor`, and `test-engineer`
 
 The selected skills cover planning, TDD, debugging, review, security, performance, API/storage
-design, documentation, delivery, and token-efficient Caveman workflows. Framework-specific Vue,
-React, Rust, JVM, Terraform, and product/marketing bundles are intentionally not selected.
+design, documentation, delivery, OpenTofu validation, and token-efficient Caveman workflows.
+Framework-specific Vue, React, Rust, JVM, frontend, and product/marketing bundles are intentionally
+not selected.
 
 ## Refresh And Validation
 

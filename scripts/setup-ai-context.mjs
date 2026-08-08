@@ -14,8 +14,15 @@ const isEntrypoint = Boolean(
     process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
 );
 
-const profiles = "base,javascript-typescript";
-const bundles = "core,brevity,engineering,planning,workflow";
+const profiles = ["base", "javascript-typescript", "infrastructure-opentofu"];
+const bundles = ["core", "brevity", "engineering", "planning", "infra", "workflow"];
+
+export function getAiCentralSelection() {
+    return {
+        profiles: [...profiles],
+        bundles: [...bundles]
+    };
+}
 
 function usage() {
     process.stdout.write(`Usage: node scripts/setup-ai-context.mjs [option]
@@ -250,9 +257,9 @@ async function runCentralSetup(setupScript, dryRun) {
     const args = [
         repositoryRoot,
         "--profiles",
-        profiles,
+        profiles.join(","),
         "--bundles",
-        bundles,
+        bundles.join(","),
         "--yes",
         "--mode",
         "link"
@@ -276,6 +283,7 @@ async function validateOwnedFiles() {
         ".codex/ai-central-pin.json",
         ".codex/steering/repository-steering.md",
         ".codex/steering/testing-quality-gates-steering.md",
+        ".codex/steering/infrastructure-opentofu-steering.md",
         "scripts/setup-ai-context.mjs"
     ];
 
@@ -333,6 +341,7 @@ async function validateSkillLinks(layout) {
         "code-simplification",
         "claude-ship-gate",
         "planning-with-files",
+        "terraform-skill",
         "toolkit-qa-test-planner"
     ];
 

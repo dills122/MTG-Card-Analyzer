@@ -68,7 +68,7 @@ pnpm site:dev
 ```
 
 See [docs/test-data-portal.md](docs/test-data-portal.md) for the architecture, local workflow,
-Cloudflare provisioning, Turnstile setup, deployment, and review process.
+OpenTofu-backed Cloudflare provisioning, Turnstile setup, deployment, and review process.
 
 ## Getting Up And Running
 

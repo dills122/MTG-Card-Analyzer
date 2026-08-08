@@ -37,18 +37,30 @@ pnpm site:dev
 The example contains only Cloudflare's public always-pass test keys. Never put a production secret
 in a tracked file.
 
-## Create Cloudflare resources
+## Provision Cloudflare resources
 
-Authenticate Wrangler and create one D1 database and one private R2 bucket:
+The OpenTofu root under `infra/cloudflare/` owns the D1 database and private R2 bucket. It follows
+the repository's pinned, encrypted-state workflow; see its README for backend bootstrap, token
+permissions, protected plan/apply, and recovery details.
 
 ```bash
-pnpm wrangler login
-pnpm wrangler d1 create mtg-card-analyzer-submissions
-pnpm wrangler r2 bucket create mtg-card-analyzer-submissions
+cp infra/cloudflare/terraform.tfvars.example infra/cloudflare/terraform.tfvars
+cp infra/cloudflare/backend.hcl.example infra/cloudflare/backend.hcl
+
+export CLOUDFLARE_API_TOKEN="..."
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
+export TF_VAR_state_encryption_passphrase="..."
+
+tofu -chdir=infra/cloudflare init -backend-config=backend.hcl -lockfile=readonly
+mkdir -p infra/cloudflare/.plans
+tofu -chdir=infra/cloudflare plan -out=.plans/portal.tfplan
+tofu -chdir=infra/cloudflare apply .plans/portal.tfplan
 ```
 
-Copy the D1 database ID from the first command into `site/wrangler.jsonc`, replacing the all-zero
-placeholder. Leave the R2 bucket private; the Worker intentionally has no public image route.
+Copy `tofu -chdir=infra/cloudflare output -raw d1_database_id` into `site/wrangler.jsonc`, replacing
+the all-zero placeholder. Confirm `r2_bucket_name` matches the `SUBMISSION_IMAGES` binding. Leave the
+R2 bucket private; the Worker intentionally has no public image route.
 
 Apply the production migration:
 
@@ -65,6 +77,8 @@ pnpm wrangler secret put TURNSTILE_SECRET_KEY --config site/wrangler.jsonc
 
 Set both Turnstile values together. Non-local submission requests fail closed when the secret is
 missing, and every production upload requires a successfully verified, single-use token.
+Turnstile is deliberately outside OpenTofu because the provider returns the widget secret into
+state.
 
 Deploy the Worker and its static assets:
 
@@ -104,5 +118,7 @@ action; never treat portal metadata as reviewed truth.
 - [Cloudflare D1 Worker binding API](https://developers.cloudflare.com/d1/worker-api/)
 - [Cloudflare R2 Workers API](https://developers.cloudflare.com/r2/api/workers/workers-api-reference/)
 - [Cloudflare Turnstile server-side validation](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
+- [Cloudflare D1 OpenTofu resource](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/d1_database)
+- [Cloudflare R2 OpenTofu resource](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/r2_bucket)
 - [Scryfall API access guidance](https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17)
 - [Scryfall card API](https://scryfall.com/docs/api/cards)
