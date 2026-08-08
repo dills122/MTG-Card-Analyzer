@@ -207,8 +207,12 @@ for (const { title, fn } of steps) {
 }
 
 console.log("\nNext steps:");
-console.log("  node index.mjs scan ./test-images/PlatinumAngel.jpg          # dry run, no writes");
-console.log("  node index.mjs scan ./test-images/PlatinumAngel.jpg --query  # persist to nedb");
+console.log(
+    "  node index.mjs scan ./test-images/PlatinumAngel.jpg          # identify without collection writes"
+);
+console.log(
+    "  node index.mjs scan ./test-images/PlatinumAngel.jpg --query --enable-collection  # persist to nedb"
+);
 console.log(
     "  node scripts/verify-env.mjs                                      # sanity-check the environment"
 );

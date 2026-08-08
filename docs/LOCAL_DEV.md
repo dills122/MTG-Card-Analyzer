@@ -1,6 +1,9 @@
 # Local Dev Setup
 
-Everything you need to get MTG Card Analyzer running locally, from a clean clone to a working scan. For contribution workflow (branching, PR gate, commit conventions) see [CONTRIBUTING.md](../CONTRIBUTING.md). For architecture and CLI flags see [README.md](../Readme.md).
+Everything you need to get MTG Card Analyzer running locally, from a clean clone to a working
+scan. For contribution workflow (branching, PR gate, commit conventions), see
+[CONTRIBUTING.md](../CONTRIBUTING.md). For commands and flags, see the
+[CLI reference](cli-reference.md); for system boundaries, see [Architecture](architecture.md).
 
 ## Quick start
 
@@ -17,7 +20,7 @@ Want the MySQL persistence adapter too? Use `--with-mysql` instead (needs [Docke
 
 ```bash
 node scripts/setup.mjs --with-mysql
-node index.mjs scan ./test-images/PlatinumAngel.jpg --query --storage-adapter rds
+node index.mjs scan ./test-images/PlatinumAngel.jpg --query --enable-collection --storage-adapter rds
 ```
 
 Not sure if your environment is actually working? Run the verifier any time:
@@ -46,10 +49,13 @@ With `--with-mysql`, the generated `secure.config.cjs` matches `docker-compose.y
 
 ## Persistence architecture (what you're setting up)
 
-Two tiers — see the [README's Persistence Architecture section](../Readme.md#persistence-architecture) for the full picture:
+A required name index plus two storage tiers — see
+[Architecture](architecture.md#storage-boundaries) for the full picture:
 
-- **Cache tier** (always-on nedb): card names dictionary, image hash cache, local operations log. `scripts/setup.mjs` sets this up by seeding names — nothing else needed.
-- **Persistence tier** (`nedb` default | `rds` opt-in): your actual collection + needs-attention records. `nedb` needs nothing extra. `rds` needs the MySQL setup above.
+- **Name index** (required nedb): the card-name dictionary seeded by `scripts/setup.mjs`.
+- **Cache tier** (default-on nedb): image hashes and the local operations log.
+- **Persistence tier** (`nedb` default | `rds` opt-in): your actual collection + needs-attention
+  records. `nedb` needs nothing extra. `rds` needs the MySQL setup above.
 
 ## MySQL / Docker
 
@@ -100,6 +106,3 @@ Docker isn't running, or the container crashed. Check `pnpm docker:logs`. `docke
 
 **Tesseract warnings during scan**
 Noisy but non-fatal in the current runtime.
-
-**Windows path separators**
-Some docs/examples use `\` (Windows-style); `/` works everywhere `node` runs, including Windows.
