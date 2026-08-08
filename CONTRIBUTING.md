@@ -37,7 +37,7 @@ workflow. A normal build does not require AI Central.
 
 ## Before Opening a PR
 
-Run the full local gate — it's what CI checks:
+Run the full local gate — it's close to what CI checks:
 
 ```bash
 pnpm check
@@ -51,7 +51,9 @@ For anything touching logic, also run coverage and take a look at what's newly u
 pnpm coverage
 ```
 
-No coverage threshold is enforced yet (see [#31](https://github.com/dills122/MTG-Card-Analyzer/issues/31)), but new code shouldn't make the picture worse.
+CI enforces a coverage floor (`pnpm coverage:check`, thresholds in the `c8` block of `package.json` —
+currently 85% lines/statements/functions, 70% branches) so coverage can't silently regress. Run
+`pnpm coverage:check` locally before pushing if your change touches lightly-covered code.
 
 ## Tests
 

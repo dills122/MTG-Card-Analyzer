@@ -37,6 +37,7 @@ async function backFillCardHashes(cardName) {
         if (cardHashes.length > 0) {
             cardHashes.forEach((hash) => HashesStore.upsert(hash));
         }
+        logger.info(`Backfilled ${cardHashes.length} printing hash(es) for "${cardName}"`);
         return true;
     } catch (err) {
         logger.error(`Unable to backfill hashes for "${cardName}": ${err?.message || String(err)}`);
@@ -46,9 +47,14 @@ async function backFillCardHashes(cardName) {
 
 async function backFillMatchingCards() {
     const names = await NamesStore.getAll();
+    logger.info(`Backfilling hashes for ${names.length} stored card name(s)`);
+    let succeeded = 0;
     for (const { name } of names) {
-        await backFillCardHashes(name);
+        if (await backFillCardHashes(name)) {
+            succeeded += 1;
+        }
     }
+    logger.info(`Backfill complete: ${succeeded}/${names.length} card name(s) succeeded`);
 }
 
 export { backFillCardHashes, backFillMatchingCards };

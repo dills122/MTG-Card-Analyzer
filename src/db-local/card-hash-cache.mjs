@@ -1,6 +1,9 @@
 import { getConfig } from "../config/index.mjs";
 import { resolveDbFilename as resolvePath } from "./resolve-db-path.mjs";
 import { createNedbStore } from "./create-nedb-store.mjs";
+import log from "../logger/log.mjs";
+
+const logger = log.create({ isPretty: true });
 
 function resolveDbFilename() {
     const config = getConfig();
@@ -52,6 +55,10 @@ function normalizeRecord(record = {}) {
 async function insertEntity(record) {
     const normalized = normalizeRecord(record);
     if (!normalized.cardName || !normalized.setName || !normalized.cardHash) {
+        logger.warn("Skipping card-hash cache write: missing cardName, setName, or cardHash", {
+            cardName: normalized.cardName,
+            setName: normalized.setName
+        });
         return 0;
     }
     const query = { lookupKey: normalized.lookupKey };

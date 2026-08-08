@@ -1,6 +1,9 @@
 import Joi from "joi";
 import storage from "../storage/index.mjs";
 import { pick } from "../util.mjs";
+import log from "../logger/log.mjs";
+
+const logger = log.create({ isPretty: true });
 
 // "I scanned another copy" semantics: delta adds to whatever quantity already exists for
 // this cardName+cardSet (default 1), it does not overwrite it. See src/storage/index.mjs
@@ -25,9 +28,16 @@ function create(params) {
     const validated = Joi.attempt(params, schema);
     return {
         ...validated,
-        insert() {
+        async insert() {
             const object = pick(this, Object.keys(schema.describe().keys));
-            return dependencies.upsert(object);
+            try {
+                return await dependencies.upsert(object);
+            } catch (err) {
+                logger.error(
+                    `Collection write failed for "${object.cardName}" (${object.cardSet}): ${err?.message || String(err)}`
+                );
+                throw err;
+            }
         }
     };
 }

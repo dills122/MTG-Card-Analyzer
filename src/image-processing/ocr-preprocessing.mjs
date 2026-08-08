@@ -10,6 +10,9 @@ import {
     sharpen,
     padAndScale
 } from "./binarize.mjs";
+import log from "../logger/log.mjs";
+
+const defaultLogger = log.create({ isPretty: true });
 
 // Tuned preprocessing settings to make small MTG text pop for OCR. Crop geometry (region
 // templates, percent->pixel math, min-source-size gate) lives in smart-crop.mjs -- this module
@@ -32,7 +35,7 @@ const preprocessConfig = {
  * @returns {Promise<{variants: Array, previewPath?: string}>}
  */
 async function prepareOcrVariants(imgPath, type, options = {}) {
-    const { directory } = options;
+    const { directory, logger = defaultLogger } = options;
     const dimensions = await getImageDimensions(imgPath);
     smartCrop.assertSourceSizeOk(dimensions);
 
@@ -54,6 +57,7 @@ async function prepareOcrVariants(imgPath, type, options = {}) {
     let previewPath;
     if (directory && variants[0]) {
         previewPath = await writePreview(variants[0].image, directory, type, variants[0].region);
+        logger.info(`Wrote OCR preview crop for "${type}": ${previewPath}`);
     }
 
     return { variants, previewPath };
