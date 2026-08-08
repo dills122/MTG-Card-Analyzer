@@ -61,29 +61,6 @@ const preprocessConfig = {
     invertPivot: 110 // invert when mean luminance is dark; keeps white-on-black text legible
 };
 
-/**
- * Crop and preprocess a snippet, returning a JPEG buffer.
- * @param {string} imgPath path to source image
- * @param {"name"|"type"|"art"|"flavor"} type snippet type
- * @returns {Promise<Buffer>} processed image buffer
- */
-async function GetImageSnippet(imgPath, type) {
-    const img = await buildSnippetImage(imgPath, type);
-    const imgBuffer = await img.getBufferAsync("image/jpeg");
-    return imgBuffer;
-}
-
-/**
- * Crop and preprocess a snippet, writing to a new file in cwd.
- */
-async function GetImageSnippetFile(imgPath, type) {
-    const ext = path.extname(imgPath) || ".jpg";
-    const filePath = `${randomUUID()}${ext}`;
-    const img = await buildSnippetImage(imgPath, type);
-    await img.writeAsync(filePath);
-    return filePath;
-}
-
 async function GetImageSnippetTmpFile(imgPath, directory, type) {
     const ext = path.extname(imgPath) || ".jpg";
     const filePath = path.join(directory, `${randomUUID()}${ext}`);
@@ -198,10 +175,8 @@ function binaryErode(img, iterations = 1) {
     return morphologicalOp(img, iterations, Math.min, 255);
 }
 
-export { GetImageSnippet, GetImageSnippetFile, GetImageSnippetTmpFile };
+export { GetImageSnippetTmpFile };
 
 export default {
-    GetImageSnippet,
-    GetImageSnippetFile,
     GetImageSnippetTmpFile
 };
