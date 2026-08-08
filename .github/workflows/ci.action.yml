@@ -40,8 +40,17 @@ jobs:
             - name: Lint + Format + Types
               run: pnpm check:fast
 
-            - name: Test
-              run: pnpm test
+            - name: Test + Coverage gate
+              run: pnpm coverage:check
+
+            - name: Upload coverage report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: mtg-coverage-${{ github.run_id }}
+                  path: coverage/
+                  if-no-files-found: warn
+                  retention-days: 14
     dot_only_linter_job:
         runs-on: ubuntu-latest
         steps:
