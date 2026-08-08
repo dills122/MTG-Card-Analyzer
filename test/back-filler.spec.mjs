@@ -17,7 +17,7 @@ describe("back-filler", () => {
     });
 
     it("hashes each printing and stores its card metadata", async () => {
-        sandbox.stub(scryfall.Search, "SearchByNameExact").resolves({
+        sandbox.stub(scryfall.Search, "searchByNameExact").resolves({
             data: [
                 {
                     name: "Pacifism",
@@ -28,7 +28,7 @@ describe("back-filler", () => {
                 }
             ]
         });
-        sandbox.stub(imageHashing.Hash, "HashImage").callsArgWith(1, null, "fake-hash");
+        sandbox.stub(imageHashing.Hash, "hashImage").callsArgWith(1, null, "fake-hash");
         const upsert = sandbox.stub(storage.hashes, "upsert");
 
         const success = await backFillCardHashes("Pacifism");
@@ -47,7 +47,7 @@ describe("back-filler", () => {
 
     it("reports a concise error when Scryfall lookup fails", async () => {
         sandbox
-            .stub(scryfall.Search, "SearchByNameExact")
+            .stub(scryfall.Search, "searchByNameExact")
             .rejects(new Error("network unavailable"));
         const consoleError = sandbox.stub(console, "error");
 
@@ -65,7 +65,7 @@ describe("back-filler", () => {
         sandbox
             .stub(storage.names, "getAll")
             .resolves([{ name: "Pacifism" }, { name: "Fireball" }]);
-        const search = sandbox.stub(scryfall.Search, "SearchByNameExact").resolves({ data: [] });
+        const search = sandbox.stub(scryfall.Search, "searchByNameExact").resolves({ data: [] });
         sandbox.stub(storage.hashes, "upsert");
 
         await backFillMatchingCards();

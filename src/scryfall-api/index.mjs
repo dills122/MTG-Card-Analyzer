@@ -1,10 +1,10 @@
 import getCardName from "./get-card-name.mjs";
 import searchName from "./search-name.mjs";
 
-export const GetCardNames = getCardName.GetCardNames;
+export const getCardNames = getCardName.getCardNames;
 export const Search = searchName;
 
 export default {
-    GetCardNames,
+    getCardNames,
     Search
 };

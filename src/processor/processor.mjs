@@ -123,7 +123,7 @@ class ProcessorClass {
 
     async createDirectoryAsync() {
         this.logger.info("Preparing temporary files");
-        const directory = await dependencies.FileIO.CreateDirectory();
+        const directory = await dependencies.FileIO.createDirectory();
         this.directory = directory;
     }
 
@@ -239,7 +239,7 @@ class ProcessorClass {
         const set = record.sets[0];
         let additionalInfo;
         try {
-            additionalInfo = await dependencies.GetAdditionalCardInfo.SearchByNameExact(
+            additionalInfo = await dependencies.GetAdditionalCardInfo.searchByNameExact(
                 record.name,
                 ""
             );

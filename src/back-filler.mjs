@@ -10,15 +10,15 @@ const { Hash } = imageHashing;
 const logger = log.create({ isPretty: true });
 
 // Promisified fresh at each call (not captured once at module load) so tests that
-// sandbox.stub(imageHashing.Hash, "HashImage") keep working -- same dynamic-dispatch reasoning
+// sandbox.stub(imageHashing.Hash, "hashImage") keep working -- same dynamic-dispatch reasoning
 // as src/storage/adapters/create-callback-adapter.mjs.
 function hashImage(url) {
-    return promisify(Hash.HashImage)(url);
+    return promisify(Hash.hashImage)(url);
 }
 
 async function backFillCardHashes(cardName) {
     try {
-        const searchResults = await Search.SearchByNameExact(cardName, cardName);
+        const searchResults = await Search.searchByNameExact(cardName, cardName);
         let cardHashes = [];
         const cards = searchResults.data || [];
         for (const card of cards) {

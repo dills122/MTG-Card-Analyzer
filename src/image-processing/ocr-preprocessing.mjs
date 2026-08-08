@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import jimp from "jimp";
-import { GetImageDimensions } from "./util.mjs";
+import { getImageDimensions } from "./util.mjs";
 import { round, clamp } from "../util.mjs";
 import {
     computeOtsuThreshold,
@@ -118,7 +118,7 @@ const regionTemplates = {
  */
 async function prepareOcrVariants(imgPath, type, options = {}) {
     const { directory } = options;
-    const dimensions = await GetImageDimensions(imgPath);
+    const dimensions = await getImageDimensions(imgPath);
     if (
         dimensions.width < preprocessConfig.minSourceWidth ||
         dimensions.height < preprocessConfig.minSourceHeight

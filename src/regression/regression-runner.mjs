@@ -42,7 +42,7 @@ function extractName(imagePath, directory, dependencies) {
 }
 
 function hashImage(imagePath, dependencies) {
-    return promisify(dependencies.Hash.HashImage)(imagePath);
+    return promisify(dependencies.Hash.hashImage)(imagePath);
 }
 
 function comparisonScore(comparison) {
@@ -64,7 +64,7 @@ async function rankPrintCandidates(imagePath, cards, dependencies) {
     return Promise.all(
         cards.map(async (card) => {
             const referenceHash = await hashImage(card.referenceImagePath, dependencies);
-            const comparison = dependencies.Hash.CompareHash(localHash, referenceHash);
+            const comparison = dependencies.Hash.compareHash(localHash, referenceHash);
             return {
                 card,
                 comparison,

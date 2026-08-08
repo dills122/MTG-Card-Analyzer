@@ -22,8 +22,8 @@ describe("Srcyfall Api::", () => {
         afterEach(() => {
             sandbox.restore();
         });
-        it("SearchByNameExact", (done) => {
-            api.SearchByNameExact("Fake Name")
+        it("searchByNameExact", (done) => {
+            api.searchByNameExact("Fake Name")
                 .then((card) => {
                     assert.isTrue(stubs.requestStub.calledOnce);
                     assert.strictEqual(card.object, "list");
@@ -34,8 +34,8 @@ describe("Srcyfall Api::", () => {
                     done(err);
                 });
         });
-        it("SearchByNameFuzzy", (done) => {
-            api.SearchByNameFuzzy("Fake Name", "Fake % Name")
+        it("searchByNameFuzzy", (done) => {
+            api.searchByNameFuzzy("Fake Name", "Fake % Name")
                 .then((card) => {
                     assert.isTrue(stubs.requestStub.calledOnce);
                     // Locks in the actual URL built -- templates.fuzzy vs templates.cardNameFuzzy
@@ -53,8 +53,8 @@ describe("Srcyfall Api::", () => {
                     done(err);
                 });
         });
-        it("SearchList", (done) => {
-            api.SearchList("Fake Name")
+        it("searchList", (done) => {
+            api.searchList("Fake Name")
                 .then((cards) => {
                     let card = cards[0];
                     assert.isTrue(stubs.requestStub.calledOnce);
@@ -68,10 +68,10 @@ describe("Srcyfall Api::", () => {
                 });
         });
 
-        it("SearchByNameExact returns empty object when request fails", (done) => {
+        it("searchByNameExact returns empty object when request fails", (done) => {
             stubs.requestStub.restore();
             stubs.requestStub = sandbox.stub(deps, "request").rejects(new Error("network fail"));
-            api.SearchByNameExact("Fake Name")
+            api.searchByNameExact("Fake Name")
                 .then((card) => {
                     assert.isTrue(stubs.requestStub.calledOnce);
                     assert.deepStrictEqual(card, {});
@@ -82,10 +82,10 @@ describe("Srcyfall Api::", () => {
                 });
         });
 
-        it("SearchList returns empty list when request fails", (done) => {
+        it("searchList returns empty list when request fails", (done) => {
             stubs.requestStub.restore();
             stubs.requestStub = sandbox.stub(deps, "request").rejects(new Error("network fail"));
-            api.SearchList("Fake Name")
+            api.searchList("Fake Name")
                 .then((cards) => {
                     assert.isTrue(stubs.requestStub.calledOnce);
                     assert.deepStrictEqual(cards, []);
@@ -115,9 +115,9 @@ describe("Srcyfall Api::", () => {
         afterEach(() => {
             sandbox.restore();
         });
-        it("SearchByNameExact", (done) => {
+        it("searchByNameExact", (done) => {
             cardNames
-                .GetCardNames()
+                .getCardNames()
                 .then((names) => {
                     assert.isTrue(stubs.requestStub.calledOnce);
                     assert.strictEqual(names[0], json.data[0]);

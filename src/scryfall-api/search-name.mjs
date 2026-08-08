@@ -11,7 +11,7 @@ const dependencies = {
 };
 
 // These return a random/newest card if printed across sets
-async function SearchByNameExact(exact, fuzzy = "") {
+async function searchByNameExact(exact, fuzzy = "") {
     try {
         const response = await dependencies.request({
             uri: encodeURI(`${apiConfig.templates.cardNameExact}${exact}`),
@@ -20,7 +20,7 @@ async function SearchByNameExact(exact, fuzzy = "") {
         if (response) {
             const cardInfo = JSON.parse(response) || {};
             if (Object.keys(cardInfo).length === 0) {
-                return await SearchByNameFuzzy(fuzzy);
+                return await searchByNameFuzzy(fuzzy);
             }
             return cardInfo;
         }
@@ -32,7 +32,7 @@ async function SearchByNameExact(exact, fuzzy = "") {
 }
 
 // These return a random/newest card if printed across sets
-async function SearchByNameFuzzy(exact, fuzzy = "") {
+async function searchByNameFuzzy(exact, fuzzy = "") {
     if (fuzzy === "") {
         return {};
     }
@@ -54,7 +54,7 @@ async function SearchByNameFuzzy(exact, fuzzy = "") {
     }
 }
 
-async function SearchList(exact) {
+async function searchList(exact) {
     const name = exact.replace(/ /g, "%20");
     try {
         const response = await dependencies.request({
@@ -64,7 +64,7 @@ async function SearchList(exact) {
         if (response) {
             const cardInfo = JSON.parse(response) || {};
             if (Object.keys(cardInfo).length === 0) {
-                return [await SearchByNameFuzzy(name)];
+                return [await searchByNameFuzzy(name)];
             }
             return cardInfo.data;
         }
@@ -75,11 +75,11 @@ async function SearchList(exact) {
     }
 }
 
-export { SearchByNameExact, SearchByNameFuzzy, SearchList, dependencies };
+export { searchByNameExact, searchByNameFuzzy, searchList, dependencies };
 
 export default {
-    SearchByNameExact,
-    SearchByNameFuzzy,
-    SearchList,
+    searchByNameExact,
+    searchByNameFuzzy,
+    searchList,
     dependencies
 };

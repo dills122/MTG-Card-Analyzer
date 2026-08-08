@@ -134,7 +134,7 @@ describe("FuzzyMatching::", () => {
             let name = "AdantoVanguard";
             const matches = await create({
                 cleanText: name
-            }).Match();
+            }).match();
             console.log(matches);
             let [first] = matches;
             assert.equal(stubs.BulkNamesStub.callCount, 1);
@@ -150,7 +150,7 @@ describe("FuzzyMatching::", () => {
             let name = "Coat Vangsduardsadfasd";
             const matches = await create({
                 cleanText: name
-            }).Match();
+            }).match();
             console.log(matches);
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             chaiAssert.isArray(matches);
@@ -158,7 +158,7 @@ describe("FuzzyMatching::", () => {
         });
 
         it("should not match an empty OCR result", async () => {
-            const matches = await create({ cleanText: "" }).Match();
+            const matches = await create({ cleanText: "" }).match();
             assert.equal(stubs.BulkNamesStub.callCount, 0);
             chaiAssert.isArray(matches);
             assert.equal(matches.length, 0);
@@ -167,7 +167,7 @@ describe("FuzzyMatching::", () => {
         it("should narrow name-style families to the strongest first-token match", async () => {
             const matches = await create({
                 cleanText: "Thought Reflection"
-            }).Match();
+            }).match();
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             chaiAssert.isArray(matches);
             chaiAssert.isAtLeast(matches.length, 1);
@@ -179,7 +179,7 @@ describe("FuzzyMatching::", () => {
         it("should still narrow when OCR trims first token (THOU REFLECTION)", async () => {
             const matches = await create({
                 cleanText: "THOU REFLECTION"
-            }).Match();
+            }).match();
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             chaiAssert.isArray(matches);
             chaiAssert.isAtLeast(matches.length, 1);
@@ -194,7 +194,7 @@ describe("FuzzyMatching::", () => {
 During your grn, Yuria9 and enchantment
 creatures you control have lifelink and ward
 At the beginning of your end step, return up to one target enchantment`
-            }).Match();
+            }).match();
 
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             assert.equal(matches[0]?.name, "Yuna, Hope of Spira");
@@ -206,7 +206,7 @@ At the beginning of your end step, return up to one target enchantment`
                 cleanText: "WIQMTLFER",
                 supplementalText: `Add X mana in any combination, where X is Vivi Ornitier’s power.
 Whenever you cast a creature spell, put a counter on Vivi Ornitier.`
-            }).Match();
+            }).match();
 
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             assert.equal(matches[0]?.name, "Vivi Ornitier");
@@ -218,7 +218,7 @@ Whenever you cast a creature spell, put a counter on Vivi Ornitier.`
                 cleanText: "",
                 supplementalText:
                     "Where X is Vivi Ornitier’s power. Put a counter on Vivi Ornitier."
-            }).Match();
+            }).match();
 
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             assert.equal(matches[0]?.name, "Vivi Ornitier");

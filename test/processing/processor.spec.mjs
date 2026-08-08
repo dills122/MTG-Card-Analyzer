@@ -40,10 +40,10 @@ describe("Integration::", () => {
                 cleanText: EXTRACTED_TEXT,
                 dirtyText: EXTRACTED_TEXT
             });
-        stubs.CreateDirectoryStub = sandbox.stub(FileIO, "CreateDirectory").resolves(DIR);
+        stubs.CreateDirectoryStub = sandbox.stub(FileIO, "createDirectory").resolves(DIR);
         stubs.MatchNameCreateStub = sandbox.stub(MatchName, "create").returns(MatchNameInstance);
-        MatchNameInstance.Match = new Function();
-        stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "Match").resolves([
+        MatchNameInstance.match = new Function();
+        stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "match").resolves([
             {
                 name: "Pacifism",
                 percentage: 100
@@ -65,7 +65,7 @@ describe("Integration::", () => {
         // in processor.mjs not injected via `dependencies`, so it's stubbed directly here.
         stubs.logRecordStub = sandbox.stub(storage.log, "record");
         stubs.GetAdditionalCardInfoStub = sandbox
-            .stub(GetAdditionalCardInfo, "SearchByNameExact")
+            .stub(GetAdditionalCardInfo, "searchByNameExact")
             .resolves({
                 object: "card",
                 id: "31279d7c-5246-40b2-a8c7-0be4a5f24a29",
@@ -208,7 +208,7 @@ describe("Integration::", () => {
         it("Should execute happy path for needs attention record", (done) => {
             stubs.MatchNameMatchStub.restore();
             stubs.MatchProcessorExecuteStub.restore();
-            stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "Match").resolves([
+            stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "match").resolves([
                 {
                     name: "Pacifism",
                     percentage: 90.2
@@ -247,7 +247,7 @@ describe("Integration::", () => {
 
         it("Should error out if no fuzzy match results are returned", (done) => {
             stubs.MatchNameMatchStub.restore();
-            stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "Match").resolves([]);
+            stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "match").resolves([]);
             let processorInstance = Processor.create({
                 filePath: FAKE_PATH
             });

@@ -28,7 +28,7 @@ function matchName({ extractionResults, supplementalText, MatchName, matchDepend
         ...(supplementalText ? { supplementalText } : {}),
         ...(matchDependencies ? { dependencies: matchDependencies } : {}),
         ...(logger ? { logger } : {})
-    }).Match();
+    }).match();
 }
 
 async function resolveCardName(options) {

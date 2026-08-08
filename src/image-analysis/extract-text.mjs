@@ -16,7 +16,7 @@ let defaultSessionOptionsKey;
  * @param {(err: Error|null, result: {cleanText: string, dirtyText: string}|null) => void} cb callback
  * @param {{logger?: {info: Function, error: Function}, session?: {recognize: Function}, cacheMethod?: string, langPath?: string, gzip?: boolean}} options runtime options
  */
-function ScanImage(imgBuffer, type, cb, options = {}) {
+function scanImage(imgBuffer, type, cb, options = {}) {
     const scanLogger = options.logger || logger;
     const candidates = normalizeCandidates(imgBuffer, type);
     const regionLabel = candidates.map((candidate) => candidate.region).join(", ");
@@ -101,7 +101,7 @@ async function getDefaultOcrSession(options = {}) {
     const workerOptions = resolveWorkerOptions(options);
     const nextOptionsKey = JSON.stringify(workerOptions);
     if (defaultSessionPromise && defaultSessionOptionsKey !== nextOptionsKey) {
-        await ShutDown();
+        await shutDown();
     }
     if (!defaultSessionPromise) {
         defaultSessionOptionsKey = nextOptionsKey;
@@ -271,7 +271,7 @@ function previewText(text) {
     return `${normalized.slice(0, max - 3)}...`;
 }
 
-async function ShutDown() {
+async function shutDown() {
     const pendingSession = defaultSessionPromise;
     defaultSessionPromise = undefined;
     defaultSessionOptionsKey = undefined;
@@ -341,11 +341,11 @@ async function createOcrSession(options = {}) {
 
 export const dependencies = { Tesseract };
 
-export { ScanImage, ShutDown, createOcrSession, scoreOcrCandidate, selectBestResult };
+export { scanImage, shutDown, createOcrSession, scoreOcrCandidate, selectBestResult };
 
 export default {
-    ScanImage,
-    ShutDown,
+    scanImage,
+    shutDown,
     createOcrSession,
     scoreOcrCandidate,
     selectBestResult,
