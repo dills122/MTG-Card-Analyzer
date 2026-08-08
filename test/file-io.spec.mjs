@@ -31,7 +31,7 @@ describe("File IO helpers", () => {
     });
 
     it("creates a directory under tmpdir using randomUUID", async () => {
-        const mkdirStub = sandbox.stub().callsArgWith(1, null);
+        const mkdirStub = sandbox.stub().resolves();
         const randomUUID = sandbox.stub().returns("uuid-abc");
         const { CreateDirectory } = buildFileIO({
             fs: { writeFile: () => {}, unlink: () => {}, mkdir: mkdirStub, rm: () => {} },
@@ -42,6 +42,7 @@ describe("File IO helpers", () => {
 
         const dirPath = await CreateDirectory();
         assert.equal(dirPath, "/tmp/mock/uuid-abc");
+        assert.isTrue(mkdirStub.calledOnceWithExactly("/tmp/mock/uuid-abc"));
     });
 
     it("cleans up files via fs.rm", async () => {

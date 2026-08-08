@@ -196,14 +196,7 @@ class ProcessHashes {
 
     async _hashRemoteForComparison(url, tempDirectory) {
         if (this.hashMode !== "set-symbol") {
-            return new Promise((resolve, reject) => {
-                this.dependencies.Hash.HashImage(url, (err, hash) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    return resolve(hash);
-                });
-            });
+            return this._hashImage(url);
         }
         try {
             return await this._hashRemoteSetSymbol(url, tempDirectory);
@@ -211,14 +204,7 @@ class ProcessHashes {
             this.logger.error(
                 `Remote set-symbol hash failed for "${this.name}"; using full card image`
             );
-            return new Promise((resolve, reject) => {
-                this.dependencies.Hash.HashImage(url, (hashErr, hash) => {
-                    if (hashErr) {
-                        return reject(hashErr);
-                    }
-                    return resolve(hash);
-                });
-            });
+            return this._hashImage(url);
         }
     }
 
@@ -227,8 +213,15 @@ class ProcessHashes {
         const cropped = this._cropRemoteSetSymbol(image);
         const tmpFilePath = path.join(tempDirectory, `${randomUUID()}.png`);
         await cropped.writeAsync(tmpFilePath);
+        return this._hashImage(tmpFilePath);
+    }
+
+    // Promisifies dependencies.Hash.HashImage at call time (not once at module load) so tests
+    // that sandbox.stub(Hash, "HashImage") after this class is defined keep working -- same
+    // dynamic-dispatch reasoning as src/storage/adapters/create-callback-adapter.mjs.
+    _hashImage(url) {
         return new Promise((resolve, reject) => {
-            this.dependencies.Hash.HashImage(tmpFilePath, (err, hash) => {
+            this.dependencies.Hash.HashImage(url, (err, hash) => {
                 if (err) {
                     return reject(err);
                 }

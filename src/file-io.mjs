@@ -15,6 +15,7 @@ function buildFileIO(deps = defaultDeps) {
     const writeFile = deps.promisify(deps.fs.writeFile);
     const unlinkFile = deps.promisify(deps.fs.unlink);
     const rm = deps.promisify(deps.fs.rm);
+    const mkdir = deps.promisify(deps.fs.mkdir);
 
     async function WriteToFile(contents, filePath = "") {
         return writeFile(filePath || `${deps.randomUUID()}.json`, JSON.stringify(contents));
@@ -26,14 +27,7 @@ function buildFileIO(deps = defaultDeps) {
 
     async function CreateDirectory() {
         const dirPath = path.join(deps.tempDirectory, deps.randomUUID());
-        await new Promise((resolve, reject) => {
-            deps.fs.mkdir(dirPath, (err) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve();
-            });
-        });
+        await mkdir(dirPath);
         return dirPath;
     }
 

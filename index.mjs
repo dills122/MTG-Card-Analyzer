@@ -250,17 +250,6 @@ async function ensureFileAccessible(accessFn, filePath) {
     await accessFn(filePath);
 }
 
-async function executeProcessor(processor) {
-    return new Promise((resolve, reject) => {
-        processor.execute((err) => {
-            if (err) {
-                return reject(err);
-            }
-            resolve();
-        });
-    });
-}
-
 // Applies CLI-flag config overrides and bridges them into process.env so the rest of the
 // pipeline -- which resolves config lazily on first DB use -- picks them up. Also validates
 // early (bad --storage-adapter fails fast here instead of deep in the pipeline). Returns the
@@ -565,7 +554,7 @@ export async function run(options = {}) {
 
     let exitCode;
     try {
-        await executeProcessor(processor);
+        await processor.execute();
         exitCode = 0;
     } catch (err) {
         logger.log(err);

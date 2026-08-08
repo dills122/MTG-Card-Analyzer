@@ -1,3 +1,4 @@
+import { promisify } from "node:util";
 import storage from "./storage/index.mjs";
 import scryfall from "./scryfall-api/index.mjs";
 import imageHashing from "./image-hashing/index.mjs";
@@ -8,6 +9,13 @@ const { Search } = scryfall;
 const { Hash } = imageHashing;
 const logger = log.create({ isPretty: true });
 
+// Promisified fresh at each call (not captured once at module load) so tests that
+// sandbox.stub(imageHashing.Hash, "HashImage") keep working -- same dynamic-dispatch reasoning
+// as src/storage/adapters/create-callback-adapter.mjs.
+function hashImage(url) {
+    return promisify(Hash.HashImage)(url);
+}
+
 async function backFillCardHashes(cardName) {
     try {
         const searchResults = await Search.SearchByNameExact(cardName, cardName);
@@ -15,14 +23,7 @@ async function backFillCardHashes(cardName) {
         const cards = searchResults.data || [];
         for (const card of cards) {
             const imageUris = card.image_uris || {};
-            const cardHash = await new Promise((resolve, reject) => {
-                Hash.HashImage(imageUris.normal, (err, hash) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    return resolve(hash);
-                });
-            });
+            const cardHash = await hashImage(imageUris.normal);
             cardHashes.push({
                 cardName: card.name,
                 setName: card.set_name,
