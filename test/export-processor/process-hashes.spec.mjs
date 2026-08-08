@@ -71,6 +71,36 @@ describe("Integration::", () => {
             );
         });
 
+        it("Should ignore cached hashes from a different hashMode", async () => {
+            stubs.getHashesStub.resolves([
+                {
+                    cardHash: CLOSE_DIFF_HASH,
+                    setName: FAKE_SET,
+                    hashMode: "full-card"
+                }
+            ]);
+            const info = sandbox.stub();
+            let hasher = ProcessHashes.create({
+                cards: [{}, {}],
+                localHash: CLOSE_DIFF_HASH,
+                name: "Test",
+                hashMode: "set-symbol",
+                ignoreNoDbMatch: true,
+                logger: { info, error: sandbox.stub() }
+            });
+
+            const matches = await hasher.compareDbHashes();
+            assert.deepEqual(matches, []);
+            assert.deepEqual(
+                info.getCalls().map((call) => call.args[0]),
+                [
+                    'Checking local hash cache for "Test"',
+                    'Skipped 1 cached hash(es) for "Test": hashMode mismatch (expected set-symbol)',
+                    'Local hash cache matches for "Test": 0'
+                ]
+            );
+        });
+
         it("Should fail with no match found error", async () => {
             let hasher = ProcessHashes.create({
                 cards: [{}, {}],
@@ -161,7 +191,8 @@ describe("Integration::", () => {
             assert.deepEqual(stubs.insertEntityStub.firstCall.args[0], {
                 cardName: "Test",
                 setName: "SET_A",
-                cardHash: FAKE_HASH
+                cardHash: FAKE_HASH,
+                hashMode: "full-card"
             });
             assert.equal(
                 info.firstCall.args[0],

@@ -40,7 +40,8 @@ describe("back-filler", () => {
                 setName: "Core Set 2020",
                 isFoil: true,
                 isPromo: false,
-                cardHash: "fake-hash"
+                cardHash: "fake-hash",
+                hashMode: "full-card"
             })
         );
     });

@@ -31,6 +31,10 @@ function normalizeRecord(record = {}) {
     const isFoil = Boolean(record.isFoil || record.IsFoil);
     const isPromo = Boolean(record.isPromo || record.IsPromo);
     const cardUrl = record.cardUrl || record.CardUrl || "";
+    // Defaults to "full-card" for writers/legacy rows that predate this field -- matches
+    // back-filler.mjs's real behavior (always full-card, never cropped) and process-hashes.mjs's
+    // own joi default, so an untagged on-disk row is classified correctly with no migration.
+    const hashMode = record.hashMode || record.HashMode || "full-card";
     const normalized = {
         cardName: String(cardName).trim(),
         setName: String(setName).trim(),
@@ -38,6 +42,7 @@ function normalizeRecord(record = {}) {
         isFoil,
         isPromo,
         cardUrl: String(cardUrl).trim(),
+        hashMode: String(hashMode).trim(),
         updatedAt: new Date()
     };
     normalized.lookupKey = toLookupKey(normalized);
