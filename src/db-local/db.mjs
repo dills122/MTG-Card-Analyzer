@@ -6,7 +6,9 @@ function resolveDbFilename() {
     return resolvePath(getConfig().cardNamesDbPath, "cardNames.db");
 }
 
-const { db } = createNedbStore({ resolveFilename: resolveDbFilename });
+const { find, insert, count } = createNedbStore({ resolveFilename: resolveDbFilename });
+
+const db = { find, insert, count };
 
 export { db, resolveDbFilename };
 

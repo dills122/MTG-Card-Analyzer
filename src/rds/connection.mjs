@@ -1,4 +1,4 @@
-import mysql from "mysql2";
+import mysql from "mysql2/promise";
 import { requireOrFalse } from "../util.mjs";
 
 // Resolved lazily, only when a connection is actually attempted -- not at import time.
@@ -14,6 +14,10 @@ function getSecureConfig() {
     return secureConfig;
 }
 
+// Returns a promise resolving to a connected mysql2 connection -- mysql2/promise's
+// createConnection() already waits for the underlying "connect" event before resolving, so
+// there's no separate .connect() step to call (unlike the callback-based mysql2 API this used
+// to use).
 function createConnection() {
     const config = getSecureConfig();
     return mysql.createConnection({

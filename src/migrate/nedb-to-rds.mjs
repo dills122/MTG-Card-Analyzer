@@ -1,4 +1,3 @@
-import { promisify } from "node:util";
 import collectionStore from "../db-local/collection-store.mjs";
 import needsAttentionStore from "../db-local/needs-attention-store.mjs";
 import rds from "../rds/index.mjs";
@@ -15,16 +14,13 @@ import rds from "../rds/index.mjs";
 // rejects.
 
 async function migrateCollection({ dryRun = false, force = false } = {}) {
-    const localEntries = await promisify(collectionStore.getAll)();
+    const localEntries = await collectionStore.getAll();
 
     const results = { total: localEntries.length, migrated: 0, skipped: 0, errors: [] };
 
     for (const entry of localEntries) {
         try {
-            const existingQty = await promisify(rds.collection.getQuantity)(
-                entry.cardName,
-                entry.cardSet
-            );
+            const existingQty = await rds.collection.getQuantity(entry.cardName, entry.cardSet);
 
             if (existingQty > 0 && !force) {
                 results.skipped += 1;
@@ -32,7 +28,7 @@ async function migrateCollection({ dryRun = false, force = false } = {}) {
             }
 
             if (!dryRun) {
-                await promisify(rds.collection.upsertRecord)({
+                await rds.collection.upsertRecord({
                     cardName: entry.cardName,
                     cardType: entry.cardType,
                     cardSet: entry.cardSet,
@@ -57,7 +53,7 @@ async function migrateCollection({ dryRun = false, force = false } = {}) {
 }
 
 async function migrateNeedsAttention({ dryRun = false } = {}) {
-    const localEntries = await promisify(needsAttentionStore.getAll)();
+    const localEntries = await needsAttentionStore.getAll();
 
     const results = { total: localEntries.length, migrated: 0, skipped: 0, errors: [] };
 
@@ -67,7 +63,7 @@ async function migrateNeedsAttention({ dryRun = false } = {}) {
             continue;
         }
         try {
-            await promisify(rds.needsAttention.insertRecord)({
+            await rds.needsAttention.insertRecord({
                 cardName: entry.cardName,
                 possibleSets: entry.possibleSets,
                 extractedText: entry.extractedText,

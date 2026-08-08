@@ -5,54 +5,43 @@ const logger = log.create({
     isPretty: true
 });
 
-function getQuantity(name, set, cb) {
-    const connection = createConnection();
-    connection.connect((err) => {
-        if (err) {
-            return cb(err, null);
-        }
-        connection.query(
+async function getQuantity(name, set) {
+    const connection = await createConnection();
+    try {
+        const [results] = await connection.query(
             "SELECT quantity FROM CardCollection WHERE cardName=? AND cardSet=? LIMIT 1",
-            [name, set],
-            (err, results) => {
-                if (err) {
-                    logger.error(err);
-                    return cb(err, null);
-                }
-                connection.end();
-                return cb(null, (results && results[0] && results[0].quantity) || 0);
-            }
+            [name, set]
         );
-    });
+        return (results && results[0] && results[0].quantity) || 0;
+    } catch (err) {
+        logger.error(err);
+        throw err;
+    } finally {
+        await connection.end();
+    }
 }
 
-function insertRecord(record, cb) {
-    const connection = createConnection();
-    connection.connect((err) => {
-        if (err) {
-            return cb(err, null);
-        }
-        connection.query(
+async function insertRecord(record) {
+    const connection = await createConnection();
+    try {
+        const [results] = await connection.query(
             "INSERT INTO CardCollection (cardName, cardSet, quantity) VALUES (?, ?, ?)",
-            [record.cardName, record.cardSet, record.quantity],
-            (err, results) => {
-                if (err) {
-                    logger.error(err);
-                    return cb(err, null);
-                }
-                connection.end();
-                return cb(null, results);
-            }
+            [record.cardName, record.cardSet, record.quantity]
         );
-    });
+        return results;
+    } catch (err) {
+        logger.error(err);
+        throw err;
+    } finally {
+        await connection.end();
+    }
 }
 
 // Insert if new, add `delta` (default 1) to quantity if cardName+cardSet already exists --
 // same "scanned another copy" semantics as the nedb-backed collection-store. Uses MySQL's
 // native upsert (CardCollection has a UNIQUE(cardName, cardSet) constraint) instead of a
 // separate SELECT-then-branch, so it's atomic at the DB level.
-function upsertRecord(record, cb) {
-    const connection = createConnection();
+async function upsertRecord(record) {
     const delta = record.delta ?? 1;
     // estValue tracks the whole stack's worth. MySQL evaluates ON DUPLICATE KEY UPDATE's SET
     // list left-to-right, and a column already assigned earlier in the list is read back at
@@ -61,11 +50,9 @@ function upsertRecord(record, cb) {
     // expression below already sees the post-increment total. Verified against a real MySQL
     // 8 instance; this is not the "obvious" reading of ON DUPLICATE KEY UPDATE semantics.
     const priceUsd = typeof record.priceUsd === "number" ? record.priceUsd : null;
-    connection.connect((err) => {
-        if (err) {
-            return cb(err, null);
-        }
-        connection.query(
+    const connection = await createConnection();
+    try {
+        const [results] = await connection.query(
             `INSERT INTO CardCollection (cardName, cardType, cardSet, quantity, estValue, automated, magicId, imageUrl)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
@@ -86,17 +73,15 @@ function upsertRecord(record, cb) {
                 record.imageUrl,
                 priceUsd,
                 priceUsd
-            ],
-            (err, results) => {
-                if (err) {
-                    logger.error(err);
-                    return cb(err, null);
-                }
-                connection.end();
-                return cb(null, results);
-            }
+            ]
         );
-    });
+        return results;
+    } catch (err) {
+        logger.error(err);
+        throw err;
+    } finally {
+        await connection.end();
+    }
 }
 
 // Manual correction -- sets quantity to an exact value instead of adding to it. Errors if the
@@ -109,71 +94,55 @@ function upsertRecord(record, cb) {
 // value by later expressions in the same statement -- same rule that bit upsertRecord's
 // estValue expression. Verified against a real MySQL 8 instance: reversing this order silently
 // computes a no-op ratio instead of the intended rescale.
-function setQuantity(name, set, quantity, cb) {
-    const connection = createConnection();
-    connection.connect((err) => {
-        if (err) {
-            return cb(err, null);
-        }
-        connection.query(
+async function setQuantity(name, set, quantity) {
+    const connection = await createConnection();
+    try {
+        const [results] = await connection.query(
             `UPDATE CardCollection
              SET estValue = CASE WHEN quantity > 0 THEN ROUND((estValue / quantity) * ?, 4) ELSE estValue END,
                  quantity = ?
              WHERE cardName = ? AND cardSet = ?`,
-            [quantity, quantity, name, set],
-            (err, results) => {
-                if (err) {
-                    logger.error(err);
-                    return cb(err, null);
-                }
-                connection.end();
-                if (!results.affectedRows) {
-                    return cb(new Error(`No collection entry for "${name}" (${set})`), null);
-                }
-                return cb(null, results);
-            }
+            [quantity, quantity, name, set]
         );
-    });
+        if (!results.affectedRows) {
+            throw new Error(`No collection entry for "${name}" (${set})`);
+        }
+        return results;
+    } catch (err) {
+        if (!/No collection entry/.test(err.message)) {
+            logger.error(err);
+        }
+        throw err;
+    } finally {
+        await connection.end();
+    }
 }
 
 // Deletes a collection entry outright. Returns the removed row (or null if nothing matched)
 // so callers can report what was actually removed.
-function deleteRecord(name, set, cb) {
-    const connection = createConnection();
-    connection.connect((err) => {
-        if (err) {
-            return cb(err, null);
-        }
-        connection.query(
+async function deleteRecord(name, set) {
+    const connection = await createConnection();
+    try {
+        const [rows] = await connection.query(
             `SELECT cardName, cardType, cardSet, quantity, estValue, automated, magicId, imageUrl
              FROM CardCollection WHERE cardName = ? AND cardSet = ? LIMIT 1`,
-            [name, set],
-            (selectErr, rows) => {
-                if (selectErr) {
-                    logger.error(selectErr);
-                    connection.end();
-                    return cb(selectErr, null);
-                }
-                const existing = rows && rows[0];
-                if (!existing) {
-                    connection.end();
-                    return cb(null, null);
-                }
-                connection.query(
-                    "DELETE FROM CardCollection WHERE cardName = ? AND cardSet = ?",
-                    [name, set],
-                    (deleteErr) => {
-                        connection.end();
-                        if (deleteErr) {
-                            logger.error(deleteErr);
-                            return cb(deleteErr, null);
-                        }
-                        return cb(null, existing);
-                    }
-                );
-            }
+            [name, set]
         );
-    });
+        const existing = rows && rows[0];
+        if (!existing) {
+            return null;
+        }
+        await connection.query("DELETE FROM CardCollection WHERE cardName = ? AND cardSet = ?", [
+            name,
+            set
+        ]);
+        return existing;
+    } catch (err) {
+        logger.error(err);
+        throw err;
+    } finally {
+        await connection.end();
+    }
 }
 
 export { getQuantity, insertRecord, upsertRecord, setQuantity, deleteRecord };

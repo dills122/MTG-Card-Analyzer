@@ -22,16 +22,14 @@ describe("migrate::nedb-to-rds", () => {
 
     describe("migrateCollection", () => {
         it("migrates every local entry not already present on the target", async () => {
-            sandbox.stub(collectionStore, "getAll").callsFake((cb) => {
-                cb(null, [
-                    { cardName: "Pacifism", cardSet: "M20", quantity: 2, estValue: 5 },
-                    { cardName: "Llanowar Elves", cardSet: "M20", quantity: 1, estValue: 0.5 }
-                ]);
-            });
-            sandbox.stub(rds.collection, "getQuantity").callsFake((name, set, cb) => cb(null, 0));
+            sandbox.stub(collectionStore, "getAll").resolves([
+                { cardName: "Pacifism", cardSet: "M20", quantity: 2, estValue: 5 },
+                { cardName: "Llanowar Elves", cardSet: "M20", quantity: 1, estValue: 0.5 }
+            ]);
+            sandbox.stub(rds.collection, "getQuantity").resolves(0);
             const upsertStub = sandbox
                 .stub(rds.collection, "upsertRecord")
-                .callsFake((record, cb) => cb(null, { affectedRows: 1 }));
+                .resolves({ affectedRows: 1 });
 
             const result = await migrateCollection();
 
@@ -45,10 +43,10 @@ describe("migrate::nedb-to-rds", () => {
         });
 
         it("skips entries that already exist on the target (idempotent rerun)", async () => {
-            sandbox.stub(collectionStore, "getAll").callsFake((cb) => {
-                cb(null, [{ cardName: "Pacifism", cardSet: "M20", quantity: 2, estValue: 5 }]);
-            });
-            sandbox.stub(rds.collection, "getQuantity").callsFake((name, set, cb) => cb(null, 2));
+            sandbox
+                .stub(collectionStore, "getAll")
+                .resolves([{ cardName: "Pacifism", cardSet: "M20", quantity: 2, estValue: 5 }]);
+            sandbox.stub(rds.collection, "getQuantity").resolves(2);
             const upsertStub = sandbox.stub(rds.collection, "upsertRecord");
 
             const result = await migrateCollection();
@@ -59,13 +57,11 @@ describe("migrate::nedb-to-rds", () => {
         });
 
         it("--force re-migrates entries that already exist instead of skipping", async () => {
-            sandbox.stub(collectionStore, "getAll").callsFake((cb) => {
-                cb(null, [{ cardName: "Pacifism", cardSet: "M20", quantity: 2, estValue: 5 }]);
-            });
-            sandbox.stub(rds.collection, "getQuantity").callsFake((name, set, cb) => cb(null, 2));
-            const upsertStub = sandbox
-                .stub(rds.collection, "upsertRecord")
-                .callsFake((record, cb) => cb(null, {}));
+            sandbox
+                .stub(collectionStore, "getAll")
+                .resolves([{ cardName: "Pacifism", cardSet: "M20", quantity: 2, estValue: 5 }]);
+            sandbox.stub(rds.collection, "getQuantity").resolves(2);
+            const upsertStub = sandbox.stub(rds.collection, "upsertRecord").resolves({});
 
             const result = await migrateCollection({ force: true });
 
@@ -75,10 +71,10 @@ describe("migrate::nedb-to-rds", () => {
         });
 
         it("--dry-run reports what would migrate without writing", async () => {
-            sandbox.stub(collectionStore, "getAll").callsFake((cb) => {
-                cb(null, [{ cardName: "Pacifism", cardSet: "M20", quantity: 2, estValue: 5 }]);
-            });
-            sandbox.stub(rds.collection, "getQuantity").callsFake((name, set, cb) => cb(null, 0));
+            sandbox
+                .stub(collectionStore, "getAll")
+                .resolves([{ cardName: "Pacifism", cardSet: "M20", quantity: 2, estValue: 5 }]);
+            sandbox.stub(rds.collection, "getQuantity").resolves(0);
             const upsertStub = sandbox.stub(rds.collection, "upsertRecord");
 
             const result = await migrateCollection({ dryRun: true });
@@ -88,19 +84,17 @@ describe("migrate::nedb-to-rds", () => {
         });
 
         it("collects per-entry errors instead of aborting the whole batch", async () => {
-            sandbox.stub(collectionStore, "getAll").callsFake((cb) => {
-                cb(null, [
-                    { cardName: "Pacifism", cardSet: "M20", quantity: 2 },
-                    { cardName: "Llanowar Elves", cardSet: "M20", quantity: 1 }
-                ]);
-            });
-            sandbox.stub(rds.collection, "getQuantity").callsFake((name, set, cb) => cb(null, 0));
+            sandbox.stub(collectionStore, "getAll").resolves([
+                { cardName: "Pacifism", cardSet: "M20", quantity: 2 },
+                { cardName: "Llanowar Elves", cardSet: "M20", quantity: 1 }
+            ]);
+            sandbox.stub(rds.collection, "getQuantity").resolves(0);
             sandbox
                 .stub(rds.collection, "upsertRecord")
                 .onFirstCall()
-                .callsFake((record, cb) => cb(new Error("connection lost")))
+                .rejects(new Error("connection lost"))
                 .onSecondCall()
-                .callsFake((record, cb) => cb(null, {}));
+                .resolves({});
 
             const result = await migrateCollection();
 
@@ -112,12 +106,10 @@ describe("migrate::nedb-to-rds", () => {
 
     describe("migrateNeedsAttention", () => {
         it("migrates every local entry", async () => {
-            sandbox.stub(needsAttentionStore, "getAll").callsFake((cb) => {
-                cb(null, [{ cardName: "Fake Card", extractedText: "clean", possibleSets: "M20" }]);
-            });
-            const insertStub = sandbox
-                .stub(rds.needsAttention, "insertRecord")
-                .callsFake((record, cb) => cb(null, {}));
+            sandbox
+                .stub(needsAttentionStore, "getAll")
+                .resolves([{ cardName: "Fake Card", extractedText: "clean", possibleSets: "M20" }]);
+            const insertStub = sandbox.stub(rds.needsAttention, "insertRecord").resolves({});
 
             const result = await migrateNeedsAttention();
 
@@ -126,14 +118,12 @@ describe("migrate::nedb-to-rds", () => {
         });
 
         it("treats a unique-constraint hit as an idempotent skip, not an error", async () => {
-            sandbox.stub(needsAttentionStore, "getAll").callsFake((cb) => {
-                cb(null, [{ cardName: "Fake Card", extractedText: "clean", possibleSets: "M20" }]);
-            });
+            sandbox
+                .stub(needsAttentionStore, "getAll")
+                .resolves([{ cardName: "Fake Card", extractedText: "clean", possibleSets: "M20" }]);
             const dupError = new Error("Duplicate entry");
             dupError.code = "ER_DUP_ENTRY";
-            sandbox
-                .stub(rds.needsAttention, "insertRecord")
-                .callsFake((record, cb) => cb(dupError));
+            sandbox.stub(rds.needsAttention, "insertRecord").rejects(dupError);
 
             const result = await migrateNeedsAttention();
 
@@ -143,12 +133,8 @@ describe("migrate::nedb-to-rds", () => {
         });
 
         it("treats a non-duplicate error as a real failure", async () => {
-            sandbox.stub(needsAttentionStore, "getAll").callsFake((cb) => {
-                cb(null, [{ cardName: "Fake Card" }]);
-            });
-            sandbox
-                .stub(rds.needsAttention, "insertRecord")
-                .callsFake((record, cb) => cb(new Error("connection lost")));
+            sandbox.stub(needsAttentionStore, "getAll").resolves([{ cardName: "Fake Card" }]);
+            sandbox.stub(rds.needsAttention, "insertRecord").rejects(new Error("connection lost"));
 
             const result = await migrateNeedsAttention();
 
@@ -157,9 +143,7 @@ describe("migrate::nedb-to-rds", () => {
         });
 
         it("--dry-run does not write", async () => {
-            sandbox.stub(needsAttentionStore, "getAll").callsFake((cb) => {
-                cb(null, [{ cardName: "Fake Card" }]);
-            });
+            sandbox.stub(needsAttentionStore, "getAll").resolves([{ cardName: "Fake Card" }]);
             const insertStub = sandbox.stub(rds.needsAttention, "insertRecord");
 
             const result = await migrateNeedsAttention({ dryRun: true });
@@ -171,8 +155,8 @@ describe("migrate::nedb-to-rds", () => {
 
     describe("migrateNedbToRds", () => {
         it("runs both collection and needs-attention migration and returns both results", async () => {
-            sandbox.stub(collectionStore, "getAll").callsFake((cb) => cb(null, []));
-            sandbox.stub(needsAttentionStore, "getAll").callsFake((cb) => cb(null, []));
+            sandbox.stub(collectionStore, "getAll").resolves([]);
+            sandbox.stub(needsAttentionStore, "getAll").resolves([]);
 
             const result = await migrateNedbToRds();
 

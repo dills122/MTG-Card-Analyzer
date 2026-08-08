@@ -8,20 +8,7 @@ const { GetCardNames } = scryfallApi;
 const dependencies = {
     GetCardNames,
     insertName(name) {
-        return new Promise((resolve, reject) => {
-            db.insert(
-                {
-                    name
-                },
-                (error) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve();
-                }
-            );
-        });
+        return db.insert({ name });
     }
 };
 

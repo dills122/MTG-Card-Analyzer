@@ -1,4 +1,3 @@
-import { promisify } from "node:util";
 import storageFactory from "./create-storage.mjs";
 import { getConfig } from "../config/index.mjs";
 import { db as namesDb } from "../db-local/db.mjs";
@@ -36,7 +35,7 @@ function cacheEnabled() {
 }
 
 async function getAllNames() {
-    const docs = await promisify(namesDb.find)({});
+    const docs = await namesDb.find({});
     return docs || [];
 }
 
@@ -44,7 +43,7 @@ async function getHashesByCardName(cardName) {
     if (!cacheEnabled()) {
         return [];
     }
-    const docs = await promisify(cardHashCache.getHashes)(cardName);
+    const docs = await cardHashCache.getHashes(cardName);
     return docs || [];
 }
 
@@ -52,14 +51,18 @@ function upsertHash(record) {
     if (!cacheEnabled()) {
         return;
     }
-    cardHashCache.insertEntity(record);
+    // Fire-and-forget, same as before -- callers don't wait on the cache write, and a
+    // failure here shouldn't ever surface as an unhandled rejection.
+    cardHashCache.insertEntity(record).catch(() => {});
 }
 
 function logOperation(entry) {
     if (!cacheEnabled()) {
         return;
     }
-    opsLog.logOperation(entry);
+    // Fire-and-forget, same as before -- callers don't wait on the log write, and a failure
+    // here shouldn't ever surface as an unhandled rejection.
+    opsLog.logOperation(entry).catch(() => {});
 }
 
 const storage = {
@@ -78,8 +81,8 @@ const storage = {
     },
     log: {
         record: logOperation,
-        dump: promisify(opsLog.getOperations),
-        stats: promisify(opsLog.getStats)
+        dump: opsLog.getOperations,
+        stats: opsLog.getStats
     },
     // Persistence tier -- STORAGE_ADAPTER-selected (nedb | rds).
     collection: {

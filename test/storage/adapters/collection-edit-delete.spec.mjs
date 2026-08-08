@@ -24,7 +24,7 @@ describe("storage/adapters::collection edit/delete", () => {
         it("collection.setQuantity delegates to collectionStore.setQuantity", async () => {
             const stub = sandbox
                 .stub(collectionStore, "setQuantity")
-                .callsFake((name, set, qty, cb) => cb(null, { quantity: qty }));
+                .callsFake((name, set, qty) => Promise.resolve({ quantity: qty }));
 
             const result = await adapter.collection.setQuantity("Pacifism", "M20", 5);
 
@@ -33,9 +33,7 @@ describe("storage/adapters::collection edit/delete", () => {
         });
 
         it("collection.setQuantity rejects on error", async () => {
-            sandbox
-                .stub(collectionStore, "setQuantity")
-                .callsFake((name, set, qty, cb) => cb(new Error("not found")));
+            sandbox.stub(collectionStore, "setQuantity").rejects(new Error("not found"));
 
             let caught;
             try {
@@ -49,7 +47,7 @@ describe("storage/adapters::collection edit/delete", () => {
         it("collection.remove delegates to collectionStore.remove", async () => {
             const stub = sandbox
                 .stub(collectionStore, "remove")
-                .callsFake((name, set, cb) => cb(null, { cardName: name }));
+                .callsFake((name) => Promise.resolve({ cardName: name }));
 
             const result = await adapter.collection.remove("Pacifism", "M20");
 
@@ -62,9 +60,7 @@ describe("storage/adapters::collection edit/delete", () => {
         const adapter = createRdsAdapter();
 
         it("collection.setQuantity delegates to rds.collection.setQuantity", async () => {
-            const stub = sandbox
-                .stub(rds.collection, "setQuantity")
-                .callsFake((name, set, qty, cb) => cb(null, { affectedRows: 1 }));
+            const stub = sandbox.stub(rds.collection, "setQuantity").resolves({ affectedRows: 1 });
 
             const result = await adapter.collection.setQuantity("Pacifism", "M20", 5);
 
@@ -73,9 +69,7 @@ describe("storage/adapters::collection edit/delete", () => {
         });
 
         it("collection.setQuantity rejects on error", async () => {
-            sandbox
-                .stub(rds.collection, "setQuantity")
-                .callsFake((name, set, qty, cb) => cb(new Error("not found")));
+            sandbox.stub(rds.collection, "setQuantity").rejects(new Error("not found"));
 
             let caught;
             try {
@@ -89,7 +83,7 @@ describe("storage/adapters::collection edit/delete", () => {
         it("collection.remove delegates to rds.collection.deleteRecord", async () => {
             const stub = sandbox
                 .stub(rds.collection, "deleteRecord")
-                .callsFake((name, set, cb) => cb(null, { cardName: name }));
+                .callsFake((name) => Promise.resolve({ cardName: name }));
 
             const result = await adapter.collection.remove("Pacifism", "M20");
 
