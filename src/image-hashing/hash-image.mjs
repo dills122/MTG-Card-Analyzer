@@ -12,7 +12,7 @@ const logger = log.create({
 });
 
 function HashImage(imgUrl, cb) {
-    logger.info(`hash-image::hash start source="${imgUrl}"`);
+    logger.info(`Hashing image: ${formatImageSource(imgUrl)}`);
     dependencies.imageHash(imgUrl, 16, true, (error, data) => {
         if (error) {
             return cb(error);
@@ -22,9 +22,6 @@ function HashImage(imgUrl, cb) {
 }
 
 function CompareHash(hashOne, hashTwo) {
-    logger.info(
-        `hash-image::compare start left=${previewHash(hashOne)} right=${previewHash(hashTwo)}`
-    );
     const HashLength = hashOne.length;
     let twoBitMatches = 0;
     let fourBitMatches = 0;
@@ -45,18 +42,31 @@ function CompareHash(hashOne, hashTwo) {
         fourBitMatches: _.round(fourBitMatches / (HashLength / 4), 2),
         stringCompare: _.round(stringSimilarity.compareTwoStrings(hashOne, hashTwo), 2)
     };
-    logger.info("hash-image::compare result", comparisonResults);
+    logger.info(
+        `Hash similarity: 2-bit ${toPercent(comparisonResults.twoBitMatches)}, 4-bit ${toPercent(comparisonResults.fourBitMatches)}, text ${toPercent(comparisonResults.stringCompare)}`
+    );
     return comparisonResults;
 }
 
-function previewHash(hash = "") {
-    if (!hash) {
-        return "empty";
+function formatImageSource(source) {
+    const value = String(source || "");
+    if (!value) {
+        return "unknown source";
     }
-    if (hash.length <= 16) {
-        return hash;
+    if (/^https?:\/\//i.test(value)) {
+        try {
+            const url = new URL(value);
+            const filename = url.pathname.split("/").filter(Boolean).pop() || "image";
+            return `${url.hostname}/${filename}`;
+        } catch {
+            return "invalid URL";
+        }
     }
-    return `${hash.slice(0, 8)}...${hash.slice(-8)}(len=${hash.length})`;
+    return value.split(/[\\/]/).filter(Boolean).pop() || "unknown source";
+}
+
+function toPercent(score) {
+    return `${Math.round(Number(score) * 100)}%`;
 }
 
 export { CompareHash, HashImage };

@@ -268,7 +268,7 @@ class ProcessorClass {
     }
 
     async CreateNeedsAttentionRecordAsync(record) {
-        this.logger.info("Creating Needs Attention Record");
+        this.logger.info(`Saving "${record.name}" for manual review`);
         const name64Image = await new Promise((resolve, reject) => {
             dependencies.Base64(this.nameExtractionImagePath, (err, encodedImage) => {
                 if (err) {
@@ -297,7 +297,7 @@ class ProcessorClass {
     }
 
     async CreateCollectionsRecordAsync(record) {
-        this.logger.info("Creating Collections Record");
+        this.logger.info(`Saving "${record.name}" to collection`);
         const set = record.sets[0];
         let additionalInfo;
         try {
@@ -330,7 +330,6 @@ class ProcessorClass {
             priceUsd: Number(additionalInfo.prices.usd) || 0,
             cardType: additionalInfo.type_line
         });
-        this.logger.info("Preparing to insert record");
         await collectionsModel.Insert();
     }
 }

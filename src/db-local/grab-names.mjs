@@ -1,7 +1,7 @@
 import { db } from "./db.mjs";
 
-function GetBulkNames(cb) {
-    db.find({}, (err, docs) => {
+function GetBulkNames(cb, store = db) {
+    store.find({}, (err, docs) => {
         if (err) {
             return cb(err);
         }

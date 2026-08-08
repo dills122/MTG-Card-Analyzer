@@ -21,7 +21,7 @@ async function StringfyImagesNDAtn(imagePaths) {
             typeImage,
             nameImage
         };
-        logger.info(`base64-img::StringfyImagesNDAtn : ${Object.keys(base64Images)}`);
+        logger.info(`Encoding image snippets: ${Object.keys(base64Images).join(", ")}`);
         return base64Images;
     } catch (error) {
         logger.error(error);
