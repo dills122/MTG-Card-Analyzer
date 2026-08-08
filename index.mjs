@@ -12,6 +12,7 @@ import {
 import storage from "./src/storage/index.mjs";
 import migrate from "./src/migrate/nedb-to-rds.mjs";
 import diagnostics from "./src/diagnostics/index.mjs";
+import { textExtraction } from "./src/image-analysis/index.mjs";
 
 const { Processor } = processorModule;
 const KNOWN_COMMANDS = ["scan", "log", "migrate", "collection", "diagnostics", "config"];
@@ -474,6 +475,7 @@ export async function run(options = {}) {
         commanderFactory = buildCli,
         fsAccess = access,
         processorFactory = Processor.create,
+        ocrShutdown = textExtraction.ShutDown,
         migrateFn = migrate.migrateNedbToRds,
         diagnosticsFn = diagnostics.gatherDiagnostics,
         exit = process.exit,
@@ -567,13 +569,21 @@ export async function run(options = {}) {
         isPretty: config.prettyLogging
     });
 
+    let exitCode;
     try {
         await executeProcessor(processor);
-        exit(0);
+        exitCode = 0;
     } catch (err) {
         logger.log(err);
-        exit(1);
+        exitCode = 1;
     }
+    try {
+        await ocrShutdown();
+    } catch (err) {
+        logger.log(err);
+        exitCode = 1;
+    }
+    exit(exitCode);
 }
 
 export { buildCli };

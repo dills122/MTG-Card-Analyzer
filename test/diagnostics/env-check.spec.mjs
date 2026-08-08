@@ -1,5 +1,8 @@
 import { assert } from "chai";
-import { runEnvironmentCheck } from "../../src/diagnostics/env-check.mjs";
+import {
+    findUnsupportedOcrParameters,
+    runEnvironmentCheck
+} from "../../src/diagnostics/env-check.mjs";
 
 // Exercises the real local environment (same checks scripts/verify-env.mjs runs) rather than
 // mocking every fs/DB dependency -- the point of this module is "is the environment actually
@@ -24,6 +27,26 @@ describe("diagnostics::env-check", () => {
         const nodeCheck = result.checks.find((check) => check.label.startsWith("Node "));
         assert.exists(nodeCheck);
         assert.equal(nodeCheck.status, "pass", "this test suite itself requires Node >=20");
+    });
+
+    it("checks the patched English OCR model used at runtime", async () => {
+        const result = await runEnvironmentCheck();
+        const modelCheck = result.checks.find((check) =>
+            check.label.startsWith("English OCR model")
+        );
+
+        assert.exists(modelCheck);
+        assert.equal(modelCheck.status, "pass");
+        assert.include(modelCheck.label, "patched eng.traineddata");
+    });
+
+    it("detects the obsolete parameters that cause Tesseract warning noise", () => {
+        const modelConfig = Buffer.from("enable_new_segsearch 0\nsave_raw_choices 1\n");
+
+        assert.deepEqual(findUnsupportedOcrParameters(modelConfig), [
+            "enable_new_segsearch",
+            "save_raw_choices"
+        ]);
     });
 
     it("reports the resolved config (storageAdapter/localCacheEnabled/collectionEnabled/debugLogging/queryingEnabled/prettyLogging)", async () => {

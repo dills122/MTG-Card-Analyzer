@@ -44,7 +44,7 @@ describe("CLI::index.mjs", () => {
         });
     });
 
-    async function runCli(cliOverrides = {}, accessImpl) {
+    async function runCli(cliOverrides = {}, accessImpl, runOverrides = {}) {
         const fakeCli = {
             filePath: "",
             flags: {},
@@ -65,7 +65,8 @@ describe("CLI::index.mjs", () => {
             fsAccess: fsAccessStub,
             processorFactory: processorCreateStub,
             exit: processExitStub,
-            logger: { log: consoleLogStub }
+            logger: { log: consoleLogStub },
+            ...runOverrides
         });
 
         return { commanderFactory, executeStub, processorCreateStub, fsAccessStub, fakeCli };
@@ -98,6 +99,24 @@ describe("CLI::index.mjs", () => {
         });
         assert.isTrue(executeStub.calledOnce);
         assert.isTrue(processExitStub.calledWith(0));
+    });
+
+    it("shuts down the OCR worker after a scan completes", async () => {
+        const ocrShutdown = sandbox.stub().resolves();
+
+        await runCli({ filePath: "./some-path.jpg", flags: {} }, undefined, { ocrShutdown });
+
+        assert.isTrue(ocrShutdown.calledOnce);
+    });
+
+    it("exits with an error when the OCR worker cannot shut down cleanly", async () => {
+        const expectedError = new Error("OCR worker shutdown failed");
+        const ocrShutdown = sandbox.stub().rejects(expectedError);
+
+        await runCli({ filePath: "./some-path.jpg", flags: {} }, undefined, { ocrShutdown });
+
+        assert.isTrue(consoleLogStub.calledWith(expectedError));
+        assert.isTrue(processExitStub.calledWith(1));
     });
 
     it("--query / --no-pretty (tri-state, explicitly passed) override the defaults", async () => {

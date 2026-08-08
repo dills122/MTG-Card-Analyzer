@@ -1,15 +1,18 @@
 import { cleanString } from "../util.mjs";
 import log from "../logger/log.mjs";
 import Tesseract from "tesseract.js";
+import { DEFAULT_OCR_LANGUAGE_PATH } from "./ocr-model.mjs";
 
 const logger = log.create({
     isPretty: true
 });
+let defaultSessionPromise;
+let defaultSessionOptionsKey;
 
 /**
- * Run OCR on one or more preprocessed regions with field-aware Tesseract config.
+ * Run OCR on one or more preprocessed regions and select the strongest normalized result.
  * @param {Buffer|string|Array} imgBuffer image buffer, path, or prepared variants
- * @param {"name"|"type"|"art"|"flavor"} type snippet type to inform PSM/whitelist
+ * @param {"name"|"type"|"art"|"flavor"} type snippet type to inform normalization
  * @param {(err: Error|null, result: {cleanText: string, dirtyText: string}|null) => void} cb callback
  * @param {{logger?: {info: Function, error: Function}, session?: {recognize: Function}, cacheMethod?: string, langPath?: string, gzip?: boolean}} options runtime options
  */
@@ -54,41 +57,23 @@ function normalizeCandidates(input, type) {
     if (Array.isArray(input)) {
         return input.map((item) => ({
             buffer: item.buffer || item,
-            region: item.region || type,
-            psm: resolvePsm(item.psm, type)
+            region: item.region || type
         }));
     }
     return [
         {
             buffer: input,
-            region: type,
-            psm: inferPsm(type)
+            region: type
         }
     ];
 }
 
 async function runCandidate(candidate, type, scanLogger, options = {}) {
-    const ocrConfig = getTesseractConfig(type, candidate.psm);
-    const onProgress = buildProgressLogger(candidate.region, scanLogger);
-    const result = options.session
-        ? await options.session.recognize(candidate.buffer, {
-              region: candidate.region,
-              logger: scanLogger
-          })
-        : await Tesseract.recognize(candidate.buffer, "eng", {
-              ...ocrConfig,
-              // Tesseract v3 otherwise rewrites ./eng.traineddata for every worker. Multiple OCR
-              // variants can race and truncate the bundled model, so treat the local cache as input.
-              cacheMethod: "readOnly",
-              ...(options.cacheMethod ? { cacheMethod: options.cacheMethod } : {}),
-              ...(options.langPath ? { langPath: options.langPath } : {}),
-              ...(typeof options.gzip === "boolean" ? { gzip: options.gzip } : {}),
-              logger: (message) => {
-                  if (message.status === "recognizing text") {
-                      onProgress(message.progress);
-                  }
-              }
-          });
+    const session = options.session || (await getDefaultOcrSession(options));
+    const result = await session.recognize(candidate.buffer, {
+        region: candidate.region,
+        logger: scanLogger
+    });
     const extractedText = (result && result.data && result.data.text) || result.text || "";
     const cleanedString = normalizeOcrText(extractedText, type);
     const confidence = (result && result.data && result.data.confidence) || 0;
@@ -104,31 +89,29 @@ async function runCandidate(candidate, type, scanLogger, options = {}) {
     };
 }
 
-function getTesseractConfig(type, psm) {
+function resolveWorkerOptions(options = {}) {
     return {
-        tessedit_char_whitelist:
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,'- ",
-        preserve_interword_spaces: "1",
-        tessedit_pageseg_mode: resolvePsm(psm, type),
-        oem: 1
+        cacheMethod: options.cacheMethod || "none",
+        langPath: options.langPath || DEFAULT_OCR_LANGUAGE_PATH,
+        gzip: typeof options.gzip === "boolean" ? options.gzip : false
     };
 }
 
-function inferPsm(type) {
-    if (type === "name" || type === "type") {
-        return 7; // single line of text
+async function getDefaultOcrSession(options = {}) {
+    const workerOptions = resolveWorkerOptions(options);
+    const nextOptionsKey = JSON.stringify(workerOptions);
+    if (defaultSessionPromise && defaultSessionOptionsKey !== nextOptionsKey) {
+        await ShutDown();
     }
-    return 11; // sparse text as a safer fallback
-}
-
-function resolvePsm(psm, type) {
-    if (typeof psm === "number") {
-        return psm;
+    if (!defaultSessionPromise) {
+        defaultSessionOptionsKey = nextOptionsKey;
+        defaultSessionPromise = createOcrSession(workerOptions).catch((error) => {
+            defaultSessionPromise = undefined;
+            defaultSessionOptionsKey = undefined;
+            throw error;
+        });
     }
-    if (psm === "line") return 7;
-    if (psm === "block") return 6;
-    if (psm === "sparse") return 11;
-    return inferPsm(type);
+    return defaultSessionPromise;
 }
 
 function normalizeOcrText(text, type) {
@@ -288,27 +271,29 @@ function previewText(text) {
     return `${normalized.slice(0, max - 3)}...`;
 }
 
-function ShutDown() {
-    Tesseract.terminate();
+async function ShutDown() {
+    const pendingSession = defaultSessionPromise;
+    defaultSessionPromise = undefined;
+    defaultSessionOptionsKey = undefined;
+    if (pendingSession) {
+        const session = await pendingSession;
+        await session.terminate();
+    }
 }
 
 async function createOcrSession(options = {}) {
     let progressLogger = () => {};
     const worker = Tesseract.createWorker({
-        // Match ScanImage's one-shot defaults while allowing regression runs to disable caching.
-        cacheMethod: "readOnly",
-        ...(options.cacheMethod ? { cacheMethod: options.cacheMethod } : {}),
-        ...(options.langPath ? { langPath: options.langPath } : {}),
-        ...(typeof options.gzip === "boolean" ? { gzip: options.gzip } : {}),
+        ...resolveWorkerOptions(options),
         logger: (message) => progressLogger(message)
     });
     try {
         await worker.load();
         await worker.loadLanguage("eng");
         await worker.initialize("eng");
-    } catch (err) {
+    } catch (error) {
         await worker.terminate().catch(() => {});
-        throw err;
+        throw error;
     }
 
     let terminated = false;
