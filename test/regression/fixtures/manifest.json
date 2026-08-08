@@ -114,7 +114,7 @@
             "apiUrl": "https://scryfall.com/card/fem/40c/mindstab-thrull"
         },
         {
-            "enabled": false,
+            "enabled": true,
             "name": "Queen Marchesa",
             "set": "PLST",
             "setName": "The List",
@@ -146,7 +146,7 @@
             "apiUrl": "https://scryfall.com/card/bbd/41/spellseeker"
         },
         {
-            "enabled": false,
+            "enabled": true,
             "name": "Thought Reflection",
             "set": "SHM",
             "setName": "Shadowmoor",
@@ -157,7 +157,7 @@
             "apiUrl": "https://scryfall.com/card/shm/53/thought-reflection"
         },
         {
-            "enabled": false,
+            "enabled": true,
             "name": "Llanowar Elves",
             "set": "M12",
             "setName": "Magic 2012",
@@ -602,7 +602,7 @@
             "id": "adanto-vanguard-pending",
             "image": "../../../test-images/AdantoVanguard.png",
             "quality": "clean-scan",
-            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "notes": "Disabled: 265x370 source is below the 360x500 preprocessing minimum",
             "expected": {
                 "name": "Adanto Vanguard",
                 "set": "XLN",
@@ -621,7 +621,7 @@
             "id": "angel-of-sanctions-pending",
             "image": "../../../test-images/AngelOfSanctions.png",
             "quality": "clean-scan",
-            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "notes": "Disabled: 265x370 source is below the 360x500 preprocessing minimum",
             "expected": {
                 "name": "Angel of Sanctions",
                 "set": "AKH",
@@ -659,7 +659,7 @@
             "id": "avaricious-dragon-pending",
             "image": "../../../test-images/AvariciousDragon.jpg",
             "quality": "clean-scan",
-            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "notes": "Disabled: 265x370 source is below the 360x500 preprocessing minimum",
             "expected": {
                 "name": "Avaricious Dragon",
                 "set": "ORI",
@@ -678,7 +678,7 @@
             "id": "meletis-charlatan-pending",
             "image": "../../../test-images/MeletisCharlatan.jpg",
             "quality": "clean-scan",
-            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "notes": "Disabled: reviewed 360x500 source produced empty OCR in a cold-cache regression run",
             "expected": {
                 "name": "Meletis Charlatan",
                 "set": "THS",
@@ -712,11 +712,11 @@
             }
         },
         {
-            "enabled": false,
-            "id": "queen-marchesa-pending",
+            "enabled": true,
+            "id": "queen-marchesa-clean-scan",
             "image": "../../../test-images/QueenMarchesa.png",
             "quality": "clean-scan",
-            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "notes": "Existing clean scan reviewed and enabled for OCR regression coverage",
             "expected": {
                 "name": "Queen Marchesa",
                 "set": "PLST",
@@ -754,7 +754,7 @@
             "id": "spellseeker-pending",
             "image": "../../../test-images/Spellseeker.png",
             "quality": "clean-scan",
-            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "notes": "Disabled: 265x370 source is below the 360x500 preprocessing minimum",
             "expected": {
                 "name": "Spellseeker",
                 "set": "BBD",
@@ -769,11 +769,11 @@
             }
         },
         {
-            "enabled": false,
-            "id": "thought-reflection-pending",
+            "enabled": true,
+            "id": "thought-reflection-clean-scan",
             "image": "../../../test-images/ThoughtReflection.jpg",
             "quality": "clean-scan",
-            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "notes": "Existing clean scan reviewed and enabled for OCR regression coverage",
             "expected": {
                 "name": "Thought Reflection",
                 "set": "SHM",
@@ -788,11 +788,11 @@
             }
         },
         {
-            "enabled": false,
-            "id": "llanowar-elves-pending",
+            "enabled": true,
+            "id": "llanowar-elves-clean-scan",
             "image": "../../../test-images/llanowarElves.jpg",
             "quality": "clean-scan",
-            "notes": "Scryfall metadata populated from apiUrl; enable and classify when ready",
+            "notes": "Existing clean scan reviewed and enabled for OCR regression coverage",
             "expected": {
                 "name": "Llanowar Elves",
                 "set": "M12",
