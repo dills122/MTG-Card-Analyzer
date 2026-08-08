@@ -55,6 +55,21 @@ Cleaned Extracted Text: `EArtifactCreatureAngel`
 
 More examples are available [here](https://github.com/dills122/mtg-card-analyzer/tree/master/test-images)
 
+## Test Data Contribution Site
+
+The repository includes a project site and review-first fixture uploader under `site/`. Contributors
+can label an exact card printing through Scryfall autocomplete or enter the complete metadata
+manually. Cloudflare Workers serves the site and API, D1 stores pending metadata, and a private R2
+bucket stores original images.
+
+```bash
+pnpm site:db:migrate:local
+pnpm site:dev
+```
+
+See [docs/test-data-portal.md](docs/test-data-portal.md) for the architecture, local workflow,
+Cloudflare provisioning, Turnstile setup, deployment, and review process.
+
 ## Getting Up And Running
 
 ### Prerequisites

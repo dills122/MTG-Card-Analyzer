@@ -49,6 +49,7 @@ typings/
 .turbo/
 .vite/
 .vitest/
+.wrangler/
 .next/
 .nuxt/
 .svelte-kit/
@@ -67,6 +68,7 @@ temp/
 .env.*
 !.env.example
 !.env.*.example
+site/.dev.vars
 secure.config.*
 !secure.config.template.*
 

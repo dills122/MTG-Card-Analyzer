@@ -1,0 +1,28 @@
+{
+    "$schema": "../node_modules/wrangler/config-schema.json",
+    "name": "mtg-card-analyzer-site",
+    "main": "./worker/index.mjs",
+    "compatibility_date": "2026-08-07",
+    "assets": {
+        "directory": "./public",
+        "binding": "ASSETS",
+        "run_worker_first": ["/api/*"]
+    },
+    "d1_databases": [
+        {
+            "binding": "SUBMISSIONS_DB",
+            "database_name": "mtg-card-analyzer-submissions",
+            "database_id": "00000000-0000-0000-0000-000000000000",
+            "migrations_dir": "./migrations"
+        }
+    ],
+    "r2_buckets": [
+        {
+            "binding": "SUBMISSION_IMAGES",
+            "bucket_name": "mtg-card-analyzer-submissions"
+        }
+    ],
+    "vars": {
+        "TURNSTILE_SITE_KEY": ""
+    }
+}
