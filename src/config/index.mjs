@@ -16,7 +16,17 @@ const DEFAULTS = Object.freeze({
     // explicitly turned off -- see --no-local-cache / LOCAL_CACHE_ENABLED. This is distinct
     // from storageAdapter, which selects the backend for *real* persistence (collection,
     // needsAttention).
-    localCacheEnabled: true
+    localCacheEnabled: true,
+    // Collection/needs-attention tracking is an opt-in module, off by default -- not
+    // everyone scanning cards wants this tool keeping an inventory. `scan --query` only
+    // writes collection/needs-attention records when this is on; explicitly invoking
+    // `collection update`/`remove` or `migrate` doesn't need it re-passed, since naming
+    // those commands is itself the opt-in for that invocation.
+    collectionEnabled: false,
+    // Captures extra detail in the ops log per scan (full match candidates/confidence, keeps
+    // preprocessing temp images instead of cleaning them up) and includes it in `diagnostics`.
+    // Off by default -- meant for troubleshooting, not routine use.
+    debugLogging: false
 });
 
 const KNOWN_STORAGE_ADAPTERS = ["nedb", "rds"];
@@ -78,7 +88,9 @@ function readEnvConfig() {
         storageAdapter: process.env.STORAGE_ADAPTER,
         cardNamesDbPath: process.env.CARD_NAMES_DB_PATH,
         cardHashDbPath: process.env.CARD_HASH_DB_PATH,
-        localCacheEnabled: parseBoolean(process.env.LOCAL_CACHE_ENABLED)
+        localCacheEnabled: parseBoolean(process.env.LOCAL_CACHE_ENABLED),
+        collectionEnabled: parseBoolean(process.env.COLLECTION_ENABLED),
+        debugLogging: parseBoolean(process.env.DEBUG_LOGGING)
     });
 }
 

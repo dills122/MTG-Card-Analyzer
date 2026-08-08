@@ -186,7 +186,8 @@ describe("Integration::", () => {
     describe("Processor::", () => {
         it("Should execute happy path for a collection record", (done) => {
             let processorInstance = Processor.create({
-                filePath: FAKE_PATH
+                filePath: FAKE_PATH,
+                collectionEnabled: true
             });
             processorInstance.execute((err) => {
                 assert.isTrue(stubs.ImageProcessorCreateStub.calledOnce);
@@ -228,7 +229,8 @@ describe("Integration::", () => {
                 .callsArgWith(0, null, [COLLECTION_NAME, COLLECTION_NAME_TWO]); //Empty right now and will have to be a multi call oen since in async.each
 
             let processorInstance = Processor.create({
-                filePath: FAKE_PATH
+                filePath: FAKE_PATH,
+                collectionEnabled: true
             });
             processorInstance.execute((err) => {
                 assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
@@ -269,13 +271,33 @@ describe("Integration::", () => {
 
         it("Should support promise execution without callback", async () => {
             let processorInstance = Processor.create({
-                filePath: FAKE_PATH
+                filePath: FAKE_PATH,
+                collectionEnabled: true
             });
             await processorInstance.execute();
             assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
             assert.isTrue(stubs.ImageProcessorExtractStub.calledOnce);
             assert.isTrue(stubs.MatchProcessorExecuteStub.calledOnce);
             assert.isTrue(stubs.CollectionInsertStub.calledOnce);
+        });
+
+        it("skips collection persistence when --query is on but the module is disabled", async () => {
+            const consoleLogStub = sandbox.stub(console, "log");
+            let processorInstance = Processor.create({
+                filePath: FAKE_PATH,
+                queryingEnabled: true,
+                collectionEnabled: false
+            });
+
+            await processorInstance.execute();
+
+            assert.equal(processorInstance.decision, "module-disabled");
+            assert.isFalse(
+                stubs.CollectionInsertStub.called,
+                "must not persist when the module is off, even with --query"
+            );
+            assert.isFalse(stubs.GetAdditionalCardInfoStub.called);
+            assert.isTrue(consoleLogStub.called, "still prints results, same as dry-run");
         });
 
         it("Should reject promise execution on matching errors", async () => {

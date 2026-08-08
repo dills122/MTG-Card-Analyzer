@@ -40,6 +40,11 @@ function buildCli(argv) {
             "--no-local-cache",
             "Disable the local nedb cache (hash cache + ops log; names dictionary is unaffected)"
         )
+        .option(
+            "--enable-collection",
+            "Enable the opt-in collection/needs-attention tracking module for this run (off by default; --query alone is not enough)",
+            false
+        )
         .action((filePath, options, command) => {
             parsed.command = "scan";
             parsed.filePath = filePath;
@@ -133,6 +138,7 @@ Examples:
   $ scan ./img-path --storage-adapter rds
   $ scan ./img-path --card-names-db ./data --config ./mtg.config.json
   $ scan ./img-path --no-local-cache
+  $ scan ./img-path --query --enable-collection
   $ log dump --limit 20
   $ log stats
   $ migrate --to rds --dry-run
@@ -177,7 +183,9 @@ async function executeProcessor(processor) {
 
 // Applies CLI-flag config overrides and bridges them into process.env so the rest of the
 // pipeline -- which resolves config lazily on first DB use -- picks them up. Also validates
-// early (bad --storage-adapter fails fast here instead of deep in the pipeline).
+// early (bad --storage-adapter fails fast here instead of deep in the pipeline). Returns the
+// resolved config on success (callers that need a value, like collectionEnabled, don't have
+// to re-resolve it) or null on error (already logged).
 function applyConfigOverrides(flags, logger) {
     try {
         const config = getConfig({
@@ -185,20 +193,22 @@ function applyConfigOverrides(flags, logger) {
             cardNamesDbPath: flags.cardNamesDb,
             cardHashDbPath: flags.cardHashDb,
             configPath: flags.config,
-            localCacheEnabled: flags._localCacheExplicit ? flags.localCache : undefined
+            localCacheEnabled: flags._localCacheExplicit ? flags.localCache : undefined,
+            collectionEnabled: flags.enableCollection || undefined
         });
         process.env.STORAGE_ADAPTER = config.storageAdapter;
         process.env.LOCAL_CACHE_ENABLED = String(config.localCacheEnabled);
+        process.env.COLLECTION_ENABLED = String(config.collectionEnabled);
         if (config.cardNamesDbPath) {
             process.env.CARD_NAMES_DB_PATH = config.cardNamesDbPath;
         }
         if (config.cardHashDbPath) {
             process.env.CARD_HASH_DB_PATH = config.cardHashDbPath;
         }
-        return null;
+        return config;
     } catch (err) {
         logger.log(err?.message || String(err));
-        return err;
+        return null;
     }
 }
 
@@ -230,8 +240,8 @@ function formatOperationsTable(entries) {
 }
 
 async function runLogDump(flags, logger) {
-    const err = applyConfigOverrides(flags, logger);
-    if (err) {
+    const config = applyConfigOverrides(flags, logger);
+    if (!config) {
         return 1;
     }
     const entries = await new Promise((resolve, reject) => {
@@ -248,8 +258,8 @@ async function runLogDump(flags, logger) {
 }
 
 async function runLogStats(flags, logger) {
-    const err = applyConfigOverrides(flags, logger);
-    if (err) {
+    const config = applyConfigOverrides(flags, logger);
+    if (!config) {
         return 1;
     }
     const stats = await new Promise((resolve, reject) => {
@@ -266,8 +276,8 @@ async function runMigrate(flags, logger, migrateFn) {
         );
         return 1;
     }
-    const err = applyConfigOverrides(flags, logger);
-    if (err) {
+    const config = applyConfigOverrides(flags, logger);
+    if (!config) {
         return 1;
     }
     try {
@@ -286,8 +296,8 @@ async function runMigrate(flags, logger, migrateFn) {
 }
 
 async function runCollectionUpdate(flags, logger) {
-    const err = applyConfigOverrides(flags, logger);
-    if (err) {
+    const config = applyConfigOverrides(flags, logger);
+    if (!config) {
         return 1;
     }
     const quantity = Number(flags.quantity);
@@ -306,8 +316,8 @@ async function runCollectionUpdate(flags, logger) {
 }
 
 async function runCollectionRemove(flags, logger) {
-    const err = applyConfigOverrides(flags, logger);
-    if (err) {
+    const config = applyConfigOverrides(flags, logger);
+    if (!config) {
         return 1;
     }
     try {
@@ -389,8 +399,8 @@ export async function run(options = {}) {
         return;
     }
 
-    const configErr = applyConfigOverrides(flags, logger);
-    if (configErr) {
+    const config = applyConfigOverrides(flags, logger);
+    if (!config) {
         return;
     }
 
@@ -399,6 +409,7 @@ export async function run(options = {}) {
     const processor = processorFactory({
         filePath,
         queryingEnabled,
+        collectionEnabled: config.collectionEnabled,
         isPretty: prettyFlag === undefined ? true : Boolean(prettyFlag)
     });
 
