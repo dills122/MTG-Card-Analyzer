@@ -333,11 +333,8 @@ async function runLogDump(flags, logger) {
     if (!config) {
         return 1;
     }
-    const entries = await new Promise((resolve, reject) => {
-        storage.log.dump({ limit: Number(flags.limit) || 50, since: flags.since }, (e, docs) =>
-            e ? reject(e) : resolve(docs || [])
-        );
-    });
+    const entries =
+        (await storage.log.dump({ limit: Number(flags.limit) || 50, since: flags.since })) || [];
     if (flags.format === "json") {
         logger.log(JSON.stringify(entries, null, 2));
     } else {
@@ -351,9 +348,7 @@ async function runLogStats(flags, logger) {
     if (!config) {
         return 1;
     }
-    const stats = await new Promise((resolve, reject) => {
-        storage.log.stats((e, s) => (e ? reject(e) : resolve(s)));
-    });
+    const stats = await storage.log.stats();
     logger.log(JSON.stringify(stats, null, 2));
     return 0;
 }

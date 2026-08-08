@@ -1,38 +1,16 @@
-import Datastore from "@dills1220/nedb";
 import { getConfig } from "../config/index.mjs";
 import { resolveDbFilename as resolvePath } from "./resolve-db-path.mjs";
+import { createNedbStore } from "./create-nedb-store.mjs";
 
 function resolveDbFilename() {
     const config = getConfig();
     return resolvePath(config.cardHashDbPath || config.cardNamesDbPath, "card-hashes.db");
 }
 
-// Resolved lazily on first real use (not at import time) so config sourced from
-// CLI flags -- applied to process.env by index.mjs before the pipeline runs -- is honored.
-let dbInstance;
-
-function getDbInstance() {
-    if (!dbInstance) {
-        dbInstance = new Datastore({
-            filename: resolveDbFilename(),
-            autoload: true
-        });
-        dbInstance.ensureIndex({ fieldName: "lookupKey", unique: true });
-        dbInstance.ensureIndex({ fieldName: "cardName" });
-    }
-    return dbInstance;
-}
-
-const db = new Proxy(
-    {},
-    {
-        get(_target, prop) {
-            const instance = getDbInstance();
-            const value = instance[prop];
-            return typeof value === "function" ? value.bind(instance) : value;
-        }
-    }
-);
+const { db } = createNedbStore({
+    resolveFilename: resolveDbFilename,
+    indexes: [{ fieldName: "lookupKey", unique: true }, { fieldName: "cardName" }]
+});
 
 function toLookupKey(record) {
     const cardName = String(record.cardName || "").trim();

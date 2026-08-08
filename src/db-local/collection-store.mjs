@@ -1,24 +1,16 @@
-import Datastore from "@dills1220/nedb";
 import { getConfig } from "../config/index.mjs";
 import { resolveDbFilename } from "./resolve-db-path.mjs";
 import { round } from "../util.mjs";
+import { createNedbStore } from "./create-nedb-store.mjs";
 
 // Local (nedb) backend for the "real persistence" tier -- your actual card collection.
 // Distinct from the always-on cache tier (names/hashes/ops-log): this only gets used when
 // STORAGE_ADAPTER=nedb (the default), same as the rds backend does when STORAGE_ADAPTER=rds.
 
-let dbInstance;
-
-function getDbInstance() {
-    if (!dbInstance) {
-        dbInstance = new Datastore({
-            filename: resolveDbFilename(getConfig().cardNamesDbPath, "collection.db"),
-            autoload: true
-        });
-        dbInstance.ensureIndex({ fieldName: "lookupKey", unique: true });
-    }
-    return dbInstance;
-}
+const { getDbInstance } = createNedbStore({
+    resolveFilename: () => resolveDbFilename(getConfig().cardNamesDbPath, "collection.db"),
+    indexes: [{ fieldName: "lookupKey", unique: true }]
+});
 
 function toLookupKey(cardName, cardSet) {
     return `${String(cardName || "").trim()}::${String(cardSet || "").trim()}`;

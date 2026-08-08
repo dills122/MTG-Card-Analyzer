@@ -24,7 +24,7 @@ describe("diagnostics::index", () => {
     });
 
     it("includes app/node/platform version info", async () => {
-        sandbox.stub(storage.log, "dump").callsFake((opts, cb) => cb(null, []));
+        sandbox.stub(storage.log, "dump").resolves([]);
 
         const bundle = await gatherDiagnostics();
 
@@ -35,7 +35,7 @@ describe("diagnostics::index", () => {
     });
 
     it("includes an environment check with checks/requiredFailures/warnings", async () => {
-        sandbox.stub(storage.log, "dump").callsFake((opts, cb) => cb(null, []));
+        sandbox.stub(storage.log, "dump").resolves([]);
 
         const bundle = await gatherDiagnostics();
 
@@ -46,7 +46,7 @@ describe("diagnostics::index", () => {
     });
 
     it("includes only the safe-to-share config fields (no secrets)", async () => {
-        sandbox.stub(storage.log, "dump").callsFake((opts, cb) => cb(null, []));
+        sandbox.stub(storage.log, "dump").resolves([]);
 
         const bundle = await gatherDiagnostics();
 
@@ -64,9 +64,9 @@ describe("diagnostics::index", () => {
     });
 
     it("passes limit through to storage.log.dump and returns its result as recentOperations", async () => {
-        const dumpStub = sandbox.stub(storage.log, "dump").callsFake((opts, cb) => {
-            cb(null, [{ decision: "collection", filePath: "./a.jpg" }]);
-        });
+        const dumpStub = sandbox
+            .stub(storage.log, "dump")
+            .resolves([{ decision: "collection", filePath: "./a.jpg" }]);
 
         const bundle = await gatherDiagnostics({ limit: 7 });
 
@@ -77,7 +77,7 @@ describe("diagnostics::index", () => {
     });
 
     it("defaults limit to 20 when not provided", async () => {
-        const dumpStub = sandbox.stub(storage.log, "dump").callsFake((opts, cb) => cb(null, []));
+        const dumpStub = sandbox.stub(storage.log, "dump").resolves([]);
 
         await gatherDiagnostics();
 
@@ -85,7 +85,7 @@ describe("diagnostics::index", () => {
     });
 
     it("rejects when the ops log fails to read", async () => {
-        sandbox.stub(storage.log, "dump").callsFake((opts, cb) => cb(new Error("db locked")));
+        sandbox.stub(storage.log, "dump").rejects(new Error("db locked"));
 
         let caughtError;
         try {
@@ -97,7 +97,7 @@ describe("diagnostics::index", () => {
     });
 
     it("surfaces a MySQL-not-configured check when withMysql is true and secure.config.cjs is absent", async () => {
-        sandbox.stub(storage.log, "dump").callsFake((opts, cb) => cb(null, []));
+        sandbox.stub(storage.log, "dump").resolves([]);
 
         const bundle = await gatherDiagnostics({ withMysql: true });
 
@@ -106,7 +106,7 @@ describe("diagnostics::index", () => {
     });
 
     it("does not run the MySQL check when withMysql is false (default)", async () => {
-        sandbox.stub(storage.log, "dump").callsFake((opts, cb) => cb(null, []));
+        sandbox.stub(storage.log, "dump").resolves([]);
 
         const bundle = await gatherDiagnostics();
 

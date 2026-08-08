@@ -1,28 +1,21 @@
-import Datastore from "@dills1220/nedb";
 import { getConfig } from "../config/index.mjs";
 import { resolveDbFilename } from "./resolve-db-path.mjs";
+import { createNedbStore } from "./create-nedb-store.mjs";
 
 // Local operations log -- part of the always-on nedb cache tier (see src/storage/index.mjs).
 // One entry per scan attempt: what was scanned, what matched, what happened, any error.
 // This is what #49 ("Transaction") became -- the old model was a half-defined mix of
 // generic-audit-log and art/flavor-match-confidence concepts that never got resolved.
 
-let dbInstance;
 // Monotonic tie-breaker: two LogOperation calls can land in the same millisecond (nedb's
 // Date sort doesn't reliably order same-millisecond entries), so `loggedAt` alone isn't a
 // safe sort key. Resets on process restart, which is fine -- it only needs to disambiguate
 // within a single run.
 let sequenceCounter = 0;
 
-function getDbInstance() {
-    if (!dbInstance) {
-        dbInstance = new Datastore({
-            filename: resolveDbFilename(getConfig().cardNamesDbPath, "operations.db"),
-            autoload: true
-        });
-    }
-    return dbInstance;
-}
+const { getDbInstance } = createNedbStore({
+    resolveFilename: () => resolveDbFilename(getConfig().cardNamesDbPath, "operations.db")
+});
 
 // entry shape: { filePath, extractedText, nameMatches, matcherResults, decision,
 //                queryingEnabled, storageAdapter, error, durationMs }

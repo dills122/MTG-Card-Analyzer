@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "../..");
@@ -74,9 +75,7 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
         record(`local cache dir is writable (${dir})`, "pass");
 
         const { db: namesDb } = await import("../db-local/db.mjs");
-        const nameCount = await new Promise((resolve, reject) => {
-            namesDb.count({}, (err, count) => (err ? reject(err) : resolve(count)));
-        });
+        const nameCount = await promisify(namesDb.count)({});
         if (nameCount > 0) {
             record(`card names DB seeded (${nameCount} names)`, "pass");
         } else {
@@ -102,9 +101,7 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
             try {
                 const { CreateConnection } = await import("../rds/connection.mjs");
                 const connection = CreateConnection();
-                await new Promise((resolve, reject) => {
-                    connection.connect((err) => (err ? reject(err) : resolve()));
-                });
+                await promisify(connection.connect.bind(connection))();
                 connection.end();
                 record("MySQL connection succeeded", "pass");
             } catch (err) {

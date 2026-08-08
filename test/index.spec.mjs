@@ -210,15 +210,13 @@ describe("CLI::index.mjs", () => {
 
     describe("log subcommands", () => {
         it("log dump prints table-formatted entries and exits 0", async () => {
-            const dumpStub = sandbox.stub(storage.log, "dump").callsFake((opts, cb) => {
-                cb(null, [
-                    {
-                        loggedAt: new Date("2026-01-01T00:00:00Z"),
-                        decision: "collection",
-                        filePath: "./a.jpg"
-                    }
-                ]);
-            });
+            const dumpStub = sandbox.stub(storage.log, "dump").resolves([
+                {
+                    loggedAt: new Date("2026-01-01T00:00:00Z"),
+                    decision: "collection",
+                    filePath: "./a.jpg"
+                }
+            ]);
 
             await runCli({ command: "log-dump", flags: { limit: "50", format: "table" } });
 
@@ -228,9 +226,7 @@ describe("CLI::index.mjs", () => {
         });
 
         it("log dump prints JSON when --format json is passed", async () => {
-            sandbox.stub(storage.log, "dump").callsFake((opts, cb) => {
-                cb(null, [{ decision: "collection" }]);
-            });
+            sandbox.stub(storage.log, "dump").resolves([{ decision: "collection" }]);
 
             await runCli({ command: "log-dump", flags: { limit: "50", format: "json" } });
 
@@ -239,13 +235,11 @@ describe("CLI::index.mjs", () => {
         });
 
         it("log stats prints aggregate JSON and exits 0", async () => {
-            const statsStub = sandbox.stub(storage.log, "stats").callsFake((cb) => {
-                cb(null, {
-                    total: 3,
-                    byDecision: { collection: 3 },
-                    errorCount: 0,
-                    avgTopConfidence: 0.9
-                });
+            const statsStub = sandbox.stub(storage.log, "stats").resolves({
+                total: 3,
+                byDecision: { collection: 3 },
+                errorCount: 0,
+                avgTopConfidence: 0.9
             });
 
             await runCli({ command: "log-stats", flags: {} });

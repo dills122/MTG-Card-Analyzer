@@ -14,9 +14,7 @@ async function gatherDiagnostics({ limit = 20, withMysql = false } = {}) {
     const { checks, requiredFailures, warnings } = await runEnvironmentCheck({ withMysql });
     const config = getConfig();
 
-    const recentOperations = await new Promise((resolve, reject) => {
-        storage.log.dump({ limit }, (err, docs) => (err ? reject(err) : resolve(docs || [])));
-    });
+    const recentOperations = (await storage.log.dump({ limit })) || [];
 
     return {
         generatedAt: new Date().toISOString(),

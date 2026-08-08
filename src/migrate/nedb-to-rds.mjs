@@ -1,3 +1,4 @@
+import { promisify } from "node:util";
 import collectionStore from "../db-local/collection-store.mjs";
 import needsAttentionStore from "../db-local/needs-attention-store.mjs";
 import rds from "../rds/index.mjs";
@@ -14,19 +15,16 @@ import rds from "../rds/index.mjs";
 // rejects.
 
 async function migrateCollection({ dryRun = false, force = false } = {}) {
-    const localEntries = await new Promise((resolve, reject) => {
-        collectionStore.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
-    });
+    const localEntries = await promisify(collectionStore.GetAll)();
 
     const results = { total: localEntries.length, migrated: 0, skipped: 0, errors: [] };
 
     for (const entry of localEntries) {
         try {
-            const existingQty = await new Promise((resolve, reject) => {
-                rds.Collection.GetQuantity(entry.cardName, entry.cardSet, (err, qty) =>
-                    err ? reject(err) : resolve(qty)
-                );
-            });
+            const existingQty = await promisify(rds.Collection.GetQuantity)(
+                entry.cardName,
+                entry.cardSet
+            );
 
             if (existingQty > 0 && !force) {
                 results.skipped += 1;
@@ -34,20 +32,15 @@ async function migrateCollection({ dryRun = false, force = false } = {}) {
             }
 
             if (!dryRun) {
-                await new Promise((resolve, reject) => {
-                    rds.Collection.UpsertRecord(
-                        {
-                            cardName: entry.cardName,
-                            cardType: entry.cardType,
-                            cardSet: entry.cardSet,
-                            delta: entry.quantity,
-                            estValue: entry.estValue,
-                            automated: entry.automated,
-                            magicId: entry.magicId,
-                            imageUrl: entry.imageUrl
-                        },
-                        (err) => (err ? reject(err) : resolve())
-                    );
+                await promisify(rds.Collection.UpsertRecord)({
+                    cardName: entry.cardName,
+                    cardType: entry.cardType,
+                    cardSet: entry.cardSet,
+                    delta: entry.quantity,
+                    estValue: entry.estValue,
+                    automated: entry.automated,
+                    magicId: entry.magicId,
+                    imageUrl: entry.imageUrl
                 });
             }
             results.migrated += 1;
@@ -64,9 +57,7 @@ async function migrateCollection({ dryRun = false, force = false } = {}) {
 }
 
 async function migrateNeedsAttention({ dryRun = false } = {}) {
-    const localEntries = await new Promise((resolve, reject) => {
-        needsAttentionStore.GetAll((err, docs) => (err ? reject(err) : resolve(docs)));
-    });
+    const localEntries = await promisify(needsAttentionStore.GetAll)();
 
     const results = { total: localEntries.length, migrated: 0, skipped: 0, errors: [] };
 
@@ -76,17 +67,12 @@ async function migrateNeedsAttention({ dryRun = false } = {}) {
             continue;
         }
         try {
-            await new Promise((resolve, reject) => {
-                rds.NDAttn.InsertRecord(
-                    {
-                        cardName: entry.cardName,
-                        possibleSets: entry.possibleSets,
-                        extractedText: entry.extractedText,
-                        dirtyExtractedText: entry.dirtyExtractedText,
-                        nameImage: entry.nameImage
-                    },
-                    (err) => (err ? reject(err) : resolve())
-                );
+            await promisify(rds.NDAttn.InsertRecord)({
+                cardName: entry.cardName,
+                possibleSets: entry.possibleSets,
+                extractedText: entry.extractedText,
+                dirtyExtractedText: entry.dirtyExtractedText,
+                nameImage: entry.nameImage
             });
             results.migrated += 1;
         } catch (err) {
