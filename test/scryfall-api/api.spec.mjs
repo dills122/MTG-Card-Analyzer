@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import api from "../../src/scryfall-api/searchName.mjs";
-import cardNames from "../../src/scryfall-api/getCardName.mjs";
+import api from "../../src/scryfall-api/search-name.mjs";
+import cardNames from "../../src/scryfall-api/get-card-name.mjs";
 const deps = api.dependencies;
 
 describe("Srcyfall Api::", () => {
