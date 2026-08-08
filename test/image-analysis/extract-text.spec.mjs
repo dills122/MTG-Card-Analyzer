@@ -13,6 +13,93 @@ describe("TextExtraction::", () => {
         sandbox.restore();
     });
 
+    it("reuses one worker while resetting adaptive OCR state between images", async () => {
+        const worker = {
+            load: sandbox.stub().resolves(),
+            loadLanguage: sandbox.stub().resolves(),
+            initialize: sandbox.stub().resolves(),
+            recognize: sandbox.stub().resolves({ data: { text: "Pacifism" } }),
+            terminate: sandbox.stub().resolves()
+        };
+        const createWorkerStub = sandbox
+            .stub(textExtraction.dependencies.Tesseract, "createWorker")
+            .returns(worker);
+
+        const session = await textExtraction.createOcrSession({
+            cacheMethod: "none",
+            langPath: "/fixtures",
+            gzip: false
+        });
+        await session.recognize("/tmp/first.jpg", { region: "name-core" });
+        await session.recognize("/tmp/second.jpg", { region: "name-wide" });
+        await session.terminate();
+
+        assert.isTrue(createWorkerStub.calledOnce);
+        assert.include(createWorkerStub.firstCall.args[0], {
+            cacheMethod: "none",
+            langPath: "/fixtures",
+            gzip: false
+        });
+        sinon.assert.callOrder(worker.load, worker.loadLanguage, worker.initialize);
+        assert.isTrue(worker.loadLanguage.calledOnceWithExactly("eng"));
+        assert.equal(worker.initialize.callCount, 2);
+        assert.isTrue(worker.initialize.alwaysCalledWithExactly("eng"));
+        assert.deepEqual(worker.recognize.args, [["/tmp/first.jpg"], ["/tmp/second.jpg"]]);
+        assert.isBelow(worker.recognize.firstCall.callId, worker.initialize.secondCall.callId);
+        assert.isBelow(worker.initialize.secondCall.callId, worker.recognize.secondCall.callId);
+        assert.isTrue(worker.terminate.calledOnce);
+    });
+
+    it("uses an injected OCR session for every prepared variant", async () => {
+        const session = {
+            recognize: sandbox.stub().resolves({
+                data: { text: "Thought Reflection", confidence: 80 }
+            })
+        };
+        const oneShotRecognize = sandbox.stub(textExtraction.dependencies.Tesseract, "recognize");
+        const variants = [
+            { buffer: Buffer.from("a"), region: "name-core", psm: "line" },
+            { buffer: Buffer.from("b"), region: "name-wide", psm: "line" }
+        ];
+
+        const result = await new Promise((resolve, reject) => {
+            textExtraction.ScanImage(
+                variants,
+                "name",
+                (err, extracted) => (err ? reject(err) : resolve(extracted)),
+                { session }
+            );
+        });
+
+        assert.equal(result.cleanText, "THOUGHT REFLECTION");
+        assert.isTrue(session.recognize.calledTwice);
+        assert.equal(session.recognize.firstCall.args[1].region, "name-core");
+        assert.equal(session.recognize.secondCall.args[1].region, "name-wide");
+        assert.isTrue(oneShotRecognize.notCalled);
+    });
+
+    it("terminates a worker when OCR session initialization fails", async () => {
+        const expectedError = new Error("language initialization failed");
+        const worker = {
+            load: sandbox.stub().resolves(),
+            loadLanguage: sandbox.stub().rejects(expectedError),
+            initialize: sandbox.stub().resolves(),
+            terminate: sandbox.stub().resolves()
+        };
+        sandbox.stub(textExtraction.dependencies.Tesseract, "createWorker").returns(worker);
+
+        let actualError;
+        try {
+            await textExtraction.createOcrSession({ cacheMethod: "none" });
+        } catch (err) {
+            actualError = err;
+        }
+
+        assert.strictEqual(actualError, expectedError);
+        assert.isTrue(worker.terminate.calledOnce);
+        assert.isTrue(worker.initialize.notCalled);
+    });
+
     it("returns clean and raw OCR text from tesseract recognize", (done) => {
         const recognizeStub = sandbox
             .stub(textExtraction.dependencies.Tesseract, "recognize")
