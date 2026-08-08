@@ -63,17 +63,21 @@ function normalizeRecord(record = {}) {
     return normalized;
 }
 
-function InsertEntity(record) {
+function InsertEntity(record, callback = () => {}) {
     const normalized = normalizeRecord(record);
     if (!normalized.cardName || !normalized.setName || !normalized.cardHash) {
+        callback(null, 0);
         return;
     }
-    db.update(
-        { lookupKey: normalized.lookupKey },
-        { $set: normalized, $setOnInsert: { createdAt: new Date() } },
-        { upsert: true },
-        () => {}
-    );
+    const query = { lookupKey: normalized.lookupKey };
+    db.findOne(query, (findError, existing) => {
+        if (findError) {
+            callback(findError);
+            return;
+        }
+        const fields = existing ? normalized : { ...normalized, createdAt: new Date() };
+        db.update(query, { $set: fields }, { upsert: true }, callback);
+    });
 }
 
 function GetHashes(name, cb) {
