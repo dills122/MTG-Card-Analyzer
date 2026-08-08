@@ -1,6 +1,5 @@
-import async from "async";
 import joi from "joi";
-import { callbackify } from "node:util";
+import { promisify } from "node:util";
 import logger from "../logger/log.mjs";
 import scryfallApi from "../scryfall-api/index.mjs";
 import exportProcessor from "../export-processor/index.mjs";
@@ -9,9 +8,9 @@ import imageProcessing from "../image-processing/index.mjs";
 import FileIO from "../file-io.mjs";
 
 const dependencies = {
-    Searcher: callbackify(scryfallApi.Search.SearchList),
+    Searcher: scryfallApi.Search.SearchList,
     HashProcessor: exportProcessor.ProcessHashes,
-    Hash: imageHashing.Hash.HashImage,
+    Hash: promisify(imageHashing.Hash.HashImage),
     CreateDirectory: FileIO.CreateDirectory,
     CleanUpFiles: FileIO.CleanUpFiles,
     GetSetSymbolSnippetTmpFile: imageProcessing.resize.GetImageSnippetTmpFile
@@ -38,32 +37,36 @@ class MatcherProcessor {
         }
     }
 
-    execute(cb) {
-        async.waterfall([(next) => this._search(next), (next) => this._processResults(next)], cb);
+    execute(callback) {
+        const execution = this.executeAsync();
+        if (typeof callback === "function") {
+            execution.then((result) => callback(null, result)).catch((err) => callback(err));
+            return;
+        }
+        return execution;
     }
 
-    _search(callback) {
+    async executeAsync() {
+        await this._searchAsync();
+        return this._processResultsAsync();
+    }
+
+    async _searchAsync() {
         this.logger.info(`matcher::search start name="${this.name}"`);
-        dependencies.Searcher(this.name, (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            this.cards = results;
-            return callback();
-        });
+        this.cards = await dependencies.Searcher(this.name);
     }
 
-    _processResults(callback) {
+    async _processResultsAsync() {
         const numCards = Array.isArray(this.cards) ? this.cards.length : "invalid";
         this.logger.info(`matcher::search results name="${this.name}" count=${numCards}`);
         if (!Array.isArray(this.cards)) {
-            return callback(new Error("Error gathering results"));
+            throw new Error("Error gathering results");
         }
         const totalCards = this.cards.length;
 
         if (totalCards === 0) {
             this.logger.info(`matcher::search no-results name="${this.name}"`);
-            return callback(null, 0);
+            return 0;
         }
 
         if (totalCards === 1) {
@@ -76,68 +79,54 @@ class MatcherProcessor {
                     scryfallUri: single.scryfall_uri || single.uri || ""
                 }
             ];
-            return callback(null, setName ? [setName] : []);
+            return setName ? [setName] : [];
         }
 
         this.logger.info(`matcher::search multi-results name="${this.name}" count=${totalCards}`);
-        async.waterfall(
-            [(next) => this._hashLocalCard(next), (next) => this._processMultiSetMatches(next)],
-            callback
-        );
+        await this._hashLocalCardAsync();
+        return this._processMultiSetMatchesAsync();
     }
 
-    _hashLocalCard(callback) {
+    async _hashLocalCardAsync() {
         this.logger.info(`matcher::hash local-image name="${this.name}" path="${this.filePath}"`);
-        dependencies
-            .CreateDirectory()
-            .then((directory) => {
-                this.setSymbolDirectory = directory;
-                this._hashFromSetSymbol(directory, (hashErr) => {
-                    if (hashErr) {
-                        this.logger.error(
-                            `Set symbol crop/hash failed for ${this.filePath}; falling back to full card hash`
-                        );
-                        return this._hashFromPath(this.filePath, callback);
-                    }
-                    return callback();
-                });
-            })
-            .catch(() => {
-                return this._hashFromPath(this.filePath, callback);
-            });
+        let directory;
+        try {
+            directory = await dependencies.CreateDirectory();
+        } catch {
+            return this._hashFromPathAsync(this.filePath);
+        }
+        this.setSymbolDirectory = directory;
+        try {
+            await this._hashFromSetSymbolAsync(directory);
+        } catch {
+            this.logger.error(
+                `Set symbol crop/hash failed for ${this.filePath}; falling back to full card hash`
+            );
+            return this._hashFromPathAsync(this.filePath);
+        }
     }
 
-    _hashFromSetSymbol(directory, callback) {
+    async _hashFromSetSymbolAsync(directory) {
         this.logger.info(`matcher::hash set-symbol name="${this.name}" path="${this.filePath}"`);
-        dependencies
-            .GetSetSymbolSnippetTmpFile(this.filePath, directory, "set-symbol")
-            .then((setSymbolPath) => {
-                this.setSymbolImagePath = setSymbolPath;
-                dependencies.Hash(setSymbolPath, (err, hash) => {
-                    this._cleanupSetSymbolDirectory();
-                    if (err) {
-                        return callback(err);
-                    }
-                    this.hashMode = "set-symbol";
-                    this.localHash = hash;
-                    return callback();
-                });
-            })
-            .catch((err) => {
-                this._cleanupSetSymbolDirectory();
-                return callback(err);
-            });
+        try {
+            const setSymbolPath = await dependencies.GetSetSymbolSnippetTmpFile(
+                this.filePath,
+                directory,
+                "set-symbol"
+            );
+            this.setSymbolImagePath = setSymbolPath;
+            const hash = await dependencies.Hash(setSymbolPath);
+            this.hashMode = "set-symbol";
+            this.localHash = hash;
+        } finally {
+            this._cleanupSetSymbolDirectory();
+        }
     }
 
-    _hashFromPath(filePath, callback) {
-        dependencies.Hash(filePath, (err, hash) => {
-            if (err) {
-                return callback(err);
-            }
-            this.hashMode = "full-card";
-            this.localHash = hash;
-            return callback();
-        });
+    async _hashFromPathAsync(filePath) {
+        const hash = await dependencies.Hash(filePath);
+        this.hashMode = "full-card";
+        this.localHash = hash;
     }
 
     _cleanupSetSymbolDirectory() {
@@ -147,11 +136,6 @@ class MatcherProcessor {
         const dir = this.setSymbolDirectory;
         this.setSymbolDirectory = "";
         dependencies.CleanUpFiles(dir).catch(() => {});
-    }
-
-    _processMultiSetMatches(callback) {
-        const execution = this._processMultiSetMatchesAsync();
-        execution.then((results) => callback(null, results)).catch((err) => callback(err));
     }
 
     async _processMultiSetMatchesAsync() {

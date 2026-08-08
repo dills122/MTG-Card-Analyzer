@@ -11,9 +11,6 @@ importers:
       '@dills1220/nedb':
         specifier: ^1.9.1
         version: 1.9.1
-      async:
-        specifier: ^3.2.6
-        version: 3.2.6
       bunyan:
         specifier: ^1.8.15
         version: 1.8.15
@@ -491,9 +488,6 @@ packages:
 
   async@0.2.10:
     resolution: {integrity: sha512-eAkdoKxU6/LkKDBzLpT+t6Ff5EtfSF4wx1WfJiPEEV7WNLnDaRXk0oVysiEPm262roaachGexwUv94WhSgN5TQ==}
-
-  async@3.2.6:
-    resolution: {integrity: sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==}
 
   aws-ssl-profiles@1.1.2:
     resolution: {integrity: sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g==}
@@ -2016,8 +2010,6 @@ snapshots:
   argparse@2.0.1: {}
 
   async@0.2.10: {}
-
-  async@3.2.6: {}
 
   aws-ssl-profiles@1.1.2: {}
 

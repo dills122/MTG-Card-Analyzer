@@ -52,10 +52,10 @@ describe("Integration::", () => {
         stubs.MatchProcessorCreateStub = sandbox
             .stub(MatchProcessor, "create")
             .returns(MatchProcessorInstance);
-        MatchProcessorInstance.execute = new Function();
+        MatchProcessorInstance.executeAsync = new Function();
         stubs.MatchProcessorExecuteStub = sandbox
-            .stub(MatchProcessorInstance, "execute")
-            .callsArgWith(0, null, [COLLECTION_NAME]); //Empty right now and will have to be a multi call oen since in async.each
+            .stub(MatchProcessorInstance, "executeAsync")
+            .resolves([COLLECTION_NAME]); //Empty right now and will have to be a multi call oen since in async.each
         stubs.NeedsAttentionInsertStub = sandbox
             .stub(NeedsAttention.prototype, "insert")
             .resolves(null);
@@ -223,8 +223,8 @@ describe("Integration::", () => {
                 }
             ]);
             stubs.MatchProcessorExecuteStub = sandbox
-                .stub(MatchProcessorInstance, "execute")
-                .callsArgWith(0, null, [COLLECTION_NAME, COLLECTION_NAME_TWO]); //Empty right now and will have to be a multi call oen since in async.each
+                .stub(MatchProcessorInstance, "executeAsync")
+                .resolves([COLLECTION_NAME, COLLECTION_NAME_TWO]); //Empty right now and will have to be a multi call oen since in async.each
 
             let processorInstance = Processor.create({
                 filePath: FAKE_PATH,
@@ -306,8 +306,8 @@ describe("Integration::", () => {
             stubs.MatchProcessorExecuteStub.restore();
             const expectedError = new Error("failed to match");
             stubs.MatchProcessorExecuteStub = sandbox
-                .stub(MatchProcessorInstance, "execute")
-                .callsArgWith(0, expectedError);
+                .stub(MatchProcessorInstance, "executeAsync")
+                .rejects(expectedError);
 
             let processorInstance = Processor.create({
                 filePath: FAKE_PATH

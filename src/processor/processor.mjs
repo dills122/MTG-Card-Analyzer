@@ -244,25 +244,19 @@ class ProcessorClass {
         );
     }
 
-    _attemptMatch(match) {
+    async _attemptMatch(match) {
         const matchProcessor = dependencies.MatchProcessor.create({
             name: match.name,
             filePath: this.filePath,
             queryingEnabled: this.queryingEnabled,
             logger: this.logger
         });
-        return new Promise((resolve, reject) => {
-            matchProcessor.execute((err, results) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve({
-                    name: match.name,
-                    sets: results,
-                    setVerificationLinks: matchProcessor.matchResultDetails || []
-                });
-            });
-        });
+        const results = await matchProcessor.executeAsync();
+        return {
+            name: match.name,
+            sets: results,
+            setVerificationLinks: matchProcessor.matchResultDetails || []
+        };
     }
 
     CreateNeedsAttentionRecord(record, callback) {
