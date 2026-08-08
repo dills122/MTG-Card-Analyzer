@@ -13,59 +13,55 @@ import { createNedbStore } from "./create-nedb-store.mjs";
 // within a single run.
 let sequenceCounter = 0;
 
-const { getDbInstance } = createNedbStore({
+const { insert, find, findSorted } = createNedbStore({
     resolveFilename: () => resolveDbFilename(getConfig().cardNamesDbPath, "operations.db")
 });
 
 // entry shape: { filePath, extractedText, nameMatches, matcherResults, decision,
 //                queryingEnabled, storageAdapter, error, durationMs }
-function logOperation(entry, cb = () => {}) {
+function logOperation(entry) {
     sequenceCounter += 1;
     const record = {
         ...entry,
         loggedAt: new Date(),
         seq: sequenceCounter
     };
-    getDbInstance().insert(record, cb);
+    return insert(record);
 }
 
-function getOperations(options = {}, cb) {
+async function getOperations(options = {}) {
     const { limit = 50, since } = options;
     const query = since ? { loggedAt: { $gte: new Date(since) } } : {};
-    getDbInstance().find(query).sort({ seq: -1 }).limit(limit).exec(cb);
+    return findSorted(query, { sort: { seq: -1 }, limit });
 }
 
-function getStats(cb) {
-    getDbInstance().find({}, (err, docs = []) => {
-        if (err) {
-            return cb(err);
+async function getStats() {
+    const docs = (await find({})) || [];
+    const byDecision = {};
+    let errorCount = 0;
+    let confidenceSum = 0;
+    let confidenceCount = 0;
+
+    docs.forEach((doc) => {
+        const decision = doc.decision || "unknown";
+        byDecision[decision] = (byDecision[decision] || 0) + 1;
+        if (doc.error) {
+            errorCount += 1;
         }
-        const byDecision = {};
-        let errorCount = 0;
-        let confidenceSum = 0;
-        let confidenceCount = 0;
-
-        docs.forEach((doc) => {
-            const decision = doc.decision || "unknown";
-            byDecision[decision] = (byDecision[decision] || 0) + 1;
-            if (doc.error) {
-                errorCount += 1;
+        (doc.nameMatches || []).forEach((match) => {
+            if (typeof match.percentage === "number") {
+                confidenceSum += match.percentage;
+                confidenceCount += 1;
             }
-            (doc.nameMatches || []).forEach((match) => {
-                if (typeof match.percentage === "number") {
-                    confidenceSum += match.percentage;
-                    confidenceCount += 1;
-                }
-            });
-        });
-
-        return cb(null, {
-            total: docs.length,
-            byDecision,
-            errorCount,
-            avgTopConfidence: confidenceCount ? confidenceSum / confidenceCount : null
         });
     });
+
+    return {
+        total: docs.length,
+        byDecision,
+        errorCount,
+        avgTopConfidence: confidenceCount ? confidenceSum / confidenceCount : null
+    };
 }
 
 export { logOperation, getOperations, getStats };

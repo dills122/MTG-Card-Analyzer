@@ -25,17 +25,12 @@ describe("db-local::needs-attention-store", () => {
 
     it("inserts a record and stamps createdAt", async () => {
         const store = await freshStore();
-        const doc = await new Promise((resolve, reject) => {
-            store.insert(
-                {
-                    cardName: "Pacifism",
-                    extractedText: "clean",
-                    dirtyExtractedText: "dirty",
-                    nameImage: "base64==",
-                    possibleSets: "M20,M21"
-                },
-                (err, d) => (err ? reject(err) : resolve(d))
-            );
+        const doc = await store.insert({
+            cardName: "Pacifism",
+            extractedText: "clean",
+            dirtyExtractedText: "dirty",
+            nameImage: "base64==",
+            possibleSets: "M20,M21"
         });
         assert.equal(doc.cardName, "Pacifism");
         assert.instanceOf(doc.createdAt, Date);
@@ -50,40 +45,24 @@ describe("db-local::needs-attention-store", () => {
             nameImage: "base64==",
             possibleSets: "M20,M21"
         };
-        const first = await new Promise((resolve, reject) => {
-            store.insert(record, (err, d) => (err ? reject(err) : resolve(d)));
-        });
-        const second = await new Promise((resolve, reject) => {
-            store.insert(record, (err, d) => (err ? reject(err) : resolve(d)));
-        });
+        const first = await store.insert(record);
+        const second = await store.insert(record);
         assert.notEqual(first._id, second._id);
     });
 
     describe("GetAll", () => {
         it("returns every needs-attention entry", async () => {
             const store = await freshStore();
-            await new Promise((resolve, reject) => {
-                store.insert({ cardName: "Pacifism", extractedText: "clean" }, (err, d) =>
-                    err ? reject(err) : resolve(d)
-                );
-            });
-            await new Promise((resolve, reject) => {
-                store.insert({ cardName: "Fake Card", extractedText: "clean" }, (err, d) =>
-                    err ? reject(err) : resolve(d)
-                );
-            });
+            await store.insert({ cardName: "Pacifism", extractedText: "clean" });
+            await store.insert({ cardName: "Fake Card", extractedText: "clean" });
 
-            const all = await new Promise((resolve, reject) => {
-                store.getAll((err, docs) => (err ? reject(err) : resolve(docs)));
-            });
+            const all = await store.getAll();
             assert.lengthOf(all, 2);
         });
 
         it("returns an empty array when nothing has been stored", async () => {
             const store = await freshStore();
-            const all = await new Promise((resolve, reject) => {
-                store.getAll((err, docs) => (err ? reject(err) : resolve(docs)));
-            });
+            const all = await store.getAll();
             assert.deepEqual(all, []);
         });
     });

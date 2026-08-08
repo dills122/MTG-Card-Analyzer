@@ -5,28 +5,24 @@ import { createNedbStore } from "./create-nedb-store.mjs";
 // Local (nedb) backend for the "real persistence" tier's needs-attention records --
 // cards the matcher couldn't confidently resolve on its own. Same tier as collection-store.mjs.
 
-const { getDbInstance } = createNedbStore({
+const { find, insert } = createNedbStore({
     resolveFilename: () => resolveDbFilename(getConfig().cardNamesDbPath, "needs-attention.db")
 });
 
-function insert(record, cb) {
+function insert_(record) {
     const doc = { ...record, createdAt: new Date() };
-    getDbInstance().insert(doc, cb);
+    return insert(doc);
 }
 
 // Returns every needs-attention entry -- used by the nedb->rds migration (src/migrate/).
-function getAll(cb) {
-    getDbInstance().find({}, (err, docs) => {
-        if (err) {
-            return cb(err, null);
-        }
-        return cb(null, docs || []);
-    });
+async function getAll() {
+    const docs = await find({});
+    return docs || [];
 }
 
-export { insert, getAll };
+export { insert_ as insert, getAll };
 
 export default {
-    insert,
+    insert: insert_,
     getAll
 };

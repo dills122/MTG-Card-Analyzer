@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import mysql from "mysql2";
+import mysql from "mysql2/promise";
 import { createConnection } from "../../src/rds/connection.mjs";
 
 describe("rds::connection", () => {
@@ -16,7 +16,7 @@ describe("rds::connection", () => {
 
     it("does not throw when secure.config.cjs is missing, falls back to empty rds config", () => {
         const fakeConnection = {};
-        sandbox.stub(mysql, "createConnection").returns(fakeConnection);
+        sandbox.stub(mysql, "createConnection").resolves(fakeConnection);
 
         assert.doesNotThrow(() => createConnection());
         const [config] = mysql.createConnection.firstCall.args;

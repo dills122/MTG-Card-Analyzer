@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import { DEFAULT_OCR_MODEL_PATH } from "../image-analysis/ocr-model.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -88,7 +87,7 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
         record(`local cache dir is writable (${dir})`, "pass");
 
         const { db: namesDb } = await import("../db-local/db.mjs");
-        const nameCount = await promisify(namesDb.count)({});
+        const nameCount = await namesDb.count({});
         if (nameCount > 0) {
             record(`card names DB seeded (${nameCount} names)`, "pass");
         } else {
@@ -113,9 +112,8 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
         } else {
             try {
                 const { createConnection } = await import("../rds/connection.mjs");
-                const connection = createConnection();
-                await promisify(connection.connect.bind(connection))();
-                connection.end();
+                const connection = await createConnection();
+                await connection.end();
                 record("MySQL connection succeeded", "pass");
             } catch (err) {
                 record(`MySQL connection failed: ${err.message}`, "fail", false);

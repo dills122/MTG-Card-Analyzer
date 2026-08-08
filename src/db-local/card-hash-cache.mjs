@@ -7,7 +7,7 @@ function resolveDbFilename() {
     return resolvePath(config.cardHashDbPath || config.cardNamesDbPath, "card-hashes.db");
 }
 
-const { db } = createNedbStore({
+const { find, findOne, update } = createNedbStore({
     resolveFilename: resolveDbFilename,
     indexes: [{ fieldName: "lookupKey", unique: true }, { fieldName: "cardName" }]
 });
@@ -44,36 +44,25 @@ function normalizeRecord(record = {}) {
     return normalized;
 }
 
-function insertEntity(record, callback = () => {}) {
+async function insertEntity(record) {
     const normalized = normalizeRecord(record);
     if (!normalized.cardName || !normalized.setName || !normalized.cardHash) {
-        callback(null, 0);
-        return;
+        return 0;
     }
     const query = { lookupKey: normalized.lookupKey };
-    db.findOne(query, (findError, existing) => {
-        if (findError) {
-            callback(findError);
-            return;
-        }
-        const fields = existing ? normalized : { ...normalized, createdAt: new Date() };
-        db.update(query, { $set: fields }, { upsert: true }, callback);
-    });
+    const existing = await findOne(query);
+    const fields = existing ? normalized : { ...normalized, createdAt: new Date() };
+    return update(query, { $set: fields }, { upsert: true });
 }
 
-function getHashes(name, cb) {
-    db.find({ cardName: name }, (err, docs) => {
-        if (err) {
-            return cb(err);
-        }
-        return cb(null, docs || []);
-    });
+async function getHashes(name) {
+    const docs = await find({ cardName: name });
+    return docs || [];
 }
 
-export { insertEntity, getHashes, db };
+export { insertEntity, getHashes };
 
 export default {
     insertEntity,
-    getHashes,
-    db
+    getHashes
 };

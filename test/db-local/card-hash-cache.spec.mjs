@@ -15,12 +15,6 @@ describe("db-local::card-hash-cache", () => {
         return import(`../../src/db-local/card-hash-cache.mjs?t=${Date.now()}-${Math.random()}`);
     }
 
-    function insert(cache, record) {
-        return new Promise((resolve, reject) => {
-            cache.insertEntity(record, (error) => (error ? reject(error) : resolve()));
-        });
-    }
-
     afterEach(() => {
         temporaryDirectories.splice(0).forEach((directory) => {
             fs.rmSync(directory, { recursive: true, force: true });
@@ -34,16 +28,14 @@ describe("db-local::card-hash-cache", () => {
     it("normalizes legacy field names and retrieves hashes by card name", async () => {
         const cache = await freshCache();
 
-        await insert(cache, {
+        await cache.insertEntity({
             Name: "  Pacifism  ",
             SetName: "  Core Set 2020  ",
             CardHash: "  abc123  ",
             IsFoil: true,
             CardUrl: " https://example.test/card.jpg "
         });
-        const hashes = await new Promise((resolve, reject) => {
-            cache.getHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
-        });
+        const hashes = await cache.getHashes("Pacifism");
 
         assert.lengthOf(hashes, 1);
         assert.include(hashes[0], {
@@ -63,16 +55,10 @@ describe("db-local::card-hash-cache", () => {
         const cache = await freshCache();
         const record = { cardName: "Pacifism", setName: "M20", cardHash: "abc123" };
 
-        await insert(cache, record);
-        const firstInsert = await new Promise((resolve, reject) => {
-            cache.getHashes("Pacifism", (error, docs) =>
-                error ? reject(error) : resolve(docs[0])
-            );
-        });
-        await insert(cache, { ...record, cardUrl: "https://example.test/new.jpg" });
-        const hashes = await new Promise((resolve, reject) => {
-            cache.getHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
-        });
+        await cache.insertEntity(record);
+        const [firstInsert] = await cache.getHashes("Pacifism");
+        await cache.insertEntity({ ...record, cardUrl: "https://example.test/new.jpg" });
+        const hashes = await cache.getHashes("Pacifism");
 
         assert.lengthOf(hashes, 1);
         assert.equal(hashes[0].cardUrl, "https://example.test/new.jpg");
@@ -82,10 +68,8 @@ describe("db-local::card-hash-cache", () => {
     it("ignores incomplete cache records", async () => {
         const cache = await freshCache();
 
-        cache.insertEntity({ cardName: "Pacifism", setName: "M20" });
-        const hashes = await new Promise((resolve, reject) => {
-            cache.getHashes("Pacifism", (error, docs) => (error ? reject(error) : resolve(docs)));
-        });
+        await cache.insertEntity({ cardName: "Pacifism", setName: "M20" });
+        const hashes = await cache.getHashes("Pacifism");
 
         assert.deepEqual(hashes, []);
     });

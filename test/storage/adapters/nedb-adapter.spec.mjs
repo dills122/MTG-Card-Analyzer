@@ -23,9 +23,7 @@ describe("storage/adapters::nedb-adapter", () => {
 
     describe("collection.getQuantity", () => {
         it("resolves with the quantity, passing name/set through unchanged", async () => {
-            const stub = sandbox
-                .stub(collectionStore, "getQuantity")
-                .callsFake((name, set, cb) => cb(null, 3));
+            const stub = sandbox.stub(collectionStore, "getQuantity").resolves(3);
 
             const result = await adapter.collection.getQuantity("Pacifism", "M20");
 
@@ -34,9 +32,7 @@ describe("storage/adapters::nedb-adapter", () => {
         });
 
         it("rejects when the store errors", async () => {
-            sandbox.stub(collectionStore, "getQuantity").callsFake((name, set, cb) => {
-                cb(new Error("disk full"));
-            });
+            sandbox.stub(collectionStore, "getQuantity").rejects(new Error("disk full"));
 
             let caught;
             try {
@@ -53,9 +49,7 @@ describe("storage/adapters::nedb-adapter", () => {
         it("resolves with the upserted doc, passing the record through unchanged", async () => {
             const record = { cardName: "Pacifism", cardSet: "M20" };
             const doc = { ...record, quantity: 1 };
-            const stub = sandbox
-                .stub(collectionStore, "upsert")
-                .callsFake((rec, cb) => cb(null, doc));
+            const stub = sandbox.stub(collectionStore, "upsert").resolves(doc);
 
             const result = await adapter.collection.upsert(record);
 
@@ -64,9 +58,7 @@ describe("storage/adapters::nedb-adapter", () => {
         });
 
         it("rejects when the store errors", async () => {
-            sandbox
-                .stub(collectionStore, "upsert")
-                .callsFake((rec, cb) => cb(new Error("write failed")));
+            sandbox.stub(collectionStore, "upsert").rejects(new Error("write failed"));
 
             let caught;
             try {
@@ -83,9 +75,7 @@ describe("storage/adapters::nedb-adapter", () => {
         it("resolves with the inserted doc, passing the record through unchanged", async () => {
             const record = { cardName: "Pacifism", extractedText: "clean" };
             const doc = { ...record, _id: "abc" };
-            const stub = sandbox
-                .stub(needsAttentionStore, "insert")
-                .callsFake((rec, cb) => cb(null, doc));
+            const stub = sandbox.stub(needsAttentionStore, "insert").resolves(doc);
 
             const result = await adapter.needsAttention.insert(record);
 
@@ -94,9 +84,7 @@ describe("storage/adapters::nedb-adapter", () => {
         });
 
         it("rejects when the store errors", async () => {
-            sandbox
-                .stub(needsAttentionStore, "insert")
-                .callsFake((rec, cb) => cb(new Error("write failed")));
+            sandbox.stub(needsAttentionStore, "insert").rejects(new Error("write failed"));
 
             let caught;
             try {
