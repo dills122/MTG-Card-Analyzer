@@ -106,6 +106,10 @@ function getRegionTemplates(type) {
 const config = {
     minSourceWidth: 360,
     minSourceHeight: 500,
+    // A source below the standard minimum but within this factor of it is still treated as
+    // recoverable for OCR (see assertOcrSourceSizeOk) -- anything further out is degenerate/
+    // unreadable rather than merely low-resolution.
+    maxRecoverableUpscaleFactor: 2,
     // Greyscale luminance std-dev (0-255) below this reads as a near-uniform-color crop (solid
     // card border/background instead of a real set-symbol icon).
     lowConfidenceStdDevThreshold: 10
@@ -115,6 +119,33 @@ function assertSourceSizeOk(dimensions) {
     if (dimensions.width < config.minSourceWidth || dimensions.height < config.minSourceHeight) {
         throw new Error("Image is to small");
     }
+}
+
+function computeSourceUpscaleFactor(dimensions) {
+    return Math.max(
+        1,
+        config.minSourceWidth / dimensions.width,
+        config.minSourceHeight / dimensions.height
+    );
+}
+
+/**
+ * OCR-specific sizing gate (GitHub issue #156). Unlike assertSourceSizeOk's hard cutoff --
+ * used for set-symbol image-hash crops, where a soft/undersized crop actively hurts hash
+ * comparison -- every OCR crop is upscaled to a fixed minimum width by padAndScale
+ * (see binarize.mjs) regardless of source resolution. So a source that's merely somewhat
+ * under the standard minimum can still reach OCR instead of being rejected outright; only a
+ * source too small/degraded to trust at all (further than maxRecoverableUpscaleFactor out)
+ * is still rejected.
+ * @param {{width: number, height: number}} dimensions
+ * @returns {{upscaleFactor: number, upscaled: boolean}}
+ */
+function assertOcrSourceSizeOk(dimensions) {
+    const upscaleFactor = computeSourceUpscaleFactor(dimensions);
+    if (upscaleFactor > config.maxRecoverableUpscaleFactor) {
+        throw new Error("Image is to small");
+    }
+    return { upscaleFactor, upscaled: upscaleFactor > 1 };
 }
 
 /**
@@ -201,6 +232,7 @@ export {
     computeGreyscaleStdDev,
     assessConfidence,
     assertSourceSizeOk,
+    assertOcrSourceSizeOk,
     cropSetSymbolFromImage,
     writeSetSymbolSnippet
 };
@@ -212,6 +244,7 @@ export default {
     computeGreyscaleStdDev,
     assessConfidence,
     assertSourceSizeOk,
+    assertOcrSourceSizeOk,
     cropSetSymbolFromImage,
     writeSetSymbolSnippet
 };

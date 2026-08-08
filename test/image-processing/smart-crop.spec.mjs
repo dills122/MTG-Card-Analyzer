@@ -10,6 +10,7 @@ import {
     cropRegion,
     computeGreyscaleStdDev,
     assessConfidence,
+    assertOcrSourceSizeOk,
     cropSetSymbolFromImage,
     writeSetSymbolSnippet
 } from "../../src/image-processing/smart-crop.mjs";
@@ -197,6 +198,31 @@ describe("Smart crop::", () => {
             }
             assert.instanceOf(caughtError, Error);
             assert.match(caughtError.message, /low confidence/);
+        });
+    });
+
+    describe("assertOcrSourceSizeOk::", () => {
+        it("reports no upscaling needed when the source already meets the OCR minimum", () => {
+            const sizing = assertOcrSourceSizeOk({ width: 360, height: 500 });
+            assert.deepEqual(sizing, { upscaleFactor: 1, upscaled: false });
+        });
+
+        it("permits and reports an upscale for a source within the recoverable range", () => {
+            // 265x370 -- the real-world fixture from GitHub issue #156.
+            const sizing = assertOcrSourceSizeOk({ width: 265, height: 370 });
+            assert.isTrue(sizing.upscaled);
+            assert.approximately(sizing.upscaleFactor, 1.36, 0.01);
+        });
+
+        it("rejects a source too far below the minimum to be a recoverable upscale", () => {
+            let caughtError;
+            try {
+                assertOcrSourceSizeOk({ width: 100, height: 100 });
+            } catch (err) {
+                caughtError = err;
+            }
+            assert.instanceOf(caughtError, Error);
+            assert.equal(caughtError.message, "Image is to small");
         });
     });
 });

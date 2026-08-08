@@ -278,7 +278,7 @@
             "apiUrl": "https://scryfall.com/card/mh3/208/writhing-chrysalis"
         },
         {
-            "enabled": false,
+            "enabled": true,
             "name": "Ingenious Artillerist",
             "set": "CLB",
             "setName": "Commander Legends: Battle for Baldur's Gate",
@@ -1852,11 +1852,11 @@
             }
         },
         {
-            "enabled": false,
+            "enabled": true,
             "id": "red-1-pending",
             "image": "../../../test-images/red-1.jpg",
-            "quality": "clean-scan",
-            "notes": "Disabled: 265x370 image is below the current 360x500 preprocessing minimum; tracked by GitHub issue #156",
+            "quality": "low-resolution",
+            "notes": "265x370 source is below the 360x500 OCR minimum; recovered via the undersized-input upscale path (issue #156)",
             "expected": {
                 "name": "Ingenious Artillerist",
                 "set": "CLB",

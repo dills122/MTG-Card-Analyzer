@@ -69,6 +69,29 @@ describe("Integration::", () => {
             });
         });
 
+        it("attaches undersized-source sizing metadata to the results (issue #156)", (done) => {
+            const sourceSizing = { upscaleFactor: 1.36, upscaled: true };
+            stubs.preprocessStub = sandbox.stub().resolves({
+                variants: [{ buffer: Buffer.from("OCR"), region: TYPE, psm: "line" }],
+                previewPath: FAKE_PATH,
+                sourceSizing
+            });
+            const processor = ImageProcessor.create({
+                path: FAKE_PATH_INPUT,
+                type: TYPE,
+                directory: FAKE_DIR,
+                dependencies: {
+                    ocrPreprocessor: { prepareOcrVariants: stubs.preprocessStub },
+                    textExtraction: { scanImage: stubs.textExtractionStub }
+                }
+            });
+
+            processor.extract((err) => {
+                assert.deepEqual(processor.results.sourceSizing, sourceSizing);
+                return done(err);
+            });
+        });
+
         it("Should error out due to an incomplete schema", (done) => {
             let processor = () => ImageProcessor.create({});
             assert.throw(processor, Error);
