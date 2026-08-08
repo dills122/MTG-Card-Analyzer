@@ -1,20 +1,17 @@
 import { access, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+    buildCardSearchUrl,
+    downloadImage,
+    fetchCardPages,
+    imageUrlForCard
+} from "../scryfall-api/regression-fixtures.mjs";
 
-const SCRYFALL_API_ORIGIN = "https://api.scryfall.com";
 const DEFAULT_MAX_PAGES = 20;
 const MAX_COUNT = 100;
 const MAX_PAGES = 100;
-const REQUEST_DELAY_MS = 125;
-const REQUEST_TIMEOUT_MS = 30_000;
-const MAX_API_RESPONSE_BYTES = 12 * 1024 * 1024;
-const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SET_CODE_PATTERN = /^[a-z0-9]{2,6}$/i;
-const REQUEST_HEADERS = {
-    "User-Agent": "MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)",
-    Accept: "application/json"
-};
 
 function parsePositiveInteger(value, label, maximum) {
     const number = Number(value);
@@ -40,7 +37,16 @@ function normalizeSetCodes(values = []) {
 
 function validateDate(value, label) {
     if (value === undefined) return undefined;
-    if (!DATE_PATTERN.test(value) || Number.isNaN(Date.parse(`${value}T00:00:00Z`))) {
+    if (!DATE_PATTERN.test(value)) {
+        throw new Error(`${label} must use YYYY-MM-DD`);
+    }
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (
+        date.getUTCFullYear() !== year ||
+        date.getUTCMonth() !== month - 1 ||
+        date.getUTCDate() !== day
+    ) {
         throw new Error(`${label} must use YYYY-MM-DD`);
     }
     return value;
@@ -75,148 +81,6 @@ function normalizeImportOptions(options) {
     };
 }
 
-function buildCardSearchUrl(options) {
-    const filters = ["game:paper", "lang:en"];
-    if (options.setCodes.length > 0) {
-        filters.push(`(${options.setCodes.map((setCode) => `e:${setCode}`).join(" OR ")})`);
-    } else {
-        if (options.releasedAfter) filters.push(`date>=${options.releasedAfter}`);
-        if (options.releasedBefore) filters.push(`date<=${options.releasedBefore}`);
-    }
-
-    const url = new URL("/cards/search", SCRYFALL_API_ORIGIN);
-    url.searchParams.set("q", filters.join(" "));
-    url.searchParams.set("unique", "prints");
-    url.searchParams.set("order", "released");
-    url.searchParams.set("dir", "desc");
-    return url.href;
-}
-
-function trustedUrl(value, expectedOrigin, label) {
-    let url;
-    try {
-        url = new URL(value);
-    } catch {
-        throw new Error(`Invalid ${label} URL`);
-    }
-    if (url.protocol !== "https:" || url.origin !== expectedOrigin) {
-        throw new Error(`Untrusted ${label} URL: ${url.origin}`);
-    }
-    return url;
-}
-
-async function readBoundedBody(response, maximumBytes, label) {
-    const contentLength = Number(response.headers.get("content-length"));
-    if (Number.isFinite(contentLength) && contentLength > maximumBytes) {
-        throw new Error(`${label} exceeds ${maximumBytes} bytes`);
-    }
-    if (!response.body) throw new Error(`${label} response body is empty`);
-
-    const chunks = [];
-    let total = 0;
-    const reader = response.body.getReader();
-    try {
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            total += value.byteLength;
-            if (total > maximumBytes) {
-                await reader.cancel();
-                throw new Error(`${label} exceeds ${maximumBytes} bytes`);
-            }
-            chunks.push(value);
-        }
-    } finally {
-        reader.releaseLock();
-    }
-
-    const bytes = new Uint8Array(total);
-    let offset = 0;
-    for (const chunk of chunks) {
-        bytes.set(chunk, offset);
-        offset += chunk.byteLength;
-    }
-    return bytes;
-}
-
-async function request(url, options = {}) {
-    const fetchImpl = options.fetchImpl || globalThis.fetch;
-    const response = await fetchImpl(url, {
-        headers: options.headers,
-        redirect: "error",
-        signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS)
-    });
-    if (!response.ok) {
-        throw new Error(`Scryfall request failed with HTTP ${response.status}`);
-    }
-    return response;
-}
-
-async function fetchCardPages(searchUrl, options = {}) {
-    const maxPages = parsePositiveInteger(
-        options.maxPages ?? DEFAULT_MAX_PAGES,
-        "max-pages",
-        MAX_PAGES
-    );
-    const wait =
-        options.wait ||
-        ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
-    const cards = [];
-    let nextUrl = trustedUrl(searchUrl, SCRYFALL_API_ORIGIN, "Scryfall API").href;
-
-    for (let page = 0; page < maxPages && nextUrl; page += 1) {
-        if (page > 0) await wait(REQUEST_DELAY_MS);
-        const response = await request(nextUrl, {
-            fetchImpl: options.fetchImpl,
-            headers: REQUEST_HEADERS
-        });
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.toLowerCase().includes("application/json")) {
-            throw new Error("Expected JSON response from Scryfall API");
-        }
-        const bytes = await readBoundedBody(
-            response,
-            MAX_API_RESPONSE_BYTES,
-            "Scryfall API response"
-        );
-        let pageData;
-        try {
-            pageData = JSON.parse(new TextDecoder().decode(bytes));
-        } catch (error) {
-            throw new Error("Scryfall API returned invalid JSON", { cause: error });
-        }
-        if (pageData?.object !== "list" || !Array.isArray(pageData.data)) {
-            throw new Error("Scryfall API response is not a card list");
-        }
-        cards.push(...pageData.data);
-        nextUrl = pageData.has_more
-            ? trustedUrl(pageData.next_page, SCRYFALL_API_ORIGIN, "Scryfall API").href
-            : undefined;
-    }
-    return cards;
-}
-
-async function downloadImage(imageUrl, destination, options = {}) {
-    const trustedImage = imageUrlForCard({ image_uris: { normal: imageUrl } });
-    if (!trustedImage) throw new Error("Untrusted Scryfall image URL");
-    const response = await request(trustedImage, {
-        fetchImpl: options.fetchImpl,
-        headers: {
-            ...REQUEST_HEADERS,
-            Accept: "image/jpeg"
-        }
-    });
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.toLowerCase().startsWith("image/jpeg")) {
-        throw new Error("Expected JPEG image from Scryfall");
-    }
-    const bytes = await readBoundedBody(response, MAX_IMAGE_BYTES, "Scryfall image");
-    if (bytes.length < 3 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) {
-        throw new Error("Scryfall download is not a valid JPEG image");
-    }
-    await writeFile(destination, bytes, { flag: "wx" });
-}
-
 async function readManifestJson(manifestPath) {
     let manifest;
     try {
@@ -248,6 +112,23 @@ function manifestPrintIdentities(manifest) {
     return new Set(manifest.catalog.flatMap(printIdentities));
 }
 
+function hasEnoughNewPrintableCards(cards, existing, count) {
+    const selected = new Set();
+    let total = 0;
+    for (const rawCard of cards) {
+        const card = normalizeCard(rawCard);
+        if (!card) continue;
+        const identities = printIdentities(card);
+        if (identities.some((identity) => existing.has(identity) || selected.has(identity))) {
+            continue;
+        }
+        for (const identity of identities) selected.add(identity);
+        total += 1;
+        if (total === count) return true;
+    }
+    return false;
+}
+
 function slugify(value) {
     const slug = String(value)
         .normalize("NFKD")
@@ -258,29 +139,19 @@ function slugify(value) {
     return slug || "card";
 }
 
-function imageUrlForCard(card) {
-    const imageUrl = card?.image_uris?.normal;
-    if (typeof imageUrl !== "string") return undefined;
-    const parsed = new URL(imageUrl);
-    if (
-        parsed.protocol !== "https:" ||
-        (parsed.hostname !== "img.scryfall.com" && !parsed.hostname.endsWith(".scryfall.io"))
-    ) {
-        return undefined;
-    }
-    return parsed.href;
-}
-
 function normalizeCard(card) {
+    const requiredStrings = [
+        card?.id,
+        card?.name,
+        card?.set,
+        card?.set_name,
+        card?.collector_number
+    ];
     if (
         !card ||
-        typeof card.id !== "string" ||
-        typeof card.name !== "string" ||
-        typeof card.set !== "string" ||
-        typeof card.set_name !== "string" ||
-        typeof card.collector_number !== "string" ||
+        requiredStrings.some((value) => typeof value !== "string" || value.trim().length === 0) ||
         card.lang !== "en" ||
-        card.digital === true
+        card.digital !== false
     ) {
         return undefined;
     }
@@ -303,12 +174,11 @@ function toManifestPath(manifestPath, filePath) {
     return path.relative(path.dirname(manifestPath), filePath).split(path.sep).join("/");
 }
 
-function fixtureEntries(card, manifestPath, imagePath, activate) {
+function fixtureEntries(card, manifestPath, imagePath) {
     const relativeImage = toManifestPath(manifestPath, imagePath);
-    const enabled = Boolean(activate);
     return {
         catalog: {
-            enabled,
+            enabled: false,
             scryfallId: card.id,
             name: card.name,
             set: card.set,
@@ -320,13 +190,11 @@ function fixtureEntries(card, manifestPath, imagePath, activate) {
             apiUrl: card.apiUrl
         },
         fixture: {
-            enabled,
+            enabled: false,
             id: `${slugify(card.set)}-${slugify(card.collectorNumber)}-${slugify(card.name)}-${slugify(card.id.slice(0, 8))}-scryfall`,
             image: relativeImage,
             quality: "clean-scan",
-            notes: enabled
-                ? "Imported from Scryfall as an active clean-scan fixture"
-                : "Imported from Scryfall; review OCR output and thresholds before enabling",
+            notes: "Imported from Scryfall; review OCR output and thresholds before enabling",
             expected: {
                 name: card.name,
                 set: card.set,
@@ -379,7 +247,9 @@ async function importScryfallFixtures(options, overrides = {}) {
 
     const fetchCardPages = overrides.fetchCardPages || defaultDependencies.fetchCardPages;
     const cards = await fetchCardPages(buildCardSearchUrl(selection), {
-        maxPages: selection.maxPages
+        maxPages: selection.maxPages,
+        shouldStop: (collectedCards) =>
+            hasEnoughNewPrintableCards(collectedCards, existing, selection.count)
     });
     const selected = [];
     const selectedIdentities = new Set();
@@ -446,12 +316,7 @@ async function importScryfallFixtures(options, overrides = {}) {
         for (const item of prepared) {
             await rename(item.temporaryImage, item.finalImage);
             movedImages.push(item.finalImage);
-            const entries = fixtureEntries(
-                item.card,
-                manifestPath,
-                item.finalImage,
-                options.activate
-            );
+            const entries = fixtureEntries(item.card, manifestPath, item.finalImage);
             manifest.catalog.push(entries.catalog);
             manifest.cases.push(entries.fixture);
         }
@@ -472,9 +337,6 @@ const defaultDependencies = {
 };
 
 export {
-    buildCardSearchUrl,
-    downloadImage,
-    fetchCardPages,
     importScryfallFixtures,
     manifestPrintIdentities,
     normalizeCard,

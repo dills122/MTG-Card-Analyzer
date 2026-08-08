@@ -14,6 +14,7 @@
         "ai:setup": "node scripts/setup-ai-context.mjs",
         "test": "mocha \"./test/**/*.spec.mjs\"",
         "test:regression": "node scripts/run-regression.mjs",
+        "fixtures:import": "node scripts/import-scryfall-fixtures.mjs",
         "regression": "node scripts/run-regression.mjs --no-fail-on-regression",
         "coverage": "c8 pnpm test",
         "coverage:check": "c8 --check-coverage pnpm test",

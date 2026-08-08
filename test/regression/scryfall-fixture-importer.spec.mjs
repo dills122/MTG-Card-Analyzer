@@ -3,12 +3,15 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
-    buildCardSearchUrl,
-    downloadImage,
-    fetchCardPages,
     importScryfallFixtures,
+    normalizeCard,
     normalizeImportOptions
 } from "../../src/regression/scryfall-fixture-importer.mjs";
+import {
+    buildCardSearchUrl,
+    downloadImage,
+    fetchCardPages
+} from "../../src/scryfall-api/regression-fixtures.mjs";
 
 describe("Scryfall regression fixture importer", () => {
     describe("normalizeImportOptions", () => {
@@ -59,6 +62,18 @@ describe("Scryfall regression fixture importer", () => {
                         count: 2
                     }),
                 "released-after must be on or before released-before"
+            );
+        });
+
+        it("rejects a calendar date that does not exist", () => {
+            assert.throws(
+                () =>
+                    normalizeImportOptions({
+                        sets: [],
+                        releasedAfter: "2025-02-30",
+                        count: 2
+                    }),
+                "released-after must use YYYY-MM-DD"
             );
         });
     });
@@ -112,6 +127,27 @@ describe("Scryfall regression fixture importer", () => {
             assert.equal(requests[0].options.headers.Accept, "application/json");
             assert.match(requests[0].options.headers["User-Agent"], /MTG-Card-Analyzer/);
             assert.deepEqual(waits, [125]);
+        });
+
+        it("stops pagination when enough usable cards have been collected", async () => {
+            let requests = 0;
+            const cards = await fetchCardPages("https://api.scryfall.com/cards/search?q=test", {
+                maxPages: 5,
+                fetchImpl: async () => {
+                    requests += 1;
+                    return jsonResponse({
+                        object: "list",
+                        data: [{ id: "enough" }],
+                        has_more: true,
+                        next_page: "https://api.scryfall.com/cards/search?page=2&q=test"
+                    });
+                },
+                shouldStop: (collected) => collected.length >= 1,
+                wait: async () => {}
+            });
+
+            assert.deepEqual(cards, [{ id: "enough" }]);
+            assert.equal(requests, 1);
         });
 
         it("rejects an untrusted pagination URL", async () => {
@@ -179,6 +215,24 @@ describe("Scryfall regression fixture importer", () => {
             assert.instanceOf(error, Error);
             assert.include(error.message, "Expected JPEG image from Scryfall");
         });
+    });
+
+    it("skips malformed Scryfall card image URLs", () => {
+        const malformed = card({
+            id: "malformed",
+            name: "Malformed",
+            set: "fin",
+            collector: "9"
+        });
+        malformed.image_uris.normal = "not a URL";
+
+        assert.isUndefined(normalizeCard(malformed));
+    });
+
+    it("skips Scryfall cards with empty required metadata", () => {
+        const malformed = card({ id: "malformed", name: "", set: "fin", collector: "9" });
+
+        assert.isUndefined(normalizeCard(malformed));
     });
 
     describe("importScryfallFixtures", () => {
