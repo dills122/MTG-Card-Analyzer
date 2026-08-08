@@ -112,10 +112,71 @@ function GetAll(cb) {
     });
 }
 
-export { GetQuantity, Upsert, GetAll };
+// Manual correction -- sets quantity to an exact value instead of adding to it (unlike
+// Upsert, which is what scans call). Errors if the entry doesn't exist; use a scan (or
+// Upsert directly) to create one. estValue is rescaled proportionally from the existing
+// per-unit value when possible (we don't persist priceUsd itself, only the last computed
+// estValue), otherwise left as-is rather than guessing.
+function SetQuantity(name, set, quantity, cb) {
+    const db = getDbInstance();
+    const lookupKey = toLookupKey(name, set);
+
+    db.findOne({ lookupKey }, (findErr, existing) => {
+        if (findErr) {
+            return cb(findErr, null);
+        }
+        if (!existing) {
+            return cb(new Error(`No collection entry for "${name}" (${set})`), null);
+        }
+
+        const estValue =
+            typeof existing.estValue === "number" && existing.quantity > 0
+                ? _.round((existing.estValue / existing.quantity) * quantity, 4)
+                : existing.estValue;
+        const now = new Date();
+
+        return db.update(
+            { lookupKey },
+            { $set: { quantity, estValue, updatedAt: now } },
+            {},
+            (updateErr) => {
+                if (updateErr) {
+                    return cb(updateErr, null);
+                }
+                return cb(null, { ...existing, quantity, estValue, updatedAt: now });
+            }
+        );
+    });
+}
+
+// Deletes a collection entry outright. Returns the removed doc (or null if nothing matched)
+// so callers can report what was actually removed.
+function Remove(name, set, cb) {
+    const db = getDbInstance();
+    const lookupKey = toLookupKey(name, set);
+
+    db.findOne({ lookupKey }, (findErr, existing) => {
+        if (findErr) {
+            return cb(findErr, null);
+        }
+        if (!existing) {
+            return cb(null, null);
+        }
+        return db.remove({ lookupKey }, {}, (removeErr) => {
+            if (removeErr) {
+                return cb(removeErr, null);
+            }
+            return cb(null, existing);
+        });
+    });
+}
+
+export { GetQuantity, Upsert, GetAll, SetQuantity, Remove };
 
 export default {
     GetQuantity,
     Upsert,
-    GetAll
+    GetAll,
+    SetQuantity,
+    Remove
 };

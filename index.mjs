@@ -7,7 +7,7 @@ import storage from "./src/storage/index.mjs";
 import migrate from "./src/migrate/nedb-to-rds.mjs";
 
 const { Processor } = processorModule;
-const KNOWN_COMMANDS = ["scan", "log", "migrate"];
+const KNOWN_COMMANDS = ["scan", "log", "migrate", "collection"];
 const HELP_TOKENS = ["--help", "-h", "help"];
 
 function buildCli(argv) {
@@ -90,6 +90,41 @@ function buildCli(argv) {
             parsed.flags = options || {};
         });
 
+    const collectionCommand = program
+        .command("collection")
+        .description("Manually correct a collection entry (persistence tier)");
+
+    collectionCommand
+        .command("update")
+        .description("Set a collection entry's quantity to an exact value")
+        .argument("<cardName>")
+        .argument("<cardSet>")
+        .requiredOption("--quantity <n>", "Exact quantity to set")
+        .option(
+            "--storage-adapter <adapter>",
+            `Storage adapter to use (${KNOWN_STORAGE_ADAPTERS.join("|")})`
+        )
+        .option("--config <path>", "Path to a JSON config file")
+        .action((cardName, cardSet, options) => {
+            parsed.command = "collection-update";
+            parsed.flags = { cardName, cardSet, ...options };
+        });
+
+    collectionCommand
+        .command("remove")
+        .description("Delete a collection entry outright")
+        .argument("<cardName>")
+        .argument("<cardSet>")
+        .option(
+            "--storage-adapter <adapter>",
+            `Storage adapter to use (${KNOWN_STORAGE_ADAPTERS.join("|")})`
+        )
+        .option("--config <path>", "Path to a JSON config file")
+        .action((cardName, cardSet, options) => {
+            parsed.command = "collection-remove";
+            parsed.flags = { cardName, cardSet, ...options };
+        });
+
     program.addHelpText(
         "after",
         `
@@ -102,6 +137,8 @@ Examples:
   $ log stats
   $ migrate --to rds --dry-run
   $ migrate --to rds
+  $ collection update "Pacifism" M20 --quantity 3
+  $ collection remove "Pacifism" M20
 `
     );
 
@@ -248,6 +285,45 @@ async function runMigrate(flags, logger, migrateFn) {
     }
 }
 
+async function runCollectionUpdate(flags, logger) {
+    const err = applyConfigOverrides(flags, logger);
+    if (err) {
+        return 1;
+    }
+    const quantity = Number(flags.quantity);
+    if (!Number.isFinite(quantity) || quantity < 0) {
+        logger.log(`--quantity must be a non-negative number, got "${flags.quantity}"`);
+        return 1;
+    }
+    try {
+        const doc = await storage.collection.setQuantity(flags.cardName, flags.cardSet, quantity);
+        logger.log(JSON.stringify(doc, null, 2));
+        return 0;
+    } catch (updateErr) {
+        logger.log(updateErr?.message || String(updateErr));
+        return 1;
+    }
+}
+
+async function runCollectionRemove(flags, logger) {
+    const err = applyConfigOverrides(flags, logger);
+    if (err) {
+        return 1;
+    }
+    try {
+        const removed = await storage.collection.remove(flags.cardName, flags.cardSet);
+        if (!removed) {
+            logger.log(`No collection entry for "${flags.cardName}" (${flags.cardSet})`);
+            return 1;
+        }
+        logger.log(JSON.stringify(removed, null, 2));
+        return 0;
+    } catch (removeErr) {
+        logger.log(removeErr?.message || String(removeErr));
+        return 1;
+    }
+}
+
 export async function run(options = {}) {
     const {
         argv = process.argv.slice(2),
@@ -262,7 +338,7 @@ export async function run(options = {}) {
     // Bare filepath args ("node index.mjs ./card.jpg") implicitly mean `scan` for backward
     // compatibility. Empty argv, --help/-h, and known commands must NOT get that prefix --
     // otherwise `node index.mjs --help` silently becomes `scan --help` and the top-level
-    // help (which lists `log`/`migrate` at all) never shows.
+    // help (which lists `log`/`migrate`/`collection` at all) never shows.
     const shouldPrefixScan =
         argv.length > 0 && !KNOWN_COMMANDS.includes(argv[0]) && !HELP_TOKENS.includes(argv[0]);
     const normalizedArgv = shouldPrefixScan ? ["scan", ...argv] : argv;
@@ -287,6 +363,16 @@ export async function run(options = {}) {
 
     if (cli.command === "migrate") {
         exit(await runMigrate(flags, logger, migrateFn));
+        return;
+    }
+
+    if (cli.command === "collection-update") {
+        exit(await runCollectionUpdate(flags, logger));
+        return;
+    }
+
+    if (cli.command === "collection-remove") {
+        exit(await runCollectionRemove(flags, logger));
         return;
     }
 

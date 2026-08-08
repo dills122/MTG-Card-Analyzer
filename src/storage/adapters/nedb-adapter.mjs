@@ -28,6 +28,28 @@ function upsertCollection(record) {
     });
 }
 
+function setQuantity(name, set, quantity) {
+    return new Promise((resolve, reject) => {
+        collectionStore.SetQuantity(name, set, quantity, (err, doc) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(doc);
+        });
+    });
+}
+
+function removeCollection(name, set) {
+    return new Promise((resolve, reject) => {
+        collectionStore.Remove(name, set, (err, doc) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(doc);
+        });
+    });
+}
+
 function insertNeedsAttention(record) {
     return new Promise((resolve, reject) => {
         needsAttentionStore.Insert(record, (err, doc) => {
@@ -44,7 +66,9 @@ function createNedbAdapter() {
         adapterName: "nedb",
         collection: {
             getQuantity,
-            upsert: upsertCollection
+            upsert: upsertCollection,
+            setQuantity,
+            remove: removeCollection
         },
         needsAttention: {
             insert: insertNeedsAttention
