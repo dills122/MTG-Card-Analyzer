@@ -399,6 +399,186 @@
             "rarity": "mythic",
             "referenceImage": "../../../test-images/regression/scryfall/fin-570-vivi-ornitier-25ef2d44.jpg",
             "apiUrl": "https://scryfall.com/card/fin/570/vivi-ornitier?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "2d6117cf-5cb3-41f3-8756-c01b5e9c760e",
+            "name": "Woodland Mystic",
+            "set": "M20",
+            "setName": "Core Set 2020",
+            "collectorNumber": "344",
+            "typeLine": "Creature — Elf Druid",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m20-344-woodland-mystic-2d6117cf.jpg",
+            "apiUrl": "https://scryfall.com/card/m20/344/woodland-mystic?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "15663129-9deb-4c34-84a0-f94cf1a723f0",
+            "name": "Sunpetal Grove",
+            "set": "M13",
+            "setName": "Magic 2013",
+            "collectorNumber": "229",
+            "typeLine": "Land",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m13-229-sunpetal-grove-15663129.jpg",
+            "apiUrl": "https://scryfall.com/card/m13/229/sunpetal-grove?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "da965767-a8b1-4725-ae20-65c18e37ad27",
+            "name": "Wurm's Tooth",
+            "set": "M12",
+            "setName": "Magic 2012",
+            "collectorNumber": "223",
+            "typeLine": "Artifact",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m12-223-wurm-s-tooth-da965767.jpg",
+            "apiUrl": "https://scryfall.com/card/m12/223/wurms-tooth?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "5d1c6c4b-62ab-4d44-a2d7-64b44d163606",
+            "name": "Chandra, Flame's Fury",
+            "set": "M20",
+            "setName": "Core Set 2020",
+            "collectorNumber": "294",
+            "typeLine": "Legendary Planeswalker — Chandra",
+            "rarity": "mythic",
+            "colors": ["R"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m20-294-chandra-flame-s-fury-5d1c6c4b.jpg",
+            "apiUrl": "https://scryfall.com/card/m20/294/chandra-flames-fury?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "71298c75-533e-4ccd-a1f5-875f63a1e89b",
+            "name": "Wit's End",
+            "set": "M13",
+            "setName": "Magic 2013",
+            "collectorNumber": "117",
+            "typeLine": "Sorcery",
+            "rarity": "rare",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m13-117-wit-s-end-71298c75.jpg",
+            "apiUrl": "https://scryfall.com/card/m13/117/wits-end?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "88439b79-f6f4-4d01-8404-a1e02f2aeb55",
+            "name": "Unsummon",
+            "set": "M12",
+            "setName": "Magic 2012",
+            "collectorNumber": "79",
+            "typeLine": "Instant",
+            "rarity": "common",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m12-79-unsummon-88439b79.jpg",
+            "apiUrl": "https://scryfall.com/card/m12/79/unsummon?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "618d21fe-8e3d-4887-b2e4-b92194ba1902",
+            "name": "Moldervine Reclamation",
+            "set": "M20",
+            "setName": "Core Set 2020",
+            "collectorNumber": "214",
+            "typeLine": "Enchantment",
+            "rarity": "uncommon",
+            "colors": ["B", "G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m20-214-moldervine-reclamation-618d21fe.jpg",
+            "apiUrl": "https://scryfall.com/card/m20/214/moldervine-reclamation?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "f5cc38bc-55a4-446a-b054-48fb90216946",
+            "name": "Sublime Archangel",
+            "set": "M13",
+            "setName": "Magic 2013",
+            "collectorNumber": "36",
+            "typeLine": "Creature — Angel",
+            "rarity": "mythic",
+            "colors": ["W"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m13-36-sublime-archangel-f5cc38bc.jpg",
+            "apiUrl": "https://scryfall.com/card/m13/36/sublime-archangel?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "27c2dd5e-465f-47fd-8f5d-fd65ba133164",
+            "name": "Rootbound Crag",
+            "set": "M12",
+            "setName": "Magic 2012",
+            "collectorNumber": "228",
+            "typeLine": "Land",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m12-228-rootbound-crag-27c2dd5e.jpg",
+            "apiUrl": "https://scryfall.com/card/m12/228/rootbound-crag?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "0db41405-87a2-4a91-97f4-a8af2ffe8313",
+            "name": "Titanic Growth",
+            "set": "M20",
+            "setName": "Core Set 2020",
+            "collectorNumber": "343",
+            "typeLine": "Instant",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m20-343-titanic-growth-0db41405.jpg",
+            "apiUrl": "https://scryfall.com/card/m20/343/titanic-growth?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "efdfb60b-948b-40fb-b18e-08f0300624b3",
+            "name": "Tormod's Crypt",
+            "set": "M13",
+            "setName": "Magic 2013",
+            "collectorNumber": "219",
+            "typeLine": "Artifact",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m13-219-tormod-s-crypt-efdfb60b.jpg",
+            "apiUrl": "https://scryfall.com/card/m13/219/tormods-crypt?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "efb37556-186f-4660-8b75-c52ef16a6d8f",
+            "name": "Chandra, the Firebrand",
+            "set": "M12",
+            "setName": "Magic 2012",
+            "collectorNumber": "124",
+            "typeLine": "Legendary Planeswalker — Chandra",
+            "rarity": "mythic",
+            "colors": ["R"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m12-124-chandra-the-firebrand-efb37556.jpg",
+            "apiUrl": "https://scryfall.com/card/m12/124/chandra-the-firebrand?utm_source=api"
         }
     ],
     "cases": [
@@ -593,7 +773,7 @@
                 "set": "E02",
                 "collectorNumber": "13",
                 "minNameScore": 0.7,
-                "maxPrintCandidates": 1,
+                "maxPrintCandidates": 2,
                 "maxRuntimeMs": 30000
             }
         },
@@ -1206,6 +1386,270 @@
                 "metadata": {
                     "typeLine": "Legendary Creature — Wizard",
                     "rarity": "mythic"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m20-344-woodland-mystic-2d6117cf-scryfall",
+            "image": "../../../test-images/regression/scryfall/m20-344-woodland-mystic-2d6117cf.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Woodland Mystic",
+                "set": "M20",
+                "collectorNumber": "344",
+                "metadata": {
+                    "typeLine": "Creature — Elf Druid",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m13-229-sunpetal-grove-15663129-scryfall",
+            "image": "../../../test-images/regression/scryfall/m13-229-sunpetal-grove-15663129.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Sunpetal Grove",
+                "set": "M13",
+                "collectorNumber": "229",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m12-223-wurm-s-tooth-da965767-scryfall",
+            "image": "../../../test-images/regression/scryfall/m12-223-wurm-s-tooth-da965767.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Wurm's Tooth",
+                "set": "M12",
+                "collectorNumber": "223",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m20-294-chandra-flame-s-fury-5d1c6c4b-scryfall",
+            "image": "../../../test-images/regression/scryfall/m20-294-chandra-flame-s-fury-5d1c6c4b.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Chandra, Flame's Fury",
+                "set": "M20",
+                "collectorNumber": "294",
+                "metadata": {
+                    "typeLine": "Legendary Planeswalker — Chandra",
+                    "rarity": "mythic",
+                    "colors": ["R"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m13-117-wit-s-end-71298c75-scryfall",
+            "image": "../../../test-images/regression/scryfall/m13-117-wit-s-end-71298c75.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Wit's End",
+                "set": "M13",
+                "collectorNumber": "117",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "rare",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m12-79-unsummon-88439b79-scryfall",
+            "image": "../../../test-images/regression/scryfall/m12-79-unsummon-88439b79.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed Scryfall clean scan; two enabled Unsummon prints intentionally exercise print selection",
+            "expected": {
+                "name": "Unsummon",
+                "set": "M12",
+                "collectorNumber": "79",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "common",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 2,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m20-214-moldervine-reclamation-618d21fe-scryfall",
+            "image": "../../../test-images/regression/scryfall/m20-214-moldervine-reclamation-618d21fe.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Moldervine Reclamation",
+                "set": "M20",
+                "collectorNumber": "214",
+                "metadata": {
+                    "typeLine": "Enchantment",
+                    "rarity": "uncommon",
+                    "colors": ["B", "G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m13-36-sublime-archangel-f5cc38bc-scryfall",
+            "image": "../../../test-images/regression/scryfall/m13-36-sublime-archangel-f5cc38bc.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Sublime Archangel",
+                "set": "M13",
+                "collectorNumber": "36",
+                "metadata": {
+                    "typeLine": "Creature — Angel",
+                    "rarity": "mythic",
+                    "colors": ["W"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m12-228-rootbound-crag-27c2dd5e-scryfall",
+            "image": "../../../test-images/regression/scryfall/m12-228-rootbound-crag-27c2dd5e.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Rootbound Crag",
+                "set": "M12",
+                "collectorNumber": "228",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m20-343-titanic-growth-0db41405-scryfall",
+            "image": "../../../test-images/regression/scryfall/m20-343-titanic-growth-0db41405.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Titanic Growth",
+                "set": "M20",
+                "collectorNumber": "343",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m13-219-tormod-s-crypt-efdfb60b-scryfall",
+            "image": "../../../test-images/regression/scryfall/m13-219-tormod-s-crypt-efdfb60b.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Tormod's Crypt",
+                "set": "M13",
+                "collectorNumber": "219",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m12-124-chandra-the-firebrand-efb37556-scryfall",
+            "image": "../../../test-images/regression/scryfall/m12-124-chandra-the-firebrand-efb37556.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan reviewed and enabled for OCR regression coverage",
+            "expected": {
+                "name": "Chandra, the Firebrand",
+                "set": "M12",
+                "collectorNumber": "124",
+                "metadata": {
+                    "typeLine": "Legendary Planeswalker — Chandra",
+                    "rarity": "mythic",
+                    "colors": ["R"],
+                    "layout": "normal",
+                    "style": "normal"
                 },
                 "minNameScore": 0.7,
                 "maxPrintCandidates": 1,
