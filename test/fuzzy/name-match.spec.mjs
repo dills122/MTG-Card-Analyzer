@@ -168,6 +168,19 @@ describe("FuzzyMatching::", () => {
             assert.equal(matches.length, 0);
         });
 
+        it("ignores invalid and duplicate legacy rows instead of failing every match", async () => {
+            stubs.BulkNamesStub.resolves([
+                { name: "_____ // ______" },
+                { name: "Pacifism" },
+                { name: "Pacifism", normalizedName: "PACIFISM" }
+            ]);
+
+            const matches = await create({ cleanText: "Pacifism" }).match();
+
+            assert.equal(matches[0]?.name, "Pacifism");
+            assert.equal(matches[0]?.percentage, 1);
+        });
+
         it("should narrow name-style families to the strongest first-token match", async () => {
             const matches = await create({
                 cleanText: "Thought Reflection"

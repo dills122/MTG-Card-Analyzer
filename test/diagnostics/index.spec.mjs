@@ -43,6 +43,15 @@ describe("diagnostics::index", () => {
         assert.isNotEmpty(bundle.environment.checks);
         assert.isNumber(bundle.environment.requiredFailures);
         assert.isArray(bundle.environment.warnings);
+        if (bundle.environment.cardNameIndex) {
+            assert.hasAllKeys(bundle.environment.cardNameIndex, [
+                "totalRows",
+                "validRows",
+                "uniqueNames",
+                "invalidRows",
+                "duplicateRows"
+            ]);
+        }
     });
 
     it("includes only the safe-to-share config fields (no secrets)", async () => {

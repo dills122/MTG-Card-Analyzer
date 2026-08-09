@@ -146,13 +146,18 @@ if (!flags.skipSeed) {
         const ok = run("node", ["./src/db-local/bulk-insert.mjs"]);
         if (!ok) {
             console.warn(
-                "  ⚠ Seeding failed (likely no network access). Run `node ./src/db-local/bulk-insert.mjs` yourself later."
+                "  ✗ Required card-name seed failed. Scans will not work until seeding succeeds; fix the reported catalog/network error and rerun setup."
             );
         }
-        return true; // never hard-fail setup over a network hiccup
+        return ok;
     });
 } else {
-    step("Skipping name-seed step (--skip-seed)", () => true);
+    step("Skipping name-seed step (--skip-seed)", () => {
+        console.warn(
+            "  ⚠ Seed skipped. This is safe only when diagnostics already reports a healthy card-name index."
+        );
+        return true;
+    });
 }
 
 if (flags.withMysql) {

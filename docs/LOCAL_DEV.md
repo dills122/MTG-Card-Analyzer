@@ -34,8 +34,9 @@ node scripts/verify-env.mjs --with-mysql # also checks the MySQL connection
 
 The setup script itself is deliberately dependency-free (only core Node modules), so it can run
 before `pnpm install` has succeeded on a fresh clone. Configuration creation is non-clobbering, but
-installation and seeding repeat unless skipped. After a successful seed, use `--skip-seed` on later
-runs because the current seeder appends the catalog and can create duplicate name rows.
+installation and seeding repeat unless skipped. Seeding is idempotent, so rerunning setup updates
+the existing index without duplicating it. Use `--skip-seed` only when
+`node scripts/verify-env.mjs` already reports a healthy card-name index.
 
 | Step               | What happens                                                                                            |
 | ------------------ | ------------------------------------------------------------------------------------------------------- |
@@ -48,8 +49,11 @@ runs because the current seeder appends the catalog and can create duplicate nam
 
 Flags compose: `node scripts/setup.mjs --with-mysql --skip-seed` skips seeding but still sets up MySQL.
 
-Name seeding prints one start summary and one completion summary. Inserts run with bounded
-concurrency, so large Scryfall catalogs do not create an unbounded burst of database work.
+Name seeding prints one start summary and one completion summary. It validates names with the same
+normalization used by matching, skips upstream names that cannot produce a match key, deduplicates
+the catalog, repairs existing invalid/duplicate rows, and upserts with bounded concurrency. An
+empty or entirely unmatchable catalog is a failure. Because scans require the local name index,
+setup exits nonzero when the required seed fails.
 
 With `--with-mysql`, the generated `secure.config.cjs` matches `docker-compose.yml`'s actual defaults (host/port/user/password/database) so `pnpm setup-db` works immediately — it does **not** just copy the generic template (which has placeholder values and would fail to connect).
 
@@ -106,7 +110,10 @@ node scripts/verify-env.mjs
 ```
 
 **`node scripts/setup.mjs` fails at the seed step**
-Almost always no network access to Scryfall. The script won't hard-fail over it — re-run `node ./src/db-local/bulk-insert.mjs` once you have network.
+The Scryfall request failed or returned no matchable catalog names. Setup exits nonzero because
+scans cannot work without the name index. Restore network/catalog access and rerun setup, or run
+`node ./src/db-local/bulk-insert.mjs` directly. Use `--skip-seed` only if diagnostics confirms an
+already healthy index.
 
 **`--with-mysql` fails at "Waiting for MySQL to become healthy"**
 Docker isn't running, or the container crashed. Check `pnpm docker:logs`. `docker compose ps` shows container status.

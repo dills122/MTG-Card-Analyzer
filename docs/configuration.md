@@ -121,6 +121,12 @@ the hash cache should live somewhere else.
 Disabling the local cache turns off the image-hash cache and operations log. It does not disable
 the card-name index, which is required for matching and has no remote fallback.
 
+The card-name seeder stores a normalized key beside each canonical name. Rerunning it is
+idempotent: catalog entries are validated with the matching normalization contract, duplicate and
+invalid legacy rows are removed, and remaining names are upserted. `diagnostics` reports the
+index's total, valid, unique, invalid, and duplicate row counts rather than treating any non-empty
+file as healthy.
+
 See [Architecture](architecture.md#storage-boundaries) for the difference between cache and
 persistence data.
 
