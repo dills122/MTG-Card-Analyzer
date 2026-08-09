@@ -99,6 +99,53 @@ Keep the Tesseract.js/core version fixed during a model comparison because its o
 notes that settings, language data, and engine version must all match for comparable output:
 [Tesseract.js FAQ](https://github.com/naptha/tesseract.js/blob/master/docs/faq.md).
 
+### Compare completed model runs
+
+Run every model against the same fixture manifest and filters, write each run to a separate output
+directory, then compare their JSON reports:
+
+```bash
+pnpm regression:compare \
+    --control artifacts/regression/models/bundled-eng-control/benchmark.json \
+    --candidate artifacts/regression/models/official-eng-fast/benchmark.json \
+    --candidate artifacts/regression/models/official-eng-best/benchmark.json \
+    --output artifacts/regression/models/comparison
+```
+
+The comparator refuses reports with different fixture ID sets. Its Markdown and JSON outputs show
+accuracy, blocking-gate, runtime, and model-size deltas plus every fixture whose pass/fail result
+changed. A model with a blocking regression is reported as a failed candidate even when its overall
+pass count increases.
+
+### Pinned upstream bakeoff: 2026-08-08
+
+The first controlled bakeoff kept Tesseract.js at 3.0.3 and ran all 79 enabled fixtures sequentially
+with OCR caching disabled. Timings are from one local run and should be treated as directional; the
+accuracy and fixture deltas are the promotion gate.
+
+| Model                    |      Size | Passed | Blocking | Mean runtime | P95 runtime |
+| ------------------------ | --------: | -----: | -------: | -----------: | ----------: |
+| Bundled control          | 20.86 MiB |  74/79 |    72/72 |   1026.22 ms |  2145.50 ms |
+| Official `tessdata_fast` |  3.92 MiB |  72/79 |    70/72 |    869.48 ms |  1907.77 ms |
+| Official `tessdata_best` | 14.69 MiB |  75/79 |    71/72 |   1063.18 ms |  2318.91 ms |
+
+Pinned inputs:
+
+- `tessdata_fast` revision `87416418657359cb625c412a48b6e1d6d41c29bd`, SHA-256
+  `7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2`
+- `tessdata_best` revision `e12c65a915945e4c28e237a9b52bc4a8f39a0cec`, SHA-256
+  `8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba`
+
+`tessdata_fast` fixed one non-blocking vintage fixture but regressed Worldly Tutor and the blocking
+Sarkhan Unbroken and Yavimaya Coast fixtures. `tessdata_best` fixed two non-blocking vintage fixtures
+but regressed the blocking Sarkhan Unbroken fixture. Neither candidate is eligible to replace the
+bundled control.
+
+Use the pinned `tessdata_best` model as the base for the custom-training experiment. Tesseract's
+official data-file guidance identifies `tessdata_best` as the float model intended for fine-tuning;
+`tessdata_fast` is an integer model that cannot be used as a training base. A trained candidate must
+return to this same comparison gate before any production promotion.
+
 ## Manifest
 
 Edit `test/regression/fixtures/manifest.json`. Paths are relative to the manifest file. The
