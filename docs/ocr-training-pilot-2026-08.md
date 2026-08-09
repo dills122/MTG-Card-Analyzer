@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 MD043 -->
+
 # OCR training pilot: August 2026
 
 ## Decision

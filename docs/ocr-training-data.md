@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 # OCR training data
 
 The custom OCR corpus is review-first. The repository currently contains a pinned, empty draft at

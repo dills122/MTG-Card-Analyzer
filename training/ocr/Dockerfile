@@ -13,6 +13,9 @@ ARG TESSDATA_BEST_ENG_SHA256=8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1
 LABEL org.opencontainers.image.source="https://github.com/dills122/MTG-Card-Analyzer"
 LABEL org.opencontainers.image.description="Pinned offline Tesseract fine-tuning environment"
 
+# Ubuntu security package revisions move within the 24.04 suite; pinning them here would make
+# rebuilds brittle. Training inputs downloaded below remain pinned by revision and checksum.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
         ca-certificates \
