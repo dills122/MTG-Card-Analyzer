@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Sanity-checks the local dev environment: is everything actually usable, not just present.
 // Run after scripts/setup.mjs, or any time something feels broken. Exits 1 if a required
-// check fails; optional checks (MySQL, seeded names) only warn.
+// check fails. An unusable required name index fails; optional MySQL checks and repairable
+// name-index corruption only warn.
 //
 // Thin CLI wrapper around src/diagnostics/env-check.mjs, which also backs
 // `node index.mjs diagnostics`. Usage: node scripts/verify-env.mjs [--with-mysql]

@@ -111,8 +111,10 @@ Diagnostics prints JSON containing application, Node.js, and platform versions; 
 checks; active configuration; and recent operations. It includes local config/database paths,
 source-image paths, OCR text, and scan details, so review the output before sharing it. The bundle
 never includes MySQL credentials. With `--with-mysql`, the connection layer reads them only to
-perform the requested connection check. MySQL connection failures and an empty card-name index are
-reported as warnings; the command exits non-zero only when a required environment check fails.
+perform the requested connection check. Card-name diagnostics report total, valid, unique,
+invalid, and duplicate row counts. An empty, entirely invalid, or implausibly small name index is a
+required failure and makes the command exit nonzero; repairable invalid/duplicate rows in an
+otherwise usable index are warnings. MySQL connection failures remain optional warnings.
 
 Options:
 

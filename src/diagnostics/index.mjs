@@ -11,7 +11,7 @@ const appVersion = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")).version;
 // and recent scan activity. Nothing sensitive in here -- secrets live only in
 // secure.config.cjs, which this never reads. `node index.mjs diagnostics`.
 async function gatherDiagnostics({ limit = 20, withMysql = false } = {}) {
-    const { checks, requiredFailures, warnings } = await runEnvironmentCheck({ withMysql });
+    const environment = await runEnvironmentCheck({ withMysql });
     const config = getConfig();
 
     const recentOperations = (await storage.log.dump({ limit })) || [];
@@ -24,7 +24,7 @@ async function gatherDiagnostics({ limit = 20, withMysql = false } = {}) {
             platform: process.platform,
             arch: process.arch
         },
-        environment: { checks, requiredFailures, warnings },
+        environment,
         // Everything in the resolved config is safe to share -- MySQL credentials live in
         // secure.config.cjs, a separate file this module never touches.
         config: {

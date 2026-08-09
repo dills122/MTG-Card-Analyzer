@@ -7,10 +7,12 @@ import {
     DEFAULT_OCR_MODEL_PATH,
     DEFAULT_OCR_MODEL_SHA256
 } from "../image-analysis/ocr-model.mjs";
+import { analyzeNameRecords } from "../fuzzy-matching/name-index.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "../..");
 const unsupportedOcrParameters = ["enable_new_segsearch", "save_raw_choices"];
+const MIN_USABLE_CARD_NAMES = 1000;
 
 function findUnsupportedOcrParameters(model) {
     return unsupportedOcrParameters.filter((parameter) => model.includes(Buffer.from(parameter)));
@@ -53,6 +55,33 @@ function checkDefaultOcrModel() {
     };
 }
 
+function evaluateCardNameIndex(records) {
+    const health = analyzeNameRecords(records);
+    const counts = `${health.uniqueNames} unique matchable names, ${health.invalidRows} invalid rows, ${health.duplicateRows} duplicate rows`;
+    if (health.uniqueNames < MIN_USABLE_CARD_NAMES) {
+        return {
+            health,
+            label: `card names DB is unusable (${counts}; expected at least ${MIN_USABLE_CARD_NAMES}) -- run \`node ./src/db-local/bulk-insert.mjs\` to repair it`,
+            status: "fail",
+            required: true
+        };
+    }
+    if (health.invalidRows > 0 || health.duplicateRows > 0) {
+        return {
+            health,
+            label: `card names DB needs repair (${counts}) -- rerun \`node ./src/db-local/bulk-insert.mjs\``,
+            status: "fail",
+            required: false
+        };
+    }
+    return {
+        health,
+        label: `card names DB healthy (${health.uniqueNames} unique matchable names)`,
+        status: "pass",
+        required: true
+    };
+}
+
 // Sanity-checks the environment is actually usable, not just "file exists". Shared by
 // scripts/verify-env.mjs (dev setup) and `node index.mjs diagnostics` (support bundle) --
 // one source of truth for what "is this environment healthy" means, printed differently by
@@ -64,6 +93,7 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
     const checks = [];
     let requiredFailures = 0;
     const warnings = [];
+    let cardNameIndex;
 
     function record(label, status, required = true) {
         checks.push({ label, status });
@@ -115,16 +145,10 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
         record(`local cache dir is writable (${dir})`, "pass");
 
         const { db: namesDb } = await import("../db-local/db.mjs");
-        const nameCount = await namesDb.count({});
-        if (nameCount > 0) {
-            record(`card names DB seeded (${nameCount} names)`, "pass");
-        } else {
-            record(
-                "card names DB is empty -- run `node ./src/db-local/bulk-insert.mjs` to seed it",
-                "fail",
-                false
-            );
-        }
+        const nameRecords = (await namesDb.find({})) || [];
+        const indexCheck = evaluateCardNameIndex(nameRecords);
+        cardNameIndex = indexCheck.health;
+        record(indexCheck.label, indexCheck.status, indexCheck.required);
     } catch (err) {
         record(`could not initialize local cache: ${err.message}`, "fail");
     }
@@ -149,9 +173,15 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
         }
     }
 
-    return { checks, requiredFailures, warnings };
+    return { checks, requiredFailures, warnings, cardNameIndex };
 }
 
-export { findUnsupportedOcrParameters, inspectDefaultOcrModel, runEnvironmentCheck };
+export {
+    MIN_USABLE_CARD_NAMES,
+    evaluateCardNameIndex,
+    findUnsupportedOcrParameters,
+    inspectDefaultOcrModel,
+    runEnvironmentCheck
+};
 
 export default { runEnvironmentCheck };

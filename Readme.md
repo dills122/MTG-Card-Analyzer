@@ -38,9 +38,11 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
 ```
 
 The setup script installs dependencies, creates local configuration files without overwriting
-existing ones, and seeds the card-name index. On later runs, pass `--skip-seed` if the index is
-already populated: the current seeder appends the Scryfall catalog and can create duplicate name
-rows. Setup does not start MySQL unless you explicitly pass `--with-mysql`.
+existing ones, and seeds the card-name index. Seeding is safe to repeat: it applies the same
+normalization contract used by matching, rejects unmatchable catalog entries, and repairs invalid
+or duplicate rows while upserting names. A required seed failure makes setup exit nonzero; use
+`--skip-seed` only when diagnostics already reports a healthy index. Setup does not start MySQL
+unless you explicitly pass `--with-mysql`.
 
 If the scan does not complete, check the environment before digging into individual settings:
 
