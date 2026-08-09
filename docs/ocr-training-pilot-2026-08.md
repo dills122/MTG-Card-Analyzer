@@ -55,3 +55,11 @@ The repeated failures identify a narrower data gap: the corpus needs reviewed vi
 modern full-art title examples acquired separately from the enabled regression fixtures. Keep the
 M10/M15 normal-frame lines, add those missing frame families, then rerun a short bounded checkpoint.
 All 118 blocking fixtures must pass before considering longer training.
+
+## Later production model migration
+
+On 2026-08-09, a separate stock-model bakeoff replaced the original Pre-4.0 legacy-only production
+archive with the pinned official `tessdata_best` English LSTM model. That model passed all 118
+blocking fixtures and 123 of 125 fixtures overall. It did not come from the 22-line custom corpus,
+so this migration does not change the rejection decision above: the reviewed corpus remains ready
+for a future, more diverse fine-tuning experiment and no custom checkpoint has been promoted.

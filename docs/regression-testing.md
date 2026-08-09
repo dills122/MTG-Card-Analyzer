@@ -12,10 +12,11 @@ The existing scan path already had strong reusable pieces:
 - `src/image-processing/ocr-preprocessing.mjs` crops four likely name regions and applies
   grayscale, normalization, scaling, thresholding, inversion, and sharpening. Failed matches can
   request bounded soft/inverted or rotated title variants.
-- `src/image-analysis/extract-text.mjs` runs Tesseract with each crop's declared page-segmentation
-  mode and preserves bounded region, line, and token-window candidates. One bounded Tesseract
-  worker loads the reviewed English model;
-  its obsolete `enable_new_segsearch` and `save_raw_choices` directives are disabled in place.
+- `src/image-analysis/extract-text.mjs` runs Tesseract with each crop's declared
+  page-segmentation mode and preserves bounded region, line, and token-window
+  candidates. One bounded Tesseract worker loads the pinned official
+  `tessdata_best` English LSTM model. The LSTM-only archive does not contain
+  the obsolete `enable_new_segsearch` or `save_raw_choices` legacy directives.
 - `src/fuzzy-matching/match-name.mjs` applies the production fuzzy-name thresholds.
 - `src/image-hashing/hash-image.mjs` provides the production perceptual hash and comparison
   metrics.
@@ -146,6 +147,28 @@ official data-file guidance identifies `tessdata_best` as the float model intend
 `tessdata_fast` is an integer model that cannot be used as a training base. A trained candidate must
 return to this same comparison gate before any production promotion.
 
+### Production LSTM promotion: 2026-08-09
+
+The original production bundle was a 20.86 MiB Pre-4.0 legacy-only archive. A current-format
+replacement bakeoff ran the complete 125-case corpus with Tesseract.js fixed at 3.0.3:
+
+| Model                         |      Size |  Passed | Blocking | Mean runtime | P95 runtime |
+| ----------------------------- | --------: | ------: | -------: | -----------: | ----------: |
+| Pre-4.0 bundled control       | 20.86 MiB | 124/125 |  118/118 |   1816.00 ms |  8010.73 ms |
+| Official `tessdata_best` LSTM | 14.69 MiB | 123/125 |  118/118 |   1503.16 ms |  4151.01 ms |
+
+The LSTM model preserved every blocking result, removed 6.18 MiB from the bundle, and reduced the
+directional mean and p95 runtimes. Its only regression was the already non-blocking Mirage
+`Illumination` fixture. The official combined `tessdata` model produced the same pass set while
+growing to 22.38 MiB, so the smaller LSTM-only model was selected.
+
+Production now pins `tessdata_best` revision
+`e12c65a915945e4c28e237a9b52bc4a8f39a0cec`, SHA-256
+`8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba`. The runtime diagnostics
+verify that exact hash, and the regression candidate manifest records the same source and engine
+provenance. Timings are directional local measurements; the zero-blocking-regression result is the
+promotion gate.
+
 ## Manifest
 
 Edit `test/regression/fixtures/manifest.json`. Paths are relative to the manifest file. The
@@ -165,8 +188,9 @@ Cases are blocking by default. Add `"blocking": false` only for a known, tracked
 must remain visible in every benchmark without failing CI. Non-blocking cases still run, retain
 their ordinary pass/fail result, and appear as `NON-BLOCKING FAIL` in the Markdown report. The
 seven vintage fixtures are temporarily non-blocking while GitHub issue #157 tracks the remaining
-vintage-card recognition work. The current benchmark recognizes six of those seven; the vintage
-`Island` fixture remains the known miss. All other enabled fixtures gate pull requests.
+vintage-card recognition work. The current LSTM benchmark recognizes five of those seven; the
+vintage `Island` and `Illumination` fixtures remain known misses. All other enabled fixtures gate
+pull requests.
 
 Minimal example:
 

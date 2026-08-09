@@ -56,7 +56,7 @@ describe("OCR model candidate manifest::", () => {
         assert.equal(manifest.candidates[0].engine.version, "3.0.3");
     });
 
-    it("tracks the reviewed bundled model as the immutable control candidate", async () => {
+    it("tracks the pinned official LSTM model as the bundled control candidate", async () => {
         const manifestPath = fileURLToPath(new URL("./ocr-models/manifest.json", import.meta.url));
 
         const manifest = await loadOcrModelManifest(manifestPath);
@@ -64,9 +64,14 @@ describe("OCR model candidate manifest::", () => {
         assert.equal(manifest.candidates.length, 1);
         assert.include(manifest.candidates[0], {
             id: "bundled-eng-control",
-            sha256: "7e084d31c8262ec2bacf90ac4288fde165c0c6db35fe7d2b8c8ff271b8876234",
-            sizeBytes: 21876572
+            family: "tessdata_best",
+            sha256: "8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba",
+            sizeBytes: 15400601
         });
+        assert.equal(
+            manifest.candidates[0].source.revision,
+            "e12c65a915945e4c28e237a9b52bc4a8f39a0cec"
+        );
     });
 
     it("rejects duplicate candidate IDs and non-English model filenames", () => {
