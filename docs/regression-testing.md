@@ -118,6 +118,17 @@ accuracy, blocking-gate, runtime, and model-size deltas plus every fixture whose
 changed. A model with a blocking regression is reported as a failed candidate even when its overall
 pass count increases.
 
+### Release-year gap expansion: 2026-08-09
+
+The release-readiness follow-up imported 40 reviewed Scryfall prints from 40 sets that filled
+missing release years and thin recent-set coverage. Thirty-three candidates passed and remain
+enabled as blocking fixtures; seven title-recognition misses remain disabled with their original
+expectations intact. The enabled corpus grew from 125 to 158 cases and now includes a passing print
+from every previously missing release year.
+
+See [the release-year expansion report](regression-fixture-era-expansion-2026-08.md) for the exact
+set cohorts, deterministic selection policy, and rejected candidates.
+
 ### Pinned upstream bakeoff: 2026-08-08
 
 The first controlled bakeoff kept Tesseract.js at 3.0.3 and ran all 79 enabled fixtures sequentially
