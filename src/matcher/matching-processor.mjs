@@ -111,7 +111,7 @@ class MatcherProcessor {
             this.hashMode = "set-symbol";
             this.localHash = hash;
         } finally {
-            this._cleanupSetSymbolDirectory();
+            await this._cleanupSetSymbolDirectoryAsync();
         }
     }
 
@@ -121,13 +121,19 @@ class MatcherProcessor {
         this.localHash = hash;
     }
 
-    _cleanupSetSymbolDirectory() {
+    async _cleanupSetSymbolDirectoryAsync() {
         if (!this.setSymbolDirectory) {
             return;
         }
         const dir = this.setSymbolDirectory;
         this.setSymbolDirectory = "";
-        this.dependencies.cleanUpFiles(dir).catch(() => {});
+        try {
+            await this.dependencies.cleanUpFiles(dir);
+        } catch (err) {
+            this.logger.error(
+                `Unable to remove set-symbol temporary directory: ${err?.message || String(err)}`
+            );
+        }
     }
 
     async _processMultiSetMatchesAsync() {
@@ -142,7 +148,9 @@ class MatcherProcessor {
             allowRemoteBestGuess: true
         });
         this.logger.info(
-            `Comparing ${this.cards.length} printings for "${this.name}" using ${this.hashMode || "full-card"} hashes`
+            `Comparing ${this.cards.length} printings for "${this.name}" using ${
+                this.hashMode || "full-card"
+            } hashes`
         );
         const dbPromise = processHashes
             .compareDbHashes()

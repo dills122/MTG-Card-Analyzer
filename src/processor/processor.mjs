@@ -89,6 +89,8 @@ class ProcessorClass {
                 error: err?.message || String(err)
             });
             throw err;
+        } finally {
+            await this.cleanUpDirectoryAsync();
         }
     }
 
@@ -96,7 +98,7 @@ class ProcessorClass {
     // --no-local-cache is set. This is what #49 ("Transaction") became.
     async logOperationAsync(extra = {}) {
         try {
-            this.dependencies.storage.log.record({
+            await this.dependencies.storage.log.record({
                 filePath: this.filePath,
                 extractedText: this.nameExtractionResults
                     ? {
@@ -124,6 +126,25 @@ class ProcessorClass {
         } catch (logErr) {
             // The ops log is a diagnostic aid, never a reason to fail (or mask) a real scan.
             this.logger.error(logErr);
+        }
+    }
+
+    async cleanUpDirectoryAsync() {
+        if (!this.directory) {
+            return;
+        }
+        const directory = this.directory;
+        this.directory = "";
+        try {
+            await this.dependencies.fileIO.cleanUpFiles(directory);
+        } catch (cleanupErr) {
+            // Temporary cleanup is best-effort diagnostics work. It must settle before the
+            // scan completes, but it must not replace a matching/persistence error.
+            this.logger.error(
+                `Unable to remove scan temporary directory: ${
+                    cleanupErr?.message || String(cleanupErr)
+                }`
+            );
         }
     }
 
@@ -196,7 +217,9 @@ class ProcessorClass {
             this.printResults();
             return;
         }
-        if (this.matcherResults.length === 1) {
+        const hasConfirmedPrinting =
+            this.matcherResults.length === 1 && this.matcherResults[0].sets.length === 1;
+        if (hasConfirmedPrinting) {
             this.decision = "collection";
             await this.CreateCollectionsRecordAsync(this.matcherResults[0]);
             return;

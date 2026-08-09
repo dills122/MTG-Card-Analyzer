@@ -129,8 +129,19 @@ class ProcessHashes {
                     };
                 })
             );
-            hashResults.forEach(({ setName, remoteImageHash }) => {
-                this._insertCardHash(setName, remoteImageHash);
+            for (const { setName, remoteImageHash } of hashResults) {
+                try {
+                    await this._insertCardHash(setName, remoteImageHash);
+                } catch (err) {
+                    // Hashes are a reusable cache, not collection truth. Wait for the
+                    // attempted write so process exit cannot drop it, but keep a cache
+                    // failure from failing an otherwise valid scan.
+                    this.logger.error(
+                        `Card-hash cache write failed for "${this.name}" (${setName}): ${
+                            err?.message || String(err)
+                        }`
+                    );
+                }
                 const comparisonResults = this.dependencies.Hash.compareHash(
                     this.localHash,
                     remoteImageHash
@@ -142,9 +153,9 @@ class ProcessHashes {
                         })
                     );
                 }
-            });
+            }
         } finally {
-            done();
+            await done();
         }
         const matchValues = config.remoteMatch;
         let bestMatches = comparisonResultsList.filter((match) => {
@@ -182,7 +193,9 @@ class ProcessHashes {
                 .slice(0, config.remoteBestGuess.maxCandidates)
                 .map((match) => omit(match, ["confidenceScore"]));
             this.logger.info(
-                `Using closest image matches for "${this.name}": ${bestMatches.map((match) => match.setName).join(", ")}`
+                `Using closest image matches for "${this.name}": ${bestMatches
+                    .map((match) => match.setName)
+                    .join(", ")}`
             );
         }
         this.logger.info(`Scryfall image matches for "${this.name}": ${bestMatches.length}`);
@@ -199,8 +212,16 @@ class ProcessHashes {
         const directory = await this.dependencies.createDirectory();
         return {
             tempDirectory: directory,
-            done: () => {
-                this.dependencies.cleanUpFiles(directory).catch(() => {});
+            done: async () => {
+                try {
+                    await this.dependencies.cleanUpFiles(directory);
+                } catch (err) {
+                    this.logger.error(
+                        `Unable to remove remote-hash temporary directory: ${
+                            err?.message || String(err)
+                        }`
+                    );
+                }
             }
         };
     }
@@ -250,11 +271,11 @@ class ProcessHashes {
         });
     }
 
-    _insertCardHash(setName, hash) {
+    async _insertCardHash(setName, hash) {
         // isFoil/isPromo/cardUrl aren't tracked through the matcher pipeline yet, so they're
         // left for the store's own defaults (false/"") -- same as before this was fixed to use
         // the store's real field names instead of a PascalCase fallback chain.
-        this.dependencies.CardHashes.upsert({
+        return this.dependencies.CardHashes.upsert({
             cardName: this.name,
             setName,
             cardHash: hash,

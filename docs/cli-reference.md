@@ -50,6 +50,11 @@ node index.mjs ./path/to/card.jpg
 needs-attention records only when both resolve to `true`. Without both, the full identification
 pipeline still runs and prints its results.
 
+Confirmed collection data requires exactly one matched card name and one matched printing set. If
+the name is clear but multiple sets remain possible, the scan writes one needs-attention record
+containing all candidate sets (when both persistence opt-ins are enabled). Dry runs and scans with
+collection tracking disabled continue to print the candidates without persistence writes.
+
 Pretty logging is enabled by default. It keeps pipeline detail visible with compact, aligned level
 labels, emits one OCR progress heartbeat per crop, and prints final card/set candidates without
 internal verification objects:
@@ -74,7 +79,9 @@ output.
 ## Inspect scan activity
 
 Every scan records an operations-log entry while the local cache is enabled. Entries include the
-input path, OCR text, match candidates, decision, duration, and any error.
+input path, OCR text, match candidates, decision, duration, and any error. The CLI awaits this log
+write and any image-hash cache writes before exiting. Cache failures are reported but do not replace
+the primary scan result.
 
 ```bash
 node index.mjs log dump

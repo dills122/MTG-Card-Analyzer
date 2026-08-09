@@ -145,6 +145,33 @@ describe("Integration::", () => {
             assert.isTrue(matches.filter((match) => match.setName === FAKE_SET).length === 2);
         });
 
+        it("awaits card-hash cache writes before remote comparison completes", async () => {
+            let finishWrite;
+            const pendingWrite = new Promise((resolve) => {
+                finishWrite = resolve;
+            });
+            stubs.insertHashStub.returns(pendingWrite);
+            sandbox.stub(Hash, "hashImage").callsArgWith(1, null, FAKE_HASH);
+            const hasher = ProcessHashes.create({
+                cards: [{ image_uris: { normal: "https://example.test/card.jpg" }, set_name: "A" }],
+                localHash: CLOSE_DIFF_HASH,
+                name: "Test"
+            });
+            let settled = false;
+
+            const comparison = hasher.compareRemoteImages().finally(() => {
+                settled = true;
+            });
+            while (!stubs.insertHashStub.called) {
+                await new Promise((resolve) => setImmediate(resolve));
+            }
+
+            assert.isFalse(settled);
+            finishWrite();
+            await comparison;
+            assert.isTrue(settled);
+        });
+
         it("Should return no results for compareRemoteHashes", async () => {
             stubs.hashImageStub = sandbox
                 .stub(Hash, "hashImage")
@@ -228,6 +255,72 @@ describe("Integration::", () => {
             assert.isTrue(stubs.symbolStub.calledOnce);
             assert.isTrue(stubs.hashImageStub.calledOnce);
             assert.equal(stubs.hashImageStub.firstCall.args[0], "http://www.fake.url/img");
+        });
+
+        it("awaits remote set-symbol directory cleanup", async () => {
+            sandbox.stub(Hash, "hashImage").callsArgWith(1, null, FAKE_HASH);
+            const hasher = ProcessHashes.create({
+                cards: [
+                    {
+                        image_uris: { normal: "https://example.test/card.jpg" },
+                        set_name: "SET_A"
+                    }
+                ],
+                localHash: CLOSE_DIFF_HASH,
+                name: "Test",
+                hashMode: "set-symbol"
+            });
+            sandbox.stub(hasher.dependencies, "createDirectory").resolves("/tmp/remote-hash-dir");
+            sandbox.stub(hasher, "_hashRemoteSetSymbol").resolves(FAKE_HASH);
+            let finishCleanup;
+            const cleanup = sandbox.stub(hasher.dependencies, "cleanUpFiles").returns(
+                new Promise((resolve) => {
+                    finishCleanup = resolve;
+                })
+            );
+            let settled = false;
+
+            const comparison = hasher.compareRemoteImages().finally(() => {
+                settled = true;
+            });
+            while (!cleanup.called) {
+                await new Promise((resolve) => setImmediate(resolve));
+            }
+
+            assert.isFalse(settled);
+            finishCleanup();
+            await comparison;
+            assert.isTrue(settled);
+        });
+
+        it("does not mask a remote hash error when cleanup also fails", async () => {
+            const primaryError = new Error("remote hash failed");
+            const error = sandbox.stub();
+            const hasher = ProcessHashes.create({
+                cards: [
+                    {
+                        image_uris: { normal: "https://example.test/card.jpg" },
+                        set_name: "SET_A"
+                    }
+                ],
+                localHash: CLOSE_DIFF_HASH,
+                name: "Test",
+                hashMode: "set-symbol",
+                logger: { info: sandbox.stub(), error }
+            });
+            sandbox.stub(hasher.dependencies, "createDirectory").resolves("/tmp/remote-hash-dir");
+            sandbox.stub(hasher, "_hashRemoteForComparison").rejects(primaryError);
+            sandbox.stub(hasher.dependencies, "cleanUpFiles").rejects(new Error("cleanup failed"));
+
+            let caughtError;
+            try {
+                await hasher.compareRemoteImages();
+            } catch (err) {
+                caughtError = err;
+            }
+
+            assert.equal(caughtError, primaryError);
+            assert.isTrue(error.calledWithMatch(sinon.match(/cleanup failed/)));
         });
 
         // Scryfall's image CDN 400s a header-less request; jimp's own URL loader sends none by
