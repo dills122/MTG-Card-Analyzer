@@ -7,10 +7,18 @@ describe("Hashing::", () => {
     const fakeHash = "0773063f063f36070e070a070f378e7f1f000fff0fff020103f00ffb0f810ff0";
     let Hashing;
     let imageHashStub;
+    let loadImageInputStub;
     describe("ImageHashing::", () => {
         beforeEach(() => {
             imageHashStub = sinon.stub().callsArgWith(3, null, fakeHash);
-            Hashing = createHashing({ imageHash: imageHashStub });
+            loadImageInputStub = sinon.stub().resolves({
+                buffer: Buffer.from("validated image"),
+                dimensions: { width: 10, height: 10, format: "jpeg" }
+            });
+            Hashing = createHashing({
+                imageHash: imageHashStub,
+                loadImageInput: loadImageInputStub
+            });
         });
         afterEach(() => {
             sinon.restore();
@@ -31,21 +39,24 @@ describe("Hashing::", () => {
         });
 
         it("Should return an error", (done) => {
-            imageHashStub.callsArgWith(3, {}, null);
+            loadImageInputStub.rejects({});
             Hashing.hashImage("", (error, hash) => {
                 assert.deepEqual(error, {});
                 assert.isUndefined(hash);
-                assert.isTrue(imageHashStub.calledOnce, "Image Hash called");
+                assert.isFalse(imageHashStub.called, "Image Hash not called");
                 done();
             });
         });
 
         it("does not let a malformed remote URL break hashing", (done) => {
             const consoleLogStub = sinon.stub(console, "log");
+            loadImageInputStub.rejects(
+                new Error("Invalid or unsupported image: remote URL is invalid")
+            );
 
             Hashing.hashImage("http://%", (error, hash) => {
-                assert.isNull(error);
-                assert.equal(hash, fakeHash);
+                assert.match(error.message, /remote URL is invalid/);
+                assert.isUndefined(hash);
                 assert.isTrue(
                     consoleLogStub.calledOnceWithExactly("INFO  Hashing image: invalid URL")
                 );

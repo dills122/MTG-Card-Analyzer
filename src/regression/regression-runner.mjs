@@ -13,6 +13,7 @@ import { resolveCardName } from "../processor/name-resolver.mjs";
 const noCacheOcrOptions = Object.freeze({
     cacheMethod: "none"
 });
+const maximumCasesPerOcrSession = 40;
 
 const silentLogger = {
     info: () => {},
@@ -353,15 +354,20 @@ async function runRegression(manifest, options = {}) {
     const managesOcrSession =
         dependencies.ImageProcessor === imageProcessorModule ||
         typeof options.dependencies?.createOcrSession === "function";
-    const ocrSession = managesOcrSession
-        ? await dependencies.createOcrSession({ ...ocrOptions, logger: silentLogger })
-        : null;
-    if (ocrSession) {
-        dependencies.ocrOptions = { ...dependencies.ocrOptions, session: ocrSession };
+    let ocrSession;
+
+    async function startOcrSession() {
+        await ocrSession?.terminate();
+        ocrSession = undefined;
+        ocrSession = await dependencies.createOcrSession({ ...ocrOptions, logger: silentLogger });
+        dependencies.ocrOptions = { ...ocrOptions, session: ocrSession };
     }
 
     try {
-        for (const fixture of selectedCases) {
+        for (const [index, fixture] of selectedCases.entries()) {
+            if (managesOcrSession && index % maximumCasesPerOcrSession === 0) {
+                await startOcrSession();
+            }
             results.push(await analyzeFixture(fixture, manifest, context, dependencies));
         }
         return {
@@ -377,7 +383,9 @@ async function runRegression(manifest, options = {}) {
                 ocrLanguageSource: options.ocrModel
                     ? `OCR candidate ${options.ocrModel.id}`
                     : "bundled official tessdata_best eng.traineddata",
-                ocrWorkerLifecycle: "shared process; adaptive state reset per crop",
+                ocrWorkerLifecycle:
+                    `shared sequentially for at most ${maximumCasesPerOcrSession} cases; ` +
+                    "adaptive state reset per crop",
                 temporaryArtifacts: "deleted after each case"
             },
             pending: {
@@ -400,6 +408,7 @@ export {
     analyzeFixture,
     comparisonScore,
     evaluateResult,
+    maximumCasesPerOcrSession,
     rankPrintCandidates,
     runRegression,
     summarize,
@@ -410,6 +419,7 @@ export default {
     analyzeFixture,
     comparisonScore,
     evaluateResult,
+    maximumCasesPerOcrSession,
     rankPrintCandidates,
     runRegression,
     summarize,

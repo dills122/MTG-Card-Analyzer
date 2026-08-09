@@ -29,6 +29,10 @@ describe("run-regression CLI::", () => {
         const report = {
             summary: { passed: 1, total: 1, passRate: 100 },
             gate: { passed: 1, total: 1, failed: 0, nonBlocking: 0, nonBlockingFailed: 0 },
+            isolation: {
+                ocrWorkerLifecycle:
+                    "shared sequentially for at most 40 cases; adaptive state reset per crop"
+            },
             pending: { cases: 0, placeholderCases: 0 }
         };
 
@@ -59,6 +63,10 @@ describe("run-regression CLI::", () => {
         assert.strictEqual(result, report);
         assert.strictEqual(receivedOptions.ocrModel, selectedCandidate);
         assert.include(lines, "OCR model: official-eng-fast");
+        assert.include(
+            lines,
+            "Tesseract worker: shared sequentially for at most 40 cases; adaptive state reset per crop"
+        );
     });
 
     it("rejects an OCR candidate ID that is not in the verified manifest", async () => {

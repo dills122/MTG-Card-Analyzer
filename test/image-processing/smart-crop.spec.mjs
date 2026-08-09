@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import jimp from "jimp";
+import { Jimp } from "jimp";
 import { assert } from "chai";
 import {
     regions,
@@ -27,7 +27,7 @@ async function makeTempDir() {
 }
 
 async function checkerboardImage(width, height) {
-    const img = await new jimp(width, height, 0xffffffff);
+    const img = new Jimp({ width, height, color: 0xffffffff });
     const { data } = img.bitmap;
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -46,7 +46,7 @@ async function checkerboardImage(width, height) {
 describe("Smart crop::", () => {
     describe("computeGreyscaleStdDev / assessConfidence::", () => {
         it("flags a solid-color image as low confidence", async () => {
-            const img = await new jimp(100, 100, 0x808080ff);
+            const img = new Jimp({ width: 100, height: 100, color: 0x808080ff });
             const stdDev = computeGreyscaleStdDev(img);
             assert.equal(stdDev, 0);
             const result = assessConfidence(img);
@@ -104,7 +104,7 @@ describe("Smart crop::", () => {
         });
 
         it("crops a real card fixture to the expected proportions", async () => {
-            const baseImage = await jimp.read(FIXTURE_PATH);
+            const baseImage = await Jimp.read(FIXTURE_PATH);
             const { width, height } = baseImage.bitmap;
 
             const { image, region } = cropSetSymbolFromImage(baseImage);
@@ -171,9 +171,9 @@ describe("Smart crop::", () => {
         });
 
         it("throws when the source image is too small", async () => {
-            const smallImage = await new jimp(100, 100, 0xffffffff);
+            const smallImage = new Jimp({ width: 100, height: 100, color: 0xffffffff });
             const smallPath = path.join(tempDir, "small.png");
-            await smallImage.writeAsync(smallPath);
+            await smallImage.write(smallPath);
 
             let caughtError;
             try {
@@ -186,9 +186,9 @@ describe("Smart crop::", () => {
         });
 
         it("throws when the crop lands on a low-confidence flat region", async () => {
-            const flatImage = await new jimp(1000, 1400, 0x808080ff);
+            const flatImage = new Jimp({ width: 1000, height: 1400, color: 0x808080ff });
             const flatPath = path.join(tempDir, "flat.png");
-            await flatImage.writeAsync(flatPath);
+            await flatImage.write(flatPath);
 
             let caughtError;
             try {

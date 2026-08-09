@@ -35,10 +35,11 @@ Every regression case is evaluated with cold application state. Image hashes are
 both the fixture and every candidate reference image; the runner has no in-memory or persistent
 hash cache. Fixture names are injected before the fuzzy matcher can initialize NeDB. Tesseract
 runs with `cacheMethod: none` and reads the bundled `eng.traineddata`, so it neither reads nor writes
-an OCR cache. One initialized Tesseract worker is shared sequentially by all selected cases and
-terminated after the run. This avoids loading the OCR engine and language model for every crop. The
-worker's adaptive recognition state is reset before each crop. OCR results remain independent of
-earlier fixtures, and the persistent language-data cache stays off.
+an OCR cache. One initialized Tesseract worker is shared sequentially for at most 40 selected cases,
+then terminated and replaced before the next case. This bounds the Tesseract 3 WASM heap during the
+expanded corpus without loading the OCR engine and language model for every crop. Each worker's
+adaptive recognition state is reset before every crop. OCR results remain independent of earlier
+fixtures, and the persistent language-data cache stays off.
 Unnecessary OCR previews are disabled. Synthetic transformations use a per-case temporary
 directory only when needed, and that directory is deleted after the case. The Markdown and JSON
 benchmark reports are the only durable files written by the runner.
@@ -74,7 +75,9 @@ pnpm test:regression \
     --ocr-model official-eng-fast
 ```
 
-Execution stays sequential to keep OCR timings and CPU contention comparable.
+Execution stays sequential to keep OCR timings and CPU contention comparable. Runs over 40 cases
+pay a worker initialization cost between case batches; per-case runtime thresholds exclude that
+between-case initialization.
 
 Run multiple fixture IDs or quality groups in one command to reuse its worker.
 Each separate command starts a new worker.

@@ -7,7 +7,9 @@ matching and an optional legacy MySQL backend.
 ## Scan pipeline
 
 1. `index.mjs` parses the command and resolves configuration.
-2. `src/image-processing/` validates the input and produces bounded hard title crops.
+2. `src/image-processing/` reads the local file once into a capped buffer, allowlists its magic
+   signature, validates dimensions and decoded pixels, and only then passes those same bytes to
+   Jimp to produce bounded hard title crops.
 3. `src/image-analysis/` runs Tesseract with each crop's declared segmentation mode and preserves
    plausible region and line candidates.
 4. `src/fuzzy-matching/` ranks all title candidates from the local card-name index and maps
@@ -21,6 +23,13 @@ matching and an optional legacy MySQL backend.
 
 The image, network, filesystem, and database boundaries remain outside the pure name-normalization
 and matching decisions so those decisions can be tested deterministically.
+
+Local image input is capped at 32 MiB, 12,000 pixels per axis, and 40 megapixels. JPEG decoding also
+uses a 256 MiB decoder allocation ceiling. Remote set-symbol images are limited to the approved
+Scryfall image origins, HTTPS, three same-origin redirects, a 15-second request deadline, and a
+16 MiB streamed body. Redirects are handled manually so request headers are never forwarded to a
+different origin. Accepted decoded formats are JPEG, PNG, GIF, and BMP; generic multi-format
+metadata probing and TIFF decoding are intentionally outside the scan boundary.
 
 ## Storage boundaries
 

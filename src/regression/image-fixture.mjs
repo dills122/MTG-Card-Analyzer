@@ -1,5 +1,6 @@
 import path from "node:path";
-import jimp from "jimp";
+import { readImage } from "../image-processing/util.mjs";
+import { adjustBrightness } from "../image-processing/color-adjustments.mjs";
 
 function clampPercent(value = 0) {
     return Math.max(0, Math.min(0.45, value));
@@ -20,7 +21,7 @@ function applyCrop(image, crop) {
         1,
         image.bitmap.height - top - Math.round(image.bitmap.height * bottomPercent)
     );
-    image.crop(left, top, width, height);
+    image.crop({ x: left, y: top, w: width, h: height });
 }
 
 async function materializeFixture(fixture, directory) {
@@ -29,12 +30,12 @@ async function materializeFixture(fixture, directory) {
         return fixture.imagePath;
     }
 
-    const image = await jimp.read(fixture.imagePath);
+    const image = await readImage(fixture.imagePath);
     if (transform.crop) {
         applyCrop(image, transform.crop);
     }
     if (typeof transform.brightness === "number") {
-        image.brightness(transform.brightness);
+        adjustBrightness(image, transform.brightness);
     }
     if (typeof transform.contrast === "number") {
         image.contrast(transform.contrast);
@@ -46,12 +47,12 @@ async function materializeFixture(fixture, directory) {
         image.rotate(transform.rotate, false);
     }
     if (transform.resize) {
-        image.resize(transform.resize.width, transform.resize.height);
+        image.resize({ w: transform.resize.width, h: transform.resize.height });
     }
 
     const safeId = fixture.id.replace(/[^a-z0-9_-]/gi, "-");
     const outputPath = path.join(directory, `${safeId}.png`);
-    await image.writeAsync(outputPath);
+    await image.write(outputPath);
     return outputPath;
 }
 
