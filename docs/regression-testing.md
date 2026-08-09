@@ -12,10 +12,11 @@ The existing scan path already had strong reusable pieces:
 - `src/image-processing/ocr-preprocessing.mjs` crops four likely name regions and applies
   grayscale, normalization, scaling, thresholding, inversion, and sharpening. Failed matches can
   request bounded soft/inverted or rotated title variants.
-- `src/image-analysis/extract-text.mjs` runs Tesseract with each crop's declared page-segmentation
-  mode and preserves bounded region, line, and token-window candidates. One bounded Tesseract
-  worker loads the pinned official `tessdata_best` English LSTM model. The LSTM-only archive
-  does not contain the obsolete `enable_new_segsearch` or `save_raw_choices` legacy directives.
+- `src/image-analysis/extract-text.mjs` runs Tesseract with each crop's declared
+  page-segmentation mode and preserves bounded region, line, and token-window
+  candidates. One bounded Tesseract worker loads the pinned official
+  `tessdata_best` English LSTM model. The LSTM-only archive does not contain
+  the obsolete `enable_new_segsearch` or `save_raw_choices` legacy directives.
 - `src/fuzzy-matching/match-name.mjs` applies the production fuzzy-name thresholds.
 - `src/image-hashing/hash-image.mjs` provides the production perceptual hash and comparison
   metrics.
