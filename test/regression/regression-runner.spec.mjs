@@ -283,9 +283,25 @@ describe("Regression framework::", () => {
             }
         };
         const receivedSessions = [];
+        let receivedSessionOptions;
         let createSessionCalls = 0;
+        const ocrModel = {
+            id: "official-eng-fast",
+            family: "tessdata_fast",
+            sha256: "b".repeat(64),
+            sizeBytes: 4_113_088,
+            modelPath: "/fixtures/models/fast/eng.traineddata",
+            languagePath: "/fixtures/models/fast",
+            source: {
+                url: "https://github.com/tesseract-ocr/tessdata_fast",
+                revision: "reviewed-ref",
+                license: "Apache-2.0"
+            },
+            engine: { package: "tesseract.js", version: "3.0.3" }
+        };
 
         const report = await runRegression(manifest, {
+            ocrModel,
             dependencies: {
                 ImageProcessor: {
                     create: ({ ocrOptions }) => {
@@ -311,8 +327,9 @@ describe("Regression framework::", () => {
                     })
                 },
                 materializeFixture: async (fixture) => fixture.imagePath,
-                createOcrSession: async () => {
+                createOcrSession: async (options) => {
                     createSessionCalls += 1;
+                    receivedSessionOptions = options;
                     return ocrSession;
                 }
             }
@@ -320,8 +337,22 @@ describe("Regression framework::", () => {
 
         assert.equal(report.summary.passed, 2);
         assert.equal(createSessionCalls, 1);
+        assert.include(receivedSessionOptions, {
+            cacheMethod: "none",
+            langPath: "/fixtures/models/fast",
+            gzip: false
+        });
         assert.deepEqual(receivedSessions, [ocrSession, ocrSession]);
         assert.equal(ocrSession.terminateCalls, 1);
+        assert.deepEqual(report.ocrModel, {
+            id: "official-eng-fast",
+            family: "tessdata_fast",
+            sha256: "b".repeat(64),
+            sizeBytes: 4_113_088,
+            source: ocrModel.source,
+            engine: ocrModel.engine
+        });
+        assert.equal(report.isolation.ocrLanguageSource, "OCR candidate official-eng-fast");
         assert.equal(
             report.isolation.ocrWorkerLifecycle,
             "shared process; adaptive state reset per crop"
@@ -367,6 +398,12 @@ describe("Regression framework::", () => {
             generatedAt: "2026-08-07T00:00:00.000Z",
             manifest: "/fixtures/manifest.json",
             offline: true,
+            ocrModel: {
+                id: "official-eng-fast",
+                family: "tessdata_fast",
+                sha256: "b".repeat(64),
+                sizeBytes: 4_113_088
+            },
             isolation: {
                 applicationPersistence: "disabled",
                 imageHashCache: "disabled",
@@ -389,6 +426,9 @@ describe("Regression framework::", () => {
         assert.include(markdown, "CI gate: PASS");
         assert.include(markdown, "NON-BLOCKING FAIL");
         assert.include(markdown, "image-hash cache disabled");
+        assert.include(markdown, "official-eng-fast");
+        assert.include(markdown, "tessdata_fast");
+        assert.include(markdown, `${"b".repeat(12)}…`);
         assert.include(markdown, "20 ms");
     });
 });

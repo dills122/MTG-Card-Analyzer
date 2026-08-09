@@ -18,6 +18,14 @@ function formatBenchmarkReport(report) {
         "",
         `Mode: ${report.offline ? "offline (no live API calls)" : "online"}`,
         "",
+        report.ocrModel
+            ? `OCR model: ${markdownCell(report.ocrModel.id)} (${markdownCell(
+                  report.ocrModel.family
+              )}; ${markdownCell(report.ocrModel.sha256?.slice(0, 12))}…; ${
+                  report.ocrModel.sizeBytes
+              } bytes)`
+            : "OCR model: unreported",
+        "",
         `Isolation: application persistence ${report.isolation?.applicationPersistence || "unknown"}; image-hash cache ${report.isolation?.imageHashCache || "unknown"}; OCR cache ${report.isolation?.ocrCache || "unknown"}`,
         "",
         "## Summary",

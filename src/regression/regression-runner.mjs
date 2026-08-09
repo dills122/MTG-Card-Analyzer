@@ -20,6 +20,12 @@ const silentLogger = {
     error: () => {}
 };
 
+function reportOcrModel(ocrModel) {
+    if (!ocrModel) return undefined;
+    const { id, family, sha256, sizeBytes, source, engine } = ocrModel;
+    return { id, family, sha256, sizeBytes, source, engine };
+}
+
 function normalized(value) {
     return String(value || "")
         .replace(/[^a-z0-9]/gi, "")
@@ -311,6 +317,13 @@ function summarizeGate(results) {
 }
 
 async function runRegression(manifest, options = {}) {
+    const ocrOptions = options.ocrModel
+        ? {
+              ...noCacheOcrOptions,
+              langPath: options.ocrModel.languagePath,
+              gzip: false
+          }
+        : noCacheOcrOptions;
     const dependencies = {
         ImageProcessor: imageProcessorModule,
         MatchName: matchNameModule,
@@ -319,7 +332,7 @@ async function runRegression(manifest, options = {}) {
         createOcrSession: textExtractionModule.createOcrSession,
         ...(options.dependencies || {}),
         // Regression isolation is an invariant, not a caller-selectable optimization.
-        ocrOptions: noCacheOcrOptions
+        ocrOptions
     };
     const activeCatalog = manifest.catalog.filter((card) => card.enabled !== false);
     const activeCases = manifest.cases.filter((fixture) => fixture.enabled !== false);
@@ -341,7 +354,7 @@ async function runRegression(manifest, options = {}) {
         dependencies.ImageProcessor === imageProcessorModule ||
         typeof options.dependencies?.createOcrSession === "function";
     const ocrSession = managesOcrSession
-        ? await dependencies.createOcrSession({ ...noCacheOcrOptions, logger: silentLogger })
+        ? await dependencies.createOcrSession({ ...ocrOptions, logger: silentLogger })
         : null;
     if (ocrSession) {
         dependencies.ocrOptions = { ...dependencies.ocrOptions, session: ocrSession };
@@ -356,11 +369,14 @@ async function runRegression(manifest, options = {}) {
             generatedAt: new Date().toISOString(),
             manifest: manifest.path,
             offline: true,
+            ocrModel: reportOcrModel(options.ocrModel),
             isolation: {
                 applicationPersistence: "disabled",
                 imageHashCache: "disabled",
                 ocrCache: "disabled",
-                ocrLanguageSource: "patched bundled eng.traineddata",
+                ocrLanguageSource: options.ocrModel
+                    ? `OCR candidate ${options.ocrModel.id}`
+                    : "patched bundled eng.traineddata",
                 ocrWorkerLifecycle: "shared process; adaptive state reset per crop",
                 temporaryArtifacts: "deleted after each case"
             },

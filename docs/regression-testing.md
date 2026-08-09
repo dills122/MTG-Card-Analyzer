@@ -66,6 +66,11 @@ pnpm test:regression --quality clean-scan --quality low-resolution
 
 # Use another manifest or output directory
 pnpm test:regression --manifest ./path/manifest.json --output ./path/reports
+
+# Run against another reviewed OCR candidate
+pnpm test:regression \
+    --ocr-model-manifest ./path/to/ocr-models.json \
+    --ocr-model official-eng-fast
 ```
 
 Execution stays sequential to keep OCR timings and CPU contention comparable.
@@ -74,6 +79,25 @@ Run multiple fixture IDs or quality groups in one command to reuse its worker.
 Each separate command starts a new worker.
 
 The generated `artifacts/regression` directory is ignored by Git.
+
+## OCR model candidates
+
+The default run loads `test/regression/ocr-models/manifest.json` and verifies the bundled control
+model's SHA-256 before starting Tesseract. Every candidate must identify its source URL and revision,
+license, model family, compatible Tesseract.js version, exact byte hash, and a local file named
+`eng.traineddata`. Candidate files are capped at 128 MiB and loaded with the OCR cache disabled.
+
+Keep each candidate in its own directory because Tesseract.js resolves English data as
+`<langPath>/eng.traineddata`. The benchmark JSON records the selected candidate's safe provenance,
+hash, and size; it does not record the candidate's local filesystem path. The Markdown report shows
+the candidate ID, family, abbreviated hash, and size.
+
+Candidate acquisition remains an explicit review step; the regression command does not download or
+replace model data. Prefer candidates from Tesseract's official
+[`tessdata`, `tessdata_fast`, and `tessdata_best` repositories](https://github.com/tesseract-ocr/tessdoc/blob/main/Data-Files.md).
+Keep the Tesseract.js/core version fixed during a model comparison because its official guidance
+notes that settings, language data, and engine version must all match for comparable output:
+[Tesseract.js FAQ](https://github.com/naptha/tesseract.js/blob/master/docs/faq.md).
 
 ## Manifest
 
