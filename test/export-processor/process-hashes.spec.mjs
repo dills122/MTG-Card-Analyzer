@@ -1,6 +1,5 @@
 import os from "os";
 import path from "node:path";
-import jimp from "jimp";
 import { assert } from "chai";
 import sinon from "sinon";
 import exportProcessor from "../../src/export-processor/index.mjs";
@@ -323,12 +322,7 @@ describe("Integration::", () => {
             assert.isTrue(error.calledWithMatch(sinon.match(/cleanup failed/)));
         });
 
-        // Scryfall's image CDN 400s a header-less request; jimp's own URL loader sends none by
-        // default. Lock in that a remote set-symbol crop always carries a User-Agent.
-        it("passes a User-Agent header when jimp reads a remote set-symbol image", async () => {
-            const readStub = sandbox.stub(jimp, "read").resolves({
-                clone: () => ({ crop: () => ({}) })
-            });
+        it("passes a User-Agent header when reading a remote set-symbol image", async () => {
             let hasher = ProcessHashes.create({
                 cards: [
                     {
@@ -342,8 +336,9 @@ describe("Integration::", () => {
                 name: "Test",
                 hashMode: "set-symbol"
             });
+            const readStub = sandbox.stub(hasher.dependencies, "readImage").resolves({});
             sandbox.stub(hasher.dependencies, "CropSetSymbol").returns({
-                image: { writeAsync: sandbox.stub().resolves() },
+                image: { write: sandbox.stub().resolves() },
                 lowConfidence: false
             });
             sandbox.stub(Hash, "hashImage").callsArgWith(1, null, FAKE_HASH);
@@ -354,34 +349,32 @@ describe("Integration::", () => {
             );
 
             assert.isTrue(readStub.calledOnce);
-            const [source] = readStub.firstCall.args;
-            assert.equal(source.url, "https://cards.scryfall.io/normal/front/a/b/card.jpg");
-            assert.property(source.headers, "User-Agent");
-            assert.isNotEmpty(source.headers["User-Agent"]);
+            const [source, options] = readStub.firstCall.args;
+            assert.equal(source, "https://cards.scryfall.io/normal/front/a/b/card.jpg");
+            assert.property(options.headers, "User-Agent");
+            assert.isNotEmpty(options.headers["User-Agent"]);
         });
 
         it("reads a local fixture path as a plain string, not a headers request object", async () => {
             const fixturePath = path.resolve(
                 "test-images/regression/scryfall/fin-570-vivi-ornitier-25ef2d44.jpg"
             );
-            const readStub = sandbox.stub(jimp, "read").resolves({
-                clone: () => ({ crop: () => ({}) })
-            });
             let hasher = ProcessHashes.create({
                 cards: [{ image_uris: { normal: fixturePath }, set_name: "SET_A" }],
                 localHash: CLOSE_DIFF_HASH,
                 name: "Test",
                 hashMode: "set-symbol"
             });
+            const readStub = sandbox.stub(hasher.dependencies, "readImage").resolves({});
             sandbox.stub(hasher.dependencies, "CropSetSymbol").returns({
-                image: { writeAsync: sandbox.stub().resolves() },
+                image: { write: sandbox.stub().resolves() },
                 lowConfidence: false
             });
             sandbox.stub(Hash, "hashImage").callsArgWith(1, null, FAKE_HASH);
 
             await hasher._hashRemoteSetSymbol(fixturePath, "/tmp");
 
-            assert.isTrue(readStub.calledOnceWithExactly(fixturePath));
+            assert.isTrue(readStub.calledOnceWithExactly(fixturePath, undefined));
         });
 
         it("Should fall back to full remote hash when set-symbol crop is low confidence", async () => {

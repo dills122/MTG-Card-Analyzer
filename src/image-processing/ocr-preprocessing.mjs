@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import jimp from "jimp";
-import { getImageDimensions } from "./util.mjs";
+import { JimpMime } from "jimp";
+import { readImage } from "./util.mjs";
+import { adjustBrightness } from "./color-adjustments.mjs";
 import smartCrop from "./smart-crop.mjs";
 import {
     computeOtsuThreshold,
@@ -39,7 +40,8 @@ const titleNameTypes = new Set(["name", "soft-name", "rotated-name"]);
  */
 async function prepareOcrVariants(imgPath, type, options = {}) {
     const { directory, logger = defaultLogger } = options;
-    const dimensions = await getImageDimensions(imgPath);
+    const baseImage = await readImage(imgPath);
+    const dimensions = baseImage.bitmap;
     const sourceSizing = smartCrop.assertOcrSourceSizeOk(dimensions);
     if (sourceSizing.upscaled) {
         logger.warn(
@@ -48,7 +50,6 @@ async function prepareOcrVariants(imgPath, type, options = {}) {
         );
     }
 
-    const baseImage = await jimp.read(imgPath);
     if (type === "rotated-name") {
         return {
             variants: await buildRotatedNameVariants(baseImage, {
@@ -69,7 +70,7 @@ async function prepareOcrVariants(imgPath, type, options = {}) {
             // no threshold) reads noticeably better on undersized sources -- see issue #156.
             lowResolutionSource: sourceSizing.upscaled
         });
-        const buffer = await processed.getBufferAsync(jimp.MIME_PNG);
+        const buffer = await processed.getBuffer(JimpMime.png);
         variants.push({
             region: template.key,
             psm: template.psm,
@@ -112,7 +113,7 @@ async function buildRotatedNameVariants(baseImage, options = {}) {
                 region: `rotated-name-${rotation === 90 ? "cw" : "ccw"}-${mode}`,
                 psm: template.psm,
                 characterWhitelist: nameCharacterWhitelist,
-                buffer: await processed.getBufferAsync(jimp.MIME_PNG),
+                buffer: await processed.getBuffer(JimpMime.png),
                 image: processed
             });
         }
@@ -133,12 +134,8 @@ async function cropAndPreprocess(baseImage, template, options = {}) {
  * OCR-friendly preprocessing: grayscale -> normalize -> blur -> upscale -> threshold -> invert -> sharpen.
  */
 async function buildOcrImage(img) {
-    let working = img
-        .clone()
-        .greyscale()
-        .normalize()
-        .contrast(preprocessConfig.contrast)
-        .brightness(preprocessConfig.brightness);
+    let working = img.clone().greyscale().normalize().contrast(preprocessConfig.contrast);
+    adjustBrightness(working, preprocessConfig.brightness);
     working = working.gaussian(preprocessConfig.blur);
     working = await padAndScale(
         working,
@@ -173,7 +170,7 @@ async function buildSoftOcrImage(img, invert = false) {
 
 async function writePreview(image, directory, type, regionKey) {
     const filePath = path.join(directory, `${type || "ocr"}-${regionKey}-${randomUUID()}.png`);
-    await image.writeAsync(filePath);
+    await image.write(filePath);
     return filePath;
 }
 

@@ -22,6 +22,10 @@ data are stored on your machine by default. No MySQL server is needed for the no
 Scans are dry runs by default: they print results without adding anything to your collection. The
 local caches and operations log still update unless you disable the local cache.
 
+Local scan inputs must be JPEG, PNG, GIF, or BMP files no larger than 32 MiB, 12,000 pixels on
+either axis, or 40 megapixels decoded. The scanner validates the file signature and dimensions
+before decoding it; TIFF, ICNS, JXL, HEIF, and other container formats are rejected.
+
 ## Quick start
 
 You need:
@@ -131,6 +135,7 @@ local-first rather than fully offline.
 | Look up commands, flags, logging, migration, or collection edits | [CLI reference](docs/cli-reference.md)                |
 | Change settings or understand local database files               | [Configuration and local data](docs/configuration.md) |
 | Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                  |
+| Review production dependency and image-input security controls   | [Dependency security](docs/dependency-security.md)    |
 | Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)      |
 | Build a reviewed custom OCR fine-tuning corpus                   | [OCR training data](docs/ocr-training-data.md)        |
 | Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                       |

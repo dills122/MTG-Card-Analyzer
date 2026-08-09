@@ -1,7 +1,9 @@
 import stringSimilarity from "string-similarity";
 import { imageHash } from "image-hash";
+import { JimpMime } from "jimp";
 import log from "../logger/log.mjs";
 import { round } from "../util.mjs";
+import { decodeImageInput, readImageInput } from "../image-processing/util.mjs";
 
 const defaultLogger = log.create({
     isPretty: true
@@ -23,22 +25,42 @@ export function isRemoteUrl(value) {
 
 export function createHashing({
     imageHash: hashImageSource = imageHash,
+    loadImageInput = readImageInput,
+    decodeImage = decodeImageInput,
     logger = defaultLogger
 } = {}) {
+    async function prepareHashSource(imgUrl, options) {
+        const input = await loadImageInput(imgUrl, options);
+        if (input.dimensions.format === "jpeg" || input.dimensions.format === "png") {
+            return {
+                data: input.buffer,
+                ext: input.dimensions.format === "jpeg" ? JimpMime.jpeg : JimpMime.png
+            };
+        }
+
+        // image-hash only decodes JPEG/PNG/WebP. Preserve the scanner's bounded GIF/BMP input
+        // contract by decoding the already-validated bytes and normalizing them to PNG first.
+        const image = await decodeImage(input);
+        return { data: await image.getBuffer(JimpMime.png), ext: JimpMime.png };
+    }
+
     function hashImage(imgUrl, cb) {
         logger.info(`Hashing image: ${formatImageSource(imgUrl)}`);
-        // image-hash accepts either a plain path/URL string or a {url, ...fetchInit} request object;
-        // only remote URLs need the header -- a local file path must stay a plain string so it still
-        // takes the fs.readFile branch instead of being treated as a request object.
-        const source = isRemoteUrl(imgUrl)
-            ? { url: imgUrl, headers: REMOTE_IMAGE_REQUEST_HEADERS }
-            : imgUrl;
-        hashImageSource(source, 16, true, (error, data) => {
-            if (error) {
-                return cb(error);
-            }
-            return cb(null, data);
-        });
+        const options = isRemoteUrl(imgUrl) ? { headers: REMOTE_IMAGE_REQUEST_HEADERS } : {};
+        prepareHashSource(imgUrl, options).then(
+            (source) => {
+                // Never let image-hash reopen a user path or perform its own unbounded fetch. Its
+                // buffer form receives bytes already capped, signature-checked, and dimension-checked
+                // by the shared image-input boundary.
+                hashImageSource(source, 16, true, (error, data) => {
+                    if (error) {
+                        return cb(error);
+                    }
+                    return cb(null, data);
+                });
+            },
+            (error) => cb(error)
+        );
     }
 
     function compareHash(hashOne, hashTwo) {

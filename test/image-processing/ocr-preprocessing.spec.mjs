@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import path from "node:path";
 import sinon from "sinon";
-import jimp from "jimp";
+import { Jimp } from "jimp";
 import os from "node:os";
 import fs from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -53,9 +53,9 @@ describe("OCR preprocessing::", function () {
         it("still rejects a source too degraded to be a recoverable upscale", async () => {
             const tempDir = await makeTempDir();
             try {
-                const tinyImage = await new jimp(100, 100, 0xffffffff);
+                const tinyImage = new Jimp({ width: 100, height: 100, color: 0xffffffff });
                 const tinyPath = path.join(tempDir, "tiny.png");
-                await tinyImage.writeAsync(tinyPath);
+                await tinyImage.write(tinyPath);
 
                 let caughtError;
                 try {

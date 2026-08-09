@@ -1,4 +1,4 @@
-import jimp from "jimp";
+import { Jimp } from "jimp";
 
 // Shared jimp binarization/preprocessing helpers for ocr-preprocessing.mjs -- previously
 // duplicated byte-identical across multiple preprocessing modules. One implementation now.
@@ -76,14 +76,14 @@ function sharpen(img) {
 }
 
 async function padAndScale(img, padding, scaleFactor, minWidth) {
-    const padded = await new jimp(
-        img.bitmap.width + padding * 2,
-        img.bitmap.height + padding * 2,
-        0xffffffff
-    );
+    const padded = new Jimp({
+        width: img.bitmap.width + padding * 2,
+        height: img.bitmap.height + padding * 2,
+        color: 0xffffffff
+    });
     padded.composite(img, padding, padding);
     const targetWidth = Math.max(minWidth, Math.round(padded.bitmap.width * scaleFactor));
-    padded.resize(targetWidth, jimp.AUTO);
+    padded.resize({ w: targetWidth });
     return padded;
 }
 

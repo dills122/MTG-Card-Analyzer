@@ -6,6 +6,7 @@ import matchNameModule from "../../src/fuzzy-matching/match-name.mjs";
 import { QUALITY_LEVELS, loadManifest, validateManifest } from "../../src/regression/manifest.mjs";
 import { formatBenchmarkReport } from "../../src/regression/report.mjs";
 import {
+    maximumCasesPerOcrSession,
     runRegression,
     summarize,
     summarizeGate
@@ -355,7 +356,81 @@ describe("Regression framework::", () => {
         assert.equal(report.isolation.ocrLanguageSource, "OCR candidate official-eng-fast");
         assert.equal(
             report.isolation.ocrWorkerLifecycle,
-            "shared process; adaptive state reset per crop"
+            "shared sequentially for at most 40 cases; adaptive state reset per crop"
+        );
+    });
+
+    it("recycles the OCR worker after the fixed case budget", async () => {
+        const manifest = {
+            path: "/fixtures/manifest.json",
+            catalog: [
+                {
+                    name: "Pacifism",
+                    set: "BBD",
+                    collectorNumber: "101",
+                    referenceImagePath: "/fixtures/reference.jpg"
+                }
+            ],
+            cases: Array.from({ length: maximumCasesPerOcrSession + 1 }, (_, index) => ({
+                id: `case-${index}`,
+                image: `case-${index}.jpg`,
+                imagePath: `/fixtures/case-${index}.jpg`,
+                quality: "clean-scan",
+                expected: { name: "Pacifism", set: "BBD", collectorNumber: "101" }
+            }))
+        };
+        const sessions = [];
+        const receivedSessions = [];
+
+        const report = await runRegression(manifest, {
+            dependencies: {
+                ImageProcessor: {
+                    create: ({ ocrOptions }) => {
+                        receivedSessions.push(ocrOptions.session);
+                        return {
+                            extract: (callback) =>
+                                callback(null, {
+                                    cleanText: "PACIFISM",
+                                    dirtyText: "Pacifism",
+                                    confidence: 99,
+                                    bestVariant: { region: "name-core" }
+                                })
+                        };
+                    }
+                },
+                MatchName: matchNameModule,
+                Hash: {
+                    hashImage: (_imagePath, callback) => callback(null, "fresh-hash"),
+                    compareHash: () => ({
+                        twoBitMatches: 1,
+                        fourBitMatches: 1,
+                        stringCompare: 1
+                    })
+                },
+                materializeFixture: async (fixture) => fixture.imagePath,
+                createOcrSession: async () => {
+                    const session = {
+                        terminateCalls: 0,
+                        async terminate() {
+                            this.terminateCalls += 1;
+                        }
+                    };
+                    sessions.push(session);
+                    return session;
+                }
+            }
+        });
+
+        assert.equal(report.summary.passed, maximumCasesPerOcrSession + 1);
+        assert.lengthOf(sessions, 2);
+        assert.deepEqual(
+            receivedSessions.slice(0, maximumCasesPerOcrSession),
+            Array(maximumCasesPerOcrSession).fill(sessions[0])
+        );
+        assert.equal(receivedSessions.at(-1), sessions[1]);
+        assert.deepEqual(
+            sessions.map((session) => session.terminateCalls),
+            [1, 1]
         );
     });
 

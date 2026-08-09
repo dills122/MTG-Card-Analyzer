@@ -31,6 +31,11 @@ A bare image path is accepted as a backward-compatible shorthand:
 node index.mjs ./path/to/card.jpg
 ```
 
+Scan inputs are limited to JPEG, PNG, GIF, and BMP files. Local files may be at most 32 MiB,
+12,000 pixels on either axis, and 40 megapixels decoded. Signature and dimension validation runs
+before image decoding, so renaming an unsupported file to a supported extension does not bypass
+the check.
+
 ### Scan options
 
 | Option                          | Effect                                                                                    |

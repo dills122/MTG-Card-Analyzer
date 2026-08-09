@@ -80,7 +80,7 @@ async function main(argv = process.argv, overrides = {}) {
         `CI gate: ${report.gate.passed}/${report.gate.total} blocking fixtures passed; ${report.gate.nonBlockingFailed}/${report.gate.nonBlocking} non-blocking fixtures failed`
     );
     writeLine("Application persistence, image-hash cache, and OCR cache: disabled");
-    writeLine("Tesseract worker: shared sequentially for this regression run");
+    writeLine(`Tesseract worker: ${report.isolation.ocrWorkerLifecycle}`);
     if (report.pending.cases > 0) {
         writeLine(`Disabled fixtures: ${report.pending.cases}`);
     }

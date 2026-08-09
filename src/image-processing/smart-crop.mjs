@@ -1,7 +1,6 @@
-import jimp from "jimp";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { getImageDimensions } from "./util.mjs";
+import { readImage } from "./util.mjs";
 import { round, clamp } from "../util.mjs";
 
 // Reusable region registry -- the shared "layer" every crop spot plugs into. setSymbol feeds the
@@ -183,7 +182,12 @@ function cropRegion(img, percents) {
     const cropHeight = clamp(round(height * percents.heightPercent), 1, height - top);
     const region = { left, top, width: cropWidth, height: cropHeight };
     return {
-        image: img.clone().crop(region.left, region.top, region.width, region.height),
+        image: img.clone().crop({
+            x: region.left,
+            y: region.top,
+            w: region.width,
+            h: region.height
+        }),
         region
     };
 }
@@ -235,16 +239,16 @@ function cropSetSymbolFromImage(img) {
  * on low-confidence crops -- both cases should fall back to full-card hashing at the call site.
  */
 async function writeSetSymbolSnippet(imgPath, directory) {
-    const dimensions = await getImageDimensions(imgPath);
+    const img = await readImage(imgPath);
+    const dimensions = img.bitmap;
     assertSourceSizeOk(dimensions);
-    const img = await jimp.read(imgPath);
     const result = cropSetSymbolFromImage(img);
     if (result.lowConfidence) {
         throw new Error(`Set symbol crop is low confidence: ${result.reason}`);
     }
     const ext = path.extname(imgPath) || ".jpg";
     const filePath = path.join(directory, `${randomUUID()}${ext}`);
-    await result.image.writeAsync(filePath);
+    await result.image.write(filePath);
     return filePath;
 }
 

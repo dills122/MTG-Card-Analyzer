@@ -1,6 +1,5 @@
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import jimp from "jimp";
 import logger from "../logger/log.mjs";
 import joi from "joi";
 import storage from "../storage/index.mjs";
@@ -31,7 +30,8 @@ const defaultDependencies = {
     Hash: imageHashing.Hash,
     createDirectory: FileIO.createDirectory,
     cleanUpFiles: FileIO.cleanUpFiles,
-    CropSetSymbol: imageProcessing.smartCrop.cropSetSymbolFromImage
+    CropSetSymbol: imageProcessing.smartCrop.cropSetSymbolFromImage,
+    readImage: imageProcessing.util.readImage
 };
 
 const schema = joi.object().keys({
@@ -241,19 +241,18 @@ class ProcessHashes {
     }
 
     async _hashRemoteSetSymbol(url, tempDirectory) {
-        // Scryfall's image CDN 400s a header-less request -- jimp's own URL loader sends none by
-        // default. Same fix/header as image-hashing/hash-image.mjs's remote imageHash() calls.
-        // Only a real http(s) URL takes jimp's {url, headers} request-object form; a local test
-        // fixture path must stay a plain string so it still takes jimp's fs-read branch.
-        const image = imageHashing.isRemoteUrl(url)
-            ? await jimp.read({ url, headers: imageHashing.REMOTE_IMAGE_REQUEST_HEADERS })
-            : await jimp.read(url);
+        const image = await this.dependencies.readImage(
+            url,
+            imageHashing.isRemoteUrl(url)
+                ? { headers: imageHashing.REMOTE_IMAGE_REQUEST_HEADERS }
+                : undefined
+        );
         const cropped = this.dependencies.CropSetSymbol(image);
         if (cropped.lowConfidence) {
             throw new Error(`Set symbol crop is low confidence: ${cropped.reason}`);
         }
         const tmpFilePath = path.join(tempDirectory, `${randomUUID()}.png`);
-        await cropped.image.writeAsync(tmpFilePath);
+        await cropped.image.write(tmpFilePath);
         return this._hashImage(tmpFilePath);
     }
 
