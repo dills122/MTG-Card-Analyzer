@@ -76,8 +76,9 @@ npm pack --dry-run --json
 
 Release tags use bare semantic versions such as `0.2.0`, without a `v` prefix. Keep
 `package.json`, the Release Drafter tag template, and the release workflow tag filter aligned.
-Publishing and creating the release tag remain explicit maintainer steps after the release commit
-has passed its gates.
+Releases are published on GitHub with the `npm pack` archive attached; this project is not published
+to the npm registry. Creating the release tag and publishing its archive remain explicit maintainer
+steps after the release commit has passed its gates.
 
 Type checking is being introduced incrementally for this ESM JavaScript codebase. The strict
 checked-module list lives in `tsconfig.checked.json`; add a touched production module there once its

@@ -31,10 +31,11 @@ before decoding it; TIFF, ICNS, JXL, HEIF, and other container formats are rejec
 You need:
 
 - [Node.js](https://nodejs.org/) 20 or newer
-- npm and a network connection for installation and the initial Scryfall card-name seed
+- npm and a network connection for the GitHub release, its dependencies, and the initial Scryfall
+  card-name seed
 
 ```bash
-npm install --global mtg-card-analyzer
+npm install --global https://github.com/dills122/MTG-Card-Analyzer/releases/latest/download/mtg-card-analyzer-0.2.0.tgz
 mtg-card-analyzer names seed
 mtg-card-analyzer scan ./path/to/card.jpg
 ```
@@ -42,9 +43,10 @@ mtg-card-analyzer scan ./path/to/card.jpg
 Run `names seed` once before the first scan. It downloads the Scryfall card-name catalog into the
 local name index. Seeding is safe to repeat: it applies the same normalization contract used by
 matching, rejects unmatchable catalog entries, repairs invalid or duplicate rows, and upserts names
-idempotently. A required seed failure exits nonzero. npm installs the `mtg-card-analyzer` command and
-the bundled English OCR model. Configuration and local data use the current directory or your home
-configuration directory as described in
+idempotently. A required seed failure exits nonzero. The GitHub release archive installs the
+`mtg-card-analyzer` command and the bundled English OCR model; the project is not published to the
+npm registry. Configuration and local data use the current directory or your home configuration
+directory as described in
 [Configuration and local data](docs/configuration.md).
 
 If the scan does not complete, check the environment before digging into individual settings:
