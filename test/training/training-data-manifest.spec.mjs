@@ -61,6 +61,25 @@ describe("OCR training-data manifest", () => {
         assert.deepEqual(manifest.samples, []);
     });
 
+    it("accepts and preserves approved review provenance", () => {
+        const manifestPath = "/repo/training/ocr/manifest.json";
+        const sample = {
+            ...validSample(),
+            review: {
+                decision: "approved-with-concern",
+                reviewedAt: "2026-08-09T12:00:00.000Z",
+                notes: "Crop quality should be revisited as the corpus grows."
+            }
+        };
+
+        const manifest = validateTrainingDataManifest(
+            baseManifest({ samples: [sample] }),
+            manifestPath
+        );
+
+        assert.deepEqual(manifest.samples[0].review, sample.review);
+    });
+
     it("loads reviewed single-line image/transcription pairs and verifies their hashes", async () => {
         const directory = await mkdtemp(path.join(os.tmpdir(), "mtg-training-data-"));
         try {
@@ -225,6 +244,48 @@ describe("OCR training-data manifest", () => {
             [
                 baseManifest({ samples: [{ ...validSample(), reviewed: "yes" }] }),
                 "samples[0].reviewed must be a boolean"
+            ],
+            [
+                baseManifest({
+                    samples: [
+                        {
+                            ...validSample(),
+                            review: {
+                                decision: "rejected",
+                                reviewedAt: "2026-08-09T12:00:00.000Z"
+                            }
+                        }
+                    ]
+                }),
+                "samples[0].review.decision must be approved or approved-with-concern"
+            ],
+            [
+                baseManifest({
+                    samples: [
+                        {
+                            ...validSample(),
+                            review: {
+                                decision: "approved",
+                                reviewedAt: "not-a-date"
+                            }
+                        }
+                    ]
+                }),
+                "samples[0].review.reviewedAt must be a valid ISO timestamp"
+            ],
+            [
+                baseManifest({
+                    samples: [
+                        {
+                            ...validSample(),
+                            review: {
+                                decision: "approved-with-concern",
+                                reviewedAt: "2026-08-09T12:00:00.000Z"
+                            }
+                        }
+                    ]
+                }),
+                "samples[0].review.notes must be a non-empty string"
             ],
             [
                 baseManifest({

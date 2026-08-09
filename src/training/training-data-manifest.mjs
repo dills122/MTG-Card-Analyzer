@@ -62,6 +62,24 @@ function validateBaseModel(baseModel) {
     }
 }
 
+function validateReview(review, label) {
+    if (review === undefined) {
+        return;
+    }
+    requireObject(review, label);
+    if (!["approved", "approved-with-concern"].includes(review.decision)) {
+        throw new Error(`${label}.decision must be approved or approved-with-concern`);
+    }
+    requireString(review.reviewedAt, `${label}.reviewedAt`);
+    const reviewedAt = new Date(review.reviewedAt);
+    if (Number.isNaN(reviewedAt.valueOf()) || reviewedAt.toISOString() !== review.reviewedAt) {
+        throw new Error(`${label}.reviewedAt must be a valid ISO timestamp`);
+    }
+    if (review.decision === "approved-with-concern" || review.notes !== undefined) {
+        requireString(review.notes, `${label}.notes`);
+    }
+}
+
 function validateSample(sample, index, directory) {
     const label = `samples[${index}]`;
     requireObject(sample, label);
@@ -76,6 +94,7 @@ function validateSample(sample, index, directory) {
     if (typeof sample.reviewed !== "boolean") {
         throw new Error(`${label}.reviewed must be a boolean`);
     }
+    validateReview(sample.review, `${label}.review`);
     requireObject(sample.source, `${label}.source`);
     if (!["card-image", "synthetic"].includes(sample.source.kind)) {
         throw new Error(`${label}.source.kind must be card-image or synthetic`);

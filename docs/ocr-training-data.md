@@ -53,32 +53,25 @@ Wizards' [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpol
 output as unofficial, noncommercial, review-only local material. Do not commit or promote a crop
 until its use, transcription, and visual quality are explicitly reviewed.
 
-### Promote an approved pair
+### Promote a reviewed batch
 
-Place the files under `training/ocr/ground-truth/`:
+Promote a staged batch only after explicitly classifying every sample. `--concern` is an approval
+that requires a note; the note remains attached to the sample in the committed manifest. Rejected
+samples stay in the ignored review batch and are never copied into the corpus.
 
-```text
-training/ocr/ground-truth/mtg-0001.png
-training/ocr/ground-truth/mtg-0001.gt.txt
+```bash
+pnpm training:review:promote \
+    --batch-dir artifacts/training-review/batch-001 \
+    --approve mtg-0001-pending \
+    --concern "mtg-0002-pending=Crop is usable but should be replaced later" \
+    --reject mtg-0003-pending
 ```
 
-Then add the pair to `training/ocr/manifest.json` with exact hashes:
-
-```json
-{
-    "id": "mtg-0001",
-    "image": "ground-truth/mtg-0001.png",
-    "transcription": "ground-truth/mtg-0001.gt.txt",
-    "imageSha256": "<64 lowercase hex characters>",
-    "transcriptionSha256": "<64 lowercase hex characters>",
-    "reviewed": true,
-    "source": {
-        "kind": "card-image",
-        "reference": "capture-batch-2026-08/card-0001",
-        "license": "owned-capture"
-    }
-}
-```
+The command rechecks staged hashes, rejects missing, duplicate, overlapping, or unknown decisions,
+copies approved image/transcription pairs under `training/ocr/ground-truth/`, and atomically updates
+`training/ocr/manifest.json`. If validation or readiness fails, it rolls back copied files and leaves
+the manifest unchanged. The fixed ratio must still produce at least one training and one evaluation
+line from the approved set.
 
 Validate structure, paths, file sizes, hashes, encoding, transcription shape, provenance, and the
 pinned base model:
