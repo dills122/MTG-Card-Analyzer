@@ -32,6 +32,9 @@ lib-cov/
 # Generated OCR regression reports
 artifacts/regression/
 
+# Local OCR training review crops (unreviewed and potentially rights-restricted)
+artifacts/training-review/
+
 # Build output
 build/
 dist/

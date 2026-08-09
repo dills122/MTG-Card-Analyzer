@@ -16,6 +16,49 @@ function requireNonEmptyString(value, label) {
     }
 }
 
+function markdownText(value) {
+    return String(value)
+        .replace(/\r?\n/g, " ")
+        .replace(/\\/g, "\\\\")
+        .replace(/`/g, "\\`")
+        .replace(/\[/g, "\\[")
+        .replace(/\]/g, "\\]")
+        .trim();
+}
+
+function formatReviewSheet(report) {
+    const lines = [
+        "# OCR training review batch",
+        "",
+        `Status: ${report.status}`,
+        "",
+        `Rights/provenance basis: ${report.rightsBasis}`,
+        "",
+        "Nothing in this directory is approved training data until every applicable checkbox and decision is completed."
+    ];
+    report.samples.forEach((sample) => {
+        const transcription = markdownText(sample.transcription);
+        lines.push(
+            "",
+            `## ${transcription}`,
+            "",
+            `Source fixture: \`${sample.sourceCaseId}\``,
+            "",
+            `Expected transcription: \`${transcription}\``,
+            "",
+            `![${transcription}](./${sample.image})`,
+            "",
+            "- [ ] Crop contains the complete exact transcription",
+            "- [ ] Characters are legible and belong to a single text line",
+            "- [ ] Transcription matches capitalization and punctuation",
+            "- [ ] Rights/provenance basis is acceptable for this use",
+            "- Decision: `approve` / `reject`",
+            "- Review notes:"
+        );
+    });
+    return `${lines.join("\n")}\n`;
+}
+
 function selectCases(regressionManifest, caseIds) {
     if (!regressionManifest || !Array.isArray(regressionManifest.cases)) {
         throw new Error("A loaded regression manifest is required");
@@ -119,11 +162,17 @@ async function stageTrainingReviewBatch(regressionManifest, options) {
             rightsBasis,
             samples
         };
-        await writeFile(
-            path.join(absoluteOutput, "review-manifest.json"),
-            `${JSON.stringify(report, null, 2)}\n`,
-            { encoding: "utf8", flag: "wx" }
-        );
+        await Promise.all([
+            writeFile(
+                path.join(absoluteOutput, "review-manifest.json"),
+                `${JSON.stringify(report, null, 2)}\n`,
+                { encoding: "utf8", flag: "wx" }
+            ),
+            writeFile(path.join(absoluteOutput, "review.md"), formatReviewSheet(report), {
+                encoding: "utf8",
+                flag: "wx"
+            })
+        ]);
         return report;
     } catch (error) {
         await rm(absoluteOutput, { recursive: true, force: true });
@@ -131,4 +180,4 @@ async function stageTrainingReviewBatch(regressionManifest, options) {
     }
 }
 
-export { MAX_REVIEW_BATCH_CASES, selectCases, stageTrainingReviewBatch };
+export { MAX_REVIEW_BATCH_CASES, formatReviewSheet, selectCases, stageTrainingReviewBatch };

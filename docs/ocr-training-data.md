@@ -33,6 +33,28 @@ integer runtime model and is not a valid fine-tuning base according to Tesseract
 
 ## Add a reviewed pair
 
+### Stage a local review batch
+
+The staging command can crop the production `name-core` region from disabled regression candidates.
+It refuses enabled fixtures, placeholder labels, compound card names without face-specific ground
+truth, duplicate IDs, oversized batches, and an existing batch directory. Output stays under the
+ignored `artifacts/training-review/` directory and every sample remains `reviewed: false`.
+
+```bash
+pnpm training:review:stage \
+    --batch batch-001 \
+    --case fin-569-choco-seeker-of-paradise-1ce688fa-scryfall \
+    --case fin-585-laughing-mad-9268ccdb-scryfall
+```
+
+The review manifest records hashes, source fixture IDs, the crop region, and the rights/provenance
+basis. Staging does not grant or assert ownership of card imagery. The default note references
+Wizards' [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy) and labels the
+output as unofficial, noncommercial, review-only local material. Do not commit or promote a crop
+until its use, transcription, and visual quality are explicitly reviewed.
+
+### Promote an approved pair
+
 Place the files under `training/ocr/ground-truth/`:
 
 ```text

@@ -1,9 +1,13 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { rejects } from "node:assert/strict";
 import { assert } from "chai";
-import { stageTrainingReviewBatch } from "../../src/training/training-review-stager.mjs";
+import {
+    MAX_REVIEW_BATCH_CASES,
+    selectCases,
+    stageTrainingReviewBatch
+} from "../../src/training/training-review-stager.mjs";
 
 function regressionManifest() {
     return {
@@ -81,6 +85,12 @@ describe("OCR training review stager", () => {
             assert.equal(writtenReport.samples[1].sourceCaseId, "candidate-two");
             assert.match(writtenReport.samples[0].imageSha256, /^[a-f0-9]{64}$/);
             assert.match(writtenReport.samples[0].transcriptionSha256, /^[a-f0-9]{64}$/);
+            const reviewSheet = await readFile(path.join(outputDirectory, "review.md"), "utf8");
+            assert.include(reviewSheet, "# OCR training review batch");
+            assert.include(reviewSheet, "## Candidate One");
+            assert.include(reviewSheet, "![Candidate One](./candidate-one.png)");
+            assert.include(reviewSheet, "- [ ] Crop contains the complete exact transcription");
+            assert.include(reviewSheet, "- Decision: `approve` / `reject`");
         } finally {
             await rm(parent, { recursive: true, force: true });
         }
@@ -109,6 +119,99 @@ describe("OCR training review stager", () => {
                 prepareOcrVariants: async () => ({ variants: [] })
             }),
             /compound-fixture uses a compound card name/
+        );
+    });
+
+    it("rejects malformed, unsafe, duplicate, unknown, and placeholder selections", () => {
+        const manifest = regressionManifest();
+        const unsafeFixture = {
+            id: "../unsafe",
+            enabled: false,
+            imagePath: "/fixtures/unsafe.jpg",
+            expected: { name: "Unsafe" }
+        };
+        const placeholderFixture = {
+            id: "placeholder",
+            enabled: false,
+            imagePath: "/fixtures/placeholder.jpg",
+            expected: { name: "CHANGE_ME" }
+        };
+        const missingNameFixture = {
+            id: "missing-name",
+            enabled: false,
+            imagePath: "/fixtures/missing-name.jpg",
+            expected: {}
+        };
+
+        assert.throws(() => selectCases(null, ["candidate-one"]), "loaded regression manifest");
+        assert.throws(() => selectCases(manifest, []), "At least one training review case");
+        assert.throws(
+            () => selectCases(manifest, Array(MAX_REVIEW_BATCH_CASES + 1).fill("candidate-one")),
+            `limited to ${MAX_REVIEW_BATCH_CASES}`
+        );
+        assert.throws(
+            () => selectCases(manifest, ["candidate-one", "candidate-one"]),
+            "case IDs must be unique"
+        );
+        assert.throws(() => selectCases(manifest, ["unknown"]), "Unknown regression fixture");
+        assert.throws(
+            () =>
+                selectCases({ ...manifest, cases: [...manifest.cases, unsafeFixture] }, [
+                    "../unsafe"
+                ]),
+            "not safe to use as a training review filename"
+        );
+        assert.throws(
+            () =>
+                selectCases({ ...manifest, cases: [...manifest.cases, placeholderFixture] }, [
+                    "placeholder"
+                ]),
+            "still has placeholder ground truth"
+        );
+        assert.throws(
+            () =>
+                selectCases({ ...manifest, cases: [...manifest.cases, missingNameFixture] }, [
+                    "missing-name"
+                ]),
+            "expected name must be a non-empty string"
+        );
+    });
+
+    it("removes a partial review directory when crop generation fails", async () => {
+        const parent = await mkdtemp(path.join(os.tmpdir(), "mtg-training-review-"));
+        const outputDirectory = path.join(parent, "failed-batch");
+        try {
+            await rejects(
+                stageTrainingReviewBatch(regressionManifest(), {
+                    caseIds: ["candidate-one"],
+                    outputDirectory,
+                    rightsBasis: "review-only",
+                    prepareOcrVariants: async () => ({ variants: [] })
+                }),
+                /did not produce a non-empty name-core crop/
+            );
+            await rejects(access(outputDirectory), /ENOENT/);
+        } finally {
+            await rm(parent, { recursive: true, force: true });
+        }
+    });
+
+    it("requires an output directory and rights/provenance basis", async () => {
+        await rejects(
+            stageTrainingReviewBatch(regressionManifest(), {
+                caseIds: ["candidate-one"],
+                outputDirectory: "",
+                rightsBasis: "review-only"
+            }),
+            /outputDirectory must be a non-empty string/
+        );
+        await rejects(
+            stageTrainingReviewBatch(regressionManifest(), {
+                caseIds: ["candidate-one"],
+                outputDirectory: "/tmp/not-created",
+                rightsBasis: ""
+            }),
+            /rightsBasis must be a non-empty string/
         );
     });
 });
