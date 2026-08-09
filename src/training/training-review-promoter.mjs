@@ -18,6 +18,55 @@ function requireString(value, label) {
     }
 }
 
+function validateApprovalDecision(decision, approvedById) {
+    requireString(decision?.id, "Approved sample ID");
+    if (!ID_PATTERN.test(decision.id)) {
+        throw new Error(`Unsafe approved sample ID: ${decision.id}`);
+    }
+    if (approvedById.has(decision.id)) {
+        throw new Error(`Duplicate approved sample ID: ${decision.id}`);
+    }
+    if (decision.concern !== undefined && decision.notes !== undefined) {
+        throw new Error(`Approved sample ${decision.id} cannot have both concern and notes`);
+    }
+    if (decision.concern !== undefined) {
+        requireString(decision.concern, `Concern for ${decision.id}`);
+        if (decision.concern.length > 500) {
+            throw new Error(`Concern for ${decision.id} must be 500 characters or fewer`);
+        }
+    }
+    if (decision.notes !== undefined) {
+        requireString(decision.notes, `Review notes for ${decision.id}`);
+        if (decision.notes.length > 500) {
+            throw new Error(`Review notes for ${decision.id} must be 500 characters or fewer`);
+        }
+    }
+}
+
+function indexApprovedDecisions(approved) {
+    const approvedById = new Map();
+    for (const decision of approved) {
+        validateApprovalDecision(decision, approvedById);
+        approvedById.set(decision.id, decision);
+    }
+    return approvedById;
+}
+
+function indexRejectedDecisions(rejectedIds) {
+    const rejected = new Set();
+    for (const id of rejectedIds) {
+        requireString(id, "Rejected sample ID");
+        if (!ID_PATTERN.test(id)) {
+            throw new Error(`Unsafe rejected sample ID: ${id}`);
+        }
+        if (rejected.has(id)) {
+            throw new Error(`Duplicate rejected sample ID: ${id}`);
+        }
+        rejected.add(id);
+    }
+    return rejected;
+}
+
 function safeChildPath(directory, relativePath, label) {
     requireString(relativePath, label);
     if (path.isAbsolute(relativePath)) {
@@ -50,43 +99,8 @@ function validateDecisions(reviewManifest, approved, rejectedIds) {
     if (!Array.isArray(approved) || !Array.isArray(rejectedIds)) {
         throw new Error("Approved and rejected decisions must be arrays");
     }
-    const approvedById = new Map();
-    for (const decision of approved) {
-        requireString(decision?.id, "Approved sample ID");
-        if (!ID_PATTERN.test(decision.id)) {
-            throw new Error(`Unsafe approved sample ID: ${decision.id}`);
-        }
-        if (approvedById.has(decision.id)) {
-            throw new Error(`Duplicate approved sample ID: ${decision.id}`);
-        }
-        if (decision.concern !== undefined && decision.notes !== undefined) {
-            throw new Error(`Approved sample ${decision.id} cannot have both concern and notes`);
-        }
-        if (decision.concern !== undefined) {
-            requireString(decision.concern, `Concern for ${decision.id}`);
-            if (decision.concern.length > 500) {
-                throw new Error(`Concern for ${decision.id} must be 500 characters or fewer`);
-            }
-        }
-        if (decision.notes !== undefined) {
-            requireString(decision.notes, `Review notes for ${decision.id}`);
-            if (decision.notes.length > 500) {
-                throw new Error(`Review notes for ${decision.id} must be 500 characters or fewer`);
-            }
-        }
-        approvedById.set(decision.id, decision);
-    }
-    const rejected = new Set();
-    for (const id of rejectedIds) {
-        requireString(id, "Rejected sample ID");
-        if (!ID_PATTERN.test(id)) {
-            throw new Error(`Unsafe rejected sample ID: ${id}`);
-        }
-        if (rejected.has(id)) {
-            throw new Error(`Duplicate rejected sample ID: ${id}`);
-        }
-        rejected.add(id);
-    }
+    const approvedById = indexApprovedDecisions(approved);
+    const rejected = indexRejectedDecisions(rejectedIds);
     const overlap = [...approvedById.keys()].filter((id) => rejected.has(id));
     if (overlap.length > 0) {
         throw new Error(`Samples cannot be both approved and rejected: ${overlap.join(", ")}`);
