@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "status": "draft",
+    "status": "reviewed",
     "modelName": "eng_mtg",
     "randomSeed": 20260808,
     "trainRatio": 0.9,
@@ -14,5 +14,92 @@
             "license": "Apache-2.0"
         }
     },
-    "samples": []
+    "samples": [
+        {
+            "id": "adanto-vanguard-pending",
+            "image": "ground-truth/adanto-vanguard-pending.png",
+            "transcription": "ground-truth/adanto-vanguard-pending.gt.txt",
+            "imageSha256": "3d58080c0d09e295eb7eea4ee1cce0075ed5a250256dd34e23b4bedd585a1b01",
+            "transcriptionSha256": "c35aeb932bab7ef98d5f18a1e058aa482125fbe8e44c762a10aa89594341c873",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:adanto-vanguard-pending",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T04:19:15.038Z"
+            }
+        },
+        {
+            "id": "angel-of-sanctions-pending",
+            "image": "ground-truth/angel-of-sanctions-pending.png",
+            "transcription": "ground-truth/angel-of-sanctions-pending.gt.txt",
+            "imageSha256": "722f0fd18fc51896676b8cdfbd5653f0fb9afae6f1343b2a2d5b4ec20871cb60",
+            "transcriptionSha256": "6666212685d230afc32c7cd1aa8f968b71803979a22e4ad3dffde876a3f6a185",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:angel-of-sanctions-pending",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T04:19:15.038Z"
+            }
+        },
+        {
+            "id": "artunement-pending",
+            "image": "ground-truth/artunement-pending.png",
+            "transcription": "ground-truth/artunement-pending.gt.txt",
+            "imageSha256": "9ed43d4d8f522a129e5159428099bb856970242b01aa966d70e6cdacd9a1aed0",
+            "transcriptionSha256": "ee2970d641a4773311dbfc0818e56e872faf940558dc8df3a91cf81f204a0ea1",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:artunement-pending",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved-with-concern",
+                "reviewedAt": "2026-08-09T04:19:15.038Z",
+                "notes": "Reviewer approved but flagged concern; no additional detail supplied."
+            }
+        },
+        {
+            "id": "avaricious-dragon-pending",
+            "image": "ground-truth/avaricious-dragon-pending.png",
+            "transcription": "ground-truth/avaricious-dragon-pending.gt.txt",
+            "imageSha256": "3f7f9bc1c4ab5bcf7e75f8af6a5470fe21f6e022e50ed18996a2b08e65590bd1",
+            "transcriptionSha256": "a658821141185d953b18373a5bee622b8eace798211c0826d80326bfa5990207",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:avaricious-dragon-pending",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T04:19:15.038Z"
+            }
+        },
+        {
+            "id": "spellseeker-pending",
+            "image": "ground-truth/spellseeker-pending.png",
+            "transcription": "ground-truth/spellseeker-pending.gt.txt",
+            "imageSha256": "792ca3f75bf231c2bfeac2fbb38673dd2b121073aeb90b2cf6e66e43d45fbef6",
+            "transcriptionSha256": "dd07940f668a167763732e55ced866c7f92b031307b854c291a9b1be26d7d504",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:spellseeker-pending",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T04:19:15.038Z"
+            }
+        }
+    ]
 }
