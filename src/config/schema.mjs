@@ -45,18 +45,25 @@ const resolvedConfigSchema = joi
     .fork(Object.keys(DEFAULTS), (field) => field.required())
     .unknown(false);
 
+/** @param {unknown} value */
 function invalidAdapterError(value) {
     return new Error(
         `Invalid storageAdapter "${value}". Expected one of: ${KNOWN_STORAGE_ADAPTERS.join(", ")}`
     );
 }
 
+/**
+ * @param {Record<string, unknown>} values
+ * @param {joi.ObjectSchema} schema
+ * @param {string} source
+ */
 function validateWithSchema(values, schema, source) {
+    const storageAdapter = values.storageAdapter;
     if (
         Object.hasOwn(values, "storageAdapter") &&
-        !KNOWN_STORAGE_ADAPTERS.includes(values.storageAdapter)
+        (typeof storageAdapter !== "string" || !KNOWN_STORAGE_ADAPTERS.includes(storageAdapter))
     ) {
-        throw invalidAdapterError(values.storageAdapter);
+        throw invalidAdapterError(storageAdapter);
     }
     const { error, value } = schema.validate(values, {
         abortEarly: false,
@@ -70,10 +77,15 @@ function validateWithSchema(values, schema, source) {
     return value;
 }
 
+/**
+ * @param {Record<string, unknown>} values
+ * @param {{source?: string, allowConfigPath?: boolean}} [options]
+ */
 function validateConfigLayer(values, { source = "configuration", allowConfigPath = false } = {}) {
     return validateWithSchema(values, allowConfigPath ? overrideSchema : userConfigSchema, source);
 }
 
+/** @param {Record<string, unknown>} values */
 function validateResolvedConfig(values) {
     return validateWithSchema(values, resolvedConfigSchema, "resolved configuration");
 }

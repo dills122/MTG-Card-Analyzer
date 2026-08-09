@@ -51,6 +51,9 @@ const policySchema = joi
     })
     .unknown(false);
 
+/**
+ * @param {{supplementalEvidence?: Record<string, unknown>, disambiguation?: Record<string, unknown>, [key: string]: unknown}} [overrides]
+ */
 function resolveMatchPolicy(overrides = {}) {
     return joi.attempt(
         {

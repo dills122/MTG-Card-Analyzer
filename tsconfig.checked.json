@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "checkJs": true
+    },
+    "include": [
+        "src/config/json-file.mjs",
+        "src/config/schema.mjs",
+        "src/config/value-parsers.mjs",
+        "src/fuzzy-matching/match-policy.mjs"
+    ]
+}

@@ -1,3 +1,4 @@
+/** @type {Readonly<Record<string, boolean>>} */
 const BOOLEAN_TOKENS = Object.freeze({
     true: true,
     false: false,
@@ -5,6 +6,11 @@ const BOOLEAN_TOKENS = Object.freeze({
     0: false
 });
 
+/**
+ * @param {unknown} value
+ * @param {{label?: string, allowNumeric?: boolean}} [options]
+ * @returns {boolean | undefined}
+ */
 function parseBoolean(value, { label = "Boolean value", allowNumeric = true } = {}) {
     if (value === undefined) {
         return undefined;
