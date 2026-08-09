@@ -100,6 +100,299 @@
                 "decision": "approved",
                 "reviewedAt": "2026-08-09T04:19:15.038Z"
             }
+        },
+        {
+            "id": "m10-35-stormfront-pegasus-d2429a15-scryfall",
+            "image": "ground-truth/m10-35-stormfront-pegasus-d2429a15-scryfall.png",
+            "transcription": "ground-truth/m10-35-stormfront-pegasus-d2429a15-scryfall.gt.txt",
+            "imageSha256": "94f2e12c162d73491afa01728766b361b5875ac1ea7df675c683eeb6bef93d28",
+            "transcriptionSha256": "11e85e6cac85f313366515e1c1c6ff7a7079202e02e1750d085d169258b89343",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-35-stormfront-pegasus-d2429a15-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m15-134-chandra-pyromaster-e92cc35d-scryfall",
+            "image": "ground-truth/m15-134-chandra-pyromaster-e92cc35d-scryfall.png",
+            "transcription": "ground-truth/m15-134-chandra-pyromaster-e92cc35d-scryfall.gt.txt",
+            "imageSha256": "8f45c399e588b17fbdc9979bcc4df86ed70c65633cdb726a559c5414533c50fa",
+            "transcriptionSha256": "945aec32945f4f0e33276d0a96cb8b167cecc482f9111edc8ca165b54e103fed",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m15-134-chandra-pyromaster-e92cc35d-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m10-104-megrim-3b04fca4-scryfall",
+            "image": "ground-truth/m10-104-megrim-3b04fca4-scryfall.png",
+            "transcription": "ground-truth/m10-104-megrim-3b04fca4-scryfall.gt.txt",
+            "imageSha256": "2f7205530f606694a162063d4a207a0f7ab526614fc42ac18c768b70fb993cb6",
+            "transcriptionSha256": "7ab0ed6547ad9402db13673077cb2055491972ca50afdb6dae0bbffaf9dbc36f",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-104-megrim-3b04fca4-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m15-230-shield-of-the-avatar-97c2cc25-scryfall",
+            "image": "ground-truth/m15-230-shield-of-the-avatar-97c2cc25-scryfall.png",
+            "transcription": "ground-truth/m15-230-shield-of-the-avatar-97c2cc25-scryfall.gt.txt",
+            "imageSha256": "9cc169088c1df47559b2d3df44151e0594ca1a695ab30bee752d0319ccf58bbf",
+            "transcriptionSha256": "ba7d214d15f2ee2be608dbc9ab68bf9d609fe858564c0e21758ecb8a72d8fc4c",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m15-230-shield-of-the-avatar-97c2cc25-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m10-229-terramorphic-expanse-61902bad-scryfall",
+            "image": "ground-truth/m10-229-terramorphic-expanse-61902bad-scryfall.png",
+            "transcription": "ground-truth/m10-229-terramorphic-expanse-61902bad-scryfall.gt.txt",
+            "imageSha256": "1bda400f16cc4e5171a62cd2c6e0452987feaeaab06f11049ff4401a26a5719e",
+            "transcriptionSha256": "388053997c1c0f028a729793026b03c3535b1dab95e46bdacd8f771ce8ef1eb7",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-229-terramorphic-expanse-61902bad-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m15-188-nissa-s-expedition-7b6c5cdd-scryfall",
+            "image": "ground-truth/m15-188-nissa-s-expedition-7b6c5cdd-scryfall.png",
+            "transcription": "ground-truth/m15-188-nissa-s-expedition-7b6c5cdd-scryfall.gt.txt",
+            "imageSha256": "ded402508c92bc05c1357cd161c02698f7f36a0f3a4537250657c233c508c739",
+            "transcriptionSha256": "297285c3a541a8b5358fe0f4db9e81e03fb7bfec6c5b136c9640109d2e2cb20e",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m15-188-nissa-s-expedition-7b6c5cdd-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m15-44-aetherspouts-46f1b48f-scryfall",
+            "image": "ground-truth/m15-44-aetherspouts-46f1b48f-scryfall.png",
+            "transcription": "ground-truth/m15-44-aetherspouts-46f1b48f-scryfall.gt.txt",
+            "imageSha256": "48167351cb377ff02ecde9d78f4be1c60772e51256c85600b929bf011a7de2d0",
+            "transcriptionSha256": "5b51df66e55b48a4640ff7af869fabff4d88e6fa583ca3ba8b2d0aad9cecc265",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m15-44-aetherspouts-46f1b48f-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m10-119-wall-of-bone-f19d80ce-scryfall",
+            "image": "ground-truth/m10-119-wall-of-bone-f19d80ce-scryfall.png",
+            "transcription": "ground-truth/m10-119-wall-of-bone-f19d80ce-scryfall.gt.txt",
+            "imageSha256": "87c7c9c2a6db3d3c0c27fcb9bf29c3ba67771f8c4d531b27be0aa8ec929e0b2f",
+            "transcriptionSha256": "c7a3ba51f8134a1595fa3bccf789c2a419da267f3b3aac40ba01d31b636e1e6d",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-119-wall-of-bone-f19d80ce-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z",
+                "notes": "This is a really good copy"
+            }
+        },
+        {
+            "id": "m10-212-howling-mine-b87c9191-scryfall",
+            "image": "ground-truth/m10-212-howling-mine-b87c9191-scryfall.png",
+            "transcription": "ground-truth/m10-212-howling-mine-b87c9191-scryfall.gt.txt",
+            "imageSha256": "94e8615aa6c8dec336a3affee236064942dea2da80d36f7be6c68d8d43a1bd9c",
+            "transcriptionSha256": "1a0fd5700bf853fe1568d689f876407d7d60da14724b3548a086e4da73d7b340",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-212-howling-mine-b87c9191-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m15-10-divine-favor-43c1ddf8-scryfall",
+            "image": "ground-truth/m15-10-divine-favor-43c1ddf8-scryfall.png",
+            "transcription": "ground-truth/m15-10-divine-favor-43c1ddf8-scryfall.gt.txt",
+            "imageSha256": "6c0663dea0d790c56b20ced6e9c45eff371c1d7079dcf5b9ce17bea81b9ca505",
+            "transcriptionSha256": "5baaf8915ec3d7b96ff1975c51ce1ccb4417d3d4dd64fdd227a57f75dbf95710",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m15-10-divine-favor-43c1ddf8-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m10-75-time-warp-f21c7628-scryfall",
+            "image": "ground-truth/m10-75-time-warp-f21c7628-scryfall.png",
+            "transcription": "ground-truth/m10-75-time-warp-f21c7628-scryfall.gt.txt",
+            "imageSha256": "1fb3d6345448de5f77a08b72e298e6f980144ee08f02a60ddb3e3f47e4cdf348",
+            "transcriptionSha256": "037ac90c7e1ee070f9dea523811caa91e2b1f5c8018e4cc7753149ebb5eba7d7",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-75-time-warp-f21c7628-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z",
+                "notes": "This is a good copy"
+            }
+        },
+        {
+            "id": "m10-141-ignite-disorder-c425d61c-scryfall",
+            "image": "ground-truth/m10-141-ignite-disorder-c425d61c-scryfall.png",
+            "transcription": "ground-truth/m10-141-ignite-disorder-c425d61c-scryfall.gt.txt",
+            "imageSha256": "269c944a4e1e6df1c4d1825db7179a7b50e97af9a6ace859aaef345dd24f9cac",
+            "transcriptionSha256": "db334a02452179a3ff07c860d85e73d5a7427e3530a041a9ebe59c4156a922a3",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-141-ignite-disorder-c425d61c-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m15-240-battlefield-forge-1dc57d63-scryfall",
+            "image": "ground-truth/m15-240-battlefield-forge-1dc57d63-scryfall.png",
+            "transcription": "ground-truth/m15-240-battlefield-forge-1dc57d63-scryfall.gt.txt",
+            "imageSha256": "b74d038ea1d4f409a658868706a39b3acec5e2f3ce6b75c1edaf841ae68f7de8",
+            "transcriptionSha256": "dc891ad7260f153124781cbd01a7a8ed27d0ad01008658c3380064dcdb56ea19",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m15-240-battlefield-forge-1dc57d63-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m10-175-deadly-recluse-6ab810f1-scryfall",
+            "image": "ground-truth/m10-175-deadly-recluse-6ab810f1-scryfall.png",
+            "transcription": "ground-truth/m10-175-deadly-recluse-6ab810f1-scryfall.gt.txt",
+            "imageSha256": "c668ad3e000c54f87b7e3801b6e98643e3886fb372aa9b3ff86568aa48ad6181",
+            "transcriptionSha256": "513656ec3400701be8b8b7367c716d4888765979cf3ab95f6531983610312d56",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-175-deadly-recluse-6ab810f1-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z",
+                "notes": "This is a good copy"
+            }
+        },
+        {
+            "id": "m10-214-magebane-armor-95b0f586-scryfall",
+            "image": "ground-truth/m10-214-magebane-armor-95b0f586-scryfall.png",
+            "transcription": "ground-truth/m10-214-magebane-armor-95b0f586-scryfall.gt.txt",
+            "imageSha256": "80f96c11a954d436951fc75151f13f7a9b484768f8eaa92c9795cdf957a2aaab",
+            "transcriptionSha256": "a912633d039a4b2c02fd295ae9efb221a1a24838e2f2646555113d154a7ff2d7",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-214-magebane-armor-95b0f586-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m15-207-vineweft-4578f064-scryfall",
+            "image": "ground-truth/m15-207-vineweft-4578f064-scryfall.png",
+            "transcription": "ground-truth/m15-207-vineweft-4578f064-scryfall.gt.txt",
+            "imageSha256": "cd5827ca5f8dba20c4b7c0828bcd314afc0c9f1a2905db55fe84e8e9923ae0ca",
+            "transcriptionSha256": "7ab1779b0c0b9f5a9cc6934c2d390cf64b510925866005f0e4eae31c3538b269",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m15-207-vineweft-4578f064-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z"
+            }
+        },
+        {
+            "id": "m10-91-diabolic-tutor-e8f7af1b-scryfall",
+            "image": "ground-truth/m10-91-diabolic-tutor-e8f7af1b-scryfall.png",
+            "transcription": "ground-truth/m10-91-diabolic-tutor-e8f7af1b-scryfall.gt.txt",
+            "imageSha256": "9d9c05e250292217718c7ab477c9ec6ed73b3200acd6e1e57c229766f5750a53",
+            "transcriptionSha256": "764b1e59613323bf3d73e991101bf439fc283823f4e9b8f8baa201e75393ebdc",
+            "reviewed": true,
+            "source": {
+                "kind": "card-image",
+                "reference": "regression-fixture:m10-91-diabolic-tutor-e8f7af1b-scryfall",
+                "license": "Wizards Fan Content Policy (https://company.wizards.com/en/legal/fancontentpolicy); unofficial, noncommercial, review-only local artifact"
+            },
+            "review": {
+                "decision": "approved",
+                "reviewedAt": "2026-08-09T05:02:58.957Z",
+                "notes": "This is a really good copy"
+            }
         }
     ]
 }
