@@ -1734,6 +1734,306 @@
             "style": "normal",
             "referenceImage": "../../../test-images/regression/scryfall/shm-205-firespout-13454f69.jpg",
             "apiUrl": "https://scryfall.com/card/shm/205/firespout?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "d2429a15-ccbe-463c-9218-968709d9e878",
+            "name": "Stormfront Pegasus",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "35",
+            "typeLine": "Creature — Pegasus",
+            "rarity": "common",
+            "colors": ["W"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-35-stormfront-pegasus-d2429a15.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/35/stormfront-pegasus?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "e92cc35d-4e97-4be2-8c53-cce68c3374ca",
+            "name": "Chandra, Pyromaster",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "134",
+            "typeLine": "Legendary Planeswalker — Chandra",
+            "rarity": "mythic",
+            "colors": ["R"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-134-chandra-pyromaster-e92cc35d.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/134/chandra-pyromaster?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "3b04fca4-b4de-4343-ba58-d8aea39edc19",
+            "name": "Megrim",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "104",
+            "typeLine": "Enchantment",
+            "rarity": "uncommon",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-104-megrim-3b04fca4.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/104/megrim?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "97c2cc25-f3cd-4bfb-b9cc-53d1f42cd69a",
+            "name": "Shield of the Avatar",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "230",
+            "typeLine": "Artifact — Equipment",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-230-shield-of-the-avatar-97c2cc25.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/230/shield-of-the-avatar?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "61902bad-c322-406d-aa4d-039efd4aa84f",
+            "name": "Terramorphic Expanse",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "229",
+            "typeLine": "Land",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-229-terramorphic-expanse-61902bad.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/229/terramorphic-expanse?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "7b6c5cdd-9075-4bb7-88ae-9dc77a637700",
+            "name": "Nissa's Expedition",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "188",
+            "typeLine": "Sorcery",
+            "rarity": "uncommon",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-188-nissa-s-expedition-7b6c5cdd.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/188/nissas-expedition?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "46f1b48f-6528-46bd-a384-2358af25e500",
+            "name": "Aetherspouts",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "44",
+            "typeLine": "Instant",
+            "rarity": "rare",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-44-aetherspouts-46f1b48f.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/44/aetherspouts?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "a3957b43-4d7e-41f9-b7a1-6f57d6603ab8",
+            "name": "Garruk, Apex Predator",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "210",
+            "typeLine": "Legendary Planeswalker — Garruk",
+            "rarity": "mythic",
+            "colors": ["B", "G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-210-garruk-apex-predator-a3957b43.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/210/garruk-apex-predator?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "f19d80ce-284a-4d22-9ea8-f8d480377212",
+            "name": "Wall of Bone",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "119",
+            "typeLine": "Creature — Skeleton Wall",
+            "rarity": "uncommon",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-119-wall-of-bone-f19d80ce.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/119/wall-of-bone?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "b87c9191-1408-4aca-9061-bfb5b101c3ad",
+            "name": "Howling Mine",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "212",
+            "typeLine": "Artifact",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-212-howling-mine-b87c9191.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/212/howling-mine?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "43c1ddf8-e38a-44df-9195-40e2b0d4cd5f",
+            "name": "Divine Favor",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "10",
+            "typeLine": "Enchantment — Aura",
+            "rarity": "common",
+            "colors": ["W"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-10-divine-favor-43c1ddf8.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/10/divine-favor?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "f21c7628-0571-4c09-8763-8e434e5e87d2",
+            "name": "Time Warp",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "75",
+            "typeLine": "Sorcery",
+            "rarity": "mythic",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-75-time-warp-f21c7628.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/75/time-warp?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "c425d61c-f224-4ba6-a32e-44e3a3954c1b",
+            "name": "Ignite Disorder",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "141",
+            "typeLine": "Instant",
+            "rarity": "uncommon",
+            "colors": ["R"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-141-ignite-disorder-c425d61c.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/141/ignite-disorder?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "1dc57d63-5a6d-4ff2-8079-544b2c4eade1",
+            "name": "Battlefield Forge",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "240",
+            "typeLine": "Land",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-240-battlefield-forge-1dc57d63.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/240/battlefield-forge?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "6ab810f1-21d6-4a98-b77a-e455370aa6cc",
+            "name": "Deadly Recluse",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "175",
+            "typeLine": "Creature — Spider",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-175-deadly-recluse-6ab810f1.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/175/deadly-recluse?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "ba4106de-20c7-48cf-8a36-8c6913b46c89",
+            "name": "Sliver Hivelord",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "211",
+            "typeLine": "Legendary Creature — Sliver",
+            "rarity": "mythic",
+            "colors": ["W", "U", "B", "R", "G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-211-sliver-hivelord-ba4106de.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/211/sliver-hivelord?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "95b0f586-a100-4817-93f8-1ee2df39ce03",
+            "name": "Magebane Armor",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "214",
+            "typeLine": "Artifact — Equipment",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-214-magebane-armor-95b0f586.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/214/magebane-armor?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "4578f064-e9f8-4e87-8f46-7536af6c144e",
+            "name": "Vineweft",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "207",
+            "typeLine": "Enchantment — Aura",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-207-vineweft-4578f064.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/207/vineweft?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "e8f7af1b-97c9-4954-bb21-1e389fcb6361",
+            "name": "Diabolic Tutor",
+            "set": "M10",
+            "setName": "Magic 2010",
+            "collectorNumber": "91",
+            "typeLine": "Sorcery",
+            "rarity": "uncommon",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m10-91-diabolic-tutor-e8f7af1b.jpg",
+            "apiUrl": "https://scryfall.com/card/m10/91/diabolic-tutor?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "99713bb4-186f-42b6-aa66-e94ec8858e6a",
+            "name": "Jace, the Living Guildpact",
+            "set": "M15",
+            "setName": "Magic 2015",
+            "collectorNumber": "62",
+            "typeLine": "Legendary Planeswalker — Jace",
+            "rarity": "mythic",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m15-62-jace-the-living-guildpact-99713bb4.jpg",
+            "apiUrl": "https://scryfall.com/card/m15/62/jace-the-living-guildpact?utm_source=api"
         }
     ],
     "cases": [
@@ -4497,6 +4797,446 @@
                     "typeLine": "Sorcery",
                     "rarity": "uncommon",
                     "colors": ["R", "G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-35-stormfront-pegasus-d2429a15-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-35-stormfront-pegasus-d2429a15.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Stormfront Pegasus",
+                "set": "M10",
+                "collectorNumber": "35",
+                "metadata": {
+                    "typeLine": "Creature — Pegasus",
+                    "rarity": "common",
+                    "colors": ["W"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-134-chandra-pyromaster-e92cc35d-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-134-chandra-pyromaster-e92cc35d.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Chandra, Pyromaster",
+                "set": "M15",
+                "collectorNumber": "134",
+                "metadata": {
+                    "typeLine": "Legendary Planeswalker — Chandra",
+                    "rarity": "mythic",
+                    "colors": ["R"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-104-megrim-3b04fca4-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-104-megrim-3b04fca4.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Megrim",
+                "set": "M10",
+                "collectorNumber": "104",
+                "metadata": {
+                    "typeLine": "Enchantment",
+                    "rarity": "uncommon",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-230-shield-of-the-avatar-97c2cc25-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-230-shield-of-the-avatar-97c2cc25.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Shield of the Avatar",
+                "set": "M15",
+                "collectorNumber": "230",
+                "metadata": {
+                    "typeLine": "Artifact — Equipment",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-229-terramorphic-expanse-61902bad-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-229-terramorphic-expanse-61902bad.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Terramorphic Expanse",
+                "set": "M10",
+                "collectorNumber": "229",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-188-nissa-s-expedition-7b6c5cdd-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-188-nissa-s-expedition-7b6c5cdd.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Nissa's Expedition",
+                "set": "M15",
+                "collectorNumber": "188",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "uncommon",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-44-aetherspouts-46f1b48f-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-44-aetherspouts-46f1b48f.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Aetherspouts",
+                "set": "M15",
+                "collectorNumber": "44",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "rare",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-210-garruk-apex-predator-a3957b43-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-210-garruk-apex-predator-a3957b43.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Garruk, Apex Predator",
+                "set": "M15",
+                "collectorNumber": "210",
+                "metadata": {
+                    "typeLine": "Legendary Planeswalker — Garruk",
+                    "rarity": "mythic",
+                    "colors": ["B", "G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-119-wall-of-bone-f19d80ce-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-119-wall-of-bone-f19d80ce.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Wall of Bone",
+                "set": "M10",
+                "collectorNumber": "119",
+                "metadata": {
+                    "typeLine": "Creature — Skeleton Wall",
+                    "rarity": "uncommon",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-212-howling-mine-b87c9191-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-212-howling-mine-b87c9191.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Howling Mine",
+                "set": "M10",
+                "collectorNumber": "212",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-10-divine-favor-43c1ddf8-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-10-divine-favor-43c1ddf8.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Divine Favor",
+                "set": "M15",
+                "collectorNumber": "10",
+                "metadata": {
+                    "typeLine": "Enchantment — Aura",
+                    "rarity": "common",
+                    "colors": ["W"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-75-time-warp-f21c7628-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-75-time-warp-f21c7628.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Time Warp",
+                "set": "M10",
+                "collectorNumber": "75",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "mythic",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-141-ignite-disorder-c425d61c-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-141-ignite-disorder-c425d61c.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Ignite Disorder",
+                "set": "M10",
+                "collectorNumber": "141",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "uncommon",
+                    "colors": ["R"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-240-battlefield-forge-1dc57d63-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-240-battlefield-forge-1dc57d63.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Battlefield Forge",
+                "set": "M15",
+                "collectorNumber": "240",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-175-deadly-recluse-6ab810f1-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-175-deadly-recluse-6ab810f1.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Deadly Recluse",
+                "set": "M10",
+                "collectorNumber": "175",
+                "metadata": {
+                    "typeLine": "Creature — Spider",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-211-sliver-hivelord-ba4106de-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-211-sliver-hivelord-ba4106de.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Sliver Hivelord",
+                "set": "M15",
+                "collectorNumber": "211",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Sliver",
+                    "rarity": "mythic",
+                    "colors": ["W", "U", "B", "R", "G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-214-magebane-armor-95b0f586-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-214-magebane-armor-95b0f586.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Magebane Armor",
+                "set": "M10",
+                "collectorNumber": "214",
+                "metadata": {
+                    "typeLine": "Artifact — Equipment",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-207-vineweft-4578f064-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-207-vineweft-4578f064.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Vineweft",
+                "set": "M15",
+                "collectorNumber": "207",
+                "metadata": {
+                    "typeLine": "Enchantment — Aura",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m10-91-diabolic-tutor-e8f7af1b-scryfall",
+            "image": "../../../test-images/regression/scryfall/m10-91-diabolic-tutor-e8f7af1b.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Diabolic Tutor",
+                "set": "M10",
+                "collectorNumber": "91",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "uncommon",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "m15-62-jace-the-living-guildpact-99713bb4-scryfall",
+            "image": "../../../test-images/regression/scryfall/m15-62-jace-the-living-guildpact-99713bb4.jpg",
+            "quality": "clean-scan",
+            "notes": "Imported from Scryfall; review OCR output and thresholds before enabling",
+            "expected": {
+                "name": "Jace, the Living Guildpact",
+                "set": "M15",
+                "collectorNumber": "62",
+                "metadata": {
+                    "typeLine": "Legendary Planeswalker — Jace",
+                    "rarity": "mythic",
+                    "colors": ["U"],
                     "layout": "normal",
                     "style": "normal"
                 },
