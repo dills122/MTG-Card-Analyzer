@@ -53,32 +53,28 @@ Wizards' [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpol
 output as unofficial, noncommercial, review-only local material. Do not commit or promote a crop
 until its use, transcription, and visual quality are explicitly reviewed.
 
-### Promote an approved pair
+### Promote a reviewed batch
 
-Place the files under `training/ocr/ground-truth/`:
+Promote a staged batch only after explicitly classifying every sample. `--approve-note` preserves a
+positive quality note while keeping the decision as approved. `--concern` is an approval that marks
+the decision as approved-with-concern. Both require notes that remain attached to the sample in the
+committed manifest. Rejected samples stay in the ignored review batch and are never copied into the
+corpus.
 
-```text
-training/ocr/ground-truth/mtg-0001.png
-training/ocr/ground-truth/mtg-0001.gt.txt
+```bash
+pnpm training:review:promote \
+    --batch-dir artifacts/training-review/batch-001 \
+    --approve mtg-0001-pending \
+    --approve-note "mtg-0002-pending=Excellent clean title crop" \
+    --concern "mtg-0003-pending=Crop is usable but should be replaced later" \
+    --reject mtg-0004-pending
 ```
 
-Then add the pair to `training/ocr/manifest.json` with exact hashes:
-
-```json
-{
-    "id": "mtg-0001",
-    "image": "ground-truth/mtg-0001.png",
-    "transcription": "ground-truth/mtg-0001.gt.txt",
-    "imageSha256": "<64 lowercase hex characters>",
-    "transcriptionSha256": "<64 lowercase hex characters>",
-    "reviewed": true,
-    "source": {
-        "kind": "card-image",
-        "reference": "capture-batch-2026-08/card-0001",
-        "license": "owned-capture"
-    }
-}
-```
+The command rechecks staged hashes, rejects missing, duplicate, overlapping, or unknown decisions,
+copies approved image/transcription pairs under `training/ocr/ground-truth/`, and atomically updates
+`training/ocr/manifest.json`. If validation or readiness fails, it rolls back copied files and leaves
+the manifest unchanged. The fixed ratio must still produce at least one training and one evaluation
+line from the approved set.
 
 Validate structure, paths, file sizes, hashes, encoding, transcription shape, provenance, and the
 pinned base model:
@@ -97,6 +93,53 @@ pnpm training:data:check --require-ready
 The readiness gate requires every sample to be reviewed and the fixed `trainRatio` to produce at
 least one training and one evaluation line. The current seed is `20260808` and the ratio is `0.9`;
 these values must be passed unchanged to `tesstrain` so repeated list generation is deterministic.
+
+## Fine-tune a candidate
+
+Training runs in a pinned Linux container because the official `tesstrain` workflow requires GNU
+Make 4.2 or newer and Tesseract 5.3 or newer. The container pins its Ubuntu base digest, official
+`tesstrain` revision, `langdata_lstm` revision, and `tessdata_best` English model hash. Network
+access is available only while building that image. The training container itself runs offline,
+read-only, without Linux capabilities, and with explicit CPU, memory, process, and temporary-file
+limits.
+
+Build the image once:
+
+```bash
+pnpm training:image:build
+```
+
+Inspect the exact command without creating a run directory:
+
+```bash
+pnpm training:run --run mtg-001 --dry-run
+```
+
+Start fine-tuning after the readiness gate passes:
+
+```bash
+pnpm training:run \
+    --run mtg-001 \
+    --max-iterations 10000 \
+    --cpus 4 \
+    --memory-gb 4
+```
+
+Pass `--build-image` to rebuild the pinned image first. Run IDs are unique and output directories
+are never overwritten. Each run copies only manifest-listed ground-truth pairs into
+`artifacts/training-runs/<run>/ground-truth/`, records exact sample hashes and hyperparameters in
+`training-plan.json`, and preserves checkpoints and logs on failure. A successful run packages the
+final float model as `candidate/eng.traineddata` beside a regression candidate manifest. These
+generated artifacts remain ignored until a candidate is explicitly reviewed and selected.
+
+The implementation follows the official [`tesstrain` requirements and Makefile variables](https://github.com/tesseract-ocr/tesstrain#usage),
+including `START_MODEL`, `MAX_ITERATIONS`, `RANDOM_SEED`, `RATIO_TRAIN`, and `PSM`. Tesseract's
+official [training guide](https://tesseract-ocr.github.io/tessdoc/tess5/TrainingTesseract-5.html)
+describes fine-tuning as the appropriate small-domain adaptation path and warns that training from
+scratch without a representative corpus is likely to overfit.
+
+The first bounded real-training experiment and its rejection evidence are recorded in
+[`ocr-training-pilot-2026-08.md`](./ocr-training-pilot-2026-08.md).
 
 ## Promotion path
 
