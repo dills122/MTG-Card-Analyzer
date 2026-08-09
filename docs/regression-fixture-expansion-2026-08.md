@@ -2,6 +2,10 @@
 
 # Regression fixture expansion experiment — August 2026
 
+> Historical campaign record: counts and failure descriptions below reflect the corpus at the
+> time of this expansion. See [OCR regression testing](regression-testing.md) for the current
+> 125-case corpus, production model, and gate behavior.
+
 This experiment expands clean-scan end-to-end coverage in batches of five to eight. Each batch is imported
 from Scryfall, visually reviewed, enabled in the offline fixture catalog, and run through the
 targeted regression harness before the next batch starts.

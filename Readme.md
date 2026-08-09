@@ -37,8 +37,10 @@ node scripts/setup.mjs
 node index.mjs scan ./test-images/PlatinumAngel.jpg
 ```
 
-The setup script installs dependencies, creates local configuration files, and seeds the card-name
-index. It is safe to run again and does not start MySQL unless you explicitly pass `--with-mysql`.
+The setup script installs dependencies, creates local configuration files without overwriting
+existing ones, and seeds the card-name index. On later runs, pass `--skip-seed` if the index is
+already populated: the current seeder appends the Scryfall catalog and can create duplicate name
+rows. Setup does not start MySQL unless you explicitly pass `--with-mysql`.
 
 If the scan does not complete, check the environment before digging into individual settings:
 

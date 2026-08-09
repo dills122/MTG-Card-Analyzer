@@ -5,18 +5,18 @@ Run commands from the repository root with `node index.mjs`. Use `node index.mjs
 
 ## Commands at a glance
 
-| Command             | Purpose                                                          |
-| ------------------- | ---------------------------------------------------------------- |
-| `scan <filePath>`   | Identify a card image and optionally persist the result          |
-| `log dump`          | Print recent local operations-log entries                        |
-| `log stats`         | Summarize the local operations log                               |
-| `collection update` | Set an existing collection entry's quantity                      |
-| `collection remove` | Permanently delete a collection entry                            |
-| `migrate`           | Copy local NeDB collection data to the legacy RDS backend        |
-| `diagnostics`       | Print a sanitized environment and recent-activity support bundle |
-| `config list`       | Show all resolved settings and their sources                     |
-| `config get`        | Print one resolved setting                                       |
-| `config set`        | Validate and persist one setting                                 |
+| Command             | Purpose                                                   |
+| ------------------- | --------------------------------------------------------- |
+| `scan <filePath>`   | Identify a card image and optionally persist the result   |
+| `log dump`          | Print recent local operations-log entries                 |
+| `log stats`         | Summarize the local operations log                        |
+| `collection update` | Set an existing collection entry's quantity               |
+| `collection remove` | Permanently delete a collection entry                     |
+| `migrate`           | Copy local NeDB collection data to the legacy RDS backend |
+| `diagnostics`       | Print an environment and recent-activity support bundle   |
+| `config list`       | Show all resolved settings and their sources              |
+| `config get`        | Print one resolved setting                                |
+| `config set`        | Validate and persist one setting                          |
 
 ## Scan a card
 
@@ -101,9 +101,11 @@ node index.mjs diagnostics --with-mysql
 ```
 
 Diagnostics prints JSON containing application, Node.js, and platform versions; environment
-checks; sanitized active configuration; and recent operations. The bundle never includes MySQL
-credentials. With `--with-mysql`, the connection layer reads them only to perform the requested
-connection check. The command exits non-zero when a required environment check fails.
+checks; active configuration; and recent operations. It includes local config/database paths,
+source-image paths, OCR text, and scan details, so review the output before sharing it. The bundle
+never includes MySQL credentials. With `--with-mysql`, the connection layer reads them only to
+perform the requested connection check. MySQL connection failures and an empty card-name index are
+reported as warnings; the command exits non-zero only when a required environment check fails.
 
 Options:
 
@@ -120,8 +122,9 @@ node index.mjs config set queryingEnabled true
 node index.mjs config set collectionEnabled true --config ./another-config.json
 ```
 
-- `config list` shows every resolved value and whether it came from the CLI, environment, file, or
-  default.
+- `config list` shows every runtime setting and whether its value came from the environment, the
+  selected file, or a built-in default. `--config` selects the file; it does not make the values in
+  that file CLI-sourced.
 - `config get <key>` prints one resolved value.
 - `config set <key> <value>` validates and merges one setting into the active JSON file.
 

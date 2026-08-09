@@ -37,13 +37,27 @@ workflow. A normal build does not require AI Central.
 
 ## Before Opening a PR
 
-Run the full local gate — it's close to what CI checks:
+Run the standard local gate:
 
 ```bash
 pnpm check
 ```
 
-That's `lint` + `prettier:check` + `typecheck` + `test`. Individual pieces (`pnpm lint:fix`, `pnpm format`) can autofix most issues.
+That's `lint` + `prettier:check` + `typecheck` + `test`. Individual pieces (`pnpm lint:fix`,
+`pnpm format`) can autofix most issues.
+
+To mirror all CI jobs, run the fast static gate, the coverage-enforced unit suite, and the
+cold-cache OCR regression suite:
+
+```bash
+pnpm check:fast
+pnpm coverage:check
+pnpm test:regression
+```
+
+`coverage:check` runs the unit suite, so the three commands above are the complete CI-equivalent
+sequence. The OCR regression run is especially important for changes to image preprocessing,
+OCR, fuzzy matching, hashing, or print selection.
 
 Type checking is being introduced incrementally for this ESM JavaScript codebase. The strict
 checked-module list lives in `tsconfig.checked.json`; add a touched production module there once its
@@ -79,10 +93,10 @@ Quick orientation — see individual `index.mjs` files in each folder for the pu
 - `src/rds/` — legacy/optional MySQL persistence backend, not used by default
 - `src/processor/` — orchestrates the end-to-end scan pipeline
 - `src/config/` — single source of truth for runtime settings (CLI flag > env var > config file > default)
-- `index.mjs` — CLI entry point (`scan`, `log dump`, `log stats`)
-- `scripts/` — dev tooling: `setup.mjs` (ramp-up), `verify-env.mjs` (environment sanity check)
+- `index.mjs` — CLI entry point (`scan`, `log`, `collection`, `migrate`, `diagnostics`, `config`)
+- `scripts/` — setup, verification, regression, fixture-import, and OCR-training tooling
 - `docker-compose.yml` — local MySQL for the optional `rds` adapter
-- `docs/` — deeper guides (currently: local dev setup)
+- `docs/` — CLI, configuration, architecture, regression, OCR-training, and local setup guides
 
 ## Picking Up an Issue
 
