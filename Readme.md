@@ -31,47 +31,43 @@ before decoding it; TIFF, ICNS, JXL, HEIF, and other container formats are rejec
 You need:
 
 - [Node.js](https://nodejs.org/) 20 or newer
-- [pnpm](https://pnpm.io/installation) 8 or newer (the repository pins pnpm 10.13.1)
-- Git and a network connection for installation and the initial Scryfall card-name seed
+- npm and a network connection for installation and the initial Scryfall card-name seed
 
 ```bash
-git clone https://github.com/dills122/MTG-Card-Analyzer.git
-cd MTG-Card-Analyzer
-node scripts/setup.mjs
-node index.mjs scan ./test-images/PlatinumAngel.jpg
+npm install --global mtg-card-analyzer
+mtg-card-analyzer names seed
+mtg-card-analyzer scan ./path/to/card.jpg
 ```
 
-The setup script installs dependencies, creates local configuration files without overwriting
-existing ones, and seeds the card-name index. Seeding is safe to repeat: it applies the same
-normalization contract used by matching, rejects unmatchable catalog entries, and repairs invalid
-or duplicate rows while upserting names. A required seed failure makes setup exit nonzero; use
-`--skip-seed` only when diagnostics already reports a healthy index. Setup does not start MySQL
-unless you explicitly pass `--with-mysql`.
-
-The package exposes `mtg-card-analyzer` as its installed executable. Commands in this source
-checkout use the equivalent `node index.mjs` form; generated help and examples use the installed
-command name.
+Run `names seed` once before the first scan. It downloads the Scryfall card-name catalog into the
+local name index. Seeding is safe to repeat: it applies the same normalization contract used by
+matching, rejects unmatchable catalog entries, repairs invalid or duplicate rows, and upserts names
+idempotently. A required seed failure exits nonzero. npm installs the `mtg-card-analyzer` command and
+the bundled English OCR model. Configuration and local data use the current directory or your home
+configuration directory as described in
+[Configuration and local data](docs/configuration.md).
 
 If the scan does not complete, check the environment before digging into individual settings:
 
 ```bash
-node scripts/verify-env.mjs
+mtg-card-analyzer diagnostics
 ```
 
-See the [local setup guide](docs/LOCAL_DEV.md) for setup flags and troubleshooting.
+Contributors working from a source checkout should use the
+[local development setup](docs/LOCAL_DEV.md), which requires pnpm and Git.
 
 ## Common workflows
 
 ### Identify a card without changing your collection
 
 ```bash
-node index.mjs scan ./path/to/card.jpg
+mtg-card-analyzer scan ./path/to/card.jpg
 ```
 
 You can also omit the `scan` word for backward compatibility:
 
 ```bash
-node index.mjs ./path/to/card.jpg
+mtg-card-analyzer ./path/to/card.jpg
 ```
 
 ### Save successful scans to a local collection
@@ -80,26 +76,26 @@ Collection tracking and writes are separate opt-ins. Set both once in `mtg.confi
 CLI:
 
 ```bash
-node index.mjs config set collectionEnabled true
-node index.mjs config set queryingEnabled true
-node index.mjs scan ./path/to/card.jpg
+mtg-card-analyzer config set collectionEnabled true
+mtg-card-analyzer config set queryingEnabled true
+mtg-card-analyzer scan ./path/to/card.jpg
 ```
 
 Or enable both for only one run:
 
 ```bash
-node index.mjs scan ./path/to/card.jpg --enable-collection --query
+mtg-card-analyzer scan ./path/to/card.jpg --enable-collection --query
 ```
 
 ### Inspect recent scan activity
 
 ```bash
-node index.mjs log dump --limit 20
-node index.mjs log stats
-node index.mjs diagnostics
+mtg-card-analyzer log dump --limit 20
+mtg-card-analyzer log stats
+mtg-card-analyzer diagnostics
 ```
 
-Run `node index.mjs --help` for the command list or see the
+Run `mtg-card-analyzer --help` for the command list or see the
 [CLI reference](docs/cli-reference.md) for every command and flag.
 
 ## How matching works
@@ -119,7 +115,7 @@ The scan promise includes local cache/log completion and removal of its bounded 
 directory, so the CLI does not exit while those writes or cleanup operations are still pending.
 
 <p align="center">
-  <img width="320" src="test-images/PlatinumAngel.jpg" alt="Platinum Angel card used by the example scan">
+  <img width="320" src="https://raw.githubusercontent.com/dills122/MTG-Card-Analyzer/master/test-images/PlatinumAngel.jpg" alt="Platinum Angel card used by the example scan">
 </p>
 
 OCR quality varies with lighting, focus, rotation, framing, and card layout. The OCR minimum is

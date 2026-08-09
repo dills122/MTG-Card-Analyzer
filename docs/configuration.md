@@ -58,9 +58,9 @@ Example:
 ## Change settings through the CLI
 
 ```bash
-node index.mjs config list
-node index.mjs config get queryingEnabled
-node index.mjs config set queryingEnabled true
+mtg-card-analyzer config list
+mtg-card-analyzer config get queryingEnabled
+mtg-card-analyzer config set queryingEnabled true
 ```
 
 `config list` is useful when a value is surprising because it reports the winning source for every
@@ -81,14 +81,14 @@ This makes both the intent to write and the intent to maintain an inventory expl
 the settings:
 
 ```bash
-node index.mjs config set collectionEnabled true
-node index.mjs config set queryingEnabled true
+mtg-card-analyzer config set collectionEnabled true
+mtg-card-analyzer config set queryingEnabled true
 ```
 
 Or override them for one scan:
 
 ```bash
-node index.mjs scan ./card.jpg --enable-collection --query
+mtg-card-analyzer scan ./card.jpg --enable-collection --query
 ```
 
 Explicit `collection update`, `collection remove`, and `migrate` commands do not require

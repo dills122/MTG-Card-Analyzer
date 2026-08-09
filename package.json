@@ -1,12 +1,45 @@
 {
     "name": "mtg-card-analyzer",
     "version": "0.2.0",
-    "description": "a mtg ocr app for documenting a collection",
+    "description": "Local-first CLI for identifying Magic: The Gathering cards from images",
     "type": "module",
     "main": "index.mjs",
     "bin": {
         "mtg-card-analyzer": "./index.mjs"
     },
+    "files": [
+        "index.mjs",
+        "eng.traineddata",
+        "mtg.config.example.json",
+        "secure.config.template.cjs",
+        "Readme.md",
+        "LICENSE",
+        "docs/cli-reference.md",
+        "docs/configuration.md",
+        "src/config/",
+        "src/console/",
+        "src/db-local/",
+        "src/diagnostics/",
+        "src/export-processor/",
+        "src/file-io.mjs",
+        "src/fuzzy-matching/",
+        "src/image-analysis/",
+        "src/image-hashing/",
+        "src/image-processing/",
+        "src/logger/",
+        "src/matcher/",
+        "src/migrate/",
+        "src/models/",
+        "src/processor/",
+        "src/rds/",
+        "src/scryfall-api/api.config.mjs",
+        "src/scryfall-api/get-card-name.mjs",
+        "src/scryfall-api/http-client.mjs",
+        "src/scryfall-api/index.mjs",
+        "src/scryfall-api/search-name.mjs",
+        "src/storage/",
+        "src/util.mjs"
+    ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/dills122/MTG-Card-Analyzer.git"
@@ -24,6 +57,7 @@
         "ai:check": "node scripts/setup-ai-context.mjs --check",
         "ai:setup": "node scripts/setup-ai-context.mjs",
         "test": "mocha \"./test/**/*.spec.mjs\"",
+        "test:package": "node scripts/package-smoke.mjs",
         "test:regression": "node scripts/run-regression.mjs",
         "regression:compare": "node scripts/compare-ocr-models.mjs",
         "training:data:check": "node scripts/validate-ocr-training-data.mjs",
@@ -49,8 +83,7 @@
         "verify": "node scripts/verify-env.mjs",
         "docker:up": "docker compose up -d",
         "docker:down": "docker compose down",
-        "docker:logs": "docker compose logs -f mysql",
-        "prepare": "lefthook install"
+        "docker:logs": "docker compose logs -f mysql"
     },
     "keywords": [
         "mtg",
@@ -116,8 +149,12 @@
     },
     "pnpm": {
         "overrides": {
+            "brace-expansion@>=2.0.0 <2.1.4": "2.1.4",
             "brace-expansion@>=4.0.0 <5.0.9": "5.0.9",
-            "flatted@<3.4.2": "3.4.2"
+            "diff@>=6.0.0 <8.0.3": "8.0.4",
+            "flatted@<3.4.2": "3.4.2",
+            "js-yaml@>=4.0.0 <4.3.1": "4.3.1",
+            "serialize-javascript@<=7.0.4": "7.0.5"
         }
     }
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { access } from "node:fs/promises";
+import { readFileSync, realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
 import processorModule from "./src/processor/index.mjs";
@@ -15,9 +16,13 @@ import storage from "./src/storage/index.mjs";
 import migrate from "./src/migrate/nedb-to-rds.mjs";
 import diagnostics from "./src/diagnostics/index.mjs";
 import { textExtraction } from "./src/image-analysis/index.mjs";
+import { executeBulkInsert } from "./src/db-local/bulk-insert.mjs";
 
 const { Processor } = processorModule;
-const KNOWN_COMMANDS = ["scan", "log", "migrate", "collection", "diagnostics", "config"];
+const APP_VERSION = JSON.parse(
+    readFileSync(new URL("./package.json", import.meta.url), "utf8")
+).version;
+const KNOWN_COMMANDS = ["scan", "names", "log", "migrate", "collection", "diagnostics", "config"];
 const HELP_TOKENS = ["--help", "-h", "help"];
 
 function buildCli(argv) {
@@ -34,7 +39,8 @@ function buildCli(argv) {
     program.exitOverride();
     program
         .name("mtg-card-analyzer")
-        .description("Identify Magic: The Gathering cards from images");
+        .description("Identify Magic: The Gathering cards from images")
+        .version(APP_VERSION);
 
     program
         .command("scan")
@@ -76,6 +82,18 @@ function buildCli(argv) {
             parsed.filePath = filePath;
             parsed.flags = options || {};
             parsed.flags._localCacheExplicit = command.getOptionValueSource("localCache") === "cli";
+        });
+
+    program
+        .command("names")
+        .description("Manage the local card-name index")
+        .command("seed")
+        .description("Seed card names from Scryfall (required before the first scan)")
+        .option("--card-names-db <path>", "Path (dir or .db file) for the local card names DB")
+        .option("--config <path>", "Path to a JSON config file")
+        .action((options) => {
+            parsed.command = "names-seed";
+            parsed.flags = options || {};
         });
 
     const logCommand = program.command("log").description("Inspect the local operations log");
@@ -212,6 +230,7 @@ function buildCli(argv) {
         "after",
         `
 Examples:
+  $ mtg-card-analyzer names seed
   $ mtg-card-analyzer scan ./img-path --query
   $ mtg-card-analyzer scan ./img-path --no-query
   $ mtg-card-analyzer scan ./img-path --no-pretty
@@ -354,6 +373,16 @@ const runLogStats = withConfig(async (config, flags, logger) => {
     return 0;
 });
 
+const runNamesSeed = withConfig(async (config, flags, logger, seedNamesFn) => {
+    try {
+        await seedNamesFn({ logger });
+        return 0;
+    } catch (err) {
+        logger.log(err?.message || String(err));
+        return 1;
+    }
+});
+
 async function runMigrate(flags, logger, migrateFn) {
     if (flags.to !== "rds") {
         logger.log(
@@ -466,6 +495,7 @@ export async function run(options = {}) {
         ocrShutdown = textExtraction.shutDown,
         migrateFn = migrate.migrateNedbToRds,
         diagnosticsFn = diagnostics.gatherDiagnostics,
+        seedNamesFn = executeBulkInsert,
         exit = process.exit,
         logger = console
     } = options;
@@ -488,6 +518,11 @@ export async function run(options = {}) {
 
     if (cli.command === "log-dump") {
         exit(await runLogDump(flags, logger));
+        return;
+    }
+
+    if (cli.command === "names-seed") {
+        exit(await runNamesSeed(flags, logger, seedNamesFn));
         return;
     }
 
@@ -576,7 +611,8 @@ export async function run(options = {}) {
 
 export { buildCli };
 
-const isDirectRun = import.meta.url === pathToFileURL(process.argv[1]).href;
+const isDirectRun =
+    process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
 if (isDirectRun) {
     run().catch((err) => {
         console.error(err);

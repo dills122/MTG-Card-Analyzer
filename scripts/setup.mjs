@@ -123,6 +123,8 @@ if (!flags.skipInstall) {
     step("Installing dependencies", () => run("pnpm", ["install"]));
 }
 
+step("Installing Git hooks", () => run("node", ["scripts/install-git-hooks.mjs"]));
+
 step("Setting up local config files", () => {
     if (flags.withMysql) {
         writeMysqlSecureConfig();
