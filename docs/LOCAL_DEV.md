@@ -16,6 +16,9 @@ node index.mjs scan ./test-images/PlatinumAngel.jpg
 
 That's the nedb-only path (default, no MySQL needed) — installs deps, creates local config files, seeds the card names dictionary. If it worked, you'll see match output for Platinum Angel.
 
+The source checkout runs the CLI as `node index.mjs`. Installed packages expose the same CLI as
+`mtg-card-analyzer`; that is the program name shown by generated help and examples.
+
 Want the MySQL persistence adapter too? Use `--with-mysql` instead (needs [Docker](https://docs.docker.com/get-docker/) running):
 
 ```bash
@@ -93,9 +96,10 @@ pnpm test:regression # cold-cache OCR and matching regression gate
 node scripts/verify-env.mjs  # is the environment actually usable
 ```
 
-`pnpm check` is the standard local gate. CI runs `pnpm check:fast`, `pnpm coverage:check`, and a
-separate `pnpm test:regression` job; see [CONTRIBUTING.md](../CONTRIBUTING.md#before-opening-a-pr)
-for the exact sequence.
+`pnpm check` is the standard local gate and remains deterministic after setup creates
+`mtg.config.json` and `secure.config.cjs`. CI runs the fast/unit gate on Node 20 and Node 22,
+collects coverage on Node 22, and runs a single separate Node 22 `pnpm test:regression` job; see
+[CONTRIBUTING.md](../CONTRIBUTING.md#before-opening-a-pr) for the exact sequence.
 
 ## Troubleshooting
 

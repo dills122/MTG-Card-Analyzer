@@ -4,6 +4,9 @@
     "description": "a mtg ocr app for documenting a collection",
     "type": "module",
     "main": "index.mjs",
+    "bin": {
+        "mtg-card-analyzer": "./index.mjs"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/dills122/MTG-Card-Analyzer.git"

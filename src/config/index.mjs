@@ -20,19 +20,22 @@ function omitUndefined(obj = {}) {
 
 // Where a config file lives if the caller didn't say explicitly:
 // MTG_CONFIG_PATH env var, then ./mtg.config.json, then ~/.mtg-card-analyzer/config.json.
-function resolveConfigFilePath(explicitPath) {
+function resolveConfigFilePath(
+    explicitPath,
+    { cwd = process.cwd(), homeDir = os.homedir(), existsSync = fs.existsSync } = {}
+) {
     if (explicitPath) {
         return explicitPath;
     }
     if (process.env.MTG_CONFIG_PATH) {
         return process.env.MTG_CONFIG_PATH;
     }
-    const cwdConfig = path.join(process.cwd(), "mtg.config.json");
-    if (fs.existsSync(cwdConfig)) {
+    const cwdConfig = path.join(cwd, "mtg.config.json");
+    if (existsSync(cwdConfig)) {
         return cwdConfig;
     }
-    const homeConfig = path.join(os.homedir(), ".mtg-card-analyzer", "config.json");
-    if (fs.existsSync(homeConfig)) {
+    const homeConfig = path.join(homeDir, ".mtg-card-analyzer", "config.json");
+    if (existsSync(homeConfig)) {
         return homeConfig;
     }
     return "";
@@ -91,12 +94,12 @@ function readEnvConfig() {
 //
 // Shared by getConfig() and getConfigWithSources() (`config list`'s "value + where it came
 // from" view) so the two never drift apart on precedence.
-function resolveConfig(overrides = {}) {
+function resolveConfig(overrides = {}, discovery = {}) {
     const cleanOverrides = validateConfigLayer(omitUndefined(overrides), {
         source: "configuration overrides",
         allowConfigPath: true
     });
-    const configFilePath = resolveConfigFilePath(cleanOverrides.configPath);
+    const configFilePath = resolveConfigFilePath(cleanOverrides.configPath, discovery);
     const fileConfig = configFilePath
         ? validateConfigLayer(
               readJsonFile(configFilePath, { allowMissing: true, label: "Config file" }),
@@ -129,27 +132,29 @@ function resolveConfig(overrides = {}) {
     return { config: merged, sources };
 }
 
-function getConfig(overrides = {}) {
-    return resolveConfig(overrides).config;
+function getConfig(overrides = {}, discovery = {}) {
+    return resolveConfig(overrides, discovery).config;
 }
 
 // For `config list`: same resolved values as getConfig(), plus where each one came from
 // (cli/env/file/default).
-function getConfigWithSources(overrides = {}) {
-    return resolveConfig(overrides);
+function getConfigWithSources(overrides = {}, discovery = {}) {
+    return resolveConfig(overrides, discovery);
 }
 
 // Where `config set` (no explicit --config/MTG_CONFIG_PATH) should write to: whichever file
 // is already in use per the normal read precedence, or a fresh ./mtg.config.json if nothing
 // exists yet. Deliberately does NOT fall back to creating a file under the home directory --
 // that path is only reused if it's already there.
-function resolveConfigWriteTarget(explicitPath) {
-    const existing = resolveConfigFilePath(explicitPath);
+function resolveConfigWriteTarget(explicitPath, discovery = {}) {
+    const existing = resolveConfigFilePath(explicitPath, discovery);
     if (existing) {
         return existing;
     }
     return (
-        explicitPath || process.env.MTG_CONFIG_PATH || path.join(process.cwd(), "mtg.config.json")
+        explicitPath ||
+        process.env.MTG_CONFIG_PATH ||
+        path.join(discovery.cwd || process.cwd(), "mtg.config.json")
     );
 }
 

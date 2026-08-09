@@ -89,7 +89,7 @@ function evaluateCardNameIndex(records) {
 //
 // Returns { checks: [{ label, status: "pass"|"fail"|"warn" }], requiredFailures, warnings }
 // rather than printing anything itself.
-async function runEnvironmentCheck({ withMysql = false } = {}) {
+async function runEnvironmentCheck({ withMysql = false } = {}, dependencies = {}) {
     const checks = [];
     let requiredFailures = 0;
     const warnings = [];
@@ -128,7 +128,7 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
     }
 
     try {
-        const { getConfig } = await import("../config/index.mjs");
+        const getConfig = dependencies.getConfig || (await import("../config/index.mjs")).getConfig;
         const config = getConfig();
         record(`storageAdapter (persistence tier): ${config.storageAdapter}`, "pass");
         record(`localCacheEnabled: ${config.localCacheEnabled}`, "pass");
@@ -137,15 +137,19 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
         record(`queryingEnabled: ${config.queryingEnabled}`, "pass");
         record(`prettyLogging: ${config.prettyLogging}`, "pass");
 
-        const { resolveDbFilename } = await import("../db-local/db.mjs");
+        const dbModule =
+            dependencies.resolveDbFilename && dependencies.getCardNameRecords
+                ? null
+                : await import("../db-local/db.mjs");
+        const resolveDbFilename = dependencies.resolveDbFilename || dbModule.resolveDbFilename;
         const namesDbPath = resolveDbFilename();
         const dir = path.dirname(namesDbPath);
         fs.mkdirSync(dir, { recursive: true });
         fs.accessSync(dir, fs.constants.R_OK | fs.constants.W_OK);
         record(`local cache dir is writable (${dir})`, "pass");
 
-        const { db: namesDb } = await import("../db-local/db.mjs");
-        const nameRecords = (await namesDb.find({})) || [];
+        const getCardNameRecords = dependencies.getCardNameRecords || (() => dbModule.db.find({}));
+        const nameRecords = (await getCardNameRecords()) || [];
         const indexCheck = evaluateCardNameIndex(nameRecords);
         cardNameIndex = indexCheck.health;
         record(indexCheck.label, indexCheck.status, indexCheck.required);
@@ -154,7 +158,8 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
     }
 
     if (withMysql) {
-        const secureConfigPath = path.join(repoRoot, "secure.config.cjs");
+        const secureConfigPath =
+            dependencies.secureConfigPath || path.join(repoRoot, "secure.config.cjs");
         if (!fs.existsSync(secureConfigPath)) {
             record(
                 "secure.config.cjs not found -- copy secure.config.template.cjs and fill in credentials",
@@ -163,7 +168,9 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
             );
         } else {
             try {
-                const { createConnection } = await import("../rds/connection.mjs");
+                const createConnection =
+                    dependencies.createConnection ||
+                    (await import("../rds/connection.mjs")).createConnection;
                 const connection = await createConnection();
                 await connection.end();
                 record("MySQL connection succeeded", "pass");

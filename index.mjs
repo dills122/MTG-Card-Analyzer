@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { access } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
@@ -30,6 +32,9 @@ function buildCli(argv) {
     program.showHelpAfterError();
     program.showSuggestionAfterError();
     program.exitOverride();
+    program
+        .name("mtg-card-analyzer")
+        .description("Identify Magic: The Gathering cards from images");
 
     program
         .command("scan")
@@ -207,24 +212,24 @@ function buildCli(argv) {
         "after",
         `
 Examples:
-  $ scan ./img-path --query
-  $ scan ./img-path --no-query
-  $ scan ./img-path --no-pretty
-  $ scan ./img-path --storage-adapter rds
-  $ scan ./img-path --card-names-db ./data --config ./mtg.config.json
-  $ scan ./img-path --no-local-cache
-  $ scan ./img-path --query --enable-collection
-  $ scan ./img-path --debug
-  $ log dump --limit 20
-  $ log stats
-  $ migrate --to rds --dry-run
-  $ migrate --to rds
-  $ collection update "Pacifism" M20 --quantity 3
-  $ collection remove "Pacifism" M20
-  $ diagnostics
-  $ config list
-  $ config get storageAdapter
-  $ config set queryingEnabled true
+  $ mtg-card-analyzer scan ./img-path --query
+  $ mtg-card-analyzer scan ./img-path --no-query
+  $ mtg-card-analyzer scan ./img-path --no-pretty
+  $ mtg-card-analyzer scan ./img-path --storage-adapter rds
+  $ mtg-card-analyzer scan ./img-path --card-names-db ./data --config ./mtg.config.json
+  $ mtg-card-analyzer scan ./img-path --no-local-cache
+  $ mtg-card-analyzer scan ./img-path --query --enable-collection
+  $ mtg-card-analyzer scan ./img-path --debug
+  $ mtg-card-analyzer log dump --limit 20
+  $ mtg-card-analyzer log stats
+  $ mtg-card-analyzer migrate --to rds --dry-run
+  $ mtg-card-analyzer migrate --to rds
+  $ mtg-card-analyzer collection update "Pacifism" M20 --quantity 3
+  $ mtg-card-analyzer collection remove "Pacifism" M20
+  $ mtg-card-analyzer diagnostics
+  $ mtg-card-analyzer config list
+  $ mtg-card-analyzer config get storageAdapter
+  $ mtg-card-analyzer config set queryingEnabled true
 `
     );
 

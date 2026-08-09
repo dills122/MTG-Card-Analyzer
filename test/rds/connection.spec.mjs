@@ -18,7 +18,7 @@ describe("rds::connection", () => {
         const fakeConnection = {};
         sandbox.stub(mysql, "createConnection").resolves(fakeConnection);
 
-        assert.doesNotThrow(() => createConnection());
+        assert.doesNotThrow(() => createConnection({ secureConfig: { rds: {} } }));
         const [config] = mysql.createConnection.firstCall.args;
         assert.deepEqual(config, {
             host: undefined,

@@ -3,9 +3,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
-    getConfig,
-    getConfigWithSources,
-    resolveConfigWriteTarget,
+    getConfig as resolveConfig,
+    getConfigWithSources as resolveConfigWithSources,
+    resolveConfigWriteTarget as findConfigWriteTarget,
     writeConfigValue,
     DEFAULTS,
     SETTABLE_KEYS
@@ -25,6 +25,13 @@ describe("config::index", () => {
     ];
     let savedEnv;
     let tmpDir;
+    let configDiscovery;
+
+    const getConfig = (overrides) => resolveConfig(overrides, configDiscovery);
+    const getConfigWithSources = (overrides) =>
+        resolveConfigWithSources(overrides, configDiscovery);
+    const resolveConfigWriteTarget = (explicitPath) =>
+        findConfigWriteTarget(explicitPath, configDiscovery);
 
     beforeEach(() => {
         savedEnv = {};
@@ -33,6 +40,7 @@ describe("config::index", () => {
             delete process.env[key];
         });
         tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mtg-config-test-"));
+        configDiscovery = { cwd: tmpDir, homeDir: tmpDir };
     });
 
     afterEach(() => {
