@@ -118,6 +118,44 @@ describe("config::index", () => {
         assert.throws(() => getConfig({ configPath: configFile }), /not valid JSON/);
     });
 
+    it("rejects incorrect config-file value types instead of treating strings as booleans", () => {
+        const configFile = path.join(tmpDir, "mtg.config.json");
+        fs.writeFileSync(configFile, JSON.stringify({ localCacheEnabled: "false" }));
+
+        assert.throws(
+            () => getConfig({ configPath: configFile }),
+            /Invalid config file.*localCacheEnabled.*must be a boolean/
+        );
+    });
+
+    it("rejects unknown config-file keys so misspellings cannot be ignored", () => {
+        const configFile = path.join(tmpDir, "mtg.config.json");
+        fs.writeFileSync(configFile, JSON.stringify({ prettyLoging: false }));
+
+        assert.throws(
+            () => getConfig({ configPath: configFile }),
+            /Invalid config file.*prettyLoging.*not allowed/
+        );
+    });
+
+    it("rejects invalid boolean environment values", () => {
+        process.env.LOCAL_CACHE_ENABLED = "flase";
+
+        assert.throws(
+            () => getConfig(),
+            /LOCAL_CACHE_ENABLED must be true or false or 1 or 0, got "flase"/
+        );
+    });
+
+    it("accepts numeric boolean environment tokens", () => {
+        process.env.LOCAL_CACHE_ENABLED = "0";
+        process.env.DEBUG_LOGGING = "1";
+
+        const config = getConfig();
+        assert.equal(config.localCacheEnabled, false);
+        assert.equal(config.debugLogging, true);
+    });
+
     it("returns empty file config when the resolved config file doesn't exist", () => {
         const missingFile = path.join(tmpDir, "does-not-exist.json");
         const config = getConfig({ configPath: missingFile });

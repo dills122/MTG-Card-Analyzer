@@ -1,427 +1,67 @@
 import joi from "joi";
-import FuzzySet from "fuzzyset.js";
-import stringSimilarity from "string-similarity";
 import logger from "../logger/log.mjs";
-import { cleanString, round, mean, orderBy } from "../util.mjs";
-
-const config = {
-    highConfidence: 0.95,
-    minConfidence: 0.7,
-    maxMatches: 5,
-    supplementalEvidence: {
-        minConfidence: 0.7,
-        minScoreDelta: 0.05,
-        minFirstTokenLength: 4,
-        minFirstTokenSimilarity: 0.6,
-        maxTokenLength: 32,
-        maxTitleTokens: 32,
-        maxSupplementalTokens: 160
-    },
-    disambiguation: {
-        minTopPercent: 0.8,
-        minTopFirstTokenSimilarity: 0.6,
-        maxScoreDelta: 0.12,
-        minFirstTokenSimilarity: 0.4,
-        maxFirstTokenDropFromTop: 0.15
-    }
-};
+import { buildNameIndex, normalizeForMatch, uniqueNormalized } from "./name-index.mjs";
+import { resolveMatchPolicy } from "./match-policy.mjs";
+import { matchSupplementalEvidence } from "./supplemental-matcher.mjs";
+import { matchTitleQueries } from "./title-matcher.mjs";
 
 async function getStoredNames() {
     const { default: storage } = await import("../storage/index.mjs");
     return storage.names.getAll();
 }
 
-const defaultDependencies = {
-    GetNames: getStoredNames
-};
+const defaultDependencies = Object.freeze({
+    getNames: getStoredNames
+});
 
-const schema = joi.object().keys({
+const schema = joi.object({
     cleanText: joi.string().allow("").required(),
-    dirtyText: joi.string().allow("").optional(),
     candidateTexts: joi.array().items(joi.string().allow("")).max(48).optional(),
-    supplementalText: joi.string().allow("").optional(),
-    logger: joi.object().optional()
+    supplementalText: joi.string().allow("").optional()
 });
 
 class MatchName {
     constructor(params = {}) {
-        const { dependencies: injectedDependencies, logger: injectedLogger, ...rest } = params;
-        const validatedSchema = joi.attempt(
-            {
-                ...rest,
-                ...(injectedLogger ? { logger: injectedLogger } : {})
-            },
-            schema
-        );
-        Object.assign(this, validatedSchema);
+        const {
+            dependencies: injectedDependencies,
+            logger: injectedLogger,
+            policy: policyOverrides,
+            ...input
+        } = params;
+        Object.assign(this, joi.attempt(input, schema));
         this.dependencies = {
             ...defaultDependencies,
             ...(injectedDependencies || {})
         };
-        if (!this.logger) {
-            this.logger = logger.create({
-                isPretty: false
-            });
-        }
-    }
-
-    filteredNames(names) {
-        this.nameLookup = {};
-        const normalizedNames = [];
-        const canonicalNames = new Map();
-        for (const record of names) {
-            const normalized = normalizeForMatch(record.name);
-            canonicalNames.set(normalized, record.name);
-            this.nameLookup[normalized] = record.name;
-            normalizedNames.push(normalized);
-        }
-
-        const aliasOwners = new Map();
-        for (const record of names) {
-            for (const alias of nameAliases(record.name).slice(1)) {
-                const normalizedAlias = normalizeForMatch(alias);
-                const owners = aliasOwners.get(normalizedAlias) || new Set();
-                owners.add(record.name);
-                aliasOwners.set(normalizedAlias, owners);
-            }
-        }
-        for (const [normalizedAlias, owners] of aliasOwners) {
-            const [owner] = owners;
-            if (owners.size !== 1 || canonicalNames.has(normalizedAlias)) {
-                continue;
-            }
-            this.nameLookup[normalizedAlias] = owner;
-            normalizedNames.push(normalizedAlias);
-        }
-        return normalizedNames;
+        this.policy = resolveMatchPolicy(policyOverrides);
+        this.logger = injectedLogger || logger.create({ isPretty: false });
     }
 
     async match() {
-        await this.gatherInitialResults();
-        const matches = await this.filterBulkMatches();
-        if (matches.length > 0 || !normalizeForMatch(this.supplementalText || "")) {
-            return matches;
+        const queries = uniqueNormalized([this.cleanText, ...(this.candidateTexts || [])]);
+        const hasSupplementalEvidence = Boolean(normalizeForMatch(this.supplementalText));
+        if (!queries.length && !hasSupplementalEvidence) {
+            return [];
         }
-        return this.matchSupplementalEvidence();
-    }
 
-    async gatherInitialResults() {
-        const normalizedQueries = uniqueNormalized([
+        const names = await this.dependencies.getNames();
+        const nameIndex = buildNameIndex(names);
+        const titleResult = matchTitleQueries(queries, nameIndex, this.policy);
+        this.matchedText = titleResult.matchedText;
+        if (titleResult.matches.length || !hasSupplementalEvidence) {
+            return titleResult.matches;
+        }
+        return matchSupplementalEvidence(
             this.cleanText,
-            ...(this.candidateTexts || [])
-        ]);
-        const hasSupplementalEvidence = Boolean(normalizeForMatch(this.supplementalText || ""));
-        if (!normalizedQueries.length && !hasSupplementalEvidence) {
-            this.nameLookup = {};
-            this.initialResults = [];
-            return;
-        }
-        const names = await this.dependencies.GetNames();
-        const filteredNames = this.filteredNames(names);
-        this.filteredStoredNames = [...new Set(filteredNames)];
-        if (!normalizedQueries.length) {
-            this.initialResults = [];
-            return;
-        }
-        const fuzzy = FuzzySet(filteredNames);
-        this.initialResults = normalizedQueries.flatMap((query) => {
-            const exact = this.nameLookup[query];
-            const matches = exact ? [[1, query]] : fuzzy.get(query) || [];
-            return matches.map((match) => ({ match, query }));
-        });
-    }
-
-    async filterBulkMatches() {
-        const scoredResults = this.initialResults.map(({ match, query }) => {
-            const [namePercent, nameMatch] = match;
-            const candidateName = this.nameLookup[nameMatch] || nameMatch;
-            const normalizedCandidate = normalizeForMatch(candidateName);
-            const queryTokens = tokenize(query);
-            const candidateTokens = tokenize(normalizedCandidate);
-            const firstTokenSimilarity = calculateFirstTokenSimilarity(
-                queryTokens,
-                candidateTokens
-            );
-            const tokenCoverage = calculateTokenCoverage(queryTokens, candidateTokens);
-            const score = round(
-                namePercent * 0.6 + tokenCoverage * 0.3 + firstTokenSimilarity * 0.1,
-                4
-            );
-            return {
-                name: candidateName,
-                percentage: namePercent,
-                _score: score,
-                _firstTokenSimilarity: firstTokenSimilarity,
-                _query: query,
-                _queryTokens: queryTokens
-            };
-        });
-        const bestByName = new Map();
-        for (const result of scoredResults) {
-            const current = bestByName.get(result.name);
-            const resultIsEligible = result.percentage >= config.minConfidence;
-            const currentIsEligible = current?.percentage >= config.minConfidence;
-            if (
-                !current ||
-                (resultIsEligible && !currentIsEligible) ||
-                (resultIsEligible === currentIsEligible &&
-                    (result._score > current._score ||
-                        (result._score === current._score &&
-                            result.percentage > current.percentage)))
-            ) {
-                bestByName.set(result.name, result);
-            }
-        }
-        const rankedResults = orderBy(
-            [...bestByName.values()],
-            ["_score", "percentage", "name"],
-            ["desc", "desc", "asc"]
+            this.supplementalText,
+            nameIndex,
+            this.policy
         );
-
-        if (shouldApplyDisambiguation(rankedResults[0]?._queryTokens || [], rankedResults)) {
-            const bestScore = rankedResults[0]._score;
-            const bestFirstTokenSimilarity = rankedResults[0]._firstTokenSimilarity;
-            const firstTokenSimilarityFloor = Math.max(
-                config.disambiguation.minFirstTokenSimilarity,
-                bestFirstTokenSimilarity - config.disambiguation.maxFirstTokenDropFromTop
-            );
-            const narrowed = rankedResults
-                .filter(
-                    (item) =>
-                        item._score >= bestScore - config.disambiguation.maxScoreDelta &&
-                        item._firstTokenSimilarity >= firstTokenSimilarityFloor &&
-                        item.percentage >= config.minConfidence
-                )
-                .slice(0, config.maxMatches + 1);
-            if (narrowed.length > 0) {
-                this.matchedText = narrowed[0]._query;
-                return narrowed.map(stripInternalFields);
-            }
-        }
-
-        const highConfidenceMatches = rankedResults.filter((item) => {
-            return item.percentage >= config.highConfidence;
-        });
-
-        if (highConfidenceMatches.length > 1) {
-            const selected = highConfidenceMatches.splice(0, config.maxMatches + 1);
-            this.matchedText = selected[0]?._query;
-            return selected.map(stripInternalFields);
-        }
-
-        const selected = rankedResults
-            .filter((item) => item.percentage >= config.minConfidence)
-            .splice(0, config.maxMatches + 1);
-        this.matchedText = selected[0]?._query;
-        return selected.map(stripInternalFields);
-    }
-
-    matchSupplementalEvidence() {
-        const titleTokens = [...new Set(tokenizeLetters(this.cleanText))].slice(
-            0,
-            config.supplementalEvidence.maxTitleTokens
-        );
-        const supplementalTokens = [...new Set(tokenizeLetters(this.supplementalText))].slice(
-            0,
-            config.supplementalEvidence.maxSupplementalTokens
-        );
-        const ranked = (this.filteredStoredNames || [])
-            .map((normalizedName) => ({
-                name: this.nameLookup[normalizedName] || normalizedName,
-                percentage: round(
-                    calculateSupplementalEvidenceScore(
-                        normalizedName,
-                        titleTokens,
-                        supplementalTokens
-                    ),
-                    4
-                )
-            }))
-            .reduce(updateTopTwoMatches, []);
-        const [best, runnerUp] = ranked;
-        if (!best || best.percentage < config.supplementalEvidence.minConfidence) {
-            return [];
-        }
-        if (
-            runnerUp &&
-            best.percentage - runnerUp.percentage < config.supplementalEvidence.minScoreDelta
-        ) {
-            return [];
-        }
-        return [best];
     }
 }
 
 const create = (params) => new MatchName(params);
 
-export { create, defaultDependencies as dependencies, MatchName };
+export { create, MatchName };
 
-export default {
-    create,
-    dependencies: defaultDependencies,
-    MatchName
-};
-
-function normalizeForMatch(text) {
-    return cleanString(text).toUpperCase().trim();
-}
-
-function nameAliases(name) {
-    return [...new Set([name, ...String(name || "").split(/\s+\/\/\s+/g)])].filter(Boolean);
-}
-
-function uniqueNormalized(values) {
-    return [...new Set(values.map(normalizeForMatch).filter(Boolean))];
-}
-
-function tokenize(text) {
-    return String(text || "")
-        .split(/\s+/g)
-        .filter(Boolean);
-}
-
-function similarity(left, right) {
-    if (!left || !right) {
-        return 0;
-    }
-    if (left === right) {
-        return 1;
-    }
-    return stringSimilarity.compareTwoStrings(left, right);
-}
-
-function calculateFirstTokenSimilarity(queryTokens, candidateTokens) {
-    if (!queryTokens.length || !candidateTokens.length) {
-        return 0;
-    }
-    return similarity(queryTokens[0], candidateTokens[0]);
-}
-
-function calculateTokenCoverage(queryTokens, candidateTokens) {
-    if (!queryTokens.length || !candidateTokens.length) {
-        return 0;
-    }
-    const similarities = queryTokens.map((queryToken) => {
-        return (
-            Math.max(
-                ...candidateTokens.map((candidateToken) => similarity(queryToken, candidateToken))
-            ) || 0
-        );
-    });
-    return mean(similarities) || 0;
-}
-
-function calculateSupplementalEvidenceScore(candidateName, titleTokens, supplementalTokens) {
-    const candidateTokens = tokenizeLetters(candidateName);
-    if (
-        candidateTokens.length < 2 ||
-        candidateTokens[0].length < config.supplementalEvidence.minFirstTokenLength ||
-        !supplementalTokens.length
-    ) {
-        return 0;
-    }
-    const firstTokenSimilarity = Math.max(
-        ...supplementalTokens.map((token) => calculateEditSimilarity(candidateTokens[0], token))
-    );
-    if (firstTokenSimilarity < config.supplementalEvidence.minFirstTokenSimilarity) {
-        return 0;
-    }
-    const bestSimilarity = (candidateToken, evidenceTokens) =>
-        Math.max(
-            0,
-            ...evidenceTokens.map((evidenceToken) =>
-                calculatePartialTokenSimilarity(candidateToken, evidenceToken)
-            )
-        );
-    const repeatedNameScore = mean(
-        candidateTokens.map((candidateToken) => bestSimilarity(candidateToken, supplementalTokens))
-    );
-    const splitEvidenceScore = titleTokens.length
-        ? mean([
-              bestSimilarity(candidateTokens[0], supplementalTokens),
-              ...candidateTokens
-                  .slice(1)
-                  .map((candidateToken) => bestSimilarity(candidateToken, titleTokens))
-          ])
-        : 0;
-    return Math.max(repeatedNameScore >= 0.9 ? repeatedNameScore : 0, splitEvidenceScore);
-}
-
-function tokenizeLetters(text) {
-    return (
-        String(text || "")
-            .toUpperCase()
-            .match(/[A-Z]+/g) || []
-    ).map((token) => token.slice(0, config.supplementalEvidence.maxTokenLength));
-}
-
-function updateTopTwoMatches(topMatches, candidate) {
-    const ranked = [...topMatches, candidate].sort(
-        (left, right) => right.percentage - left.percentage || left.name.localeCompare(right.name)
-    );
-    return ranked.slice(0, 2);
-}
-
-function calculatePartialTokenSimilarity(candidateToken, evidenceToken) {
-    if (candidateToken.length < 3) {
-        return candidateToken === evidenceToken ? 1 : 0;
-    }
-    let best = 0;
-    const minWindow = Math.max(3, candidateToken.length - 1);
-    const maxWindow = candidateToken.length + 1;
-    for (let windowSize = minWindow; windowSize <= maxWindow; windowSize += 1) {
-        if (evidenceToken.length < windowSize) {
-            best = Math.max(best, calculateEditSimilarity(candidateToken, evidenceToken));
-            continue;
-        }
-        for (let index = 0; index <= evidenceToken.length - windowSize; index += 1) {
-            best = Math.max(
-                best,
-                calculateEditSimilarity(
-                    candidateToken,
-                    evidenceToken.slice(index, index + windowSize)
-                )
-            );
-        }
-    }
-    return best;
-}
-
-function calculateEditSimilarity(left, right) {
-    const row = Array.from({ length: right.length + 1 }, (_, index) => index);
-    for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
-        let diagonal = row[0];
-        row[0] = leftIndex;
-        for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
-            const above = row[rightIndex];
-            row[rightIndex] = Math.min(
-                row[rightIndex] + 1,
-                row[rightIndex - 1] + 1,
-                diagonal + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1)
-            );
-            diagonal = above;
-        }
-    }
-    return 1 - row[right.length] / Math.max(left.length, right.length, 1);
-}
-
-function shouldApplyDisambiguation(queryTokens, rankedResults) {
-    if (queryTokens.length < 2) {
-        return false;
-    }
-    const top = rankedResults[0];
-    if (!top) {
-        return false;
-    }
-    return (
-        top.percentage >= config.disambiguation.minTopPercent &&
-        top._firstTokenSimilarity >= config.disambiguation.minTopFirstTokenSimilarity
-    );
-}
-
-function stripInternalFields(result) {
-    return {
-        name: result.name,
-        percentage: result.percentage
-    };
-}
+export default { create, MatchName };

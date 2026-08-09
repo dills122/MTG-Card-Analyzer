@@ -36,7 +36,9 @@ The configuration file is selected in this order:
 | `debugLogging`      | `DEBUG_LOGGING`       | `false`               | `--debug`                  |
 
 Accepted `storageAdapter` values are `nedb` and `rds`. Boolean values written through `config set`
-must be exactly `true` or `false`.
+must be exactly `true` or `false`. Boolean environment variables accept `true`, `false`, `1`, or
+`0`. Invalid values, unknown JSON keys, and incorrect JSON value types stop configuration loading
+with a source-specific error instead of being treated as truthy values.
 
 Example:
 

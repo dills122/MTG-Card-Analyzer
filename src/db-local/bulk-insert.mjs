@@ -5,19 +5,22 @@ import { seedCardNames } from "./seed-card-names.mjs";
 
 const { getCardNames } = scryfallApi;
 
-const dependencies = {
-    getCardNames,
-    insertName(name) {
-        return db.insert({ name });
-    }
-};
+function insertStoredName(name) {
+    return db.insert({ name });
+}
 
 async function executeBulkInsert(options = {}) {
+    const {
+        getCardNames: fetchCardNames = getCardNames,
+        insertName = insertStoredName,
+        logger = console,
+        concurrency
+    } = options;
     return seedCardNames({
-        getCardNames: options.getCardNames || dependencies.getCardNames,
-        insertName: options.insertName || dependencies.insertName,
-        logger: options.logger || console,
-        concurrency: options.concurrency
+        getCardNames: fetchCardNames,
+        insertName,
+        logger,
+        concurrency
     });
 }
 
@@ -29,7 +32,7 @@ if (isDirectRun) {
     });
 }
 
-export { dependencies, executeBulkInsert };
+export { executeBulkInsert };
 
 export default {
     executeBulkInsert

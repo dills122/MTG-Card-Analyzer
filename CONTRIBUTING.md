@@ -45,6 +45,10 @@ pnpm check
 
 That's `lint` + `prettier:check` + `typecheck` + `test`. Individual pieces (`pnpm lint:fix`, `pnpm format`) can autofix most issues.
 
+Type checking is being introduced incrementally for this ESM JavaScript codebase. The strict
+checked-module list lives in `tsconfig.checked.json`; add a touched production module there once its
+JSDoc contracts pass `pnpm typecheck`.
+
 For anything touching logic, also run coverage and take a look at what's newly uncovered:
 
 ```bash
@@ -59,7 +63,9 @@ currently 85% lines/statements/functions, 70% branches) so coverage can't silent
 
 - Tests live in `test/**/*.spec.mjs` and mirror the `src/` structure.
 - Tests stub external calls (Scryfall API, MySQL/RDS, filesystem where practical) — no live network or DB access required to run the suite.
-- Use `proxyquire`/`sinon` (already deps) for stubbing module dependencies, consistent with existing specs.
+- Prefer constructor, factory, or function-parameter injection at I/O boundaries. Use standalone
+  `sinon` fakes in each test; do not mutate module-level dependency objects shared by production
+  imports.
 
 ## Project Layout
 

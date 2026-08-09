@@ -266,10 +266,9 @@ class ProcessHashes {
 const create = (params) => new ProcessHashes(params);
 ProcessHashes.create = create;
 
-export { create, ProcessHashes, defaultDependencies as dependencies };
+export { create, ProcessHashes };
 
 export default {
     create,
-    ProcessHashes,
-    dependencies: defaultDependencies
+    ProcessHashes
 };

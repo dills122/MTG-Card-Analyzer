@@ -1,77 +1,21 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { readJsonFile, writeJsonFileAtomic } from "./json-file.mjs";
+import {
+    DEFAULTS,
+    KNOWN_STORAGE_ADAPTERS,
+    SETTABLE_KEYS,
+    validateConfigLayer,
+    validateResolvedConfig
+} from "./schema.mjs";
+import { parseBoolean } from "./value-parsers.mjs";
 
 // Single source of truth for app-wide runtime settings.
 //
 // Precedence (highest wins): explicit overrides (CLI flags) > env vars > config file > defaults.
-const DEFAULTS = Object.freeze({
-    storageAdapter: "nedb",
-    // Whether a scan persists results (collection / needs-attention writes) or dry-runs.
-    // Off by default -- see --query / --no-query, and QUERYING_ENABLED.
-    queryingEnabled: false,
-    // Pretty (human-readable) logging vs plain. On by default -- see --pretty / --no-pretty,
-    // and PRETTY_LOGGING.
-    prettyLogging: true,
-    cardNamesDbPath: "",
-    cardHashDbPath: "",
-    configPath: "",
-    // The local nedb cache (names dictionary, hash cache, ops log) is always on unless
-    // explicitly turned off -- see --no-local-cache / LOCAL_CACHE_ENABLED. This is distinct
-    // from storageAdapter, which selects the backend for *real* persistence (collection,
-    // needsAttention).
-    localCacheEnabled: true,
-    // Collection/needs-attention tracking is an opt-in module, off by default -- not
-    // everyone scanning cards wants this tool keeping an inventory. `scan --query` only
-    // writes collection/needs-attention records when this is on; explicitly invoking
-    // `collection update`/`remove` or `migrate` doesn't need it re-passed, since naming
-    // those commands is itself the opt-in for that invocation.
-    collectionEnabled: false,
-    // Captures extra detail in the ops log per scan (full match candidates/confidence, keeps
-    // preprocessing temp images instead of cleaning them up) and includes it in `diagnostics`.
-    // Off by default -- meant for troubleshooting, not routine use.
-    debugLogging: false
-});
-
-const KNOWN_STORAGE_ADAPTERS = ["nedb", "rds"];
-
-// Keys a user can actually change via `config set`/`config get` (and see listed in
-// `config list`). configPath is deliberately excluded -- it's resolution metadata (which file
-// won), not a setting itself.
-const SETTABLE_KEYS = Object.freeze({
-    storageAdapter: { type: "enum", values: KNOWN_STORAGE_ADAPTERS },
-    cardNamesDbPath: { type: "string" },
-    cardHashDbPath: { type: "string" },
-    localCacheEnabled: { type: "boolean" },
-    collectionEnabled: { type: "boolean" },
-    debugLogging: { type: "boolean" },
-    queryingEnabled: { type: "boolean" },
-    prettyLogging: { type: "boolean" }
-});
-
-function compact(obj = {}) {
-    return Object.fromEntries(
-        Object.entries(obj).filter(
-            ([, value]) => value !== undefined && value !== "" && value !== null
-        )
-    );
-}
-
-function readJsonFile(filePath) {
-    let raw;
-    try {
-        raw = fs.readFileSync(filePath, "utf8");
-    } catch (err) {
-        if (err.code === "ENOENT") {
-            return {};
-        }
-        throw new Error(`Config file at "${filePath}" could not be read: ${err.message}`);
-    }
-    try {
-        return JSON.parse(raw);
-    } catch (err) {
-        throw new Error(`Config file at "${filePath}" is not valid JSON: ${err.message}`);
-    }
+function omitUndefined(obj = {}) {
+    return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
 }
 
 // Where a config file lives if the caller didn't say explicitly:
@@ -94,27 +38,6 @@ function resolveConfigFilePath(explicitPath) {
     return "";
 }
 
-function parseBoolean(value) {
-    if (value === undefined) {
-        return undefined;
-    }
-    return !["false", "0", ""].includes(String(value).toLowerCase());
-}
-
-// Stricter than parseBoolean (used for env vars, where "truthy unless false/0/empty" is
-// forgiving on purpose): a value the user typed directly at `config set` should be rejected
-// if it's not unambiguously true/false, not silently coerced to true.
-function parseStrictBoolean(value) {
-    const lower = String(value).toLowerCase();
-    if (lower === "true") {
-        return true;
-    }
-    if (lower === "false") {
-        return false;
-    }
-    return undefined;
-}
-
 // Validates + coerces a raw CLI string into the right type for a settable config key.
 // Throws a message-ready Error on anything unrecognized -- callers (config-set CLI handler)
 // just need to catch and print err.message.
@@ -126,11 +49,11 @@ function coerceSettableValue(key, rawValue) {
         );
     }
     if (spec.type === "boolean") {
-        const parsed = parseStrictBoolean(rawValue);
-        if (parsed === undefined) {
+        try {
+            return parseBoolean(rawValue, { label: `"${key}"`, allowNumeric: false });
+        } catch {
             throw new Error(`"${key}" expects true or false, got "${rawValue}"`);
         }
-        return parsed;
     }
     if (spec.type === "enum") {
         if (!spec.values.includes(rawValue)) {
@@ -144,25 +67,22 @@ function coerceSettableValue(key, rawValue) {
 }
 
 function readEnvConfig() {
-    return compact({
+    return omitUndefined({
         storageAdapter: process.env.STORAGE_ADAPTER,
         cardNamesDbPath: process.env.CARD_NAMES_DB_PATH,
         cardHashDbPath: process.env.CARD_HASH_DB_PATH,
-        localCacheEnabled: parseBoolean(process.env.LOCAL_CACHE_ENABLED),
-        collectionEnabled: parseBoolean(process.env.COLLECTION_ENABLED),
-        debugLogging: parseBoolean(process.env.DEBUG_LOGGING),
-        queryingEnabled: parseBoolean(process.env.QUERYING_ENABLED),
-        prettyLogging: parseBoolean(process.env.PRETTY_LOGGING)
+        localCacheEnabled: parseBoolean(process.env.LOCAL_CACHE_ENABLED, {
+            label: "LOCAL_CACHE_ENABLED"
+        }),
+        collectionEnabled: parseBoolean(process.env.COLLECTION_ENABLED, {
+            label: "COLLECTION_ENABLED"
+        }),
+        debugLogging: parseBoolean(process.env.DEBUG_LOGGING, { label: "DEBUG_LOGGING" }),
+        queryingEnabled: parseBoolean(process.env.QUERYING_ENABLED, {
+            label: "QUERYING_ENABLED"
+        }),
+        prettyLogging: parseBoolean(process.env.PRETTY_LOGGING, { label: "PRETTY_LOGGING" })
     });
-}
-
-function validate(config) {
-    if (!KNOWN_STORAGE_ADAPTERS.includes(config.storageAdapter)) {
-        throw new Error(
-            `Invalid storageAdapter "${config.storageAdapter}". Expected one of: ${KNOWN_STORAGE_ADAPTERS.join(", ")}`
-        );
-    }
-    return config;
 }
 
 // overrides: highest-precedence values, meant for CLI flags passed explicitly by the caller.
@@ -172,12 +92,20 @@ function validate(config) {
 // Shared by getConfig() and getConfigWithSources() (`config list`'s "value + where it came
 // from" view) so the two never drift apart on precedence.
 function resolveConfig(overrides = {}) {
-    const cleanOverrides = compact(overrides);
+    const cleanOverrides = validateConfigLayer(omitUndefined(overrides), {
+        source: "configuration overrides",
+        allowConfigPath: true
+    });
     const configFilePath = resolveConfigFilePath(cleanOverrides.configPath);
-    const fileConfig = configFilePath ? compact(readJsonFile(configFilePath)) : {};
-    const envConfig = readEnvConfig();
+    const fileConfig = configFilePath
+        ? validateConfigLayer(
+              readJsonFile(configFilePath, { allowMissing: true, label: "Config file" }),
+              { source: `config file at "${configFilePath}"` }
+          )
+        : {};
+    const envConfig = validateConfigLayer(readEnvConfig(), { source: "environment configuration" });
 
-    const merged = validate({
+    const merged = validateResolvedConfig({
         ...DEFAULTS,
         ...fileConfig,
         ...envConfig,
@@ -229,10 +157,12 @@ function resolveConfigWriteTarget(explicitPath) {
 // already there. Creates the file (and its directory) if it doesn't exist yet.
 function writeConfigValue(filePath, key, rawValue) {
     const value = coerceSettableValue(key, rawValue);
-    const existing = readJsonFile(filePath);
+    const existing = validateConfigLayer(
+        readJsonFile(filePath, { allowMissing: true, label: "Config file" }),
+        { source: `config file at "${filePath}"` }
+    );
     const updated = { ...existing, [key]: value };
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, `${JSON.stringify(updated, null, 4)}\n`);
+    writeJsonFileAtomic(filePath, updated, { label: "Config file" });
     return { key, value, filePath };
 }
 

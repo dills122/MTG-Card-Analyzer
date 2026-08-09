@@ -1,16 +1,16 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import Hashing from "../../src/image-hashing/hash-image.mjs";
+import { createHashing } from "../../src/image-hashing/hash-image.mjs";
 
 describe("Hashing::", () => {
     const url = "https://img.scryfall.com/cards/normal/en/shm/53.jpg?1517813031";
     const fakeHash = "0773063f063f36070e070a070f378e7f1f000fff0fff020103f00ffb0f810ff0";
-    let stubs = {};
+    let Hashing;
+    let imageHashStub;
     describe("ImageHashing::", () => {
         beforeEach(() => {
-            stubs.imageHashStub = sinon
-                .stub(Hashing.dependencies, "imageHash")
-                .callsArgWith(3, null, fakeHash);
+            imageHashStub = sinon.stub().callsArgWith(3, null, fakeHash);
+            Hashing = createHashing({ imageHash: imageHashStub });
         });
         afterEach(() => {
             sinon.restore();
@@ -20,7 +20,7 @@ describe("Hashing::", () => {
             Hashing.hashImage(url, (error, hash) => {
                 assert.isNull(error);
                 assert.isString(hash);
-                assert.isTrue(stubs.imageHashStub.calledOnce, "Image Hash called");
+                assert.isTrue(imageHashStub.calledOnce, "Image Hash called");
                 assert.isTrue(
                     consoleLogStub.calledOnceWithExactly(
                         "INFO  Hashing image: img.scryfall.com/53.jpg"
@@ -31,14 +31,11 @@ describe("Hashing::", () => {
         });
 
         it("Should return an error", (done) => {
-            stubs.imageHashStub.restore();
-            stubs.imageHashStub = sinon
-                .stub(Hashing.dependencies, "imageHash")
-                .callsArgWith(3, {}, null);
+            imageHashStub.callsArgWith(3, {}, null);
             Hashing.hashImage("", (error, hash) => {
                 assert.deepEqual(error, {});
                 assert.isUndefined(hash);
-                assert.isTrue(stubs.imageHashStub.calledOnce, "Image Hash called");
+                assert.isTrue(imageHashStub.calledOnce, "Image Hash called");
                 done();
             });
         });
@@ -61,6 +58,9 @@ describe("Hashing::", () => {
         const hashTwo = "0773063f063f36070e070a070f378e7f1f000fff0fff020103f00ffb0f810ff0";
         afterEach(() => {
             sinon.restore();
+        });
+        beforeEach(() => {
+            Hashing = createHashing();
         });
         it("Should return a hash comparison result", (done) => {
             const consoleLogStub = sinon.stub(console, "log");

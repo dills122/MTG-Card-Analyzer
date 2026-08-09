@@ -102,10 +102,9 @@ class ImageProcessor {
 
 const create = (params) => new ImageProcessor(params);
 
-export { create, defaultDependencies as dependencies, ImageProcessor };
+export { create, ImageProcessor };
 
 export default {
     create,
-    dependencies: defaultDependencies,
     ImageProcessor
 };

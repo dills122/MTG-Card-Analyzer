@@ -15,6 +15,7 @@ const pageSegmentationModes = Object.freeze({
 });
 let defaultSessionPromise;
 let defaultSessionOptionsKey;
+let defaultSessionTesseract;
 
 /**
  * Run OCR on one or more preprocessed regions and select the strongest normalized result.
@@ -25,6 +26,7 @@ let defaultSessionOptionsKey;
  */
 function scanImage(imgBuffer, type, cb, options = {}) {
     const scanLogger = options.logger || logger;
+    const tesseract = options.tesseract || Tesseract;
     const candidates = normalizeCandidates(imgBuffer, type);
     const regionLabel = candidates.map((candidate) => candidate.region).join(", ");
     const regionWord = candidates.length === 1 ? "region" : "regions";
@@ -48,12 +50,12 @@ function scanImage(imgBuffer, type, cb, options = {}) {
                     candidates: results,
                     textCandidates
                 },
-                Tesseract
+                tesseract
             );
         })
         .catch((err) => {
             scanLogger.error(err);
-            return cb(err, null, Tesseract);
+            return cb(err, null, tesseract);
         });
 }
 
@@ -122,12 +124,17 @@ function resolveWorkerOptions(options = {}) {
 async function getDefaultOcrSession(options = {}) {
     const workerOptions = resolveWorkerOptions(options);
     const nextOptionsKey = JSON.stringify(workerOptions);
-    if (defaultSessionPromise && defaultSessionOptionsKey !== nextOptionsKey) {
+    const tesseract = options.tesseract || Tesseract;
+    if (
+        defaultSessionPromise &&
+        (defaultSessionOptionsKey !== nextOptionsKey || defaultSessionTesseract !== tesseract)
+    ) {
         await shutDown();
     }
     if (!defaultSessionPromise) {
         defaultSessionOptionsKey = nextOptionsKey;
-        defaultSessionPromise = createOcrSession(workerOptions).catch((error) => {
+        defaultSessionTesseract = tesseract;
+        defaultSessionPromise = createOcrSession({ ...workerOptions, tesseract }).catch((error) => {
             defaultSessionPromise = undefined;
             defaultSessionOptionsKey = undefined;
             throw error;
@@ -330,6 +337,7 @@ async function shutDown() {
     const pendingSession = defaultSessionPromise;
     defaultSessionPromise = undefined;
     defaultSessionOptionsKey = undefined;
+    defaultSessionTesseract = undefined;
     if (pendingSession) {
         const session = await pendingSession;
         await session.terminate();
@@ -338,7 +346,8 @@ async function shutDown() {
 
 async function createOcrSession(options = {}) {
     let progressLogger = () => {};
-    const worker = Tesseract.createWorker({
+    const tesseract = options.tesseract || Tesseract;
+    const worker = tesseract.createWorker({
         ...resolveWorkerOptions(options),
         logger: (message) => progressLogger(message)
     });
@@ -404,8 +413,6 @@ async function createOcrSession(options = {}) {
     };
 }
 
-export const dependencies = { Tesseract };
-
 export { scanImage, shutDown, createOcrSession, scoreOcrCandidate, selectBestResult };
 
 export default {
@@ -413,6 +420,5 @@ export default {
     shutDown,
     createOcrSession,
     scoreOcrCandidate,
-    selectBestResult,
-    dependencies
+    selectBestResult
 };

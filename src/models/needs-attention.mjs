@@ -16,12 +16,14 @@ const schema = Joi.object().keys({
     possibleSets: Joi.string().min(3).required()
 });
 
-const dependencies = {
+const defaultDependencies = Object.freeze({
     insert: (record) => storage.needsAttention.insert(record)
-};
+});
 
 function create(params) {
-    const validated = Joi.attempt(params, schema);
+    const { dependencies: injectedDependencies, ...input } = params;
+    const validated = Joi.attempt(input, schema);
+    const dependencies = { ...defaultDependencies, ...(injectedDependencies || {}) };
     return {
         ...validated,
         async insert() {
@@ -38,6 +40,6 @@ function create(params) {
     };
 }
 
-export { create, dependencies };
+export { create };
 
-export default { create, dependencies };
+export default { create };
