@@ -119,6 +119,7 @@ local-first rather than fully offline.
 | Change settings or understand local database files               | [Configuration and local data](docs/configuration.md) |
 | Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                  |
 | Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)      |
+| Build a reviewed custom OCR fine-tuning corpus                   | [OCR training data](docs/ocr-training-data.md)        |
 | Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                       |
 
 The default NeDB backend is the recommended path. A legacy MySQL/RDS adapter remains available for
