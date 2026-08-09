@@ -220,7 +220,13 @@ class ProcessHashes {
     }
 
     async _hashRemoteSetSymbol(url, tempDirectory) {
-        const image = await jimp.read(url);
+        // Scryfall's image CDN 400s a header-less request -- jimp's own URL loader sends none by
+        // default. Same fix/header as image-hashing/hash-image.mjs's remote imageHash() calls.
+        // Only a real http(s) URL takes jimp's {url, headers} request-object form; a local test
+        // fixture path must stay a plain string so it still takes jimp's fs-read branch.
+        const image = imageHashing.isRemoteUrl(url)
+            ? await jimp.read({ url, headers: imageHashing.REMOTE_IMAGE_REQUEST_HEADERS })
+            : await jimp.read(url);
         const cropped = this.dependencies.CropSetSymbol(image);
         if (cropped.lowConfidence) {
             throw new Error(`Set symbol crop is low confidence: ${cropped.reason}`);

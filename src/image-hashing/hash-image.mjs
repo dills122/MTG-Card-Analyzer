@@ -11,9 +11,29 @@ const logger = log.create({
     isPretty: true
 });
 
+// Scryfall's image CDN (cards.scryfall.io) returns HTTP 400 for a header-less request -- Node's
+// global fetch (what the image-hash package uses under the hood) sends no User-Agent by default,
+// so every remote hash was failing outright. Same header value as scryfall-api/http-client.mjs's
+// REQUEST_HEADERS; duplicated locally (like regression-fixtures.mjs's own copy) rather than
+// importing across the image-hashing/scryfall-api boundary for one constant.
+export const REMOTE_IMAGE_REQUEST_HEADERS = {
+    "User-Agent": "MTG-Card-Analyzer/0.2 (+https://github.com/dills122/MTG-Card-Analyzer)",
+    Accept: "image/*"
+};
+
+export function isRemoteUrl(value) {
+    return typeof value === "string" && /^https?:\/\//i.test(value);
+}
+
 function hashImage(imgUrl, cb) {
     logger.info(`Hashing image: ${formatImageSource(imgUrl)}`);
-    dependencies.imageHash(imgUrl, 16, true, (error, data) => {
+    // image-hash accepts either a plain path/URL string or a {url, ...fetchInit} request object;
+    // only remote URLs need the header -- a local file path must stay a plain string so it still
+    // takes the fs.readFile branch instead of being treated as a request object.
+    const source = isRemoteUrl(imgUrl)
+        ? { url: imgUrl, headers: REMOTE_IMAGE_REQUEST_HEADERS }
+        : imgUrl;
+    dependencies.imageHash(source, 16, true, (error, data) => {
         if (error) {
             return cb(error);
         }
@@ -74,5 +94,7 @@ export { compareHash, hashImage };
 export default {
     compareHash,
     hashImage,
-    dependencies
+    dependencies,
+    isRemoteUrl,
+    REMOTE_IMAGE_REQUEST_HEADERS
 };
