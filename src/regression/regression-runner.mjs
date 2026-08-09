@@ -376,7 +376,7 @@ async function runRegression(manifest, options = {}) {
                 ocrCache: "disabled",
                 ocrLanguageSource: options.ocrModel
                     ? `OCR candidate ${options.ocrModel.id}`
-                    : "patched bundled eng.traineddata",
+                    : "bundled official tessdata_best eng.traineddata",
                 ocrWorkerLifecycle: "shared process; adaptive state reset per crop",
                 temporaryArtifacts: "deleted after each case"
             },

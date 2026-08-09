@@ -2,9 +2,10 @@
 
 # OCR training data
 
-The custom OCR corpus is review-first. The repository currently contains a pinned, empty draft at
-`training/ocr/manifest.json`; it defines the base model and validation contract without pretending
-that unreviewed samples are ready to train.
+The custom OCR corpus is review-first. `training/ocr/manifest.json` currently records 22 reviewed
+single-line samples with pinned hashes and provenance; the deterministic split yields 19 training
+lines and three evaluation lines. The corpus remains separate from the bundled production model so
+rejected experiments cannot silently change runtime OCR behavior.
 
 Tesseract's supported `tesstrain` workflow consumes single-line PNG or TIFF images paired with a
 plain-text transcription whose filename replaces the image extension with `.gt.txt`. Its training
@@ -149,3 +150,8 @@ Training completion is not promotion. Package the selected checkpoint as `eng.tr
 to a reviewed OCR candidate manifest with exact provenance and SHA-256, run the full regression
 corpus, and compare it to the bundled control with `pnpm regression:compare`. A candidate with any
 blocking regression does not replace the production model, even if aggregate accuracy improves.
+
+The production bundle now uses the pinned official `tessdata_best` English LSTM model as its control.
+This replaced the original Pre-4.0 legacy-only archive after the stock LSTM model passed all 118
+blocking fixtures. The reviewed custom corpus is still available for future domain fine-tuning; no
+custom checkpoint has been promoted.

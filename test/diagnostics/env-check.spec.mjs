@@ -1,8 +1,10 @@
 import { assert } from "chai";
 import {
     findUnsupportedOcrParameters,
+    inspectDefaultOcrModel,
     runEnvironmentCheck
 } from "../../src/diagnostics/env-check.mjs";
+import { DEFAULT_OCR_MODEL_SHA256 } from "../../src/image-analysis/ocr-model.mjs";
 
 // Exercises the real local environment (same checks scripts/verify-env.mjs runs) rather than
 // mocking every fs/DB dependency -- the point of this module is "is the environment actually
@@ -29,7 +31,7 @@ describe("diagnostics::env-check", () => {
         assert.equal(nodeCheck.status, "pass", "this test suite itself requires Node >=20");
     });
 
-    it("checks the patched English OCR model used at runtime", async () => {
+    it("checks the pinned official LSTM English model used at runtime", async () => {
         const result = await runEnvironmentCheck();
         const modelCheck = result.checks.find((check) =>
             check.label.startsWith("English OCR model")
@@ -37,7 +39,16 @@ describe("diagnostics::env-check", () => {
 
         assert.exists(modelCheck);
         assert.equal(modelCheck.status, "pass");
-        assert.include(modelCheck.label, "patched eng.traineddata");
+        assert.include(modelCheck.label, "official tessdata_best LSTM");
+    });
+
+    it("rejects model bytes that do not match the pinned production SHA-256", () => {
+        const inspection = inspectDefaultOcrModel(Buffer.from("unexpected model"));
+
+        assert.equal(inspection.expectedSha256, DEFAULT_OCR_MODEL_SHA256);
+        assert.notEqual(inspection.sha256, inspection.expectedSha256);
+        assert.isFalse(inspection.matchesExpectedSha256);
+        assert.deepEqual(inspection.unsupportedParameters, []);
     });
 
     it("detects the obsolete parameters that cause Tesseract warning noise", () => {

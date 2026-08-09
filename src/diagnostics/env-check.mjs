@@ -1,7 +1,12 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_OCR_MODEL_PATH } from "../image-analysis/ocr-model.mjs";
+import {
+    DEFAULT_OCR_MODEL_FAMILY,
+    DEFAULT_OCR_MODEL_PATH,
+    DEFAULT_OCR_MODEL_SHA256
+} from "../image-analysis/ocr-model.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "../..");
@@ -9,6 +14,16 @@ const unsupportedOcrParameters = ["enable_new_segsearch", "save_raw_choices"];
 
 function findUnsupportedOcrParameters(model) {
     return unsupportedOcrParameters.filter((parameter) => model.includes(Buffer.from(parameter)));
+}
+
+function inspectDefaultOcrModel(model) {
+    const sha256 = createHash("sha256").update(model).digest("hex");
+    return {
+        sha256,
+        expectedSha256: DEFAULT_OCR_MODEL_SHA256,
+        matchesExpectedSha256: sha256 === DEFAULT_OCR_MODEL_SHA256,
+        unsupportedParameters: findUnsupportedOcrParameters(model)
+    };
 }
 
 // Sanity-checks the environment is actually usable, not just "file exists". Shared by
@@ -43,15 +58,18 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
 
     if (fs.existsSync(DEFAULT_OCR_MODEL_PATH)) {
         const model = fs.readFileSync(DEFAULT_OCR_MODEL_PATH);
-        const unsupportedParameters = findUnsupportedOcrParameters(model);
-        if (unsupportedParameters.length === 0) {
-            record("English OCR model available (patched eng.traineddata)", "pass");
+        const inspection = inspectDefaultOcrModel(model);
+        if (inspection.unsupportedParameters.length > 0) {
+            record(
+                `English OCR model contains unsupported parameters: ${inspection.unsupportedParameters.join(", ")}`,
+                "fail"
+            );
+        } else if (!inspection.matchesExpectedSha256) {
+            record("English OCR model does not match the pinned production SHA-256", "fail");
         } else {
             record(
-                `English OCR model contains unsupported parameters: ${unsupportedParameters.join(
-                    ", "
-                )}`,
-                "fail"
+                `English OCR model available (official ${DEFAULT_OCR_MODEL_FAMILY} LSTM)`,
+                "pass"
             );
         }
     } else {
@@ -124,6 +142,6 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
     return { checks, requiredFailures, warnings };
 }
 
-export { findUnsupportedOcrParameters, runEnvironmentCheck };
+export { findUnsupportedOcrParameters, inspectDefaultOcrModel, runEnvironmentCheck };
 
 export default { runEnvironmentCheck };
