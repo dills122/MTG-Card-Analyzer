@@ -6,6 +6,8 @@ describe("TextExtraction::", () => {
     let sandbox;
     let worker;
     let createWorkerStub;
+    let tesseract;
+    let scanImage;
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
@@ -17,8 +19,10 @@ describe("TextExtraction::", () => {
             setParameters: sandbox.stub().resolves(),
             terminate: sandbox.stub().resolves()
         };
-        createWorkerStub = sandbox.stub(textExtraction.dependencies.Tesseract, "createWorker");
-        createWorkerStub.returns(worker);
+        createWorkerStub = sandbox.stub().returns(worker);
+        tesseract = { createWorker: createWorkerStub };
+        scanImage = (image, type, callback, options = {}) =>
+            textExtraction.scanImage(image, type, callback, { ...options, tesseract });
     });
 
     afterEach(async () => {
@@ -30,7 +34,8 @@ describe("TextExtraction::", () => {
         const session = await textExtraction.createOcrSession({
             cacheMethod: "none",
             langPath: "/fixtures",
-            gzip: false
+            gzip: false,
+            tesseract
         });
         await session.recognize("/tmp/first.jpg", {
             region: "name-core"
@@ -63,14 +68,13 @@ describe("TextExtraction::", () => {
                 data: { text: "Thought Reflection", confidence: 80 }
             })
         };
-        const oneShotRecognize = sandbox.stub(textExtraction.dependencies.Tesseract, "recognize");
         const variants = [
             { buffer: Buffer.from("a"), region: "name-core", psm: "line" },
             { buffer: Buffer.from("b"), region: "name-wide", psm: "line" }
         ];
 
         const result = await new Promise((resolve, reject) => {
-            textExtraction.scanImage(
+            scanImage(
                 variants,
                 "name",
                 (err, extracted) => (err ? reject(err) : resolve(extracted)),
@@ -82,7 +86,6 @@ describe("TextExtraction::", () => {
         assert.isTrue(session.recognize.calledTwice);
         assert.equal(session.recognize.firstCall.args[1].region, "name-core");
         assert.equal(session.recognize.secondCall.args[1].region, "name-wide");
-        assert.isTrue(oneShotRecognize.notCalled);
         assert.isTrue(createWorkerStub.notCalled);
     });
 
@@ -92,7 +95,7 @@ describe("TextExtraction::", () => {
 
         let actualError;
         try {
-            await textExtraction.createOcrSession({ cacheMethod: "none" });
+            await textExtraction.createOcrSession({ cacheMethod: "none", tesseract });
         } catch (err) {
             actualError = err;
         }
@@ -109,7 +112,7 @@ describe("TextExtraction::", () => {
             }
         });
 
-        textExtraction.scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
+        scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.isNull(err);
             assert.isTrue(recognizeStub.calledOnce);
             assert.equal(createWorkerStub.firstCall.args[0].cacheMethod, "none");
@@ -124,7 +127,7 @@ describe("TextExtraction::", () => {
         const expectedErr = new Error("OCR failed");
         const recognizeStub = worker.recognize.rejects(expectedErr);
 
-        textExtraction.scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
+        scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.strictEqual(err, expectedErr);
             assert.isTrue(recognizeStub.calledOnce);
             assert.isNull(result);
@@ -135,7 +138,7 @@ describe("TextExtraction::", () => {
     it("allows regression runs to disable the OCR cache and use a local language model", (done) => {
         worker.recognize.resolves({ data: { text: "Pacifism" } });
 
-        textExtraction.scanImage(
+        scanImage(
             "/tmp/fake-image.jpg",
             "name",
             (err) => {
@@ -191,7 +194,7 @@ describe("TextExtraction::", () => {
             }
         });
 
-        textExtraction.scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
+        scanImage("/tmp/fake-image.jpg", "name", (err, result) => {
             assert.isNull(err);
             assert.isTrue(recognizeStub.calledOnce);
             assert.equal(result.cleanText, "THOUGHT REFLECTION");
@@ -225,7 +228,7 @@ describe("TextExtraction::", () => {
             { buffer: Buffer.from("b"), region: "name-core", psm: "line" }
         ];
         const result = await new Promise((resolve, reject) => {
-            textExtraction.scanImage(variants, "name", (err, extracted) => {
+            scanImage(variants, "name", (err, extracted) => {
                 if (err) {
                     return reject(err);
                 }
@@ -253,7 +256,7 @@ describe("TextExtraction::", () => {
             { buffer: Buffer.from("b"), region: "name-wide", psm: "line" }
         ];
         const extraction = new Promise((resolve, reject) => {
-            textExtraction.scanImage(variants, "name", (err, result) => {
+            scanImage(variants, "name", (err, result) => {
                 if (err) return reject(err);
                 return resolve(result);
             });
@@ -278,7 +281,7 @@ describe("TextExtraction::", () => {
         });
 
         await new Promise((resolve, reject) => {
-            textExtraction.scanImage(
+            scanImage(
                 [{ buffer: Buffer.from("card"), region: "name-core", psm: "line" }],
                 "name",
                 (err, result) => (err ? reject(err) : resolve(result)),
@@ -304,7 +307,7 @@ describe("TextExtraction::", () => {
             .resolves({ data: { text: "Pacifism", confidence: 80 } });
 
         const result = await new Promise((resolve, reject) => {
-            textExtraction.scanImage(
+            scanImage(
                 [
                     { buffer: Buffer.from("a"), region: "name-core", psm: "line" },
                     { buffer: Buffer.from("b"), region: "top-band", psm: "block" }
@@ -341,7 +344,7 @@ describe("TextExtraction::", () => {
         });
 
         const result = await new Promise((resolve, reject) => {
-            textExtraction.scanImage(
+            scanImage(
                 [{ buffer: Buffer.from("card"), region: "top-band", psm: "block" }],
                 "name",
                 (err, extracted) => (err ? reject(err) : resolve(extracted))
@@ -361,7 +364,7 @@ describe("TextExtraction::", () => {
         });
 
         const result = await new Promise((resolve, reject) => {
-            textExtraction.scanImage(
+            scanImage(
                 [{ buffer: Buffer.from("card"), region: "top-band", psm: "block" }],
                 "name",
                 (err, extracted) => (err ? reject(err) : resolve(extracted))

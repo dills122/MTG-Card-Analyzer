@@ -7,14 +7,14 @@ import imageHashing from "../image-hashing/index.mjs";
 import imageProcessing from "../image-processing/index.mjs";
 import FileIO from "../file-io.mjs";
 
-const dependencies = {
-    Searcher: scryfallApi.Search.searchList,
-    HashProcessor: exportProcessor.ProcessHashes,
-    Hash: promisify(imageHashing.Hash.hashImage),
+const defaultDependencies = Object.freeze({
+    searchPrintings: scryfallApi.Search.searchList,
+    processHashes: exportProcessor.ProcessHashes,
+    hashImage: promisify(imageHashing.Hash.hashImage),
     createDirectory: FileIO.createDirectory,
     cleanUpFiles: FileIO.cleanUpFiles,
-    GetSetSymbolSnippetTmpFile: imageProcessing.smartCrop.writeSetSymbolSnippet
-};
+    writeSetSymbolSnippet: imageProcessing.smartCrop.writeSetSymbolSnippet
+});
 
 const schema = joi.object().keys({
     name: joi.string().required(),
@@ -25,16 +25,14 @@ const schema = joi.object().keys({
 
 class MatcherProcessor {
     constructor(params = {}) {
-        const { error: hasError } = schema.validate(params);
+        const { dependencies: injectedDependencies, logger: injectedLogger, ...input } = params;
+        const { error: hasError, value } = schema.validate(input);
         if (hasError) {
             throw new Error("Required params missing");
         }
-        Object.assign(this, params);
-        if (!this.logger) {
-            this.logger = logger.create({
-                isPretty: true
-            });
-        }
+        Object.assign(this, value);
+        this.dependencies = { ...defaultDependencies, ...(injectedDependencies || {}) };
+        this.logger = injectedLogger || logger.create({ isPretty: true });
     }
 
     execute(callback) {
@@ -53,7 +51,7 @@ class MatcherProcessor {
 
     async _searchAsync() {
         this.logger.info(`Searching Scryfall for "${this.name}"`);
-        this.cards = await dependencies.Searcher(this.name);
+        this.cards = await this.dependencies.searchPrintings(this.name);
     }
 
     async _processResultsAsync() {
@@ -88,7 +86,7 @@ class MatcherProcessor {
     async _hashLocalCardAsync() {
         let directory;
         try {
-            directory = await dependencies.createDirectory();
+            directory = await this.dependencies.createDirectory();
         } catch {
             return this._hashFromPathAsync(this.filePath);
         }
@@ -104,12 +102,12 @@ class MatcherProcessor {
     async _hashFromSetSymbolAsync(directory) {
         this.logger.info(`Hashing set symbol for "${this.name}"`);
         try {
-            const setSymbolPath = await dependencies.GetSetSymbolSnippetTmpFile(
+            const setSymbolPath = await this.dependencies.writeSetSymbolSnippet(
                 this.filePath,
                 directory
             );
             this.setSymbolImagePath = setSymbolPath;
-            const hash = await dependencies.Hash(setSymbolPath);
+            const hash = await this.dependencies.hashImage(setSymbolPath);
             this.hashMode = "set-symbol";
             this.localHash = hash;
         } finally {
@@ -118,7 +116,7 @@ class MatcherProcessor {
     }
 
     async _hashFromPathAsync(filePath) {
-        const hash = await dependencies.Hash(filePath);
+        const hash = await this.dependencies.hashImage(filePath);
         this.hashMode = "full-card";
         this.localHash = hash;
     }
@@ -129,11 +127,11 @@ class MatcherProcessor {
         }
         const dir = this.setSymbolDirectory;
         this.setSymbolDirectory = "";
-        dependencies.cleanUpFiles(dir).catch(() => {});
+        this.dependencies.cleanUpFiles(dir).catch(() => {});
     }
 
     async _processMultiSetMatchesAsync() {
-        const processHashes = dependencies.HashProcessor.create({
+        const processHashes = this.dependencies.processHashes.create({
             name: this.name,
             cards: this.cards,
             localHash: this.localHash,
@@ -205,10 +203,9 @@ class MatcherProcessor {
 
 const create = (params) => new MatcherProcessor(params);
 
-export { create, dependencies, MatcherProcessor };
+export { create, MatcherProcessor };
 
 export default {
     create,
-    dependencies,
     MatcherProcessor
 };

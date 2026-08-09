@@ -19,16 +19,17 @@ async function base64EncodeImage(imagePath) {
     return buffer.toString("base64");
 }
 
-const dependencies = {
-    ImageProcessor: imageProcessing.ImageProcessor,
-    FileIO,
-    MatchName: fuzzyMatching.MatchName,
-    MatchProcessor: matcher.MatchingProcessor,
-    NeedsAttention,
-    Collection,
-    GetAdditionalCardInfo: scryfallApi.Search,
-    Base64: base64EncodeImage
-};
+const defaultDependencies = Object.freeze({
+    imageProcessor: imageProcessing.ImageProcessor,
+    fileIO: FileIO,
+    matchName: fuzzyMatching.MatchName,
+    matchProcessor: matcher.MatchingProcessor,
+    needsAttention: NeedsAttention,
+    collection: Collection,
+    cardSearch: scryfallApi.Search,
+    encodeImage: base64EncodeImage,
+    storage
+});
 
 const schema = joi.object().keys({
     filePath: joi.string().min(1).required(),
@@ -45,9 +46,14 @@ const schema = joi.object().keys({
 
 class ProcessorClass {
     constructor(params) {
-        const { logger: injectedLogger, ...processorParams } = params;
+        const {
+            dependencies: injectedDependencies,
+            logger: injectedLogger,
+            ...processorParams
+        } = params;
         const validatedSchema = joi.attempt(processorParams, schema);
         Object.assign(this, validatedSchema);
+        this.dependencies = { ...defaultDependencies, ...(injectedDependencies || {}) };
         this.imagePaths = {};
         this.extractedText = {};
         this.matcherResults = [];
@@ -90,7 +96,7 @@ class ProcessorClass {
     // --no-local-cache is set. This is what #49 ("Transaction") became.
     async logOperationAsync(extra = {}) {
         try {
-            storage.log.record({
+            this.dependencies.storage.log.record({
                 filePath: this.filePath,
                 extractedText: this.nameExtractionResults
                     ? {
@@ -111,7 +117,7 @@ class ProcessorClass {
                 decision: this.decision,
                 queryingEnabled: this.queryingEnabled,
                 collectionEnabled: this.collectionEnabled,
-                storageAdapter: storage.adapterName,
+                storageAdapter: this.dependencies.storage.adapterName,
                 error: null,
                 ...extra
             });
@@ -123,13 +129,13 @@ class ProcessorClass {
 
     async createDirectoryAsync() {
         this.logger.info("Preparing temporary files");
-        const directory = await dependencies.FileIO.createDirectory();
+        const directory = await this.dependencies.fileIO.createDirectory();
         this.directory = directory;
     }
 
     async extractNameAsync() {
         this.logger.info("Reading card name");
-        const extractor = dependencies.ImageProcessor.create({
+        const extractor = this.dependencies.imageProcessor.create({
             path: this.filePath,
             type: "name",
             directory: this.directory
@@ -151,8 +157,8 @@ class ProcessorClass {
         const resolution = await resolveCardName({
             filePath: this.filePath,
             directory: this.directory,
-            ImageProcessor: dependencies.ImageProcessor,
-            MatchName: dependencies.MatchName,
+            ImageProcessor: this.dependencies.imageProcessor,
+            MatchName: this.dependencies.matchName,
             logger: this.logger,
             titleExtractionResults: this.nameExtractionResults,
             titleExtractionImagePath: this.nameExtractionImagePath
@@ -209,7 +215,7 @@ class ProcessorClass {
     }
 
     async _attemptMatch(match) {
-        const matchProcessor = dependencies.MatchProcessor.create({
+        const matchProcessor = this.dependencies.matchProcessor.create({
             name: match.name,
             filePath: this.filePath,
             queryingEnabled: this.queryingEnabled,
@@ -225,8 +231,8 @@ class ProcessorClass {
 
     async CreateNeedsAttentionRecordAsync(record) {
         this.logger.info(`Saving "${record.name}" for manual review`);
-        const name64Image = await dependencies.Base64(this.nameExtractionImagePath);
-        const needsAttenionModel = dependencies.NeedsAttention.create({
+        const name64Image = await this.dependencies.encodeImage(this.nameExtractionImagePath);
+        const needsAttenionModel = this.dependencies.needsAttention.create({
             cardName: record.name,
             extractedText: this.nameExtractionResults.cleanText,
             dirtyExtractedText: this.nameExtractionResults.dirtyText,
@@ -241,10 +247,7 @@ class ProcessorClass {
         const set = record.sets[0];
         let additionalInfo;
         try {
-            additionalInfo = await dependencies.GetAdditionalCardInfo.searchByNameExact(
-                record.name,
-                ""
-            );
+            additionalInfo = await this.dependencies.cardSearch.searchByNameExact(record.name, "");
         } catch (err) {
             this.logger.error(err);
             throw err;
@@ -253,7 +256,7 @@ class ProcessorClass {
         // (nedb or rds, whichever is selected) owns adding that to whatever quantity
         // already exists for this cardName+cardSet, and computes estValue from the
         // resulting total using priceUsd. See src/models/card-collection.mjs.
-        const collectionsModel = dependencies.Collection.create({
+        const collectionsModel = this.dependencies.collection.create({
             cardName: record.name,
             cardSet: set,
             automated: true,
@@ -283,11 +286,8 @@ function formatMatchSummary(matches = []) {
 
 export const create = (params) => new ProcessorClass(params);
 
-export { dependencies };
-
 export const Processor = {
     create,
-    dependencies,
     Processor: ProcessorClass
 };
 

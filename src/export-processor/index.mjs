@@ -1,10 +1,9 @@
-import { ProcessHashes as ProcessHashesClass, create, dependencies } from "./process-hashes.mjs";
+import { ProcessHashes as ProcessHashesClass, create } from "./process-hashes.mjs";
 
 export const ProcessHashes = ProcessHashesClass;
-export { create, dependencies };
+export { create };
 
 export default {
     ProcessHashes: ProcessHashesClass,
-    create,
-    dependencies
+    create
 };

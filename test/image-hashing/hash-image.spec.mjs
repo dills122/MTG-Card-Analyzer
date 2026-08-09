@@ -1,12 +1,16 @@
 import { assert } from "chai";
 import sinon from "sinon";
-import { hashImage, compareHash, dependencies } from "../../src/image-hashing/hash-image.mjs";
+import { compareHash, createHashing } from "../../src/image-hashing/hash-image.mjs";
 
 describe("image-hashing::hash-image", () => {
     let sandbox;
+    let imageHashStub;
+    let hashImage;
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
+        imageHashStub = sandbox.stub();
+        ({ hashImage } = createHashing({ imageHash: imageHashStub }));
     });
 
     afterEach(() => {
@@ -19,9 +23,7 @@ describe("image-hashing::hash-image", () => {
         // failing outright until this was fixed. Lock in that a remote URL always carries a
         // User-Agent through image-hash's {url, headers} request-object form.
         it("passes a User-Agent header for a remote http(s) URL", (done) => {
-            const imageHashStub = sandbox
-                .stub(dependencies, "imageHash")
-                .callsArgWith(3, null, "hash");
+            imageHashStub.callsArgWith(3, null, "hash");
 
             hashImage("https://cards.scryfall.io/normal/front/a/b/card.jpg", (err, hash) => {
                 assert.isNull(err);
@@ -36,9 +38,7 @@ describe("image-hashing::hash-image", () => {
         });
 
         it("passes a local file path through unchanged (no headers wrapper)", (done) => {
-            const imageHashStub = sandbox
-                .stub(dependencies, "imageHash")
-                .callsArgWith(3, null, "hash");
+            imageHashStub.callsArgWith(3, null, "hash");
 
             hashImage("/tmp/some/local/card.png", (err) => {
                 assert.isTrue(imageHashStub.calledOnce);
@@ -49,7 +49,7 @@ describe("image-hashing::hash-image", () => {
         });
 
         it("forwards a hashing error to the callback", (done) => {
-            sandbox.stub(dependencies, "imageHash").callsArgWith(3, new Error("boom"));
+            imageHashStub.callsArgWith(3, new Error("boom"));
 
             hashImage("https://cards.scryfall.io/normal/front/a/b/card.jpg", (err, hash) => {
                 assert.instanceOf(err, Error);

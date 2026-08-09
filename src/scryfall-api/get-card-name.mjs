@@ -2,34 +2,36 @@ import apiConfig from "./api.config.mjs";
 import log from "../logger/log.mjs";
 import { request, REQUEST_HEADERS } from "./http-client.mjs";
 
-const logger = log.create({
+const defaultLogger = log.create({
     isPretty: true
 });
 
-const dependencies = {
-    request
-};
-
-async function getCardNames() {
-    try {
-        const response = await dependencies.request({
-            uri: apiConfig.templates.catalogCardNames,
-            headers: REQUEST_HEADERS
-        });
-        if (response) {
-            const names = JSON.parse(response).data || [];
-            return names;
+export function createCardNameApi({ request: sendRequest = request, logger = defaultLogger } = {}) {
+    async function getCardNames() {
+        try {
+            const response = await sendRequest({
+                uri: apiConfig.templates.catalogCardNames,
+                headers: REQUEST_HEADERS
+            });
+            if (response) {
+                return JSON.parse(response).data || [];
+            }
+            return [];
+        } catch (err) {
+            logger.error(err);
+            return [];
         }
-        return [];
-    } catch (err) {
-        logger.error(err);
-        return [];
     }
+
+    return Object.freeze({ getCardNames });
 }
 
-export { getCardNames, dependencies };
+const cardNameApi = createCardNameApi();
+const { getCardNames } = cardNameApi;
+
+export { getCardNames };
 
 export default {
     getCardNames,
-    dependencies
+    createCardNameApi
 };

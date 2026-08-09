@@ -2,84 +2,84 @@ import apiConfig from "./api.config.mjs";
 import log from "../logger/log.mjs";
 import { request, REQUEST_HEADERS } from "./http-client.mjs";
 
-const logger = log.create({
+const defaultLogger = log.create({
     isPretty: true
 });
 
-const dependencies = {
-    request
-};
-
-// These return a random/newest card if printed across sets
-async function searchByNameExact(exact, fuzzy = "") {
-    try {
-        const response = await dependencies.request({
-            uri: encodeURI(`${apiConfig.templates.cardNameExact}${exact}`),
-            headers: REQUEST_HEADERS
-        });
-        if (response) {
-            const cardInfo = JSON.parse(response) || {};
-            if (Object.keys(cardInfo).length === 0) {
-                return await searchByNameFuzzy(fuzzy);
+export function createSearchApi({ request: sendRequest = request, logger = defaultLogger } = {}) {
+    // These return a random/newest card if printed across sets.
+    async function searchByNameExact(exact, fuzzy = "") {
+        try {
+            const response = await sendRequest({
+                uri: encodeURI(`${apiConfig.templates.cardNameExact}${exact}`),
+                headers: REQUEST_HEADERS
+            });
+            if (response) {
+                const cardInfo = JSON.parse(response) || {};
+                if (Object.keys(cardInfo).length === 0) {
+                    return await searchByNameFuzzy(fuzzy);
+                }
+                return cardInfo;
             }
-            return cardInfo;
+            return {};
+        } catch (err) {
+            logger.error(err);
+            return {};
         }
-        return {};
-    } catch (err) {
-        logger.error(err);
-        return {};
     }
-}
 
-// These return a random/newest card if printed across sets
-async function searchByNameFuzzy(exact, fuzzy = "") {
-    if (fuzzy === "") {
-        return {};
-    }
-    try {
-        const response = await dependencies.request({
-            uri: encodeURI(`${apiConfig.templates.cardNameFuzzy}${exact}`),
-            headers: REQUEST_HEADERS
-        });
-        if (response) {
-            const cardInfo = JSON.parse(response) || {};
-            return cardInfo;
+    // These return a random/newest card if printed across sets.
+    async function searchByNameFuzzy(exact, fuzzy = "") {
+        if (fuzzy === "") {
+            return {};
         }
-        return {};
-    } catch (err) {
-        logger.error(err);
-        return {
-            err
-        };
-    }
-}
-
-async function searchList(exact) {
-    const name = exact.replace(/ /g, "%20");
-    try {
-        const response = await dependencies.request({
-            uri: `${apiConfig.templates.cardListExact}${name}&unique=prints`,
-            headers: REQUEST_HEADERS
-        });
-        if (response) {
-            const cardInfo = JSON.parse(response) || {};
-            if (Object.keys(cardInfo).length === 0) {
-                return [await searchByNameFuzzy(name)];
+        try {
+            const response = await sendRequest({
+                uri: encodeURI(`${apiConfig.templates.cardNameFuzzy}${exact}`),
+                headers: REQUEST_HEADERS
+            });
+            if (response) {
+                return JSON.parse(response) || {};
             }
-            return cardInfo.data;
+            return {};
+        } catch (err) {
+            logger.error(err);
+            return { err };
         }
-        return [];
-    } catch (err) {
-        logger.error(err);
-        return [];
     }
+
+    async function searchList(exact) {
+        const name = exact.replace(/ /g, "%20");
+        try {
+            const response = await sendRequest({
+                uri: `${apiConfig.templates.cardListExact}${name}&unique=prints`,
+                headers: REQUEST_HEADERS
+            });
+            if (response) {
+                const cardInfo = JSON.parse(response) || {};
+                if (Object.keys(cardInfo).length === 0) {
+                    return [await searchByNameFuzzy(name)];
+                }
+                return cardInfo.data;
+            }
+            return [];
+        } catch (err) {
+            logger.error(err);
+            return [];
+        }
+    }
+
+    return Object.freeze({ searchByNameExact, searchByNameFuzzy, searchList });
 }
 
-export { searchByNameExact, searchByNameFuzzy, searchList, dependencies };
+const searchApi = createSearchApi();
+const { searchByNameExact, searchByNameFuzzy, searchList } = searchApi;
+
+export { searchByNameExact, searchByNameFuzzy, searchList };
 
 export default {
     searchByNameExact,
     searchByNameFuzzy,
     searchList,
-    dependencies
+    createSearchApi
 };

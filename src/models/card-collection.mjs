@@ -20,12 +20,14 @@ const schema = Joi.object().keys({
     imageUrl: Joi.string().min(3).max(150).required()
 });
 
-const dependencies = {
+const defaultDependencies = Object.freeze({
     upsert: (record) => storage.collection.upsert(record)
-};
+});
 
 function create(params) {
-    const validated = Joi.attempt(params, schema);
+    const { dependencies: injectedDependencies, ...input } = params;
+    const validated = Joi.attempt(input, schema);
+    const dependencies = { ...defaultDependencies, ...(injectedDependencies || {}) };
     return {
         ...validated,
         async insert() {
@@ -42,6 +44,6 @@ function create(params) {
     };
 }
 
-export { create, dependencies };
+export { create };
 
-export default { create, dependencies };
+export default { create };

@@ -1,11 +1,10 @@
-import ProcessorApi, { create, dependencies, ProcessorClass } from "./processor.mjs";
+import ProcessorApi, { create, ProcessorClass } from "./processor.mjs";
 
 export const Processor = ProcessorApi;
-export { create, dependencies, ProcessorClass };
+export { create, ProcessorClass };
 
 export default {
     Processor: ProcessorApi,
     create,
-    dependencies,
     ProcessorClass
 };
