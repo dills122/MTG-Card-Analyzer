@@ -2544,6 +2544,606 @@
             "style": "showcase",
             "referenceImage": "../../../test-images/regression/scryfall/dmu-328-danitha-benalia-s-hope-26070716.jpg",
             "apiUrl": "https://scryfall.com/card/dmu/328/danitha-benalias-hope?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "d2e9decf-47b7-44e0-b380-8055b6011021",
+            "name": "Pyramids",
+            "set": "ARN",
+            "setName": "Arabian Nights",
+            "collectorNumber": "67",
+            "typeLine": "Artifact",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/arn-67-pyramids-d2e9decf.jpg",
+            "apiUrl": "https://scryfall.com/card/arn/67/pyramids?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "20d666ef-39bf-4fbf-8201-5f1056539da2",
+            "name": "Blue Elemental Blast",
+            "set": "LEA",
+            "setName": "Limited Edition Alpha",
+            "collectorNumber": "49",
+            "typeLine": "Instant",
+            "rarity": "common",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/lea-49-blue-elemental-blast-20d666ef.jpg",
+            "apiUrl": "https://scryfall.com/card/lea/49/blue-elemental-blast?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "5149ffff-d38f-458e-bcfa-a4b6b332a0b4",
+            "name": "Xenic Poltergeist",
+            "set": "ATQ",
+            "setName": "Antiquities",
+            "collectorNumber": "20",
+            "typeLine": "Creature — Spirit",
+            "rarity": "uncommon",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/atq-20-xenic-poltergeist-5149ffff.jpg",
+            "apiUrl": "https://scryfall.com/card/atq/20/xenic-poltergeist?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "52ff5051-e24b-4453-aaae-ed4f2bf213ab",
+            "name": "Wall of Kelp",
+            "set": "HML",
+            "setName": "Homelands",
+            "collectorNumber": "40",
+            "typeLine": "Creature — Plant Wall",
+            "rarity": "rare",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/hml-40-wall-of-kelp-52ff5051.jpg",
+            "apiUrl": "https://scryfall.com/card/hml/40/wall-of-kelp?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "4c0ad95c-d62c-4138-ada0-fa39a63a449e",
+            "name": "Snow-Covered Forest",
+            "set": "ICE",
+            "setName": "Ice Age",
+            "collectorNumber": "383",
+            "typeLine": "Basic Snow Land — Forest",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/ice-383-snow-covered-forest-4c0ad95c.jpg",
+            "apiUrl": "https://scryfall.com/card/ice/383/snow-covered-forest?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "897de61e-440f-4eaf-aef8-0dd1c6117288",
+            "name": "Cocoon",
+            "set": "CHR",
+            "setName": "Chronicles",
+            "collectorNumber": "59",
+            "typeLine": "Enchantment — Aura",
+            "rarity": "uncommon",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/chr-59-cocoon-897de61e.jpg",
+            "apiUrl": "https://scryfall.com/card/chr/59/cocoon?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "e315c1c2-436e-48ff-9214-938697178393",
+            "name": "Ancient Runes",
+            "set": "TMP",
+            "setName": "Tempest",
+            "collectorNumber": "161",
+            "typeLine": "Enchantment",
+            "rarity": "uncommon",
+            "colors": ["R"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/tmp-161-ancient-runes-e315c1c2.jpg",
+            "apiUrl": "https://scryfall.com/card/tmp/161/ancient-runes?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "e70cd5fa-ae66-4ea4-90d2-28af2aa34dd4",
+            "name": "Necrosavant",
+            "set": "VIS",
+            "setName": "Visions",
+            "collectorNumber": "65",
+            "typeLine": "Creature — Zombie Giant",
+            "rarity": "rare",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/vis-65-necrosavant-e70cd5fa.jpg",
+            "apiUrl": "https://scryfall.com/card/vis/65/necrosavant?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "368b28e4-a367-4a38-866d-c3768bd9b7ad",
+            "name": "Flux",
+            "set": "WTH",
+            "setName": "Weatherlight",
+            "collectorNumber": "39",
+            "typeLine": "Sorcery",
+            "rarity": "common",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/wth-39-flux-368b28e4.jpg",
+            "apiUrl": "https://scryfall.com/card/wth/39/flux?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "666efc89-b566-4b2b-a0e2-52f1dedc9e10",
+            "name": "Exhaustion",
+            "set": "USG",
+            "setName": "Urza's Saga",
+            "collectorNumber": "74",
+            "typeLine": "Sorcery",
+            "rarity": "uncommon",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/usg-74-exhaustion-666efc89.jpg",
+            "apiUrl": "https://scryfall.com/card/usg/74/exhaustion?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "28028830-83ed-45e2-b495-3b9ad9d3e988",
+            "name": "Mox Diamond",
+            "set": "STH",
+            "setName": "Stronghold",
+            "collectorNumber": "138",
+            "typeLine": "Artifact",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/sth-138-mox-diamond-28028830.jpg",
+            "apiUrl": "https://scryfall.com/card/sth/138/mox-diamond?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "cb80105c-d2c0-4f8c-9302-5e6152a60f54",
+            "name": "Jackalope Herd",
+            "set": "EXO",
+            "setName": "Exodus",
+            "collectorNumber": "111",
+            "typeLine": "Creature — Rabbit Beast",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/exo-111-jackalope-herd-cb80105c.jpg",
+            "apiUrl": "https://scryfall.com/card/exo/111/jackalope-herd?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "0e3d913d-2dcf-4747-8169-0c44ec895864",
+            "name": "Saprazzan Heir",
+            "set": "MMQ",
+            "setName": "Mercadian Masques",
+            "collectorNumber": "99",
+            "typeLine": "Creature — Merfolk",
+            "rarity": "rare",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mmq-99-saprazzan-heir-0e3d913d.jpg",
+            "apiUrl": "https://scryfall.com/card/mmq/99/saprazzan-heir?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "229ba320-69c9-4400-a0d7-f0f79e8d9856",
+            "name": "Fodder Cannon",
+            "set": "UDS",
+            "setName": "Urza's Destiny",
+            "collectorNumber": "131",
+            "typeLine": "Artifact",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/uds-131-fodder-cannon-229ba320.jpg",
+            "apiUrl": "https://scryfall.com/card/uds/131/fodder-cannon?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "59e256c2-38df-4012-9308-ce17dd889e5f",
+            "name": "Rancor",
+            "set": "ULG",
+            "setName": "Urza's Legacy",
+            "collectorNumber": "110",
+            "typeLine": "Enchantment — Aura",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/ulg-110-rancor-59e256c2.jpg",
+            "apiUrl": "https://scryfall.com/card/ulg/110/rancor?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "f80a56ed-3ebb-4e20-bf6a-e27127f762e8",
+            "name": "Thicket Elemental",
+            "set": "INV",
+            "setName": "Invasion",
+            "collectorNumber": "214",
+            "typeLine": "Creature — Elemental",
+            "rarity": "rare",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/inv-214-thicket-elemental-f80a56ed.jpg",
+            "apiUrl": "https://scryfall.com/card/inv/214/thicket-elemental?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "ccaff6a0-7831-45db-a50f-881c6cb7ce49",
+            "name": "Vicious Hunger",
+            "set": "NEM",
+            "setName": "Nemesis",
+            "collectorNumber": "74",
+            "typeLine": "Sorcery",
+            "rarity": "common",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/nem-74-vicious-hunger-ccaff6a0.jpg",
+            "apiUrl": "https://scryfall.com/card/nem/74/vicious-hunger?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "9211ee02-e854-4414-92b1-65a7af29f0b9",
+            "name": "Sunken Field",
+            "set": "PCY",
+            "setName": "Prophecy",
+            "collectorNumber": "51",
+            "typeLine": "Enchantment — Aura",
+            "rarity": "uncommon",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/pcy-51-sunken-field-9211ee02.jpg",
+            "apiUrl": "https://scryfall.com/card/pcy/51/sunken-field?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "5514627a-b24c-48c9-9a5a-5a375adcdf62",
+            "name": "Anarchist",
+            "set": "ODY",
+            "setName": "Odyssey",
+            "collectorNumber": "173",
+            "typeLine": "Creature — Human Wizard",
+            "rarity": "common",
+            "colors": ["R"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/ody-173-anarchist-5514627a.jpg",
+            "apiUrl": "https://scryfall.com/card/ody/173/anarchist?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "8e7dd90a-4f93-43aa-b503-18289fdd571e",
+            "name": "Illusion // Reality",
+            "set": "APC",
+            "setName": "Apocalypse",
+            "collectorNumber": "129",
+            "typeLine": "Instant // Instant",
+            "rarity": "uncommon",
+            "colors": ["U", "G"],
+            "layout": "split",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/apc-129-illusion-reality-8e7dd90a.jpg",
+            "apiUrl": "https://scryfall.com/card/apc/129/illusion-reality?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "1315fef0-234e-44f5-a7a3-bf3db78943c3",
+            "name": "Planar Overlay",
+            "set": "PLS",
+            "setName": "Planeshift",
+            "collectorNumber": "28",
+            "typeLine": "Sorcery",
+            "rarity": "rare",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/pls-28-planar-overlay-1315fef0.jpg",
+            "apiUrl": "https://scryfall.com/card/pls/28/planar-overlay?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "7e505e8e-51aa-4415-81e6-cf022279edb0",
+            "name": "Glarecaster",
+            "set": "ONS",
+            "setName": "Onslaught",
+            "collectorNumber": "30",
+            "typeLine": "Creature — Bird Cleric",
+            "rarity": "rare",
+            "colors": ["W"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/ons-30-glarecaster-7e505e8e.jpg",
+            "apiUrl": "https://scryfall.com/card/ons/30/glarecaster?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "bd3a735a-5f51-41af-99d1-92296cec7b22",
+            "name": "Far Wanderings",
+            "set": "TOR",
+            "setName": "Torment",
+            "collectorNumber": "125",
+            "typeLine": "Sorcery",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/tor-125-far-wanderings-bd3a735a.jpg",
+            "apiUrl": "https://scryfall.com/card/tor/125/far-wanderings?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "92ece630-e484-4221-911f-e32048894f23",
+            "name": "Riftstone Portal",
+            "set": "JUD",
+            "setName": "Judgment",
+            "collectorNumber": "143",
+            "typeLine": "Land",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/jud-143-riftstone-portal-92ece630.jpg",
+            "apiUrl": "https://scryfall.com/card/jud/143/riftstone-portal?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "f3dcd1ce-717c-431a-9895-f7701d276743",
+            "name": "Pharika's Mender",
+            "set": "THS",
+            "setName": "Theros",
+            "collectorNumber": "197",
+            "typeLine": "Creature — Gorgon",
+            "rarity": "uncommon",
+            "colors": ["B", "G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/ths-197-pharika-s-mender-f3dcd1ce.jpg",
+            "apiUrl": "https://scryfall.com/card/ths/197/pharikas-mender?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "71c2f0fb-3291-489c-92cf-8d326f2e6735",
+            "name": "Mark of the Vampire",
+            "set": "M14",
+            "setName": "Magic 2014",
+            "collectorNumber": "105",
+            "typeLine": "Enchantment — Aura",
+            "rarity": "common",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/m14-105-mark-of-the-vampire-71c2f0fb.jpg",
+            "apiUrl": "https://scryfall.com/card/m14/105/mark-of-the-vampire?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "47fde349-010e-4a2e-838e-e924dbeec355",
+            "name": "Watery Grave",
+            "set": "GTC",
+            "setName": "Gatecrash",
+            "collectorNumber": "249",
+            "typeLine": "Land — Island Swamp",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/gtc-249-watery-grave-47fde349.jpg",
+            "apiUrl": "https://scryfall.com/card/gtc/249/watery-grave?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "87252577-3e7b-4ea2-b0ac-3ba3f0eaac40",
+            "name": "Boros Cluestone",
+            "set": "DGM",
+            "setName": "Dragon's Maze",
+            "collectorNumber": "137",
+            "typeLine": "Artifact",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/dgm-137-boros-cluestone-87252577.jpg",
+            "apiUrl": "https://scryfall.com/card/dgm/137/boros-cluestone?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "f2392fbb-d9c4-4688-b99c-4e7614c60c12",
+            "name": "Volatile Fjord",
+            "set": "KHM",
+            "setName": "Kaldheim",
+            "collectorNumber": "273",
+            "typeLine": "Snow Land — Island Mountain",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/khm-273-volatile-fjord-f2392fbb.jpg",
+            "apiUrl": "https://scryfall.com/card/khm/273/volatile-fjord?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "0069688d-6fc8-466e-8b53-11f0ada87b21",
+            "name": "Bloodline Culling",
+            "set": "MID",
+            "setName": "Innistrad: Midnight Hunt",
+            "collectorNumber": "343",
+            "typeLine": "Instant",
+            "rarity": "rare",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "extended-art",
+            "referenceImage": "../../../test-images/regression/scryfall/mid-343-bloodline-culling-0069688d.jpg",
+            "apiUrl": "https://scryfall.com/card/mid/343/bloodline-culling?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "a5c7241c-c053-440b-b91c-f7298080d626",
+            "name": "Tanazir Quandrix",
+            "set": "STX",
+            "setName": "Strixhaven: School of Mages",
+            "collectorNumber": "284",
+            "typeLine": "Legendary Creature — Elder Dragon",
+            "rarity": "mythic",
+            "colors": ["U", "G"],
+            "layout": "normal",
+            "style": "full-art",
+            "referenceImage": "../../../test-images/regression/scryfall/stx-284-tanazir-quandrix-a5c7241c.jpg",
+            "apiUrl": "https://scryfall.com/card/stx/284/tanazir-quandrix?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "141f7948-3140-40f2-95dd-ab6c79f2a821",
+            "name": "Laid to Rest",
+            "set": "VOW",
+            "setName": "Innistrad: Crimson Vow",
+            "collectorNumber": "207",
+            "typeLine": "Enchantment",
+            "rarity": "uncommon",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/vow-207-laid-to-rest-141f7948.jpg",
+            "apiUrl": "https://scryfall.com/card/vow/207/laid-to-rest?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "b43b3c33-aa44-4001-87ff-695bf04f51be",
+            "name": "Lumra, Bellow of the Woods",
+            "set": "BLB",
+            "setName": "Bloomburrow",
+            "collectorNumber": "342",
+            "typeLine": "Legendary Creature — Elemental Bear",
+            "rarity": "mythic",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "full-art",
+            "referenceImage": "../../../test-images/regression/scryfall/blb-342-lumra-bellow-of-the-woods-b43b3c33.jpg",
+            "apiUrl": "https://scryfall.com/card/blb/342/lumra-bellow-of-the-woods?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "2dd69f2d-8c9c-41fc-93ea-48fc7a6d5272",
+            "name": "Underwater Tunnel // Slimy Aquarium",
+            "set": "DSK",
+            "setName": "Duskmourn: House of Horror",
+            "collectorNumber": "79",
+            "typeLine": "Enchantment — Room // Enchantment — Room",
+            "rarity": "common",
+            "colors": ["U"],
+            "layout": "split",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/dsk-79-underwater-tunnel-slimy-aquarium-2dd69f2d.jpg",
+            "apiUrl": "https://scryfall.com/card/dsk/79/underwater-tunnel-slimy-aquarium?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "aae03d91-8269-4124-ba50-a6c65f47718b",
+            "name": "Insatiable Avarice",
+            "set": "OTJ",
+            "setName": "Outlaws of Thunder Junction",
+            "collectorNumber": "325",
+            "typeLine": "Sorcery",
+            "rarity": "rare",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "extended-art",
+            "referenceImage": "../../../test-images/regression/scryfall/otj-325-insatiable-avarice-aae03d91.jpg",
+            "apiUrl": "https://scryfall.com/card/otj/325/insatiable-avarice?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "eb67d2a1-4b0b-4d4a-8ae9-eaf0f831cdb5",
+            "name": "Not on My Watch",
+            "set": "MKM",
+            "setName": "Murders at Karlov Manor",
+            "collectorNumber": "291",
+            "typeLine": "Instant",
+            "rarity": "uncommon",
+            "colors": ["W"],
+            "layout": "normal",
+            "style": "showcase",
+            "referenceImage": "../../../test-images/regression/scryfall/mkm-291-not-on-my-watch-eb67d2a1.jpg",
+            "apiUrl": "https://scryfall.com/card/mkm/291/not-on-my-watch?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "91e30df5-63f7-4281-8d64-8d522d663652",
+            "name": "Master Pakku",
+            "set": "TLA",
+            "setName": "Avatar: The Last Airbender",
+            "collectorNumber": "63",
+            "typeLine": "Legendary Creature — Human Advisor Ally",
+            "rarity": "uncommon",
+            "colors": ["U"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/tla-63-master-pakku-91e30df5.jpg",
+            "apiUrl": "https://scryfall.com/card/tla/63/master-pakku?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "76bd76c7-7a1e-4119-8f4a-12b536b30a32",
+            "name": "Awaken the Honored Dead",
+            "set": "TDM",
+            "setName": "Tarkir: Dragonstorm",
+            "collectorNumber": "383",
+            "typeLine": "Enchantment — Saga",
+            "rarity": "rare",
+            "colors": ["U", "B", "G"],
+            "layout": "saga",
+            "style": "borderless",
+            "referenceImage": "../../../test-images/regression/scryfall/tdm-383-awaken-the-honored-dead-76bd76c7.jpg",
+            "apiUrl": "https://scryfall.com/card/tdm/383/awaken-the-honored-dead?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "cd9e294e-cdb2-423d-a034-f68f673b5973",
+            "name": "Skybox Ferry",
+            "set": "DFT",
+            "setName": "Aetherdrift",
+            "collectorNumber": "332",
+            "typeLine": "Artifact — Vehicle",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "full-art",
+            "referenceImage": "../../../test-images/regression/scryfall/dft-332-skybox-ferry-cd9e294e.jpg",
+            "apiUrl": "https://scryfall.com/card/dft/332/skybox-ferry?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "f6bb05de-4cf5-479d-a0f7-1a2792a6b6d0",
+            "name": "Susur Secundi, Void Altar",
+            "set": "EOE",
+            "setName": "Edge of Eternities",
+            "collectorNumber": "284",
+            "typeLine": "Land — Planet",
+            "rarity": "mythic",
+            "colors": [],
+            "layout": "normal",
+            "style": "showcase",
+            "referenceImage": "../../../test-images/regression/scryfall/eoe-284-susur-secundi-void-altar-f6bb05de.jpg",
+            "apiUrl": "https://scryfall.com/card/eoe/284/susur-secundi-void-altar?utm_source=api"
         }
     ],
     "cases": [
@@ -6495,6 +7095,886 @@
                     "typeLine": "Legendary Creature — Human Knight",
                     "rarity": "rare",
                     "colors": ["W"],
+                    "layout": "normal",
+                    "style": "showcase"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "arn-67-pyramids-d2e9decf-scryfall",
+            "image": "../../../test-images/regression/scryfall/arn-67-pyramids-d2e9decf.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed release-year gap candidate; disabled after no name match at 34% OCR confidence",
+            "expected": {
+                "name": "Pyramids",
+                "set": "ARN",
+                "collectorNumber": "67",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "lea-49-blue-elemental-blast-20d666ef-scryfall",
+            "image": "../../../test-images/regression/scryfall/lea-49-blue-elemental-blast-20d666ef.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed release-year gap candidate; disabled after no name match at 48% OCR confidence",
+            "expected": {
+                "name": "Blue Elemental Blast",
+                "set": "LEA",
+                "collectorNumber": "49",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "common",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "atq-20-xenic-poltergeist-5149ffff-scryfall",
+            "image": "../../../test-images/regression/scryfall/atq-20-xenic-poltergeist-5149ffff.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Xenic Poltergeist",
+                "set": "ATQ",
+                "collectorNumber": "20",
+                "metadata": {
+                    "typeLine": "Creature — Spirit",
+                    "rarity": "uncommon",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "hml-40-wall-of-kelp-52ff5051-scryfall",
+            "image": "../../../test-images/regression/scryfall/hml-40-wall-of-kelp-52ff5051.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed release-year gap candidate; disabled after no name match at 52% OCR confidence",
+            "expected": {
+                "name": "Wall of Kelp",
+                "set": "HML",
+                "collectorNumber": "40",
+                "metadata": {
+                    "typeLine": "Creature — Plant Wall",
+                    "rarity": "rare",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "ice-383-snow-covered-forest-4c0ad95c-scryfall",
+            "image": "../../../test-images/regression/scryfall/ice-383-snow-covered-forest-4c0ad95c.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Snow-Covered Forest",
+                "set": "ICE",
+                "collectorNumber": "383",
+                "metadata": {
+                    "typeLine": "Basic Snow Land — Forest",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "chr-59-cocoon-897de61e-scryfall",
+            "image": "../../../test-images/regression/scryfall/chr-59-cocoon-897de61e.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Cocoon",
+                "set": "CHR",
+                "collectorNumber": "59",
+                "metadata": {
+                    "typeLine": "Enchantment — Aura",
+                    "rarity": "uncommon",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "tmp-161-ancient-runes-e315c1c2-scryfall",
+            "image": "../../../test-images/regression/scryfall/tmp-161-ancient-runes-e315c1c2.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Ancient Runes",
+                "set": "TMP",
+                "collectorNumber": "161",
+                "metadata": {
+                    "typeLine": "Enchantment",
+                    "rarity": "uncommon",
+                    "colors": ["R"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "vis-65-necrosavant-e70cd5fa-scryfall",
+            "image": "../../../test-images/regression/scryfall/vis-65-necrosavant-e70cd5fa.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Necrosavant",
+                "set": "VIS",
+                "collectorNumber": "65",
+                "metadata": {
+                    "typeLine": "Creature — Zombie Giant",
+                    "rarity": "rare",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "wth-39-flux-368b28e4-scryfall",
+            "image": "../../../test-images/regression/scryfall/wth-39-flux-368b28e4.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed release-year gap candidate; disabled after no name match at 36% OCR confidence",
+            "expected": {
+                "name": "Flux",
+                "set": "WTH",
+                "collectorNumber": "39",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "common",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "usg-74-exhaustion-666efc89-scryfall",
+            "image": "../../../test-images/regression/scryfall/usg-74-exhaustion-666efc89.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Exhaustion",
+                "set": "USG",
+                "collectorNumber": "74",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "uncommon",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "sth-138-mox-diamond-28028830-scryfall",
+            "image": "../../../test-images/regression/scryfall/sth-138-mox-diamond-28028830.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Mox Diamond",
+                "set": "STH",
+                "collectorNumber": "138",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "exo-111-jackalope-herd-cb80105c-scryfall",
+            "image": "../../../test-images/regression/scryfall/exo-111-jackalope-herd-cb80105c.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Jackalope Herd",
+                "set": "EXO",
+                "collectorNumber": "111",
+                "metadata": {
+                    "typeLine": "Creature — Rabbit Beast",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "mmq-99-saprazzan-heir-0e3d913d-scryfall",
+            "image": "../../../test-images/regression/scryfall/mmq-99-saprazzan-heir-0e3d913d.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Saprazzan Heir",
+                "set": "MMQ",
+                "collectorNumber": "99",
+                "metadata": {
+                    "typeLine": "Creature — Merfolk",
+                    "rarity": "rare",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "uds-131-fodder-cannon-229ba320-scryfall",
+            "image": "../../../test-images/regression/scryfall/uds-131-fodder-cannon-229ba320.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Fodder Cannon",
+                "set": "UDS",
+                "collectorNumber": "131",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "ulg-110-rancor-59e256c2-scryfall",
+            "image": "../../../test-images/regression/scryfall/ulg-110-rancor-59e256c2.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Rancor",
+                "set": "ULG",
+                "collectorNumber": "110",
+                "metadata": {
+                    "typeLine": "Enchantment — Aura",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "inv-214-thicket-elemental-f80a56ed-scryfall",
+            "image": "../../../test-images/regression/scryfall/inv-214-thicket-elemental-f80a56ed.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Thicket Elemental",
+                "set": "INV",
+                "collectorNumber": "214",
+                "metadata": {
+                    "typeLine": "Creature — Elemental",
+                    "rarity": "rare",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "nem-74-vicious-hunger-ccaff6a0-scryfall",
+            "image": "../../../test-images/regression/scryfall/nem-74-vicious-hunger-ccaff6a0.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Vicious Hunger",
+                "set": "NEM",
+                "collectorNumber": "74",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "common",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "pcy-51-sunken-field-9211ee02-scryfall",
+            "image": "../../../test-images/regression/scryfall/pcy-51-sunken-field-9211ee02.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed release-year gap candidate; disabled after no name match at 19% OCR confidence",
+            "expected": {
+                "name": "Sunken Field",
+                "set": "PCY",
+                "collectorNumber": "51",
+                "metadata": {
+                    "typeLine": "Enchantment — Aura",
+                    "rarity": "uncommon",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "ody-173-anarchist-5514627a-scryfall",
+            "image": "../../../test-images/regression/scryfall/ody-173-anarchist-5514627a.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Anarchist",
+                "set": "ODY",
+                "collectorNumber": "173",
+                "metadata": {
+                    "typeLine": "Creature — Human Wizard",
+                    "rarity": "common",
+                    "colors": ["R"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "apc-129-illusion-reality-8e7dd90a-scryfall",
+            "image": "../../../test-images/regression/scryfall/apc-129-illusion-reality-8e7dd90a.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed release-year gap candidate; disabled after no name match at 15% OCR confidence",
+            "expected": {
+                "name": "Illusion // Reality",
+                "set": "APC",
+                "collectorNumber": "129",
+                "metadata": {
+                    "typeLine": "Instant // Instant",
+                    "rarity": "uncommon",
+                    "colors": ["U", "G"],
+                    "layout": "split",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "pls-28-planar-overlay-1315fef0-scryfall",
+            "image": "../../../test-images/regression/scryfall/pls-28-planar-overlay-1315fef0.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Planar Overlay",
+                "set": "PLS",
+                "collectorNumber": "28",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "rare",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "ons-30-glarecaster-7e505e8e-scryfall",
+            "image": "../../../test-images/regression/scryfall/ons-30-glarecaster-7e505e8e.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed release-year gap candidate; disabled after no name match at 50% OCR confidence",
+            "expected": {
+                "name": "Glarecaster",
+                "set": "ONS",
+                "collectorNumber": "30",
+                "metadata": {
+                    "typeLine": "Creature — Bird Cleric",
+                    "rarity": "rare",
+                    "colors": ["W"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "tor-125-far-wanderings-bd3a735a-scryfall",
+            "image": "../../../test-images/regression/scryfall/tor-125-far-wanderings-bd3a735a.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Far Wanderings",
+                "set": "TOR",
+                "collectorNumber": "125",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "jud-143-riftstone-portal-92ece630-scryfall",
+            "image": "../../../test-images/regression/scryfall/jud-143-riftstone-portal-92ece630.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Riftstone Portal",
+                "set": "JUD",
+                "collectorNumber": "143",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "ths-197-pharika-s-mender-f3dcd1ce-scryfall",
+            "image": "../../../test-images/regression/scryfall/ths-197-pharika-s-mender-f3dcd1ce.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Pharika's Mender",
+                "set": "THS",
+                "collectorNumber": "197",
+                "metadata": {
+                    "typeLine": "Creature — Gorgon",
+                    "rarity": "uncommon",
+                    "colors": ["B", "G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "m14-105-mark-of-the-vampire-71c2f0fb-scryfall",
+            "image": "../../../test-images/regression/scryfall/m14-105-mark-of-the-vampire-71c2f0fb.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Mark of the Vampire",
+                "set": "M14",
+                "collectorNumber": "105",
+                "metadata": {
+                    "typeLine": "Enchantment — Aura",
+                    "rarity": "common",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "gtc-249-watery-grave-47fde349-scryfall",
+            "image": "../../../test-images/regression/scryfall/gtc-249-watery-grave-47fde349.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Watery Grave",
+                "set": "GTC",
+                "collectorNumber": "249",
+                "metadata": {
+                    "typeLine": "Land — Island Swamp",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "dgm-137-boros-cluestone-87252577-scryfall",
+            "image": "../../../test-images/regression/scryfall/dgm-137-boros-cluestone-87252577.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Boros Cluestone",
+                "set": "DGM",
+                "collectorNumber": "137",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "khm-273-volatile-fjord-f2392fbb-scryfall",
+            "image": "../../../test-images/regression/scryfall/khm-273-volatile-fjord-f2392fbb.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Volatile Fjord",
+                "set": "KHM",
+                "collectorNumber": "273",
+                "metadata": {
+                    "typeLine": "Snow Land — Island Mountain",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "mid-343-bloodline-culling-0069688d-scryfall",
+            "image": "../../../test-images/regression/scryfall/mid-343-bloodline-culling-0069688d.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Bloodline Culling",
+                "set": "MID",
+                "collectorNumber": "343",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "rare",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "extended-art"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "stx-284-tanazir-quandrix-a5c7241c-scryfall",
+            "image": "../../../test-images/regression/scryfall/stx-284-tanazir-quandrix-a5c7241c.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Tanazir Quandrix",
+                "set": "STX",
+                "collectorNumber": "284",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Elder Dragon",
+                    "rarity": "mythic",
+                    "colors": ["U", "G"],
+                    "layout": "normal",
+                    "style": "full-art"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "vow-207-laid-to-rest-141f7948-scryfall",
+            "image": "../../../test-images/regression/scryfall/vow-207-laid-to-rest-141f7948.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Laid to Rest",
+                "set": "VOW",
+                "collectorNumber": "207",
+                "metadata": {
+                    "typeLine": "Enchantment",
+                    "rarity": "uncommon",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "blb-342-lumra-bellow-of-the-woods-b43b3c33-scryfall",
+            "image": "../../../test-images/regression/scryfall/blb-342-lumra-bellow-of-the-woods-b43b3c33.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Lumra, Bellow of the Woods",
+                "set": "BLB",
+                "collectorNumber": "342",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Elemental Bear",
+                    "rarity": "mythic",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "full-art"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "dsk-79-underwater-tunnel-slimy-aquarium-2dd69f2d-scryfall",
+            "image": "../../../test-images/regression/scryfall/dsk-79-underwater-tunnel-slimy-aquarium-2dd69f2d.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Underwater Tunnel // Slimy Aquarium",
+                "set": "DSK",
+                "collectorNumber": "79",
+                "metadata": {
+                    "typeLine": "Enchantment — Room // Enchantment — Room",
+                    "rarity": "common",
+                    "colors": ["U"],
+                    "layout": "split",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "otj-325-insatiable-avarice-aae03d91-scryfall",
+            "image": "../../../test-images/regression/scryfall/otj-325-insatiable-avarice-aae03d91.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Insatiable Avarice",
+                "set": "OTJ",
+                "collectorNumber": "325",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "rare",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "extended-art"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "mkm-291-not-on-my-watch-eb67d2a1-scryfall",
+            "image": "../../../test-images/regression/scryfall/mkm-291-not-on-my-watch-eb67d2a1.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Not on My Watch",
+                "set": "MKM",
+                "collectorNumber": "291",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "uncommon",
+                    "colors": ["W"],
+                    "layout": "normal",
+                    "style": "showcase"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "tla-63-master-pakku-91e30df5-scryfall",
+            "image": "../../../test-images/regression/scryfall/tla-63-master-pakku-91e30df5.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Master Pakku",
+                "set": "TLA",
+                "collectorNumber": "63",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Human Advisor Ally",
+                    "rarity": "uncommon",
+                    "colors": ["U"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "tdm-383-awaken-the-honored-dead-76bd76c7-scryfall",
+            "image": "../../../test-images/regression/scryfall/tdm-383-awaken-the-honored-dead-76bd76c7.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Awaken the Honored Dead",
+                "set": "TDM",
+                "collectorNumber": "383",
+                "metadata": {
+                    "typeLine": "Enchantment — Saga",
+                    "rarity": "rare",
+                    "colors": ["U", "B", "G"],
+                    "layout": "saga",
+                    "style": "borderless"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "dft-332-skybox-ferry-cd9e294e-scryfall",
+            "image": "../../../test-images/regression/scryfall/dft-332-skybox-ferry-cd9e294e.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Skybox Ferry",
+                "set": "DFT",
+                "collectorNumber": "332",
+                "metadata": {
+                    "typeLine": "Artifact — Vehicle",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "full-art"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "eoe-284-susur-secundi-void-altar-f6bb05de-scryfall",
+            "image": "../../../test-images/regression/scryfall/eoe-284-susur-secundi-void-altar-f6bb05de.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for release-year gap coverage",
+            "expected": {
+                "name": "Susur Secundi, Void Altar",
+                "set": "EOE",
+                "collectorNumber": "284",
+                "metadata": {
+                    "typeLine": "Land — Planet",
+                    "rarity": "mythic",
+                    "colors": [],
                     "layout": "normal",
                     "style": "showcase"
                 },
