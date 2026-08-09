@@ -3,15 +3,22 @@ import { expect, assert as chaiAssert } from "chai";
 import sinon from "sinon";
 import matchName from "../../src/fuzzy-matching/match-name.mjs";
 
-const { create, dependencies } = matchName;
+const { create: createMatchName } = matchName;
 
 describe("FuzzyMatching::", () => {
     let sandbox = {};
     let stubs = {};
 
+    function create(params) {
+        return createMatchName({
+            ...params,
+            dependencies: { getNames: stubs.BulkNamesStub }
+        });
+    }
+
     beforeEach(() => {
         sandbox = sinon.createSandbox();
-        stubs.BulkNamesStub = sandbox.stub(dependencies, "GetNames").resolves([
+        stubs.BulkNamesStub = sandbox.stub().resolves([
             {
                 name: "Legion's Landing // Adanto, the First Fort"
             },
@@ -126,8 +133,7 @@ describe("FuzzyMatching::", () => {
         ]);
     });
     afterEach(() => {
-        sinon.restore();
-        stubs.BulkNamesStub.restore();
+        sandbox.restore();
     });
     describe("NameMatching::", () => {
         it("Should return a high probability match", async () => {
@@ -135,7 +141,6 @@ describe("FuzzyMatching::", () => {
             const matches = await create({
                 cleanText: name
             }).match();
-            console.log(matches);
             let [first] = matches;
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             expect(matches).to.be.an("array");
@@ -151,7 +156,6 @@ describe("FuzzyMatching::", () => {
             const matches = await create({
                 cleanText: name
             }).match();
-            console.log(matches);
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             chaiAssert.isArray(matches);
             assert.equal(matches.length, 0);
@@ -251,11 +255,34 @@ Whenever you cast a creature spell, put a counter on Vivi Ornitier.`
         });
 
         it("maps an unambiguous face-name match back to its canonical compound name", async () => {
-            const matcher = create({ cleanText: "Legion's Landing", dirtyText: "" });
+            const matcher = create({ cleanText: "Legion's Landing" });
             const matches = await matcher.match();
 
             assert.equal(matches[0]?.name, "Legion's Landing // Adanto, the First Fort");
             assert.equal(matches[0]?.percentage, 1);
+        });
+
+        it("never returns more candidates than the configured maximum", async () => {
+            stubs.BulkNamesStub.resolves(
+                ["Alpha", "Bravo", "Charly", "Delta", "Eagle", "Foxtrot", "Golf"].map((suffix) => ({
+                    name: `Thought Reflection ${suffix}`
+                }))
+            );
+
+            const matches = await create({ cleanText: "Thought Reflection" }).match();
+
+            assert.equal(matches.length, 5);
+        });
+
+        it("deduplicates compound-card aliases before supplemental ambiguity checks", async () => {
+            stubs.BulkNamesStub.resolves([{ name: "Alpha Mage // Beta Sage" }]);
+
+            const matches = await create({
+                cleanText: "ZZZZ",
+                supplementalText: "Alpha Mage and Beta Sage. Alpha Mage. Beta Sage."
+            }).match();
+
+            assert.deepEqual(matches, [{ name: "Alpha Mage // Beta Sage", percentage: 1 }]);
         });
     });
 });

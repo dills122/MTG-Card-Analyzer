@@ -189,7 +189,7 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
             logger: silentLogger,
             titleExtractionResults: ocr,
             matchDependencies: {
-                GetNames: async () => context.cardNames
+                getNames: async () => context.cardNames
             }
         });
         const nameMatches = nameResolution.matches;

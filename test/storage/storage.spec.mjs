@@ -28,7 +28,7 @@ describe("storage::index (lazy adapter resolution)", () => {
         delete process.env.STORAGE_ADAPTER;
         const storage = await freshStorage();
         // Simulate the real consumer pattern (match-name.mjs): grab a method reference
-        // at import time, same as `const dependencies = { GetNames: storage.names.getAll }`.
+        // at import time, same as `const dependencies = { getNames: storage.names.getAll }`.
         const getAll = storage.names.getAll;
 
         // CLI flag applied AFTER the import graph has already loaded, same as index.mjs's run().

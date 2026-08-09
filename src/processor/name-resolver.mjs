@@ -30,7 +30,6 @@ async function matchName({
 }) {
     const matcher = MatchName.create({
         cleanText: extractionResults.cleanText,
-        ...(extractionResults.dirtyText ? { dirtyText: extractionResults.dirtyText } : {}),
         candidateTexts: extractionResults.textCandidates || [],
         ...(supplementalText ? { supplementalText } : {}),
         ...(matchDependencies ? { dependencies: matchDependencies } : {}),
