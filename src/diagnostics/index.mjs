@@ -10,11 +10,14 @@ const appVersion = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")).version;
 // Everything a bug report needs, in one shot: environment health, versions, active config,
 // and recent scan activity. Nothing sensitive in here -- secrets live only in
 // secure.config.cjs, which this never reads. `node index.mjs diagnostics`.
-async function gatherDiagnostics({ limit = 20, withMysql = false } = {}) {
-    const environment = await runEnvironmentCheck({ withMysql });
-    const config = getConfig();
+async function gatherDiagnostics({ limit = 20, withMysql = false } = {}, dependencies = {}) {
+    const environmentCheck = dependencies.runEnvironmentCheck || runEnvironmentCheck;
+    const resolveConfig = dependencies.getConfig || getConfig;
+    const dumpOperations = dependencies.dumpOperations || ((options) => storage.log.dump(options));
+    const environment = await environmentCheck({ withMysql });
+    const config = resolveConfig();
 
-    const recentOperations = (await storage.log.dump({ limit })) || [];
+    const recentOperations = (await dumpOperations({ limit })) || [];
 
     return {
         generatedAt: new Date().toISOString(),

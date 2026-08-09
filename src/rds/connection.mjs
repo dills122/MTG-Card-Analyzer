@@ -18,8 +18,7 @@ function getSecureConfig() {
 // createConnection() already waits for the underlying "connect" event before resolving, so
 // there's no separate .connect() step to call (unlike the callback-based mysql2 API this used
 // to use).
-function createConnection() {
-    const config = getSecureConfig();
+function createConnection({ secureConfig: config = getSecureConfig() } = {}) {
     return mysql.createConnection({
         host: config.rds.host,
         port: config.rds.port,

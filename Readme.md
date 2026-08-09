@@ -44,6 +44,10 @@ or duplicate rows while upserting names. A required seed failure makes setup exi
 `--skip-seed` only when diagnostics already reports a healthy index. Setup does not start MySQL
 unless you explicitly pass `--with-mysql`.
 
+The package exposes `mtg-card-analyzer` as its installed executable. Commands in this source
+checkout use the equivalent `node index.mjs` form; generated help and examples use the installed
+command name.
+
 If the scan does not complete, check the environment before digging into individual settings:
 
 ```bash
@@ -151,7 +155,9 @@ fuzzy matching, hashing, or print selection should also run:
 pnpm test:regression
 ```
 
-The unit suite is deterministic and does not require live Scryfall or MySQL access. See
+The unit suite is deterministic, ignores machine-local configuration and credentials, and does not
+require live Scryfall or MySQL access. CI runs the fast/unit gate on both Node 20 and Node 22 while
+running the expensive cold-cache OCR regression once on Node 22. See
 [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## License

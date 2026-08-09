@@ -4,7 +4,7 @@ Thanks for looking at MTG Card Analyzer. This doc covers how to set up, work on,
 
 ## Setup
 
-- Node >= 20 (repo is developed/tested on Node 22)
+- Node >= 20 (CI tests the supported floor on Node 20 and the primary runtime on Node 22)
 - [pnpm](https://pnpm.io/) >= 8: `corepack enable` or `npm i -g pnpm`
 - Clone and run the setup script:
 
@@ -59,6 +59,10 @@ pnpm test:regression
 sequence. The OCR regression run is especially important for changes to image preprocessing,
 OCR, fuzzy matching, hashing, or print selection.
 
+CI runs `check:fast` and the unit suite on Node 20 and Node 22. Coverage is collected on Node 22,
+and the cold-cache OCR regression remains a single Node 22 job so the compatibility matrix does not
+multiply the expensive benchmark.
+
 Type checking is being introduced incrementally for this ESM JavaScript codebase. The strict
 checked-module list lives in `tsconfig.checked.json`; add a touched production module there once its
 JSDoc contracts pass `pnpm typecheck`.
@@ -77,6 +81,8 @@ currently 85% lines/statements/functions, 70% branches) so coverage can't silent
 
 - Tests live in `test/**/*.spec.mjs` and mirror the `src/` structure.
 - Tests stub external calls (Scryfall API, MySQL/RDS, filesystem where practical) — no live network or DB access required to run the suite.
+- Config, diagnostics, and RDS tests inject isolated paths and settings; `pnpm check` must pass even
+  when setup-created `mtg.config.json` and `secure.config.cjs` files exist in the checkout.
 - Prefer constructor, factory, or function-parameter injection at I/O boundaries. Use standalone
   `sinon` fakes in each test; do not mutate module-level dependency objects shared by production
   imports.

@@ -15,7 +15,12 @@ permissions:
     pull-requests: read
 jobs:
     pr_job:
+        name: Quality (Node ${{ matrix.node-version }})
         runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                node-version: ["20", "22"]
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -30,7 +35,7 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  node-version: ${{ matrix.node-version }}
                   cache: pnpm
                   cache-dependency-path: pnpm-lock.yaml
 
@@ -40,14 +45,19 @@ jobs:
             - name: Lint + Format + Types
               run: pnpm check:fast
 
+            - name: Unit tests
+              if: matrix.node-version == '20'
+              run: pnpm test
+
             - name: Test + Coverage gate
+              if: matrix.node-version == '22'
               run: pnpm coverage:check
 
             - name: Upload coverage report
-              if: always()
+              if: always() && matrix.node-version == '22'
               uses: actions/upload-artifact@v4
               with:
-                  name: mtg-coverage-${{ github.run_id }}
+                  name: mtg-coverage-node-${{ matrix.node-version }}-${{ github.run_id }}
                   path: coverage/
                   if-no-files-found: warn
                   retention-days: 14

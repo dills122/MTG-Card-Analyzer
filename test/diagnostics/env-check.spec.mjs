@@ -1,4 +1,7 @@
 import { assert } from "chai";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
     MIN_USABLE_CARD_NAMES,
     evaluateCardNameIndex,
@@ -8,11 +11,33 @@ import {
 } from "../../src/diagnostics/env-check.mjs";
 import { DEFAULT_OCR_MODEL_SHA256 } from "../../src/image-analysis/ocr-model.mjs";
 
-// Exercises the real local environment (same checks scripts/verify-env.mjs runs) rather than
-// mocking every fs/DB dependency -- the point of this module is "is the environment actually
-// usable", so a real repo checkout with a seeded local cache is the meaningful thing to assert
-// against. See test/diagnostics/index.spec.mjs for gatherDiagnostics()'s own wiring.
 describe("diagnostics::env-check", () => {
+    let tmpDir;
+    let dependencies;
+
+    beforeEach(() => {
+        tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mtg-diagnostics-test-"));
+        dependencies = {
+            getConfig: () => ({
+                storageAdapter: "nedb",
+                localCacheEnabled: true,
+                collectionEnabled: false,
+                debugLogging: false,
+                queryingEnabled: false,
+                prettyLogging: true
+            }),
+            resolveDbFilename: () => path.join(tmpDir, "cardNames.db"),
+            getCardNameRecords: async () => [],
+            secureConfigPath: path.join(tmpDir, "secure.config.cjs")
+        };
+    });
+
+    afterEach(() => {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    const runCheck = (options) => runEnvironmentCheck(options, dependencies);
+
     it("reports a normalized, deduplicated card-name index as healthy", () => {
         const records = Array.from({ length: MIN_USABLE_CARD_NAMES }, (_, index) => ({
             name: `Card ${index}`
@@ -54,7 +79,7 @@ describe("diagnostics::env-check", () => {
     });
 
     it("returns checks/requiredFailures/warnings with no unhandled rejection", async () => {
-        const result = await runEnvironmentCheck();
+        const result = await runCheck();
 
         assert.isArray(result.checks);
         assert.isNotEmpty(result.checks);
@@ -76,14 +101,14 @@ describe("diagnostics::env-check", () => {
     });
 
     it("checks Node version against the >=20 floor", async () => {
-        const result = await runEnvironmentCheck();
+        const result = await runCheck();
         const nodeCheck = result.checks.find((check) => check.label.startsWith("Node "));
         assert.exists(nodeCheck);
         assert.equal(nodeCheck.status, "pass", "this test suite itself requires Node >=20");
     });
 
     it("checks the pinned official LSTM English model used at runtime", async () => {
-        const result = await runEnvironmentCheck();
+        const result = await runCheck();
         const modelCheck = result.checks.find((check) =>
             check.label.startsWith("English OCR model")
         );
@@ -112,7 +137,7 @@ describe("diagnostics::env-check", () => {
     });
 
     it("reports the resolved config (storageAdapter/localCacheEnabled/collectionEnabled/debugLogging/queryingEnabled/prettyLogging)", async () => {
-        const result = await runEnvironmentCheck();
+        const result = await runCheck();
         const labels = result.checks.map((check) => check.label);
         assert.isTrue(labels.some((label) => label.startsWith("storageAdapter")));
         assert.isTrue(labels.some((label) => label.startsWith("localCacheEnabled")));
@@ -123,16 +148,30 @@ describe("diagnostics::env-check", () => {
     });
 
     it("skips the MySQL check by default (withMysql: false)", async () => {
-        const result = await runEnvironmentCheck();
+        const result = await runCheck();
         const labels = result.checks.map((check) => check.label);
         assert.isFalse(labels.some((label) => label.includes("MySQL")));
     });
 
-    it("runs a MySQL-related check when withMysql is true", async () => {
-        const result = await runEnvironmentCheck({ withMysql: true });
+    it("reports the injected missing secure config when withMysql is true", async () => {
+        const result = await runCheck({ withMysql: true });
         const labels = result.checks.map((check) => check.label);
-        assert.isTrue(
-            labels.some((label) => label.includes("MySQL") || label.includes("secure.config.cjs"))
-        );
+        assert.isTrue(labels.some((label) => label.includes("secure.config.cjs not found")));
+    });
+
+    it("uses the injected MySQL connection boundary when secure config exists", async () => {
+        fs.writeFileSync(dependencies.secureConfigPath, "fixture only\n");
+        let connectionEnded = false;
+        dependencies.createConnection = async () => ({
+            end: async () => {
+                connectionEnded = true;
+            }
+        });
+
+        const result = await runCheck({ withMysql: true });
+        const mysqlCheck = result.checks.find((check) => check.label.includes("MySQL"));
+
+        assert.deepEqual(mysqlCheck, { label: "MySQL connection succeeded", status: "pass" });
+        assert.isTrue(connectionEnded);
     });
 });
