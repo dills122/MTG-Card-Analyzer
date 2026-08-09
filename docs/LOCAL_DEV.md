@@ -32,7 +32,10 @@ node scripts/verify-env.mjs --with-mysql # also checks the MySQL connection
 
 ## What `scripts/setup.mjs` does
 
-Deliberately dependency-free (only core Node modules) so it runs before `pnpm install` has ever succeeded on a fresh clone. Every step is idempotent — safe to re-run any time, won't clobber files you've already customized.
+The setup script itself is deliberately dependency-free (only core Node modules), so it can run
+before `pnpm install` has succeeded on a fresh clone. Configuration creation is non-clobbering, but
+installation and seeding repeat unless skipped. After a successful seed, use `--skip-seed` on later
+runs because the current seeder appends the catalog and can create duplicate name rows.
 
 | Step               | What happens                                                                                            |
 | ------------------ | ------------------------------------------------------------------------------------------------------- |
@@ -81,10 +84,14 @@ To wipe local MySQL state entirely: `docker compose down -v` (removes the volume
 pnpm check          # full gate: lint + prettier + typecheck + test
 pnpm test            # tests only
 pnpm coverage        # tests + coverage report (coverage/index.html)
+pnpm coverage:check  # tests + the coverage thresholds enforced by CI
+pnpm test:regression # cold-cache OCR and matching regression gate
 node scripts/verify-env.mjs  # is the environment actually usable
 ```
 
-`pnpm check` is what CI runs — get it green locally before opening a PR.
+`pnpm check` is the standard local gate. CI runs `pnpm check:fast`, `pnpm coverage:check`, and a
+separate `pnpm test:regression` job; see [CONTRIBUTING.md](../CONTRIBUTING.md#before-opening-a-pr)
+for the exact sequence.
 
 ## Troubleshooting
 
