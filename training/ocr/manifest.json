@@ -1,0 +1,18 @@
+{
+    "version": 1,
+    "status": "draft",
+    "modelName": "eng_mtg",
+    "randomSeed": 20260808,
+    "trainRatio": 0.9,
+    "baseModel": {
+        "id": "official-eng-best",
+        "family": "tessdata_best",
+        "sha256": "8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba",
+        "source": {
+            "url": "https://github.com/tesseract-ocr/tessdata_best",
+            "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+            "license": "Apache-2.0"
+        }
+    },
+    "samples": []
+}

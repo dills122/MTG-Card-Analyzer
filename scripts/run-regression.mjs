@@ -3,6 +3,7 @@
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Command } from "commander";
+import { loadOcrModelManifest } from "../src/regression/ocr-model-candidate.mjs";
 import { QUALITY_LEVELS, loadManifest } from "../src/regression/manifest.mjs";
 import { runRegression } from "../src/regression/regression-runner.mjs";
 import { writeBenchmarkReport } from "../src/regression/report.mjs";
@@ -11,6 +12,11 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDirectory, "..");
 const defaultManifest = path.join(repositoryRoot, "test/regression/fixtures/manifest.json");
 const defaultOutput = path.join(repositoryRoot, "artifacts/regression");
+const defaultOcrModelManifest = path.join(
+    repositoryRoot,
+    "test/regression/ocr-models/manifest.json"
+);
+const defaultOcrModel = "bundled-eng-control";
 
 function collect(value, previous) {
     return previous.concat(value);
@@ -22,6 +28,12 @@ function buildProgram() {
         .description("Run deterministic OCR and card-matching regression fixtures")
         .option("-m, --manifest <path>", "fixture manifest", defaultManifest)
         .option("-o, --output <directory>", "benchmark report directory", defaultOutput)
+        .option(
+            "--ocr-model-manifest <path>",
+            "reviewed OCR model candidate manifest",
+            defaultOcrModelManifest
+        )
+        .option("--ocr-model <id>", "OCR model candidate ID", defaultOcrModel)
         .option("-c, --case <id>", "run a fixture id (repeatable)", collect, [])
         .option(
             "-q, --quality <level>",
@@ -32,37 +44,53 @@ function buildProgram() {
         .option("--no-fail-on-regression", "write the report but exit zero when fixtures fail");
 }
 
-async function main(argv = process.argv) {
+async function main(argv = process.argv, overrides = {}) {
+    const {
+        loadManifest: loadFixtureManifest = loadManifest,
+        loadOcrModelManifest: loadModelManifest = loadOcrModelManifest,
+        runRegression: runRegressionFn = runRegression,
+        writeBenchmarkReport: writeBenchmarkReportFn = writeBenchmarkReport,
+        writeLine = console.log
+    } = overrides;
     const options = buildProgram().parse(argv).opts();
     const unknownQualities = options.quality.filter((quality) => !QUALITY_LEVELS.includes(quality));
     if (unknownQualities.length > 0) {
         throw new Error(`Unknown quality level(s): ${unknownQualities.join(", ")}`);
     }
 
-    const manifest = await loadManifest(options.manifest);
-    const report = await runRegression(manifest, {
+    const manifest = await loadFixtureManifest(options.manifest);
+    const modelManifest = await loadModelManifest(options.ocrModelManifest);
+    const ocrModel = modelManifest.candidates.find(
+        (candidate) => candidate.id === options.ocrModel && candidate.enabled !== false
+    );
+    if (!ocrModel) {
+        throw new Error(`Unknown OCR model candidate: ${options.ocrModel}`);
+    }
+    const report = await runRegressionFn(manifest, {
         caseIds: options.case,
-        qualities: options.quality
+        qualities: options.quality,
+        ocrModel
     });
-    const paths = await writeBenchmarkReport(report, options.output);
-    console.log(
+    const paths = await writeBenchmarkReportFn(report, options.output);
+    writeLine(`OCR model: ${ocrModel.id}`);
+    writeLine(
         `Regression: ${report.summary.passed}/${report.summary.total} passed (${report.summary.passRate}%)`
     );
-    console.log(
+    writeLine(
         `CI gate: ${report.gate.passed}/${report.gate.total} blocking fixtures passed; ${report.gate.nonBlockingFailed}/${report.gate.nonBlocking} non-blocking fixtures failed`
     );
-    console.log("Application persistence, image-hash cache, and OCR cache: disabled");
-    console.log("Tesseract worker: shared sequentially for this regression run");
+    writeLine("Application persistence, image-hash cache, and OCR cache: disabled");
+    writeLine("Tesseract worker: shared sequentially for this regression run");
     if (report.pending.cases > 0) {
-        console.log(`Disabled fixtures: ${report.pending.cases}`);
+        writeLine(`Disabled fixtures: ${report.pending.cases}`);
     }
     if (report.pending.placeholderCases > 0) {
-        console.log(
+        writeLine(
             `Fixtures containing CHANGE_ME: ${report.pending.placeholderCases} (search the manifest to label them)`
         );
     }
-    console.log(`Markdown report: ${paths.markdownPath}`);
-    console.log(`JSON report: ${paths.jsonPath}`);
+    writeLine(`Markdown report: ${paths.markdownPath}`);
+    writeLine(`JSON report: ${paths.jsonPath}`);
 
     if (options.failOnRegression && report.gate.failed > 0) {
         process.exitCode = 1;
