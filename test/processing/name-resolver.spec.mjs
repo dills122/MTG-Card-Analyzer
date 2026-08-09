@@ -42,7 +42,15 @@ describe("Name resolver::", () => {
         const ImageProcessor = {
             create: sinon.stub().callsFake(({ type }) => ({
                 imagePath: `${type}.png`,
-                extract: (callback) => callback(null, type === "name" ? titleResults : rulesResults)
+                extract: (callback) =>
+                    callback(
+                        null,
+                        type === "name"
+                            ? titleResults
+                            : type === "rules-name"
+                              ? rulesResults
+                              : { cleanText: "", dirtyText: "", candidates: [] }
+                    )
             }))
         };
         const firstMatcher = { match: sinon.stub().resolves([]) };
@@ -55,6 +63,10 @@ describe("Name resolver::", () => {
                 .onFirstCall()
                 .returns(firstMatcher)
                 .onSecondCall()
+                .returns(firstMatcher)
+                .onThirdCall()
+                .returns(firstMatcher)
+                .onCall(3)
                 .returns(fallbackMatcher)
         };
 
@@ -67,11 +79,55 @@ describe("Name resolver::", () => {
 
         assert.deepEqual(
             ImageProcessor.create.getCalls().map((call) => call.args[0].type),
-            ["name", "rules-name"]
+            ["name", "soft-name", "rotated-name", "rules-name"]
         );
-        assert.equal(MatchName.create.secondCall.args[0].cleanText, titleResults.cleanText);
-        assert.equal(MatchName.create.secondCall.args[0].supplementalText, rulesResults.dirtyText);
+        assert.equal(MatchName.create.getCall(3).args[0].cleanText, titleResults.cleanText);
+        assert.equal(MatchName.create.getCall(3).args[0].supplementalText, rulesResults.dirtyText);
         assert.equal(result.matches[0].name, "Yuna, Hope of Spira");
         assert.equal(result.supplementalExtractionResults, rulesResults);
+    });
+
+    it("matches an alternate OCR line and promotes its source region", async () => {
+        const titleResults = {
+            cleanText: "HUMANELM",
+            dirtyText: "humanelm",
+            confidence: 74,
+            bestVariant: { region: "name-core" },
+            textCandidates: ["HUMANELM", "THUNDERSTEEL COLOSSUS"],
+            candidates: [
+                {
+                    region: "name-core",
+                    cleanText: "HUMANELM",
+                    dirtyText: "humanelm",
+                    confidence: 74,
+                    textCandidates: ["HUMANELM"]
+                },
+                {
+                    region: "top-band",
+                    cleanText: "THUNDERSTEEL COLOSSUS",
+                    dirtyText: "Thundersteel Colossus",
+                    confidence: 70,
+                    textCandidates: ["THUNDERSTEEL COLOSSUS"]
+                }
+            ]
+        };
+        const matcher = {
+            matchedText: "THUNDERSTEEL COLOSSUS",
+            match: sinon.stub().resolves([{ name: "Thundersteel Colossus", percentage: 1 }])
+        };
+        const MatchName = { create: sinon.stub().returns(matcher) };
+
+        const result = await resolveCardName({
+            filePath: "card.jpg",
+            directory: "tmp",
+            ImageProcessor: { create: sinon.stub() },
+            MatchName,
+            titleExtractionResults: titleResults,
+            titleExtractionImagePath: "title.png"
+        });
+
+        assert.equal(result.extractionResults.cleanText, "THUNDERSTEEL COLOSSUS");
+        assert.equal(result.extractionResults.bestVariant.region, "top-band");
+        assert.equal(result.matches[0].name, "Thundersteel Colossus");
     });
 });

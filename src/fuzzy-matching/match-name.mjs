@@ -37,7 +37,8 @@ const defaultDependencies = {
 
 const schema = joi.object().keys({
     cleanText: joi.string().allow("").required(),
-    dirtyText: joi.string().optional(),
+    dirtyText: joi.string().allow("").optional(),
+    candidateTexts: joi.array().items(joi.string().allow("")).max(48).optional(),
     supplementalText: joi.string().allow("").optional(),
     logger: joi.object().optional()
 });
@@ -66,11 +67,33 @@ class MatchName {
 
     filteredNames(names) {
         this.nameLookup = {};
-        return names.map((record) => {
+        const normalizedNames = [];
+        const canonicalNames = new Map();
+        for (const record of names) {
             const normalized = normalizeForMatch(record.name);
+            canonicalNames.set(normalized, record.name);
             this.nameLookup[normalized] = record.name;
-            return normalized;
-        });
+            normalizedNames.push(normalized);
+        }
+
+        const aliasOwners = new Map();
+        for (const record of names) {
+            for (const alias of nameAliases(record.name).slice(1)) {
+                const normalizedAlias = normalizeForMatch(alias);
+                const owners = aliasOwners.get(normalizedAlias) || new Set();
+                owners.add(record.name);
+                aliasOwners.set(normalizedAlias, owners);
+            }
+        }
+        for (const [normalizedAlias, owners] of aliasOwners) {
+            const [owner] = owners;
+            if (owners.size !== 1 || canonicalNames.has(normalizedAlias)) {
+                continue;
+            }
+            this.nameLookup[normalizedAlias] = owner;
+            normalizedNames.push(normalizedAlias);
+        }
+        return normalizedNames;
     }
 
     async match() {
@@ -83,9 +106,12 @@ class MatchName {
     }
 
     async gatherInitialResults() {
-        const normalizedQuery = normalizeForMatch(this.cleanText);
+        const normalizedQueries = uniqueNormalized([
+            this.cleanText,
+            ...(this.candidateTexts || [])
+        ]);
         const hasSupplementalEvidence = Boolean(normalizeForMatch(this.supplementalText || ""));
-        if (!normalizedQuery && !hasSupplementalEvidence) {
+        if (!normalizedQueries.length && !hasSupplementalEvidence) {
             this.nameLookup = {};
             this.initialResults = [];
             return;
@@ -93,25 +119,24 @@ class MatchName {
         const names = await this.dependencies.GetNames();
         const filteredNames = this.filteredNames(names);
         this.filteredStoredNames = [...new Set(filteredNames)];
-        if (!normalizedQuery) {
+        if (!normalizedQueries.length) {
             this.initialResults = [];
             return;
         }
         const fuzzy = FuzzySet(filteredNames);
-        const exact = this.nameLookup[normalizedQuery];
-        this.initialResults = exact ? [[1, normalizedQuery]] : fuzzy.get(normalizedQuery);
-        if (!this.initialResults) {
-            this.initialResults = [];
-        }
+        this.initialResults = normalizedQueries.flatMap((query) => {
+            const exact = this.nameLookup[query];
+            const matches = exact ? [[1, query]] : fuzzy.get(query) || [];
+            return matches.map((match) => ({ match, query }));
+        });
     }
 
     async filterBulkMatches() {
-        const query = normalizeForMatch(this.cleanText);
-        const queryTokens = tokenize(query);
-        const scoredResults = this.initialResults.map((match) => {
+        const scoredResults = this.initialResults.map(({ match, query }) => {
             const [namePercent, nameMatch] = match;
             const candidateName = this.nameLookup[nameMatch] || nameMatch;
             const normalizedCandidate = normalizeForMatch(candidateName);
+            const queryTokens = tokenize(query);
             const candidateTokens = tokenize(normalizedCandidate);
             const firstTokenSimilarity = calculateFirstTokenSimilarity(
                 queryTokens,
@@ -126,16 +151,34 @@ class MatchName {
                 name: candidateName,
                 percentage: namePercent,
                 _score: score,
-                _firstTokenSimilarity: firstTokenSimilarity
+                _firstTokenSimilarity: firstTokenSimilarity,
+                _query: query,
+                _queryTokens: queryTokens
             };
         });
+        const bestByName = new Map();
+        for (const result of scoredResults) {
+            const current = bestByName.get(result.name);
+            const resultIsEligible = result.percentage >= config.minConfidence;
+            const currentIsEligible = current?.percentage >= config.minConfidence;
+            if (
+                !current ||
+                (resultIsEligible && !currentIsEligible) ||
+                (resultIsEligible === currentIsEligible &&
+                    (result._score > current._score ||
+                        (result._score === current._score &&
+                            result.percentage > current.percentage)))
+            ) {
+                bestByName.set(result.name, result);
+            }
+        }
         const rankedResults = orderBy(
-            scoredResults,
+            [...bestByName.values()],
             ["_score", "percentage", "name"],
             ["desc", "desc", "asc"]
         );
 
-        if (shouldApplyDisambiguation(queryTokens, rankedResults)) {
+        if (shouldApplyDisambiguation(rankedResults[0]?._queryTokens || [], rankedResults)) {
             const bestScore = rankedResults[0]._score;
             const bestFirstTokenSimilarity = rankedResults[0]._firstTokenSimilarity;
             const firstTokenSimilarityFloor = Math.max(
@@ -151,6 +194,7 @@ class MatchName {
                 )
                 .slice(0, config.maxMatches + 1);
             if (narrowed.length > 0) {
+                this.matchedText = narrowed[0]._query;
                 return narrowed.map(stripInternalFields);
             }
         }
@@ -160,13 +204,16 @@ class MatchName {
         });
 
         if (highConfidenceMatches.length > 1) {
-            return highConfidenceMatches.splice(0, config.maxMatches + 1).map(stripInternalFields);
+            const selected = highConfidenceMatches.splice(0, config.maxMatches + 1);
+            this.matchedText = selected[0]?._query;
+            return selected.map(stripInternalFields);
         }
 
-        return rankedResults
+        const selected = rankedResults
             .filter((item) => item.percentage >= config.minConfidence)
-            .splice(0, config.maxMatches + 1)
-            .map(stripInternalFields);
+            .splice(0, config.maxMatches + 1);
+        this.matchedText = selected[0]?._query;
+        return selected.map(stripInternalFields);
     }
 
     matchSupplementalEvidence() {
@@ -217,6 +264,14 @@ export default {
 
 function normalizeForMatch(text) {
     return cleanString(text).toUpperCase().trim();
+}
+
+function nameAliases(name) {
+    return [...new Set([name, ...String(name || "").split(/\s+\/\/\s+/g)])].filter(Boolean);
+}
+
+function uniqueNormalized(values) {
+    return [...new Set(values.map(normalizeForMatch).filter(Boolean))];
 }
 
 function tokenize(text) {

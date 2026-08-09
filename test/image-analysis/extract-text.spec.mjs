@@ -322,10 +322,54 @@ describe("TextExtraction::", () => {
             langPath: "/fixtures",
             gzip: false
         });
-        assert.isTrue(worker.setParameters.notCalled);
+        assert.deepEqual(worker.setParameters.args, [
+            [{ tessedit_pageseg_mode: "7" }],
+            [{ tessedit_pageseg_mode: "6" }]
+        ]);
         assert.isTrue(worker.recognize.calledTwice);
 
         await textExtraction.shutDown();
         assert.isTrue(worker.terminate.calledOnce);
+    });
+
+    it("preserves each plausible OCR line as a bounded name candidate", async () => {
+        worker.recognize.resolves({
+            data: {
+                text: "border noise\nScreaming Fury\n33\n",
+                confidence: 61
+            }
+        });
+
+        const result = await new Promise((resolve, reject) => {
+            textExtraction.scanImage(
+                [{ buffer: Buffer.from("card"), region: "top-band", psm: "block" }],
+                "name",
+                (err, extracted) => (err ? reject(err) : resolve(extracted))
+            );
+        });
+
+        assert.include(result.textCandidates, "SCREAMING FURY");
+        assert.isAtMost(result.textCandidates.length, 12);
+    });
+
+    it("keeps bounded token windows that remove short title-border noise", async () => {
+        worker.recognize.resolves({
+            data: {
+                text: "Er of Mazarbul II\nNegate KL\n",
+                confidence: 58
+            }
+        });
+
+        const result = await new Promise((resolve, reject) => {
+            textExtraction.scanImage(
+                [{ buffer: Buffer.from("card"), region: "top-band", psm: "block" }],
+                "name",
+                (err, extracted) => (err ? reject(err) : resolve(extracted))
+            );
+        });
+
+        assert.include(result.textCandidates, "OF MAZARBUL");
+        assert.include(result.textCandidates, "NEGATE");
+        assert.isAtMost(result.textCandidates.length, 12);
     });
 });

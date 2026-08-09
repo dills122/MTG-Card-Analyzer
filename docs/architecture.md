@@ -7,13 +7,17 @@ matching and an optional legacy MySQL backend.
 ## Scan pipeline
 
 1. `index.mjs` parses the command and resolves configuration.
-2. `src/image-processing/` validates the input and produces enhanced crops of likely name regions.
-3. `src/image-analysis/` runs Tesseract and selects the strongest OCR result.
-4. `src/fuzzy-matching/` normalizes that result and ranks names from the local card-name index.
-5. `src/matcher/` obtains candidate printings through `src/scryfall-api/` and compares cached or
+2. `src/image-processing/` validates the input and produces bounded hard title crops.
+3. `src/image-analysis/` runs Tesseract with each crop's declared segmentation mode and preserves
+   plausible region and line candidates.
+4. `src/fuzzy-matching/` ranks all title candidates from the local card-name index and maps
+   unambiguous face-name aliases back to canonical compound names.
+5. When matching fails, `src/processor/` progressively requests soft/inverted title crops, rotated
+   title bands, and supplemental rules text.
+6. `src/matcher/` obtains candidate printings through `src/scryfall-api/` and compares cached or
    remote image hashes.
-6. `src/processor/` chooses dry-run, collection, needs-attention, or error behavior.
-7. `src/storage/` records local diagnostics and, when explicitly enabled, collection data.
+7. `src/processor/` chooses dry-run, collection, needs-attention, or error behavior.
+8. `src/storage/` records local diagnostics and, when explicitly enabled, collection data.
 
 The image, network, filesystem, and database boundaries remain outside the pure name-normalization
 and matching decisions so those decisions can be tested deterministically.

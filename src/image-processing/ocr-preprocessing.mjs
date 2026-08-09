@@ -26,11 +26,14 @@ const preprocessConfig = {
     blur: 1,
     invertPivot: 110
 };
+const nameCharacterWhitelist =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',-/ ";
+const titleNameTypes = new Set(["name", "soft-name", "rotated-name"]);
 
 /**
  * Build OCR-ready variants for likely text regions.
  * @param {string} imgPath
- * @param {"name"|"type"|"rules-name"} type
+ * @param {"name"|"soft-name"|"rotated-name"|"type"|"rules-name"} type
  * @param {{directory?: string}} options
  * @returns {Promise<{variants: Array, previewPath?: string, sourceSizing: {upscaleFactor: number, upscaled: boolean}}>}
  */
@@ -46,6 +49,14 @@ async function prepareOcrVariants(imgPath, type, options = {}) {
     }
 
     const baseImage = await jimp.read(imgPath);
+    if (type === "rotated-name") {
+        return {
+            variants: await buildRotatedNameVariants(baseImage, {
+                lowResolutionSource: sourceSizing.upscaled
+            }),
+            sourceSizing
+        };
+    }
     const templates = smartCrop.getRegionTemplates(type);
     const variants = [];
 
@@ -62,6 +73,7 @@ async function prepareOcrVariants(imgPath, type, options = {}) {
         variants.push({
             region: template.key,
             psm: template.psm,
+            ...(titleNameTypes.has(type) ? { characterWhitelist: nameCharacterWhitelist } : {}),
             buffer,
             image: processed
         });
@@ -76,8 +88,43 @@ async function prepareOcrVariants(imgPath, type, options = {}) {
     return { variants, previewPath, sourceSizing };
 }
 
+async function buildRotatedNameVariants(baseImage, options = {}) {
+    const variants = [];
+    const template = {
+        leftPercent: 0.015,
+        topPercent: 0.015,
+        widthPercent: 0.97,
+        heightPercent: 0.15,
+        psm: "block"
+    };
+    for (const rotation of [90, -90]) {
+        const rotated = baseImage.clone().rotate(rotation);
+        for (const mode of ["hard", "soft"]) {
+            const processed = await cropAndPreprocess(
+                rotated,
+                {
+                    ...template,
+                    mode: mode === "soft" ? "soft" : undefined
+                },
+                options
+            );
+            variants.push({
+                region: `rotated-name-${rotation === 90 ? "cw" : "ccw"}-${mode}`,
+                psm: template.psm,
+                characterWhitelist: nameCharacterWhitelist,
+                buffer: await processed.getBufferAsync(jimp.MIME_PNG),
+                image: processed
+            });
+        }
+    }
+    return variants;
+}
+
 async function cropAndPreprocess(baseImage, template, options = {}) {
     const { image: cropped } = smartCrop.cropRegion(baseImage, template);
+    if (template.mode === "soft-inverted") {
+        return buildSoftOcrImage(cropped, true);
+    }
     const useSoftProfile = template.mode === "soft" || options.lowResolutionSource;
     return useSoftProfile ? buildSoftOcrImage(cropped) : buildOcrImage(cropped);
 }
@@ -111,8 +158,11 @@ async function buildOcrImage(img) {
     return working;
 }
 
-async function buildSoftOcrImage(img) {
+async function buildSoftOcrImage(img, invert = false) {
     const working = img.clone().greyscale().normalize().contrast(0.2);
+    if (invert) {
+        working.invert();
+    }
     return padAndScale(
         working,
         preprocessConfig.padding,

@@ -21,14 +21,23 @@ async function extractText({
     return { results, imagePath: extractor.imagePath };
 }
 
-function matchName({ extractionResults, supplementalText, MatchName, matchDependencies, logger }) {
-    return MatchName.create({
+async function matchName({
+    extractionResults,
+    supplementalText,
+    MatchName,
+    matchDependencies,
+    logger
+}) {
+    const matcher = MatchName.create({
         cleanText: extractionResults.cleanText,
-        dirtyText: extractionResults.dirtyText,
+        ...(extractionResults.dirtyText ? { dirtyText: extractionResults.dirtyText } : {}),
+        candidateTexts: extractionResults.textCandidates || [],
         ...(supplementalText ? { supplementalText } : {}),
         ...(matchDependencies ? { dependencies: matchDependencies } : {}),
         ...(logger ? { logger } : {})
-    }).match();
+    });
+    const matches = await matcher.match();
+    return { matches, matchedText: matcher.matchedText };
 }
 
 async function resolveCardName(options) {
@@ -38,18 +47,34 @@ async function resolveCardName(options) {
               imagePath: options.titleExtractionImagePath
           }
         : await extractText({ ...options, type: "name" });
-    let matches = await matchName({
-        extractionResults: title.results,
+    const titleStages = [title];
+    let combinedTitleResults = combineExtractionResults(titleStages);
+    let resolution = await matchName({
+        extractionResults: combinedTitleResults,
         MatchName: options.MatchName,
         matchDependencies: options.matchDependencies,
         logger: options.logger
     });
+    let selectedTitle = title;
     let supplemental;
 
-    if (matches.length === 0) {
+    for (const type of ["soft-name", "rotated-name"]) {
+        if (resolution.matches.length > 0) break;
+        const fallback = await extractText({ ...options, type });
+        titleStages.push(fallback);
+        combinedTitleResults = combineExtractionResults(titleStages);
+        resolution = await matchName({
+            extractionResults: combinedTitleResults,
+            MatchName: options.MatchName,
+            matchDependencies: options.matchDependencies,
+            logger: options.logger
+        });
+    }
+
+    if (resolution.matches.length === 0) {
         supplemental = await extractText({ ...options, type: "rules-name" });
-        matches = await matchName({
-            extractionResults: title.results,
+        resolution = await matchName({
+            extractionResults: combinedTitleResults,
             supplementalText: supplemental.results.dirtyText,
             MatchName: options.MatchName,
             matchDependencies: options.matchDependencies,
@@ -57,12 +82,71 @@ async function resolveCardName(options) {
         });
     }
 
+    const promoted = promoteMatchedExtraction(titleStages, resolution.matchedText);
+    if (promoted) {
+        selectedTitle = promoted;
+    }
+
     return {
-        extractionResults: title.results,
-        extractionImagePath: title.imagePath,
-        matches,
+        extractionResults: selectedTitle.results,
+        extractionImagePath: selectedTitle.imagePath,
+        matches: resolution.matches,
         supplementalExtractionResults: supplemental?.results
     };
+}
+
+function combineExtractionResults(stages) {
+    const first = stages[0].results;
+    return {
+        ...first,
+        textCandidates: uniqueText(
+            stages.flatMap(({ results }) => [
+                results.cleanText,
+                ...(results.textCandidates || []),
+                ...(results.candidates || []).flatMap((candidate) => [
+                    candidate.cleanText,
+                    ...(candidate.textCandidates || [])
+                ])
+            ])
+        ).slice(0, 48)
+    };
+}
+
+function promoteMatchedExtraction(stages, matchedText) {
+    const normalizedMatch = normalizeText(matchedText);
+    if (!normalizedMatch) return null;
+
+    for (const stage of stages) {
+        for (const candidate of stage.results.candidates || []) {
+            const candidateTexts = [candidate.cleanText, ...(candidate.textCandidates || [])];
+            const matchedCandidateText = candidateTexts.find(
+                (text) => normalizeText(text) === normalizedMatch
+            );
+            if (matchedCandidateText) {
+                return {
+                    ...stage,
+                    results: {
+                        ...stage.results,
+                        cleanText: matchedCandidateText,
+                        dirtyText: candidate.dirtyText,
+                        confidence: candidate.confidence,
+                        bestVariant: candidate
+                    }
+                };
+            }
+        }
+    }
+    return null;
+}
+
+function uniqueText(values) {
+    return [...new Set(values.map((value) => String(value || "").trim()).filter(Boolean))];
+}
+
+function normalizeText(value) {
+    return String(value || "")
+        .toUpperCase()
+        .trim();
 }
 
 export { resolveCardName };

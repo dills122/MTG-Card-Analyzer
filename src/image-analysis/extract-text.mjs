@@ -6,13 +6,20 @@ import { DEFAULT_OCR_LANGUAGE_PATH } from "./ocr-model.mjs";
 const logger = log.create({
     isPretty: true
 });
+const maxNameTextCandidates = 12;
+const pageSegmentationModes = Object.freeze({
+    line: Tesseract.PSM.SINGLE_LINE,
+    "raw-line": Tesseract.PSM.RAW_LINE,
+    block: Tesseract.PSM.SINGLE_BLOCK,
+    sparse: Tesseract.PSM.SPARSE_TEXT
+});
 let defaultSessionPromise;
 let defaultSessionOptionsKey;
 
 /**
  * Run OCR on one or more preprocessed regions and select the strongest normalized result.
  * @param {Buffer|string|Array} imgBuffer image buffer, path, or prepared variants
- * @param {"name"|"type"|"art"|"flavor"} type snippet type to inform normalization
+ * @param {"name"|"soft-name"|"rotated-name"|"type"|"art"|"flavor"} type snippet type to inform normalization
  * @param {(err: Error|null, result: {cleanText: string, dirtyText: string}|null) => void} cb callback
  * @param {{logger?: {info: Function, error: Function}, session?: {recognize: Function}, cacheMethod?: string, langPath?: string, gzip?: boolean}} options runtime options
  */
@@ -27,6 +34,10 @@ function scanImage(imgBuffer, type, cb, options = {}) {
     runCandidatesSequentially(candidates, type, scanLogger, options)
         .then((results) => {
             const best = selectBestResult(results, type);
+            const textCandidates = uniqueTextCandidates([
+                ...(best.textCandidates || []),
+                ...results.flatMap((result) => result.textCandidates || [])
+            ]);
             return cb(
                 null,
                 {
@@ -34,7 +45,8 @@ function scanImage(imgBuffer, type, cb, options = {}) {
                     dirtyText: best.dirtyText,
                     confidence: best.confidence,
                     bestVariant: best,
-                    candidates: results
+                    candidates: results,
+                    textCandidates
                 },
                 Tesseract
             );
@@ -57,7 +69,9 @@ function normalizeCandidates(input, type) {
     if (Array.isArray(input)) {
         return input.map((item) => ({
             buffer: item.buffer || item,
-            region: item.region || type
+            region: item.region || type,
+            psm: item.psm,
+            characterWhitelist: item.characterWhitelist
         }));
     }
     return [
@@ -72,6 +86,8 @@ async function runCandidate(candidate, type, scanLogger, options = {}) {
     const session = options.session || (await getDefaultOcrSession(options));
     const result = await session.recognize(candidate.buffer, {
         region: candidate.region,
+        psm: candidate.psm,
+        characterWhitelist: candidate.characterWhitelist,
         logger: scanLogger
     });
     const extractedText = (result && result.data && result.data.text) || result.text || "";
@@ -85,7 +101,13 @@ async function runCandidate(candidate, type, scanLogger, options = {}) {
         cleanText: cleanedString,
         dirtyText: extractedText,
         confidence,
-        buffer: candidate.buffer
+        buffer: candidate.buffer,
+        textCandidates: isNameType(type)
+            ? uniqueTextCandidates([
+                  cleanedString,
+                  ...normalizeNameLines(extractedText).flatMap(expandNameLineCandidates)
+              ])
+            : [cleanedString].filter(Boolean)
     };
 }
 
@@ -120,7 +142,7 @@ function normalizeOcrText(text, type) {
 
 function scoreOcrCandidate(result, type) {
     const confidence = Number(result?.confidence) || 0;
-    if (type !== "name") {
+    if (!isNameType(type)) {
         return confidence;
     }
 
@@ -161,18 +183,18 @@ function selectBestResult(results, type) {
 }
 
 function normalizeOcrTextByType(text, type) {
-    if (type === "name") {
+    if (isNameType(type)) {
         return normalizeNameText(text);
     }
     return normalizeGenericText(text);
 }
 
+function isNameType(type) {
+    return type === "name" || type === "soft-name" || type === "rotated-name";
+}
+
 function normalizeNameText(text) {
-    const normalizedUnicode = normalizeUnicode(text || "");
-    const lines = normalizedUnicode
-        .split(/\r?\n/g)
-        .map((line) => normalizeGenericText(line))
-        .filter(Boolean);
+    const lines = normalizeNameLines(text);
 
     if (!lines.length) {
         return "";
@@ -183,8 +205,41 @@ function normalizeNameText(text) {
         return scoreNameLine(current) > scoreNameLine(best) ? current : best;
     }, lines[0]);
 
-    const pruned = pruneNameTokens(bestLine);
-    return pruned || bestLine;
+    return normalizeNameLine(bestLine);
+}
+
+function normalizeNameLines(text) {
+    return normalizeUnicode(text || "")
+        .split(/\r?\n/g)
+        .map((line) => normalizeGenericText(line))
+        .filter(Boolean);
+}
+
+function normalizeNameLine(line) {
+    const pruned = pruneNameTokens(line);
+    return pruned || line;
+}
+
+function expandNameLineCandidates(line) {
+    const normalized = normalizeNameLine(line);
+    const tokens = normalized.split(/\s+/g).filter(Boolean);
+    const candidates = [normalized];
+    if (tokens.length >= 2 && tokens.at(-1).replace(/[^A-Z]/g, "").length <= 2) {
+        candidates.push(tokens.slice(0, -1).join(" "));
+    }
+    if (tokens.length >= 3) {
+        candidates.push(tokens.slice(1).join(" "), tokens.slice(0, -1).join(" "));
+    }
+    if (tokens.length >= 4) {
+        candidates.push(tokens.slice(1, -1).join(" "));
+    }
+    return candidates.filter((candidate) => candidate.replace(/[^A-Z0-9]/g, "").length >= 4);
+}
+
+function uniqueTextCandidates(candidates) {
+    return [
+        ...new Set(candidates.map((candidate) => String(candidate || "").trim()).filter(Boolean))
+    ].slice(0, maxNameTextCandidates);
 }
 
 function normalizeGenericText(text) {
@@ -321,6 +376,16 @@ async function createOcrSession(options = {}) {
                         onProgress(message.progress);
                     }
                 };
+                const recognitionParameters = {};
+                const psm = pageSegmentationModes[recognitionOptions.psm];
+                if (psm) recognitionParameters.tessedit_pageseg_mode = psm;
+                if (recognitionOptions.characterWhitelist) {
+                    recognitionParameters.tessedit_char_whitelist =
+                        recognitionOptions.characterWhitelist;
+                }
+                if (Object.keys(recognitionParameters).length > 0) {
+                    await worker.setParameters(recognitionParameters);
+                }
                 try {
                     return await worker.recognize(image);
                 } finally {

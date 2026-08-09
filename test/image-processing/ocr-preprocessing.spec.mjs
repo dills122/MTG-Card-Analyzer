@@ -68,4 +68,48 @@ describe("OCR preprocessing::", () => {
             }
         });
     });
+
+    it("builds bounded soft title variants for the normal title regions", async () => {
+        const fixturePath = path.resolve(
+            "test-images/regression/scryfall/fin-570-vivi-ornitier-25ef2d44.jpg"
+        );
+
+        const { variants } = await prepareOcrVariants(fixturePath, "soft-name");
+
+        assert.deepEqual(
+            variants.map((variant) => variant.region),
+            [
+                "name-core-soft",
+                "name-core-soft-inverted",
+                "name-wide-soft",
+                "name-wide-soft-inverted",
+                "top-band-soft",
+                "top-band-soft-inverted",
+                "name-full-soft",
+                "name-full-soft-inverted"
+            ]
+        );
+        assert.equal(variants[2].psm, "raw-line");
+        assert.include(variants[2].characterWhitelist, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    });
+
+    it("builds hard and soft title bands in both rotated orientations", async function () {
+        this.timeout(5000);
+
+        const fixturePath = path.resolve(
+            "test-images/regression/scryfall/who-605-unleash-the-flux-8e3c04ad.jpg"
+        );
+
+        const { variants } = await prepareOcrVariants(fixturePath, "rotated-name");
+
+        assert.deepEqual(
+            variants.map((variant) => variant.region),
+            [
+                "rotated-name-cw-hard",
+                "rotated-name-cw-soft",
+                "rotated-name-ccw-hard",
+                "rotated-name-ccw-soft"
+            ]
+        );
+    });
 });

@@ -9,10 +9,12 @@ machine-readable JSON.
 
 The existing scan path already had strong reusable pieces:
 
-- `src/image-processing/ocr-preprocessing.mjs` crops three likely name regions and applies
-  grayscale, normalization, scaling, thresholding, inversion, and sharpening.
-- `src/image-analysis/extract-text.mjs` runs Tesseract on those variants and selects the
-  highest-confidence OCR result. One bounded Tesseract worker loads the reviewed English model;
+- `src/image-processing/ocr-preprocessing.mjs` crops four likely name regions and applies
+  grayscale, normalization, scaling, thresholding, inversion, and sharpening. Failed matches can
+  request bounded soft/inverted or rotated title variants.
+- `src/image-analysis/extract-text.mjs` runs Tesseract with each crop's declared page-segmentation
+  mode and preserves bounded region, line, and token-window candidates. One bounded Tesseract
+  worker loads the reviewed English model;
   its obsolete `enable_new_segsearch` and `save_raw_choices` directives are disabled in place.
 - `src/fuzzy-matching/match-name.mjs` applies the production fuzzy-name thresholds.
 - `src/image-hashing/hash-image.mjs` provides the production perceptual hash and comparison
@@ -90,8 +92,9 @@ pass/fail total. The report separately shows disabled fixtures and fixtures that
 Cases are blocking by default. Add `"blocking": false` only for a known, tracked limitation that
 must remain visible in every benchmark without failing CI. Non-blocking cases still run, retain
 their ordinary pass/fail result, and appear as `NON-BLOCKING FAIL` in the Markdown report. The
-seven vintage fixtures are temporarily non-blocking while GitHub issue #157 tracks a dedicated
-vintage-card recognition flow. All other enabled fixtures gate pull requests.
+seven vintage fixtures are temporarily non-blocking while GitHub issue #157 tracks the remaining
+vintage-card recognition work. The current benchmark recognizes six of those seven; the vintage
+`Island` fixture remains the known miss. All other enabled fixtures gate pull requests.
 
 Minimal example:
 
@@ -273,8 +276,9 @@ the regression suite repeatable and independent of API availability or Scryfall 
 
 ## Report fields
 
-Each case records raw and normalized OCR text, Tesseract confidence and winning region, fuzzy
-name matches, name-candidate count, print-candidate count, the selected print, its three hash
+Each case records the raw and normalized OCR text promoted from the title candidate that produced
+the selected name match, Tesseract confidence and region, fuzzy name matches, name-candidate count,
+print-candidate count, the selected print, its three hash
 comparison metrics, set/collector verification, failures, per-stage timing, and total runtime.
 The summary includes pass rate, the blocking CI-gate result, non-blocking failure counts,
 disabled and placeholder fixture counts, totals by quality, total/mean runtime, and p95 runtime.

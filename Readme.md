@@ -93,10 +93,13 @@ Run `node index.mjs --help` for the command list or see the
 ## How matching works
 
 1. The image is validated and likely title regions are cropped and enhanced.
-2. Tesseract extracts text from several variants; the best result is normalized.
-3. The result is fuzzy-matched against the local card-name index.
-4. Candidate printings come from Scryfall and are ranked with cached or downloaded image hashes.
-5. Results are printed and, only when enabled, written to the selected collection backend.
+2. Tesseract extracts bounded title candidates with the segmentation mode declared by each crop.
+3. All plausible OCR regions and lines are fuzzy-matched against the local card-name index;
+   unambiguous individual face names resolve back to their canonical compound card name.
+4. Failed title matches progressively try soft/inverted title variants, rotated title bands, and
+   finally supplemental rules text, avoiding the extra OCR work for ordinary successful scans.
+5. Candidate printings come from Scryfall and are ranked with cached or downloaded image hashes.
+6. Results are printed and, only when enabled, written to the selected collection backend.
 
 <p align="center">
   <img width="320" src="test-images/PlatinumAngel.jpg" alt="Platinum Angel card used by the example scan">
