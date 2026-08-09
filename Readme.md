@@ -105,9 +105,10 @@ Run `node index.mjs --help` for the command list or see the
   <img width="320" src="test-images/PlatinumAngel.jpg" alt="Platinum Angel card used by the example scan">
 </p>
 
-OCR quality varies with lighting, focus, rotation, framing, and card layout. Images smaller than
-360 by 500 pixels are currently rejected. Setup and printing lookup use Scryfall, so the scanner
-is local-first rather than fully offline.
+OCR quality varies with lighting, focus, rotation, framing, and card layout. The OCR minimum is
+360 by 500 pixels; a smaller source within 2x of that is still upscaled and processed, and only a
+source further below is rejected. Setup and printing lookup use Scryfall, so the scanner is
+local-first rather than fully offline.
 
 ## Documentation
 

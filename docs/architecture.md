@@ -65,13 +65,16 @@ See [Configuration and local data](configuration.md) for precedence, paths, and 
 | `src/fuzzy-matching/`   | Name and type normalization and fuzzy ranking                     |
 | `src/matcher/`          | Candidate-print matching and hash orchestration                   |
 | `src/image-hashing/`    | Perceptual image hashing and comparison                           |
+| `src/export-processor/` | Card-hash comparison against the local cache and remote Scryfall  |
 | `src/processor/`        | End-to-end scan workflow and decision orchestration               |
+| `src/models/`           | Collection and needs-attention record validation and persistence  |
 | `src/scryfall-api/`     | Scryfall requests and response translation                        |
 | `src/storage/`          | Persistence contract and backend selection                        |
 | `src/db-local/`         | NeDB name index, cache, operations log, and local persistence     |
 | `src/rds/`              | Optional legacy MySQL persistence adapter                         |
 | `src/diagnostics/`      | Sanitized environment and recent-activity reports                 |
 | `src/regression/`       | Offline OCR, matching, and print-selection benchmark framework    |
+| `src/logger/`           | Shared pretty/plain leveled logger                                |
 
 ## Tests and external services
 

@@ -44,9 +44,10 @@ benchmark reports are the only durable files written by the runner.
 
 <!-- markdownlint-enable MD013 -->
 
-Images below 360 by 500 pixels are rejected by current production preprocessing. Keep
-low-resolution fixtures above that hard boundary unless the expected result is the validation
-failure itself.
+Production preprocessing requires 360 by 500 pixels; a source within 2x of that minimum is
+upscaled and still processed (see `smartCrop.assertOcrSourceSizeOk`), and only a source further
+below is rejected. Keep low-resolution fixtures within the recoverable range unless the expected
+result is the validation failure itself.
 
 ## Run the suite
 
