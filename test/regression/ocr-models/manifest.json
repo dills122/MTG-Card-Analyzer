@@ -1,0 +1,20 @@
+{
+    "version": 1,
+    "candidates": [
+        {
+            "id": "bundled-eng-control",
+            "model": "../../../eng.traineddata",
+            "family": "project-bundled-control",
+            "sha256": "7e084d31c8262ec2bacf90ac4288fde165c0c6db35fe7d2b8c8ff271b8876234",
+            "source": {
+                "url": "https://github.com/dills122/MTG-Card-Analyzer",
+                "revision": "dcc5d0e",
+                "license": "Apache-2.0"
+            },
+            "engine": {
+                "package": "tesseract.js",
+                "version": "3.0.3"
+            }
+        }
+    ]
+}
