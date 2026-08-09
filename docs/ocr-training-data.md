@@ -135,6 +135,9 @@ official [training guide](https://tesseract-ocr.github.io/tessdoc/tess5/Training
 describes fine-tuning as the appropriate small-domain adaptation path and warns that training from
 scratch without a representative corpus is likely to overfit.
 
+The first bounded real-training experiment and its rejection evidence are recorded in
+[`ocr-training-pilot-2026-08.md`](./ocr-training-pilot-2026-08.md).
+
 ## Promotion path
 
 Training completion is not promotion. Package the selected checkpoint as `eng.traineddata`, add it
