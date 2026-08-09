@@ -101,7 +101,12 @@ Run `node index.mjs --help` for the command list or see the
 4. Failed title matches progressively try soft/inverted title variants, rotated title bands, and
    finally supplemental rules text, avoiding the extra OCR work for ordinary successful scans.
 5. Candidate printings come from Scryfall and are ranked with cached or downloaded image hashes.
-6. Results are printed and, only when enabled, written to the selected collection backend.
+6. Results are printed and, only when enabled, a single confirmed printing is written to the
+   collection backend. A resolved name with multiple possible sets is saved to needs-attention
+   instead of being treated as confirmed.
+
+The scan promise includes local cache/log completion and removal of its bounded OCR temporary
+directory, so the CLI does not exit while those writes or cleanup operations are still pending.
 
 <p align="center">
   <img width="320" src="test-images/PlatinumAngel.jpg" alt="Platinum Angel card used by the example scan">

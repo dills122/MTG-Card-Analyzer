@@ -41,6 +41,10 @@ The cache tier is local NeDB and does not follow `storageAdapter`. It contains:
 It is enabled by default and can be disabled with `--no-local-cache` or
 `LOCAL_CACHE_ENABLED=false`.
 
+Cache writes are asynchronous but part of scan completion: hash upserts and the operations-log
+record settle before the CLI exits. A cache failure remains non-fatal to identification and is
+reported through the logger. Backfill reports success only after all of its hash upserts complete.
+
 ### Persistence tier
 
 The persistence tier stores collection and needs-attention records. `storageAdapter` selects:
@@ -50,7 +54,14 @@ The persistence tier stores collection and needs-attention records. `storageAdap
 
 Collection persistence is off by default. A scan writes only when both `queryingEnabled` and
 `collectionEnabled` are true. Scanning the same unambiguous card again increments its quantity;
-explicit collection commands can correct or remove an entry.
+explicit collection commands can correct or remove an entry. “Unambiguous” means exactly one card
+name and exactly one printing set. Multiple possible sets are written to needs-attention rather
+than selecting the first set as confirmed collection data.
+
+The processor owns one bounded OCR work directory per scan and removes it in a `finally` path on
+success and failure. Set-symbol hashing follows the same ownership rule for its local and remote
+temporary directories. Cleanup is awaited, logged on failure, and never replaces the primary scan
+error.
 
 See [Configuration and local data](configuration.md) for precedence, paths, and settings.
 

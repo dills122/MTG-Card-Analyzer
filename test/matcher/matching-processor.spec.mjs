@@ -222,4 +222,69 @@ describe("MatcherProcessor::", () => {
             done();
         });
     });
+
+    it("awaits local set-symbol cleanup before comparing hashes", async () => {
+        const processHashesInstance = {
+            compareDbHashes: sandbox.stub().resolves([]),
+            compareRemoteImages: sandbox.stub().resolves([{ setName: "M21" }])
+        };
+        sandbox.stub(dependencies, "searchPrintings").resolves([
+            { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } },
+            { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
+        ]);
+        sandbox.stub(dependencies, "hashImage").resolves("FAKE_LOCAL_HASH");
+        sandbox.stub(dependencies, "createDirectory").resolves("/tmp/set-symbol-dir");
+        sandbox
+            .stub(dependencies, "writeSetSymbolSnippet")
+            .resolves("/tmp/set-symbol-dir/set-symbol.png");
+        let finishCleanup;
+        const cleanup = sandbox.stub(dependencies, "cleanUpFiles").returns(
+            new Promise((resolve) => {
+                finishCleanup = resolve;
+            })
+        );
+        const processHashesStub = sandbox
+            .stub(dependencies.processHashes, "create")
+            .returns(processHashesInstance);
+        const processor = create({ name: "Pacifism", filePath: "/tmp/pacifism.jpg" });
+
+        const execution = processor.executeAsync();
+        while (!cleanup.called) {
+            await new Promise((resolve) => setImmediate(resolve));
+        }
+
+        assert.isFalse(processHashesStub.called);
+        finishCleanup();
+        const result = await execution;
+        assert.deepEqual(result, ["M21"]);
+        assert.isTrue(processHashesStub.calledOnce);
+    });
+
+    it("does not mask a full-card hash error when set-symbol cleanup also fails", async () => {
+        const primaryError = new Error("full hash failed");
+        const error = sandbox.stub();
+        sandbox.stub(dependencies, "searchPrintings").resolves([
+            { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } },
+            { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
+        ]);
+        sandbox.stub(dependencies, "createDirectory").resolves("/tmp/set-symbol-dir");
+        sandbox.stub(dependencies, "writeSetSymbolSnippet").rejects(new Error("crop failed"));
+        sandbox.stub(dependencies, "cleanUpFiles").rejects(new Error("cleanup failed"));
+        sandbox.stub(dependencies, "hashImage").rejects(primaryError);
+        const processor = create({
+            name: "Pacifism",
+            filePath: "/tmp/pacifism.jpg",
+            logger: { info: sandbox.stub(), error }
+        });
+
+        let caughtError;
+        try {
+            await processor.executeAsync();
+        } catch (err) {
+            caughtError = err;
+        }
+
+        assert.equal(caughtError, primaryError);
+        assert.isTrue(error.calledWithMatch(sinon.match(/cleanup failed/)));
+    });
 });

@@ -58,6 +58,24 @@ describe("back-filler", () => {
         );
     });
 
+    it("reports failure only after a cache write rejects", async () => {
+        sandbox.stub(scryfall.Search, "searchList").resolves([
+            {
+                name: "Pacifism",
+                set_name: "Core Set 2020",
+                image_uris: { normal: "https://example.test/pacifism.jpg" }
+            }
+        ]);
+        sandbox.stub(imageHashing.Hash, "hashImage").callsArgWith(1, null, "fake-hash");
+        sandbox.stub(storage.hashes, "upsert").rejects(new Error("disk full"));
+        const consoleError = sandbox.stub(console, "error");
+
+        const success = await backFillCardHashes("Pacifism");
+
+        assert.isFalse(success);
+        assert.isTrue(consoleError.calledWithMatch(sinon.match(/disk full/)));
+    });
+
     it("backfills every stored card name", async () => {
         sandbox
             .stub(storage.names, "getAll")

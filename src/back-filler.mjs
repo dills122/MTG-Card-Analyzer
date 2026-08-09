@@ -37,8 +37,8 @@ async function backFillCardHashes(cardName) {
             });
         }
         cardHashes = [...new Set(cardHashes)];
-        if (cardHashes.length > 0) {
-            cardHashes.forEach((hash) => HashesStore.upsert(hash));
+        for (const hash of cardHashes) {
+            await HashesStore.upsert(hash);
         }
         logger.info(`Backfilled ${cardHashes.length} printing hash(es) for "${cardName}"`);
         return true;

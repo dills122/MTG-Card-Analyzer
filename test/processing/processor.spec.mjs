@@ -36,6 +36,7 @@ describe("Integration::", () => {
                 dirtyText: EXTRACTED_TEXT
             });
         stubs.CreateDirectoryStub = sandbox.stub().resolves(DIR);
+        stubs.CleanUpFilesStub = sandbox.stub().resolves();
         stubs.MatchNameCreateStub = sandbox.stub().returns(MatchNameInstance);
         stubs.MatchNameMatchStub = sandbox.stub(MatchNameInstance, "match").resolves([
             {
@@ -49,7 +50,7 @@ describe("Integration::", () => {
             .resolves([COLLECTION_NAME]); //Empty right now and will have to be a multi call oen since in async.each
         stubs.NeedsAttentionInsertStub = sandbox.stub().resolves(null);
         stubs.CollectionInsertStub = sandbox.stub().resolves(null);
-        stubs.logRecordStub = sandbox.stub();
+        stubs.logRecordStub = sandbox.stub().resolves();
         stubs.GetAdditionalCardInfoStub = sandbox.stub().resolves({
             object: "card",
             id: "31279d7c-5246-40b2-a8c7-0be4a5f24a29",
@@ -159,14 +160,18 @@ describe("Integration::", () => {
             }
         });
         stubs.Base64Stub = sandbox.stub().resolves(NAME_BASE_64);
+        stubs.NeedsAttentionCreateStub = sandbox
+            .stub()
+            .returns({ insert: stubs.NeedsAttentionInsertStub });
         dependencies = {
             imageProcessor: { create: stubs.ImageProcessorCreateStub },
-            fileIO: { createDirectory: stubs.CreateDirectoryStub },
+            fileIO: {
+                createDirectory: stubs.CreateDirectoryStub,
+                cleanUpFiles: stubs.CleanUpFilesStub
+            },
             matchName: { create: stubs.MatchNameCreateStub },
             matchProcessor: { create: stubs.MatchProcessorCreateStub },
-            needsAttention: {
-                create: sandbox.stub().returns({ insert: stubs.NeedsAttentionInsertStub })
-            },
+            needsAttention: { create: stubs.NeedsAttentionCreateStub },
             collection: {
                 create: sandbox.stub().returns({ insert: stubs.CollectionInsertStub })
             },
@@ -189,7 +194,8 @@ describe("Integration::", () => {
                 assert.isTrue(stubs.ImageProcessorCreateStub.calledOnce);
                 assert.isTrue(stubs.ImageProcessorExtractStub.calledOnce);
                 assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
-                assert.deepEqual(processorInstance.directory, DIR);
+                assert.isTrue(stubs.CleanUpFilesStub.calledOnceWithExactly(DIR));
+                assert.equal(processorInstance.directory, "");
                 assert.isTrue(stubs.MatchNameCreateStub.calledOnce);
                 assert.isTrue(stubs.MatchNameMatchStub.calledOnce);
                 assert.isTrue(stubs.MatchProcessorCreateStub.calledOnce);
@@ -230,7 +236,8 @@ describe("Integration::", () => {
             });
             processorInstance.execute((err) => {
                 assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
-                assert.deepEqual(processorInstance.directory, DIR);
+                assert.isTrue(stubs.CleanUpFilesStub.calledOnceWithExactly(DIR));
+                assert.equal(processorInstance.directory, "");
                 assert.isTrue(stubs.ImageProcessorCreateStub.calledOnce);
                 assert.isTrue(stubs.ImageProcessorExtractStub.calledOnce);
                 assert.isTrue(stubs.MatchNameCreateStub.calledOnce);
@@ -251,7 +258,8 @@ describe("Integration::", () => {
             });
             processorInstance.execute((err) => {
                 assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
-                assert.deepEqual(processorInstance.directory, DIR);
+                assert.isTrue(stubs.CleanUpFilesStub.calledOnceWithExactly(DIR));
+                assert.equal(processorInstance.directory, "");
                 assert.equal(stubs.ImageProcessorCreateStub.callCount, 4);
                 assert.equal(stubs.ImageProcessorExtractStub.callCount, 4);
                 assert.deepEqual(
@@ -279,6 +287,42 @@ describe("Integration::", () => {
             assert.isTrue(stubs.ImageProcessorExtractStub.calledOnce);
             assert.isTrue(stubs.MatchProcessorExecuteStub.calledOnce);
             assert.isTrue(stubs.CollectionInsertStub.calledOnce);
+            assert.isTrue(stubs.CleanUpFilesStub.calledOnceWithExactly(DIR));
+        });
+
+        it("routes one name with multiple possible sets to needs attention", async () => {
+            stubs.MatchProcessorExecuteStub.resolves([COLLECTION_NAME, COLLECTION_NAME_TWO]);
+            const processorInstance = createProcessor({
+                filePath: FAKE_PATH,
+                queryingEnabled: true,
+                collectionEnabled: true
+            });
+
+            await processorInstance.execute();
+
+            assert.equal(processorInstance.decision, "needs-attention");
+            assert.isFalse(stubs.CollectionInsertStub.called);
+            assert.isFalse(stubs.GetAdditionalCardInfoStub.called);
+            assert.isTrue(stubs.NeedsAttentionInsertStub.calledOnce);
+            assert.deepInclude(stubs.NeedsAttentionCreateStub.firstCall.args[0], {
+                cardName: "Pacifism",
+                possibleSets: `${COLLECTION_NAME},${COLLECTION_NAME_TWO}`
+            });
+        });
+
+        it("keeps an ambiguous printing result non-persistent during a dry run", async () => {
+            stubs.MatchProcessorExecuteStub.resolves([COLLECTION_NAME, COLLECTION_NAME_TWO]);
+            const processorInstance = createProcessor({
+                filePath: FAKE_PATH,
+                queryingEnabled: false,
+                collectionEnabled: true
+            });
+
+            await processorInstance.execute();
+
+            assert.equal(processorInstance.decision, "dry-run");
+            assert.isFalse(stubs.CollectionInsertStub.called);
+            assert.isFalse(stubs.NeedsAttentionInsertStub.called);
         });
 
         it("skips collection persistence when --query is on but the module is disabled", async () => {
@@ -341,6 +385,80 @@ describe("Integration::", () => {
             assert.equal(caughtError, expectedError);
             assert.isFalse(stubs.CollectionInsertStub.calledOnce);
             assert.isFalse(stubs.NeedsAttentionInsertStub.calledOnce);
+            assert.isTrue(stubs.CleanUpFilesStub.calledOnceWithExactly(DIR));
+        });
+
+        it("awaits temporary cleanup before resolving", async () => {
+            let finishCleanup;
+            stubs.CleanUpFilesStub.returns(
+                new Promise((resolve) => {
+                    finishCleanup = resolve;
+                })
+            );
+            const processorInstance = createProcessor({ filePath: FAKE_PATH });
+            let settled = false;
+
+            const execution = processorInstance.execute().finally(() => {
+                settled = true;
+            });
+            while (!stubs.CleanUpFilesStub.called) {
+                await new Promise((resolve) => setImmediate(resolve));
+            }
+
+            assert.isFalse(settled);
+            finishCleanup();
+            await execution;
+            assert.isTrue(settled);
+        });
+
+        it("awaits the operations-log write before cleanup and resolution", async () => {
+            let finishLogWrite;
+            stubs.logRecordStub.returns(
+                new Promise((resolve) => {
+                    finishLogWrite = resolve;
+                })
+            );
+            const processorInstance = createProcessor({ filePath: FAKE_PATH });
+            let settled = false;
+
+            const execution = processorInstance.execute().finally(() => {
+                settled = true;
+            });
+            while (!stubs.logRecordStub.called) {
+                await new Promise((resolve) => setImmediate(resolve));
+            }
+
+            assert.isFalse(settled);
+            assert.isFalse(stubs.CleanUpFilesStub.called);
+            finishLogWrite();
+            await execution;
+            assert.isTrue(stubs.CleanUpFilesStub.calledOnceWithExactly(DIR));
+            assert.isTrue(settled);
+        });
+
+        it("does not replace the primary scan error when cleanup fails", async () => {
+            const primaryError = new Error("failed to match");
+            stubs.MatchProcessorExecuteStub.rejects(primaryError);
+            stubs.CleanUpFilesStub.rejects(new Error("cleanup failed"));
+            const error = sandbox.stub();
+            const processorInstance = createProcessor({
+                filePath: FAKE_PATH,
+                logger: {
+                    info: sandbox.stub(),
+                    error,
+                    output: sandbox.stub()
+                }
+            });
+
+            let caughtError;
+            try {
+                await processorInstance.execute();
+            } catch (err) {
+                caughtError = err;
+            }
+
+            assert.equal(caughtError, primaryError);
+            assert.isTrue(error.calledWithMatch(sinon.match(/cleanup failed/)));
         });
 
         it("logs only name/sets per matcher result when debugLogging is off (default)", (done) => {
