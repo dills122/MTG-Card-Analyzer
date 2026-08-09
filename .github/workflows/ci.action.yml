@@ -14,7 +14,7 @@ permissions:
     contents: read
     pull-requests: read
 jobs:
-    pr_job:
+    quality_matrix:
         name: Quality (Node ${{ matrix.node-version }})
         runs-on: ubuntu-latest
         strategy:
@@ -61,6 +61,20 @@ jobs:
                   path: coverage/
                   if-no-files-found: warn
                   retention-days: 14
+    pr_job:
+        name: pr_job
+        needs: quality_matrix
+        if: always()
+        runs-on: ubuntu-latest
+        steps:
+            - name: Require the Node quality matrix
+              env:
+                  QUALITY_MATRIX_RESULT: ${{ needs.quality_matrix.result }}
+              run: |
+                  if [ "$QUALITY_MATRIX_RESULT" != "success" ]; then
+                    echo "::error::Quality matrix result: $QUALITY_MATRIX_RESULT"
+                    exit 1
+                  fi
     dot_only_linter_job:
         runs-on: ubuntu-latest
         steps:
