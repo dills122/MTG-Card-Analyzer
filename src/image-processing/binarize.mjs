@@ -1,7 +1,7 @@
 import jimp from "jimp";
 
-// Shared jimp binarization/preprocessing helpers -- resize.mjs and ocr-preprocessing.mjs both
-// used to carry byte-identical copies of these. One implementation now.
+// Shared jimp binarization/preprocessing helpers for ocr-preprocessing.mjs -- previously
+// duplicated byte-identical across multiple preprocessing modules. One implementation now.
 
 function computeOtsuThreshold(img) {
     const histogram = new Array(256).fill(0);

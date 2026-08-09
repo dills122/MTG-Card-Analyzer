@@ -1,9 +1,11 @@
+const base = "https://api.scryfall.com";
+
 export default {
-    base: "https://api.scryfall.com",
-    cardRandom: "https://api.scryfall.com/cards/random",
+    base,
     templates: {
-        cardNameExact: "https://api.scryfall.com/cards/named?exact=",
-        cardNameFuzzy: "https://api.scryfall.com/cards/named?fuzzy=",
-        cardListExact: "https://api.scryfall.com/cards/search?q=name%3A"
+        cardNameExact: `${base}/cards/named?exact=`,
+        cardNameFuzzy: `${base}/cards/named?fuzzy=`,
+        cardListExact: `${base}/cards/search?q=name%3A`,
+        catalogCardNames: `${base}/catalog/card-names`
     }
 };

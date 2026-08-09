@@ -1,3 +1,4 @@
+import apiConfig from "./api.config.mjs";
 import log from "../logger/log.mjs";
 import { request, REQUEST_HEADERS } from "./http-client.mjs";
 
@@ -9,12 +10,10 @@ const dependencies = {
     request
 };
 
-const baseUrl = "https://api.scryfall.com";
-
 async function getCardNames() {
     try {
         const response = await dependencies.request({
-            uri: `${baseUrl}/catalog/card-names`,
+            uri: apiConfig.templates.catalogCardNames,
             headers: REQUEST_HEADERS
         });
         if (response) {

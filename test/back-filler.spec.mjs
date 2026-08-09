@@ -17,17 +17,15 @@ describe("back-filler", () => {
     });
 
     it("hashes each printing and stores its card metadata", async () => {
-        sandbox.stub(scryfall.Search, "searchByNameExact").resolves({
-            data: [
-                {
-                    name: "Pacifism",
-                    set_name: "Core Set 2020",
-                    foil: true,
-                    promo: false,
-                    image_uris: { normal: "https://example.test/pacifism.jpg" }
-                }
-            ]
-        });
+        sandbox.stub(scryfall.Search, "searchList").resolves([
+            {
+                name: "Pacifism",
+                set_name: "Core Set 2020",
+                foil: true,
+                promo: false,
+                image_uris: { normal: "https://example.test/pacifism.jpg" }
+            }
+        ]);
         sandbox.stub(imageHashing.Hash, "hashImage").callsArgWith(1, null, "fake-hash");
         const upsert = sandbox.stub(storage.hashes, "upsert");
 
@@ -47,9 +45,7 @@ describe("back-filler", () => {
     });
 
     it("reports a concise error when Scryfall lookup fails", async () => {
-        sandbox
-            .stub(scryfall.Search, "searchByNameExact")
-            .rejects(new Error("network unavailable"));
+        sandbox.stub(scryfall.Search, "searchList").rejects(new Error("network unavailable"));
         const consoleError = sandbox.stub(console, "error");
 
         const success = await backFillCardHashes("Pacifism");
@@ -66,17 +62,14 @@ describe("back-filler", () => {
         sandbox
             .stub(storage.names, "getAll")
             .resolves([{ name: "Pacifism" }, { name: "Fireball" }]);
-        const search = sandbox.stub(scryfall.Search, "searchByNameExact").resolves({ data: [] });
+        const search = sandbox.stub(scryfall.Search, "searchList").resolves([]);
         sandbox.stub(storage.hashes, "upsert");
 
         await backFillMatchingCards();
 
         assert.deepEqual(
-            search.getCalls().map((call) => call.args.slice(0, 2)),
-            [
-                ["Pacifism", "Pacifism"],
-                ["Fireball", "Fireball"]
-            ]
+            search.getCalls().map((call) => call.args),
+            [["Pacifism"], ["Fireball"]]
         );
     });
 });

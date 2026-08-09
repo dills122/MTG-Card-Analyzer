@@ -18,9 +18,12 @@ function hashImage(url) {
 
 async function backFillCardHashes(cardName) {
     try {
-        const searchResults = await Search.searchByNameExact(cardName, cardName);
+        // searchByNameExact returns a single card object (no printings list) -- searchList is
+        // the one that returns every printing of the name (via /cards/search&unique=prints),
+        // which is what hashing "every printing" actually needs. Using searchByNameExact here
+        // silently no-opped forever: `.data` was always undefined on its response shape.
+        const cards = await Search.searchList(cardName);
         let cardHashes = [];
-        const cards = searchResults.data || [];
         for (const card of cards) {
             const imageUris = card.image_uris || {};
             const cardHash = await hashImage(imageUris.normal);
