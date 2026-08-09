@@ -26,6 +26,33 @@ function inspectDefaultOcrModel(model) {
     };
 }
 
+function checkDefaultOcrModel() {
+    if (!fs.existsSync(DEFAULT_OCR_MODEL_PATH)) {
+        return {
+            label: "English OCR model missing at repo root -- restore eng.traineddata.",
+            status: "fail"
+        };
+    }
+
+    const inspection = inspectDefaultOcrModel(fs.readFileSync(DEFAULT_OCR_MODEL_PATH));
+    if (inspection.unsupportedParameters.length > 0) {
+        return {
+            label: `English OCR model contains unsupported parameters: ${inspection.unsupportedParameters.join(", ")}`,
+            status: "fail"
+        };
+    }
+    if (!inspection.matchesExpectedSha256) {
+        return {
+            label: "English OCR model does not match the pinned production SHA-256",
+            status: "fail"
+        };
+    }
+    return {
+        label: `English OCR model available (official ${DEFAULT_OCR_MODEL_FAMILY} LSTM)`,
+        status: "pass"
+    };
+}
+
 // Sanity-checks the environment is actually usable, not just "file exists". Shared by
 // scripts/verify-env.mjs (dev setup) and `node index.mjs diagnostics` (support bundle) --
 // one source of truth for what "is this environment healthy" means, printed differently by
@@ -56,25 +83,8 @@ async function runEnvironmentCheck({ withMysql = false } = {}) {
         record(`Node ${process.versions.node} -- this project targets Node >=20`, "fail");
     }
 
-    if (fs.existsSync(DEFAULT_OCR_MODEL_PATH)) {
-        const model = fs.readFileSync(DEFAULT_OCR_MODEL_PATH);
-        const inspection = inspectDefaultOcrModel(model);
-        if (inspection.unsupportedParameters.length > 0) {
-            record(
-                `English OCR model contains unsupported parameters: ${inspection.unsupportedParameters.join(", ")}`,
-                "fail"
-            );
-        } else if (!inspection.matchesExpectedSha256) {
-            record("English OCR model does not match the pinned production SHA-256", "fail");
-        } else {
-            record(
-                `English OCR model available (official ${DEFAULT_OCR_MODEL_FAMILY} LSTM)`,
-                "pass"
-            );
-        }
-    } else {
-        record("English OCR model missing at repo root -- restore eng.traineddata.", "fail");
-    }
+    const ocrModelCheck = checkDefaultOcrModel();
+    record(ocrModelCheck.label, ocrModelCheck.status);
 
     const testImage = path.join(repoRoot, "test-images/PlatinumAngel.jpg");
     if (fs.existsSync(testImage)) {
