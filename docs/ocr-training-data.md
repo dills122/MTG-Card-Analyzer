@@ -55,16 +55,19 @@ until its use, transcription, and visual quality are explicitly reviewed.
 
 ### Promote a reviewed batch
 
-Promote a staged batch only after explicitly classifying every sample. `--concern` is an approval
-that requires a note; the note remains attached to the sample in the committed manifest. Rejected
-samples stay in the ignored review batch and are never copied into the corpus.
+Promote a staged batch only after explicitly classifying every sample. `--approve-note` preserves a
+positive quality note while keeping the decision as approved. `--concern` is an approval that marks
+the decision as approved-with-concern. Both require notes that remain attached to the sample in the
+committed manifest. Rejected samples stay in the ignored review batch and are never copied into the
+corpus.
 
 ```bash
 pnpm training:review:promote \
     --batch-dir artifacts/training-review/batch-001 \
     --approve mtg-0001-pending \
-    --concern "mtg-0002-pending=Crop is usable but should be replaced later" \
-    --reject mtg-0003-pending
+    --approve-note "mtg-0002-pending=Excellent clean title crop" \
+    --concern "mtg-0003-pending=Crop is usable but should be replaced later" \
+    --reject mtg-0004-pending
 ```
 
 The command rechecks staged hashes, rejects missing, duplicate, overlapping, or unknown decisions,

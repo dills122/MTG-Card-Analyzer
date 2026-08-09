@@ -3,7 +3,7 @@ import { assert } from "chai";
 import { buildProgram, main } from "../../scripts/promote-ocr-training-review.mjs";
 
 describe("promote-ocr-training-review CLI", () => {
-    it("parses approved, concerned, and rejected decisions", () => {
+    it("parses approved, positively noted, concerned, and rejected decisions", () => {
         const options = buildProgram("/repo")
             .parse([
                 "node",
@@ -12,6 +12,8 @@ describe("promote-ocr-training-review CLI", () => {
                 "/review/batch-001",
                 "--approve",
                 "adanto",
+                "--approve-note",
+                "spellseeker=This is a really good copy",
                 "--concern",
                 "attunement=Approved but lower contrast",
                 "--reject",
@@ -20,6 +22,9 @@ describe("promote-ocr-training-review CLI", () => {
             .opts();
 
         assert.deepEqual(options.approve, ["adanto"]);
+        assert.deepEqual(options.approveNote, [
+            { id: "spellseeker", notes: "This is a really good copy" }
+        ]);
         assert.deepEqual(options.concern, [
             { id: "attunement", concern: "Approved but lower contrast" }
         ]);
@@ -38,6 +43,8 @@ describe("promote-ocr-training-review CLI", () => {
                 "/review/batch-001",
                 "--approve",
                 "adanto",
+                "--approve-note",
+                "spellseeker=This is a really good copy",
                 "--concern",
                 "attunement=Approved but lower contrast",
                 "--reject",
@@ -48,7 +55,7 @@ describe("promote-ocr-training-review CLI", () => {
                 promoteTrainingReviewBatch: async (options) => {
                     received = options;
                     return {
-                        approved: ["adanto", "attunement"],
+                        approved: ["adanto", "spellseeker", "attunement"],
                         rejected: ["mindstab"],
                         trainingManifestPath: "/repo/training/ocr/manifest.json"
                     };
@@ -62,12 +69,13 @@ describe("promote-ocr-training-review CLI", () => {
             trainingManifestPath: "/repo/training/ocr/manifest.json",
             approved: [
                 { id: "adanto" },
+                { id: "spellseeker", notes: "This is a really good copy" },
                 { id: "attunement", concern: "Approved but lower contrast" }
             ],
             rejectedIds: ["mindstab"]
         });
-        assert.equal(result.approved.length, 2);
-        assert.include(lines, "Promoted 2 reviewed sample(s); rejected 1");
+        assert.equal(result.approved.length, 3);
+        assert.include(lines, "Promoted 3 reviewed sample(s); rejected 1");
     });
 
     it("rejects a sample listed as both approved and concerned", async () => {
@@ -85,7 +93,7 @@ describe("promote-ocr-training-review CLI", () => {
                 ],
                 { repositoryRoot: "/repo" }
             ),
-            /cannot appear in both --approve and --concern/
+            /cannot appear in more than one approval option/
         );
     });
 });

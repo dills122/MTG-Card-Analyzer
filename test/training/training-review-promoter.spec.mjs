@@ -82,14 +82,14 @@ describe("OCR training review promoter", () => {
         await rm(root, { recursive: true, force: true });
     });
 
-    it("promotes only approved samples and preserves concern provenance", async () => {
+    it("promotes only approved samples and preserves positive and concern provenance", async () => {
         const fixture = await createFixture(root);
 
         const result = await promoteTrainingReviewBatch({
             reviewManifestPath: fixture.reviewManifestPath,
             trainingManifestPath: fixture.trainingManifestPath,
             approved: [
-                { id: "approved" },
+                { id: "approved", notes: "This is a really good copy" },
                 { id: "concern", concern: "Reviewer approved with concern" }
             ],
             rejectedIds: ["rejected"],
@@ -111,6 +111,11 @@ describe("OCR training review promoter", () => {
             decision: "approved-with-concern",
             reviewedAt: "2026-08-09T01:00:00.000Z",
             notes: "Reviewer approved with concern"
+        });
+        assert.deepEqual(promoted.samples[0].review, {
+            decision: "approved",
+            reviewedAt: "2026-08-09T01:00:00.000Z",
+            notes: "This is a really good copy"
         });
         assert.equal(promoted.samples[0].source.reference, "regression-fixture:approved-fixture");
         assert.equal(

@@ -59,10 +59,19 @@ function validateDecisions(reviewManifest, approved, rejectedIds) {
         if (approvedById.has(decision.id)) {
             throw new Error(`Duplicate approved sample ID: ${decision.id}`);
         }
+        if (decision.concern !== undefined && decision.notes !== undefined) {
+            throw new Error(`Approved sample ${decision.id} cannot have both concern and notes`);
+        }
         if (decision.concern !== undefined) {
             requireString(decision.concern, `Concern for ${decision.id}`);
             if (decision.concern.length > 500) {
                 throw new Error(`Concern for ${decision.id} must be 500 characters or fewer`);
+            }
+        }
+        if (decision.notes !== undefined) {
+            requireString(decision.notes, `Review notes for ${decision.id}`);
+            if (decision.notes.length > 500) {
+                throw new Error(`Review notes for ${decision.id} must be 500 characters or fewer`);
             }
         }
         approvedById.set(decision.id, decision);
@@ -171,6 +180,7 @@ async function promoteTrainingReviewBatch(options = {}) {
         const promotedSamples = [];
         for (const sample of approvedSamples) {
             const decision = approvedById.get(sample.id);
+            const reviewNotes = decision.concern ?? decision.notes;
             const extension = path.extname(sample.image).toLowerCase();
             const image = `ground-truth/${sample.id}${extension}`;
             const transcription = `ground-truth/${sample.id}.gt.txt`;
@@ -203,7 +213,7 @@ async function promoteTrainingReviewBatch(options = {}) {
                 review: {
                     decision: decision.concern ? "approved-with-concern" : "approved",
                     reviewedAt,
-                    ...(decision.concern ? { notes: decision.concern } : {})
+                    ...(reviewNotes ? { notes: reviewNotes } : {})
                 }
             });
         }

@@ -24,12 +24,30 @@ function collectConcern(value, previous) {
     return previous.concat(concernOption(value));
 }
 
+function approvalNoteOption(value) {
+    const separator = value.indexOf("=");
+    if (separator < 1 || separator === value.length - 1) {
+        throw new InvalidArgumentError("must use <sample-id>=<positive review note>");
+    }
+    return { id: value.slice(0, separator), notes: value.slice(separator + 1) };
+}
+
+function collectApprovalNote(value, previous) {
+    return previous.concat(approvalNoteOption(value));
+}
+
 function buildProgram(repositoryRoot = defaultRepositoryRoot) {
     return new Command()
         .name("promote-ocr-training-review")
         .description("Promote an explicitly reviewed local OCR batch into ground truth")
         .requiredOption("--batch-dir <directory>", "local staged review batch")
         .option("--approve <id>", "approved sample ID (repeatable)", collect, [])
+        .option(
+            "--approve-note <id=note>",
+            "approved sample with a positive provenance note (repeatable)",
+            collectApprovalNote,
+            []
+        )
         .option(
             "--concern <id=note>",
             "approved-with-concern sample and note (repeatable)",
@@ -51,18 +69,29 @@ async function main(argv = process.argv, overrides = {}) {
         writeLine = console.log
     } = overrides;
     const options = buildProgram(repositoryRoot).parse(argv).opts();
-    const approvedIds = new Set(options.approve);
-    const overlap = options.concern.filter((decision) => approvedIds.has(decision.id));
-    if (overlap.length > 0) {
+    const approvalDecisions = [
+        ...options.approve.map((id) => ({ id })),
+        ...options.approveNote,
+        ...options.concern
+    ];
+    const approvalIds = new Set();
+    const duplicateApprovalIds = new Set();
+    for (const decision of approvalDecisions) {
+        if (approvalIds.has(decision.id)) {
+            duplicateApprovalIds.add(decision.id);
+        }
+        approvalIds.add(decision.id);
+    }
+    if (duplicateApprovalIds.size > 0) {
         throw new Error(
-            `Samples cannot appear in both --approve and --concern: ${overlap.map((decision) => decision.id).join(", ")}`
+            `Samples cannot appear in more than one approval option: ${[...duplicateApprovalIds].join(", ")}`
         );
     }
     const batchDirectory = path.resolve(options.batchDir);
     const result = await promote({
         reviewManifestPath: path.join(batchDirectory, "review-manifest.json"),
         trainingManifestPath: path.resolve(options.manifest),
-        approved: [...options.approve.map((id) => ({ id })), ...options.concern],
+        approved: approvalDecisions,
         rejectedIds: options.reject
     });
     writeLine(
@@ -80,4 +109,4 @@ if (isDirectRun) {
     });
 }
 
-export { buildProgram, concernOption, main };
+export { approvalNoteOption, buildProgram, concernOption, main };
