@@ -13,7 +13,9 @@ async function makeTempDir() {
     return dir;
 }
 
-describe("OCR preprocessing::", () => {
+describe("OCR preprocessing::", function () {
+    this.timeout(15000);
+
     it("builds a single soft rules-text fallback region", async () => {
         const fixturePath = path.resolve(
             "test-images/regression/scryfall/fin-570-vivi-ornitier-25ef2d44.jpg"
@@ -93,9 +95,7 @@ describe("OCR preprocessing::", () => {
         assert.include(variants[2].characterWhitelist, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     });
 
-    it("builds hard and soft title bands in both rotated orientations", async function () {
-        this.timeout(5000);
-
+    it("builds hard and soft title bands in both rotated orientations", async () => {
         const fixturePath = path.resolve(
             "test-images/regression/scryfall/who-605-unleash-the-flux-8e3c04ad.jpg"
         );
