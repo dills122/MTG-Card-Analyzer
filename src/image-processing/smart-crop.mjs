@@ -39,6 +39,14 @@ const regions = {
             widthPercent: 0.9,
             heightPercent: 0.12,
             psm: "block"
+        },
+        {
+            key: "name-full",
+            leftPercent: 0.015,
+            topPercent: 0.02,
+            widthPercent: 0.97,
+            heightPercent: 0.14,
+            psm: "block"
         }
     ],
     type: [
@@ -97,6 +105,21 @@ const regions = {
         }
     ]
 };
+
+regions["soft-name"] = regions.name.flatMap((template) => [
+    {
+        ...template,
+        key: `${template.key}-soft`,
+        mode: "soft",
+        psm: template.key === "name-wide" ? "raw-line" : template.psm
+    },
+    {
+        ...template,
+        key: `${template.key}-soft-inverted`,
+        mode: "soft-inverted",
+        psm: template.key === "name-wide" ? "raw-line" : template.psm
+    }
+]);
 
 // OCR types without a dedicated table (or unrecognized types) fall back to the default bands.
 function getRegionTemplates(type) {

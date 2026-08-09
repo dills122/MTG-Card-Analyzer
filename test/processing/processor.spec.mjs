@@ -254,14 +254,14 @@ describe("Integration::", () => {
             processorInstance.execute((err) => {
                 assert.isTrue(stubs.CreateDirectoryStub.calledOnce);
                 assert.deepEqual(processorInstance.directory, DIR);
-                assert.equal(stubs.ImageProcessorCreateStub.callCount, 2);
-                assert.equal(stubs.ImageProcessorExtractStub.callCount, 2);
+                assert.equal(stubs.ImageProcessorCreateStub.callCount, 4);
+                assert.equal(stubs.ImageProcessorExtractStub.callCount, 4);
                 assert.deepEqual(
                     stubs.ImageProcessorCreateStub.getCalls().map((call) => call.args[0].type),
-                    ["name", "rules-name"]
+                    ["name", "soft-name", "rotated-name", "rules-name"]
                 );
-                assert.equal(stubs.MatchNameCreateStub.callCount, 2);
-                assert.equal(stubs.MatchNameMatchStub.callCount, 2);
+                assert.equal(stubs.MatchNameCreateStub.callCount, 4);
+                assert.equal(stubs.MatchNameMatchStub.callCount, 4);
                 assert.isTrue(err instanceof Error);
                 assert.isFalse(stubs.MatchProcessorCreateStub.calledOnce);
                 assert.isFalse(stubs.MatchProcessorExecuteStub.calledOnce);

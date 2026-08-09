@@ -223,5 +223,39 @@ Whenever you cast a creature spell, put a counter on Vivi Ornitier.`
             assert.equal(stubs.BulkNamesStub.callCount, 1);
             assert.equal(matches[0]?.name, "Vivi Ornitier");
         });
+
+        it("ranks an exact alternate OCR candidate above a weak selected crop", async () => {
+            const matcher = create({
+                cleanText: "WIQMTLFER",
+                candidateTexts: ["WIQMTLFER", "THOUGHT REFLECTION"]
+            });
+            const matches = await matcher.match();
+
+            assert.equal(matches[0]?.name, "Thought Reflection");
+            assert.equal(matches[0]?.percentage, 1);
+            assert.equal(matcher.matchedText, "THOUGHT REFLECTION");
+            assert.equal(stubs.BulkNamesStub.callCount, 1);
+        });
+
+        it("keeps an eligible noisy candidate when a cleaner suffix falls below threshold", async () => {
+            stubs.BulkNamesStub.resolves([{ name: "Book of Mazarbul" }]);
+            const matcher = create({
+                cleanText: "MAZARBUL",
+                candidateTexts: ["ER OF MAZARBUL", "OF MAZARBUL"]
+            });
+            const matches = await matcher.match();
+
+            assert.equal(matches[0]?.name, "Book of Mazarbul");
+            chaiAssert.isAtLeast(matches[0]?.percentage || 0, 0.7);
+            assert.equal(matcher.matchedText, "ER OF MAZARBUL");
+        });
+
+        it("maps an unambiguous face-name match back to its canonical compound name", async () => {
+            const matcher = create({ cleanText: "Legion's Landing", dirtyText: "" });
+            const matches = await matcher.match();
+
+            assert.equal(matches[0]?.name, "Legion's Landing // Adanto, the First Fort");
+            assert.equal(matches[0]?.percentage, 1);
+        });
     });
 });

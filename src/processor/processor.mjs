@@ -158,6 +158,8 @@ class ProcessorClass {
             titleExtractionImagePath: this.nameExtractionImagePath
         });
         this.nameMatches = resolution.matches;
+        this.nameExtractionResults = resolution.extractionResults;
+        this.nameExtractionImagePath = resolution.extractionImagePath;
         this.supplementalNameExtractionResults = resolution.supplementalExtractionResults;
         this.logger.info(formatMatchSummary(this.nameMatches));
     }

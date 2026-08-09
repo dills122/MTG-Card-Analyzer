@@ -187,6 +187,7 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
             }
         });
         const nameMatches = nameResolution.matches;
+        const resolvedOcr = nameResolution.extractionResults || ocr;
         timings.nameMatchMs = elapsedSince(stageStartedAt);
 
         const topName = nameMatches[0]?.name;
@@ -204,14 +205,14 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
             sourceImage: fixture.image,
             expected: fixture.expected,
             ocr: {
-                cleanText: ocr.cleanText,
-                dirtyText: ocr.dirtyText,
-                confidence: ocr.confidence || 0,
-                variant: ocr.bestVariant?.region || "",
+                cleanText: resolvedOcr.cleanText,
+                dirtyText: resolvedOcr.dirtyText,
+                confidence: resolvedOcr.confidence || 0,
+                variant: resolvedOcr.bestVariant?.region || "",
                 // Whether the source image was below the standard OCR minimum and had to be
                 // processed through the undersized-input path (see GitHub issue #156).
-                upscaled: Boolean(ocr.sourceSizing?.upscaled),
-                upscaleFactor: ocr.sourceSizing?.upscaleFactor || 1
+                upscaled: Boolean(resolvedOcr.sourceSizing?.upscaled),
+                upscaleFactor: resolvedOcr.sourceSizing?.upscaleFactor || 1
             },
             nameMatches,
             nameCandidateCount: nameMatches.length,
