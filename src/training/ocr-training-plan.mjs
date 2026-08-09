@@ -1,6 +1,7 @@
 import path from "node:path";
 
 const TESSTRAIN_REVISION = "405346a3a67d8e4e049341d1da6a4b752e0b8351";
+const LANGDATA_LSTM_REVISION = "07930fd9f246622c26eb5de794d9212ceac432d3";
 const OCR_TRAINING_IMAGE = `mtg-card-analyzer/tesstrain:${TESSTRAIN_REVISION.slice(0, 12)}`;
 const MIN_ITERATIONS = 1;
 const MAX_ITERATIONS = 100_000;
@@ -84,6 +85,7 @@ function createOcrTrainingPlan(manifest, options = {}) {
         `MODEL_NAME=${manifest.modelName}`,
         "START_MODEL=eng",
         "TESSDATA=/opt/tessdata_best",
+        "LANGDATA_DIR=/opt/langdata_lstm",
         "DATA_DIR=/run/data",
         `OUTPUT_DIR=/run/data/${manifest.modelName}`,
         "GROUND_TRUTH_DIR=/run/ground-truth",
@@ -102,6 +104,7 @@ function createOcrTrainingPlan(manifest, options = {}) {
         resources: { cpus, memoryGb },
         provenance: {
             tesstrainRevision: TESSTRAIN_REVISION,
+            langdataLstmRevision: LANGDATA_LSTM_REVISION,
             image: OCR_TRAINING_IMAGE,
             baseModelId: manifest.baseModel.id,
             baseModelRevision: manifest.baseModel.source.revision,
@@ -111,8 +114,32 @@ function createOcrTrainingPlan(manifest, options = {}) {
             psm: 13,
             randomSeed: manifest.randomSeed,
             trainRatio: manifest.trainRatio,
-            sampleIds: manifest.samples.map((sample) => sample.id)
+            sampleIds: manifest.samples.map((sample) => sample.id),
+            samples: manifest.samples.map((sample) => ({
+                id: sample.id,
+                imageSha256: sample.imageSha256,
+                transcriptionSha256: sample.transcriptionSha256
+            }))
         }
+    };
+}
+
+function createOcrTrainingImageBuildPlan(repositoryRoot) {
+    if (typeof repositoryRoot !== "string" || repositoryRoot.trim().length === 0) {
+        throw new Error("repositoryRoot must be a non-empty path");
+    }
+    const absoluteRoot = path.resolve(repositoryRoot);
+    const context = path.join(absoluteRoot, "training/ocr");
+    return {
+        executable: "docker",
+        args: [
+            "build",
+            "--file",
+            path.join(context, "Dockerfile"),
+            "--tag",
+            OCR_TRAINING_IMAGE,
+            context
+        ]
     };
 }
 
@@ -120,7 +147,9 @@ export {
     MAX_CPUS,
     MAX_ITERATIONS,
     MAX_MEMORY_GB,
+    LANGDATA_LSTM_REVISION,
     OCR_TRAINING_IMAGE,
     TESSTRAIN_REVISION,
+    createOcrTrainingImageBuildPlan,
     createOcrTrainingPlan
 };

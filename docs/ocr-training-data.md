@@ -98,6 +98,50 @@ The readiness gate requires every sample to be reviewed and the fixed `trainRati
 least one training and one evaluation line. The current seed is `20260808` and the ratio is `0.9`;
 these values must be passed unchanged to `tesstrain` so repeated list generation is deterministic.
 
+## Fine-tune a candidate
+
+Training runs in a pinned Linux container because the official `tesstrain` workflow requires GNU
+Make 4.2 or newer and Tesseract 5.3 or newer. The container pins its Ubuntu base digest, official
+`tesstrain` revision, `langdata_lstm` revision, and `tessdata_best` English model hash. Network
+access is available only while building that image. The training container itself runs offline,
+read-only, without Linux capabilities, and with explicit CPU, memory, process, and temporary-file
+limits.
+
+Build the image once:
+
+```bash
+pnpm training:image:build
+```
+
+Inspect the exact command without creating a run directory:
+
+```bash
+pnpm training:run --run mtg-001 --dry-run
+```
+
+Start fine-tuning after the readiness gate passes:
+
+```bash
+pnpm training:run \
+    --run mtg-001 \
+    --max-iterations 10000 \
+    --cpus 4 \
+    --memory-gb 4
+```
+
+Pass `--build-image` to rebuild the pinned image first. Run IDs are unique and output directories
+are never overwritten. Each run copies only manifest-listed ground-truth pairs into
+`artifacts/training-runs/<run>/ground-truth/`, records exact sample hashes and hyperparameters in
+`training-plan.json`, and preserves checkpoints and logs on failure. A successful run packages the
+final float model as `candidate/eng.traineddata` beside a regression candidate manifest. These
+generated artifacts remain ignored until a candidate is explicitly reviewed and selected.
+
+The implementation follows the official [`tesstrain` requirements and Makefile variables](https://github.com/tesseract-ocr/tesstrain#usage),
+including `START_MODEL`, `MAX_ITERATIONS`, `RANDOM_SEED`, `RATIO_TRAIN`, and `PSM`. Tesseract's
+official [training guide](https://tesseract-ocr.github.io/tessdoc/tess5/TrainingTesseract-5.html)
+describes fine-tuning as the appropriate small-domain adaptation path and warns that training from
+scratch without a representative corpus is likely to overfit.
+
 ## Promotion path
 
 Training completion is not promotion. Package the selected checkpoint as `eng.traineddata`, add it

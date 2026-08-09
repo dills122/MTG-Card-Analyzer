@@ -35,6 +35,9 @@ artifacts/regression/
 # Local OCR training review crops (unreviewed and potentially rights-restricted)
 artifacts/training-review/
 
+# Generated OCR checkpoints, trained models, and local candidate packages
+artifacts/training-runs/
+
 # Build output
 build/
 dist/
