@@ -4,6 +4,14 @@
     "description": "a mtg ocr app for documenting a collection",
     "type": "module",
     "main": "index.mjs",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dills122/MTG-Card-Analyzer.git"
+    },
+    "homepage": "https://github.com/dills122/MTG-Card-Analyzer#readme",
+    "bugs": {
+        "url": "https://github.com/dills122/MTG-Card-Analyzer/issues"
+    },
     "packageManager": "pnpm@10.13.1",
     "engines": {
         "node": ">=20.0.0",

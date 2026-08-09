@@ -1,5 +1,9 @@
-name-template: "v$RESOLVED_VERSION 🌈"
-tag-template: "v$RESOLVED_VERSION"
+# No "v" prefix: matches the project's existing published tags (0.1.6, 0.1.8). The old "v$..."
+# templates here never matched those tags, so version-resolver could never find a prior release
+# to bump from and the draft stuck at a hardcoded 0.1.0 baseline indefinitely (see the v0.2.0
+# release published to reset this).
+name-template: "$RESOLVED_VERSION 🌈"
+tag-template: "$RESOLVED_VERSION"
 categories:
     - title: "🚀 Features"
       labels:
