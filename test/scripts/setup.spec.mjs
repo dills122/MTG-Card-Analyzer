@@ -18,6 +18,10 @@ describe("fresh-clone setup smoke", () => {
             path.join(cloneRoot, "scripts/setup.mjs")
         );
         fs.copyFileSync(
+            path.join(repoRoot, "scripts/install-git-hooks.mjs"),
+            path.join(cloneRoot, "scripts/install-git-hooks.mjs")
+        );
+        fs.copyFileSync(
             path.join(repoRoot, "mtg.config.example.json"),
             path.join(cloneRoot, "mtg.config.example.json")
         );

@@ -39,7 +39,9 @@ function checkDefaultOcrModel() {
     const inspection = inspectDefaultOcrModel(fs.readFileSync(DEFAULT_OCR_MODEL_PATH));
     if (inspection.unsupportedParameters.length > 0) {
         return {
-            label: `English OCR model contains unsupported parameters: ${inspection.unsupportedParameters.join(", ")}`,
+            label: `English OCR model contains unsupported parameters: ${inspection.unsupportedParameters.join(
+                ", "
+            )}`,
             status: "fail"
         };
     }
@@ -61,7 +63,7 @@ function evaluateCardNameIndex(records) {
     if (health.uniqueNames < MIN_USABLE_CARD_NAMES) {
         return {
             health,
-            label: `card names DB is unusable (${counts}; expected at least ${MIN_USABLE_CARD_NAMES}) -- run \`node ./src/db-local/bulk-insert.mjs\` to repair it`,
+            label: `card names DB is unusable (${counts}; expected at least ${MIN_USABLE_CARD_NAMES}) -- run \`mtg-card-analyzer names seed\` to repair it`,
             status: "fail",
             required: true
         };
@@ -69,7 +71,7 @@ function evaluateCardNameIndex(records) {
     if (health.invalidRows > 0 || health.duplicateRows > 0) {
         return {
             health,
-            label: `card names DB needs repair (${counts}) -- rerun \`node ./src/db-local/bulk-insert.mjs\``,
+            label: `card names DB needs repair (${counts}) -- rerun \`mtg-card-analyzer names seed\``,
             status: "fail",
             required: false
         };

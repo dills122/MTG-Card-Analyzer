@@ -14,7 +14,9 @@ cd MTG-Card-Analyzer
 node scripts/setup.mjs
 ```
 
-That installs deps (also runs `lefthook install` via the `prepare` script, wiring up git hooks for lint-staged), creates local config files, and seeds the card names dictionary. Full walkthrough, flags, and troubleshooting: **[docs/LOCAL_DEV.md](docs/LOCAL_DEV.md)**.
+That installs dependencies and repository Git hooks, creates local config files, and seeds the card
+names dictionary. Full walkthrough, flags, and troubleshooting:
+**[docs/LOCAL_DEV.md](docs/LOCAL_DEV.md)**.
 
 ## AI-Assisted Development
 
@@ -63,6 +65,20 @@ CI runs `check:fast` and the unit suite on Node 20 and Node 22. Coverage is coll
 and the cold-cache OCR regression remains a single Node 22 job so the compatibility matrix does not
 multiply the expensive benchmark.
 
+Distribution changes must also inspect and execute the packed artifact:
+
+```bash
+pnpm test:package
+npm pack --dry-run --json
+```
+
+## Releases
+
+Release tags use bare semantic versions such as `0.2.0`, without a `v` prefix. Keep
+`package.json`, the Release Drafter tag template, and the release workflow tag filter aligned.
+Publishing and creating the release tag remain explicit maintainer steps after the release commit
+has passed its gates.
+
 Type checking is being introduced incrementally for this ESM JavaScript codebase. The strict
 checked-module list lives in `tsconfig.checked.json`; add a touched production module there once its
 JSDoc contracts pass `pnpm typecheck`.
@@ -99,7 +115,7 @@ Quick orientation — see individual `index.mjs` files in each folder for the pu
 - `src/rds/` — legacy/optional MySQL persistence backend, not used by default
 - `src/processor/` — orchestrates the end-to-end scan pipeline
 - `src/config/` — single source of truth for runtime settings (CLI flag > env var > config file > default)
-- `index.mjs` — CLI entry point (`scan`, `log`, `collection`, `migrate`, `diagnostics`, `config`)
+- `index.mjs` — CLI entry point (`scan`, `names`, `log`, `collection`, `migrate`, `diagnostics`, `config`)
 - `scripts/` — setup, verification, regression, fixture-import, and OCR-training tooling
 - `docker-compose.yml` — local MySQL for the optional `rds` adapter
 - `docs/` — CLI, configuration, architecture, regression, OCR-training, and local setup guides

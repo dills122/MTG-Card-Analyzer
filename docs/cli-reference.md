@@ -9,6 +9,7 @@ same commands with `node index.mjs`; for example, `node index.mjs --help`.
 | Command             | Purpose                                                   |
 | ------------------- | --------------------------------------------------------- |
 | `scan <filePath>`   | Identify a card image and optionally persist the result   |
+| `names seed`        | Seed the required local card-name index from Scryfall     |
 | `log dump`          | Print recent local operations-log entries                 |
 | `log stats`         | Summarize the local operations log                        |
 | `collection update` | Set an existing collection entry's quantity               |
@@ -21,14 +22,22 @@ same commands with `node index.mjs`; for example, `node index.mjs --help`.
 
 ## Scan a card
 
+Before the first scan, seed the local name index. The command needs network access. It is safe to
+repeat: the seeder rejects unmatchable catalog entries, repairs invalid or duplicate rows, and
+upserts names idempotently.
+
 ```bash
-node index.mjs scan ./path/to/card.jpg
+mtg-card-analyzer names seed
+```
+
+```bash
+mtg-card-analyzer scan ./path/to/card.jpg
 ```
 
 A bare image path is accepted as a backward-compatible shorthand:
 
 ```bash
-node index.mjs ./path/to/card.jpg
+mtg-card-analyzer ./path/to/card.jpg
 ```
 
 Scan inputs are limited to JPEG, PNG, GIF, and BMP files. Local files may be at most 32 MiB,
@@ -90,10 +99,10 @@ write and any image-hash cache writes before exiting. Cache failures are reporte
 the primary scan result.
 
 ```bash
-node index.mjs log dump
-node index.mjs log dump --limit 20
-node index.mjs log dump --format json --since 2026-01-01
-node index.mjs log stats
+mtg-card-analyzer log dump
+mtg-card-analyzer log dump --limit 20
+mtg-card-analyzer log dump --format json --since 2026-01-01
+mtg-card-analyzer log stats
 ```
 
 `log dump` options:
@@ -108,9 +117,9 @@ node index.mjs log stats
 ## Generate diagnostics
 
 ```bash
-node index.mjs diagnostics
-node index.mjs diagnostics --limit 50
-node index.mjs diagnostics --with-mysql
+mtg-card-analyzer diagnostics
+mtg-card-analyzer diagnostics --limit 50
+mtg-card-analyzer diagnostics --with-mysql
 ```
 
 Diagnostics prints JSON containing application, Node.js, and platform versions; environment
@@ -131,10 +140,10 @@ Options:
 ## Manage configuration
 
 ```bash
-node index.mjs config list
-node index.mjs config get storageAdapter
-node index.mjs config set queryingEnabled true
-node index.mjs config set collectionEnabled true --config ./another-config.json
+mtg-card-analyzer config list
+mtg-card-analyzer config get storageAdapter
+mtg-card-analyzer config set queryingEnabled true
+mtg-card-analyzer config set collectionEnabled true --config ./another-config.json
 ```
 
 - `config list` shows every runtime setting and whether its value came from the environment, the
@@ -152,8 +161,8 @@ Scanning the same unambiguous card again adds one to its quantity. These command
 corrections through the active persistence backend:
 
 ```bash
-node index.mjs collection update "Pacifism" M20 --quantity 3
-node index.mjs collection remove "Pacifism" M20
+mtg-card-analyzer collection update "Pacifism" M20 --quantity 3
+mtg-card-analyzer collection remove "Pacifism" M20
 ```
 
 `collection update` overwrites the quantity with the supplied non-negative value and rescales the
@@ -169,8 +178,8 @@ Both commands accept `--storage-adapter <nedb|rds>` and `--config <path>`.
 The only supported migration is from local NeDB collection and needs-attention data to RDS:
 
 ```bash
-node index.mjs migrate --to rds --dry-run
-node index.mjs migrate --to rds
+mtg-card-analyzer migrate --to rds --dry-run
+mtg-card-analyzer migrate --to rds
 ```
 
 The command always reads from local NeDB regardless of the active storage adapter. By default it

@@ -46,6 +46,7 @@ the existing index without duplicating it. Use `--skip-seed` only when
 | Node version check | Warns if `<20`                                                                                          |
 | pnpm check         | Warns with the fix if pnpm isn't installed                                                              |
 | `pnpm install`     | Skip with `--skip-install`                                                                              |
+| Git hooks          | Installs Lefthook when its development binary and repository hook path are available                    |
 | Local config files | Creates `secure.config.cjs` and `mtg.config.json` if missing (leaves existing ones alone)               |
 | Seed card names    | Runs `node ./src/db-local/bulk-insert.mjs` (needs network access to Scryfall) — skip with `--skip-seed` |
 | MySQL (opt-in)     | With `--with-mysql`: starts `docker compose`, waits for the healthcheck, runs `pnpm setup-db`           |

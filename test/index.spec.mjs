@@ -270,6 +270,39 @@ describe("CLI::index.mjs", () => {
         });
     });
 
+    describe("names subcommands", () => {
+        it("names seed seeds the configured name database and exits 0", async () => {
+            const seedNamesFn = sandbox.stub().resolves({ inserted: 10 });
+
+            await runCli(
+                { command: "names-seed", flags: { cardNamesDb: "/tmp/names.db" } },
+                undefined,
+                { seedNamesFn }
+            );
+
+            assert.equal(process.env.CARD_NAMES_DB_PATH, "/tmp/names.db");
+            assert.isTrue(seedNamesFn.calledOnce);
+            assert.isTrue(processExitStub.calledWith(0));
+        });
+
+        it("names seed reports failures and exits 1", async () => {
+            const seedNamesFn = sandbox.stub().rejects(new Error("Scryfall unavailable"));
+
+            await runCli({ command: "names-seed", flags: {} }, undefined, { seedNamesFn });
+
+            assert.isTrue(consoleLogStub.calledWith("Scryfall unavailable"));
+            assert.isTrue(processExitStub.calledWith(1));
+        });
+
+        it("names seed treats an unchanged idempotent seed as success", async () => {
+            const seedNamesFn = sandbox.stub().resolves({ inserted: 0, unchanged: 35059 });
+
+            await runCli({ command: "names-seed", flags: {} }, undefined, { seedNamesFn });
+
+            assert.isTrue(processExitStub.calledWith(0));
+        });
+    });
+
     describe("migrate subcommand", () => {
         function fakeCliFor(flags) {
             return { command: "migrate", filePath: "", flags, helpRequested: false };
@@ -628,6 +661,12 @@ describe("CLI::index.mjs buildCli (real commander wiring)", () => {
     it("parses `log stats`", () => {
         const parsed = buildCli(["log", "stats"]);
         assert.equal(parsed.command, "log-stats");
+    });
+
+    it("parses `names seed`", () => {
+        const parsed = buildCli(["names", "seed", "--card-names-db", "./names.db"]);
+        assert.equal(parsed.command, "names-seed");
+        assert.equal(parsed.flags.cardNamesDb, "./names.db");
     });
 
     it("does not throw on empty argv -- commander shows top-level help instead", () => {
