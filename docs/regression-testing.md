@@ -35,8 +35,9 @@ Every regression case is evaluated with cold application state. Image hashes are
 both the fixture and every candidate reference image; the runner has no in-memory or persistent
 hash cache. Fixture names are injected before the fuzzy matcher can initialize NeDB. Tesseract
 runs with `cacheMethod: none` and reads the bundled `eng.traineddata`, so it neither reads nor writes
-an OCR cache. One initialized Tesseract worker is shared sequentially for at most 40 selected cases,
-then terminated and replaced before the next case. This bounds the Tesseract 3 WASM heap during the
+an OCR cache. The selected cases are distributed deterministically across a bounded pool of one to
+three shards. Each shard owns an initialized Tesseract worker, processes its cases sequentially,
+and replaces its worker after at most 40 cases. This bounds each Tesseract 3 WASM heap during the
 expanded corpus without loading the OCR engine and language model for every crop. Each worker's
 adaptive recognition state is reset before every crop. OCR results remain independent of earlier
 fixtures, and the persistent language-data cache stays off.
@@ -66,6 +67,10 @@ pnpm test:regression --case pacifism-clean-scan --case pacifism-blur
 # Run one or more quality groups
 pnpm test:regression --quality clean-scan --quality low-resolution
 
+# Override the default parallelism for constrained machines or timing comparisons
+pnpm test:regression --workers 1
+pnpm test:regression --workers 3
+
 # Use another manifest or output directory
 pnpm test:regression --manifest ./path/manifest.json --output ./path/reports
 
@@ -75,12 +80,16 @@ pnpm test:regression \
     --ocr-model official-eng-fast
 ```
 
-Execution stays sequential to keep OCR timings and CPU contention comparable. Runs over 40 cases
-pay a worker initialization cost between case batches; per-case runtime thresholds exclude that
-between-case initialization.
+The CLI uses three OCR workers by default and accepts `--workers 1`, `2`, or `3`. Cases are assigned
+round-robin to fixed shards and merged back into manifest order for deterministic reports. Each
+shard remains sequential because one Tesseract worker cannot recognize multiple crops concurrently.
+Runs with more than 40 cases per shard pay a worker initialization cost between case batches;
+per-case runtime thresholds exclude that between-case initialization. Reports record both the sum
+of per-case runtimes and elapsed wall runtime so speed comparisons can use the latter.
 
-Run multiple fixture IDs or quality groups in one command to reuse its worker.
-Each separate command starts a new worker.
+Run multiple fixture IDs or quality groups in one command to reuse the worker pool. Each separate
+command starts a new pool. Use one worker when collecting controlled model-comparison timings; use
+the default bounded parallelism for the ordinary regression gate.
 
 The generated `artifacts/regression` directory is ignored by Git.
 
