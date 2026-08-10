@@ -3,6 +3,7 @@ import platinumAngel from "../../test-images/PlatinumAngel.jpg";
 import "../styles/site.css";
 
 const repositoryUrl = "https://github.com/dills122/MTG-Card-Analyzer";
+const baseUrl = import.meta.env.BASE_URL;
 const installCommand =
     "npm install --global https://github.com/dills122/MTG-Card-Analyzer/releases/latest/download/mtg-card-analyzer-0.2.0.tgz";
 
@@ -30,7 +31,7 @@ const paletteItems = [
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
             rel="stylesheet"
