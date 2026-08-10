@@ -8,6 +8,7 @@ const installCommand =
 
 const paletteItems = [
     { href: "#how-it-works", label: "How it works", meta: "OCR → names → print" },
+    { href: "#scan-anatomy", label: "Scan anatomy", meta: "Crop → prepare → compare" },
     { href: "#boundaries", label: "Operating boundaries", meta: "Local data and input limits" },
     { href: "#install", label: "Install the CLI", meta: "Node 20+ · GitHub release" },
     { href: "#open-directions", label: "Open directions", meta: "Work tracked in GitHub" },
@@ -51,6 +52,7 @@ const paletteItems = [
 
                 <nav class="nav-links" aria-label="Project tour">
                     <a href="#how-it-works">Pipeline</a>
+                    <a href="#scan-anatomy">Anatomy</a>
                     <a href="#boundaries">Boundaries</a>
                     <a href="#open-directions">Next</a>
                 </nav>
@@ -107,7 +109,7 @@ const paletteItems = [
                     </button>
                 </form>
             </div>
-            <p class="palette-status" id="palette-status" aria-live="polite">5 destinations</p>
+            <p class="palette-status" id="palette-status" aria-live="polite">6 destinations</p>
             <div class="palette-results" id="palette-results" role="listbox">
                 {
                     paletteItems.map((item, index) => (
@@ -235,6 +237,121 @@ const paletteItems = [
                         <span class="step-artifact">Perceptual hash</span>
                     </li>
                 </ol>
+            </section>
+
+            <section class="anatomy-section" id="scan-anatomy" aria-labelledby="anatomy-title">
+                <div class="section-heading anatomy-heading">
+                    <h2 id="anatomy-title">What the analyzer actually sees.</h2>
+                    <p>
+                        The first pass is narrow and cheap. Wider, softer, and rotated title bands
+                        only enter when earlier evidence cannot clear the name policy. Print matching
+                        then compares images prepared in the same hash mode.
+                    </p>
+                </div>
+
+                <div class="anatomy-layout">
+                    <figure class="crop-inspector">
+                        <div class="crop-stage">
+                            <img
+                                src={platinumAngel.src}
+                                width="672"
+                                height="936"
+                                alt="Platinum Angel scan annotated with the analyzer’s title and set-symbol crop regions"
+                                loading="lazy"
+                            />
+                            <span class="crop-box crop-box-title" data-pin="A" aria-hidden="true"></span>
+                            <span class="crop-box crop-box-symbol" data-pin="B" aria-hidden="true"></span>
+                        </div>
+                        <figcaption class="crop-legend">
+                            <div>
+                                <span class="annotation-pin" aria-hidden="true">A</span>
+                                <p><strong>Title core</strong> 8% left · 5% top · 78% wide · 6.5% tall</p>
+                            </div>
+                            <div>
+                                <span class="annotation-pin" aria-hidden="true">B</span>
+                                <p><strong>Set symbol</strong> 78% left · 53.5% top · 13% wide · 10% tall</p>
+                            </div>
+                        </figcaption>
+                    </figure>
+
+                    <div class="evidence-ledger">
+                        <article class="evidence-step">
+                            <div class="evidence-step-head">
+                                <span>01 / Crop</span>
+                                <code>name-core</code>
+                            </div>
+                            <h3>Start where a card name should be.</h3>
+                            <div class="crop-sample" aria-label="Visual preview of the title crop">
+                                <img src={platinumAngel.src} width="672" height="936" alt="" loading="lazy" />
+                            </div>
+                            <p>
+                                Four title templates progress from the core line to a 97%-wide top band.
+                                The normal pass stops as soon as the evidence is strong enough.
+                            </p>
+                        </article>
+
+                        <article class="evidence-step">
+                            <div class="evidence-step-head">
+                                <span>02 / Prepare</span>
+                                <code>hard profile</code>
+                            </div>
+                            <h3>Turn artwork noise into OCR contrast.</h3>
+                            <div class="crop-sample crop-sample-processed" aria-label="Visual proxy for the OCR preprocessing profile">
+                                <img src={platinumAngel.src} width="672" height="936" alt="" loading="lazy" />
+                                <span>VISUAL PROXY</span>
+                            </div>
+                            <p>
+                                Grayscale, normalize, tune contrast and brightness, blur, scale, apply
+                                Otsu thresholding, then invert dark crops when needed. Soft and rotated
+                                variants are fallbacks, not the default workload.
+                            </p>
+                        </article>
+
+                        <article class="evidence-step">
+                            <div class="evidence-step-head">
+                                <span>03 / Resolve</span>
+                                <code>title score</code>
+                            </div>
+                            <h3>Rank the words, not just the edit distance.</h3>
+                            <p class="score-formula">
+                                <span><strong>0.6</strong> fuzzy name</span>
+                                <span><strong>0.3</strong> token coverage</span>
+                                <span><strong>0.1</strong> first token</span>
+                            </p>
+                            <div class="policy-line">
+                                <span>≥ 0.95 high confidence</span>
+                                <span>≥ 0.70 candidate floor</span>
+                            </div>
+                        </article>
+
+                        <article class="evidence-step evidence-step-hash">
+                            <div class="evidence-step-head">
+                                <span>04 / Compare</span>
+                                <code>16 × 16 pHash</code>
+                            </div>
+                            <h3>Ask whether the printing looks like its candidate.</h3>
+                            <p>
+                                Full-card compares to full-card; set-symbol compares to the same crop.
+                                Each perceptual hash is checked three ways against reviewed thresholds.
+                            </p>
+                            <dl class="hash-thresholds">
+                                <div>
+                                    <dt>Local cache</dt>
+                                    <dd><span>2-bit ≥ 92%</span><span>4-bit ≥ 85%</span><span>text ≥ 92%</span></dd>
+                                </div>
+                                <div>
+                                    <dt>Remote candidate</dt>
+                                    <dd><span>2-bit ≥ 75%</span><span>4-bit ≥ 70%</span><span>text ≥ 75%</span></dd>
+                                </div>
+                            </dl>
+                            <p class="fallback-note">
+                                If the set-symbol crop is too flat (standard deviation below 10) or
+                                cannot be prepared, the analyzer falls back to full-card hashing rather
+                                than comparing noise.
+                            </p>
+                        </article>
+                    </div>
+                </div>
             </section>
 
             <section class="boundaries-section" id="boundaries" aria-labelledby="boundaries-title">
