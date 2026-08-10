@@ -41,6 +41,7 @@ artifacts/training-runs/
 # Build output
 build/
 dist/
+.astro/
 out/
 typings/
 *.tsbuildinfo

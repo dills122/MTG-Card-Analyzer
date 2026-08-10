@@ -1,0 +1,20 @@
+[
+    {
+        "date": "2026-08-09",
+        "macrostructure": "Workbench",
+        "theme": "Coral",
+        "enrichment": "none",
+        "nav": "N13 Inline CmdK",
+        "footer": "Ft5 Statement",
+        "brief": "Warm cream palette revision preserving the Astro project showcase structure"
+    },
+    {
+        "date": "2026-08-09",
+        "macrostructure": "Workbench",
+        "theme": "Cobalt",
+        "enrichment": "none",
+        "nav": "N13 Inline CmdK",
+        "footer": "Ft5 Statement",
+        "brief": "Astro project showcase for technical MTG collectors and developers"
+    }
+]
