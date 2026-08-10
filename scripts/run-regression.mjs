@@ -2,7 +2,7 @@
 
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 import { loadOcrModelManifest } from "../src/regression/ocr-model-candidate.mjs";
 import { QUALITY_LEVELS, loadManifest } from "../src/regression/manifest.mjs";
 import { runRegression } from "../src/regression/regression-runner.mjs";
@@ -17,9 +17,17 @@ const defaultOcrModelManifest = path.join(
     "test/regression/ocr-models/manifest.json"
 );
 const defaultOcrModel = "bundled-eng-control";
+const defaultWorkers = 3;
 
 function collect(value, previous) {
     return previous.concat(value);
+}
+
+function parseWorkerCount(value) {
+    if (!/^[1-3]$/.test(value)) {
+        throw new InvalidArgumentError("must be an integer from 1 to 3");
+    }
+    return Number(value);
 }
 
 function buildProgram() {
@@ -34,6 +42,12 @@ function buildProgram() {
             defaultOcrModelManifest
         )
         .option("--ocr-model <id>", "OCR model candidate ID", defaultOcrModel)
+        .option(
+            "-w, --workers <count>",
+            "parallel OCR worker sessions (1-3)",
+            parseWorkerCount,
+            defaultWorkers
+        )
         .option("-c, --case <id>", "run a fixture id (repeatable)", collect, [])
         .option(
             "-q, --quality <level>",
@@ -69,7 +83,8 @@ async function main(argv = process.argv, overrides = {}) {
     const report = await runRegressionFn(manifest, {
         caseIds: options.case,
         qualities: options.quality,
-        ocrModel
+        ocrModel,
+        workers: options.workers
     });
     const paths = await writeBenchmarkReportFn(report, options.output);
     writeLine(`OCR model: ${ocrModel.id}`);
@@ -81,6 +96,7 @@ async function main(argv = process.argv, overrides = {}) {
     );
     writeLine("Application persistence, image-hash cache, and OCR cache: disabled");
     writeLine(`Tesseract worker: ${report.isolation.ocrWorkerLifecycle}`);
+    writeLine(`Wall runtime: ${report.summary.wallRuntimeMs} ms`);
     if (report.pending.cases > 0) {
         writeLine(`Disabled fixtures: ${report.pending.cases}`);
     }
@@ -106,4 +122,4 @@ if (isDirectRun) {
     });
 }
 
-export { buildProgram, main };
+export { buildProgram, defaultWorkers, main, parseWorkerCount };

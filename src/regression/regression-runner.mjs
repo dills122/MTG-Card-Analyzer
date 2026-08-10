@@ -14,6 +14,7 @@ const noCacheOcrOptions = Object.freeze({
     cacheMethod: "none"
 });
 const maximumCasesPerOcrSession = 40;
+const maximumOcrWorkers = 3;
 
 const silentLogger = {
     info: () => {},
@@ -317,7 +318,25 @@ function summarizeGate(results) {
     };
 }
 
+function resolveOcrWorkerCount(value) {
+    const workerCount = value ?? 1;
+    if (!Number.isInteger(workerCount) || workerCount < 1 || workerCount > maximumOcrWorkers) {
+        throw new Error(`OCR worker count must be an integer from 1 to ${maximumOcrWorkers}`);
+    }
+    return workerCount;
+}
+
+function shardCases(cases, workerCount) {
+    const shardCount = Math.min(workerCount, cases.length);
+    const shards = Array.from({ length: shardCount }, () => []);
+    cases.forEach((fixture, index) => {
+        shards[index % shardCount].push({ fixture, index });
+    });
+    return shards;
+}
+
 async function runRegression(manifest, options = {}) {
+    const workerCount = resolveOcrWorkerCount(options.workers);
     const ocrOptions = options.ocrModel
         ? {
               ...noCacheOcrOptions,
@@ -350,58 +369,91 @@ async function runRegression(manifest, options = {}) {
         name
     }));
     const context = { cardNames, catalog: activeCatalog };
-    const results = [];
     const managesOcrSession =
         dependencies.ImageProcessor === imageProcessorModule ||
         typeof options.dependencies?.createOcrSession === "function";
-    let ocrSession;
 
-    async function startOcrSession() {
-        await ocrSession?.terminate();
-        ocrSession = undefined;
-        ocrSession = await dependencies.createOcrSession({ ...ocrOptions, logger: silentLogger });
-        dependencies.ocrOptions = { ...ocrOptions, session: ocrSession };
-    }
+    async function runShard(shard) {
+        const shardDependencies = { ...dependencies, ocrOptions };
+        const indexedResults = [];
+        let ocrSession;
 
-    try {
-        for (const [index, fixture] of selectedCases.entries()) {
-            if (managesOcrSession && index % maximumCasesPerOcrSession === 0) {
-                await startOcrSession();
-            }
-            results.push(await analyzeFixture(fixture, manifest, context, dependencies));
+        async function startOcrSession() {
+            await ocrSession?.terminate();
+            ocrSession = undefined;
+            ocrSession = await dependencies.createOcrSession({
+                ...ocrOptions,
+                logger: silentLogger
+            });
+            shardDependencies.ocrOptions = { ...ocrOptions, session: ocrSession };
         }
-        return {
-            schemaVersion: 1,
-            generatedAt: new Date().toISOString(),
-            manifest: manifest.path,
-            offline: true,
-            ocrModel: reportOcrModel(options.ocrModel),
-            isolation: {
-                applicationPersistence: "disabled",
-                imageHashCache: "disabled",
-                ocrCache: "disabled",
-                ocrLanguageSource: options.ocrModel
-                    ? `OCR candidate ${options.ocrModel.id}`
-                    : "bundled official tessdata_best eng.traineddata",
-                ocrWorkerLifecycle:
-                    `shared sequentially for at most ${maximumCasesPerOcrSession} cases; ` +
-                    "adaptive state reset per crop",
-                temporaryArtifacts: "deleted after each case"
-            },
-            pending: {
-                catalogEntries: manifest.catalog.length - activeCatalog.length,
-                cases: manifest.cases.length - activeCases.length,
-                placeholderCases: manifest.cases.filter((fixture) =>
-                    JSON.stringify(fixture).includes("CHANGE_ME")
-                ).length
-            },
-            summary: summarize(results),
-            gate: summarizeGate(results),
-            results
-        };
-    } finally {
-        await ocrSession?.terminate();
+
+        try {
+            for (const [shardIndex, { fixture, index }] of shard.entries()) {
+                if (managesOcrSession && shardIndex % maximumCasesPerOcrSession === 0) {
+                    await startOcrSession();
+                }
+                indexedResults.push({
+                    index,
+                    result: await analyzeFixture(fixture, manifest, context, shardDependencies)
+                });
+            }
+            return indexedResults;
+        } finally {
+            await ocrSession?.terminate();
+        }
     }
+
+    const startedAt = performance.now();
+    const shards = shardCases(selectedCases, workerCount);
+    const shardRuns = await Promise.allSettled(shards.map(runShard));
+    const failedShard = shardRuns.find((result) => result.status === "rejected");
+    if (failedShard) {
+        throw failedShard.reason;
+    }
+    const results = shardRuns
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value)
+        .flat()
+        .sort((left, right) => left.index - right.index)
+        .map(({ result }) => result);
+    const lifecyclePrefix =
+        shards.length === 1
+            ? "shared sequentially"
+            : `${shards.length} parallel shards; each shared`;
+    return {
+        schemaVersion: 1,
+        generatedAt: new Date().toISOString(),
+        manifest: manifest.path,
+        offline: true,
+        ocrModel: reportOcrModel(options.ocrModel),
+        isolation: {
+            applicationPersistence: "disabled",
+            imageHashCache: "disabled",
+            ocrCache: "disabled",
+            ocrWorkers: shards.length,
+            ocrLanguageSource: options.ocrModel
+                ? `OCR candidate ${options.ocrModel.id}`
+                : "bundled official tessdata_best eng.traineddata",
+            ocrWorkerLifecycle:
+                `${lifecyclePrefix} for at most ${maximumCasesPerOcrSession} cases; ` +
+                "adaptive state reset per crop",
+            temporaryArtifacts: "deleted after each case"
+        },
+        pending: {
+            catalogEntries: manifest.catalog.length - activeCatalog.length,
+            cases: manifest.cases.length - activeCases.length,
+            placeholderCases: manifest.cases.filter((fixture) =>
+                JSON.stringify(fixture).includes("CHANGE_ME")
+            ).length
+        },
+        summary: {
+            ...summarize(results),
+            wallRuntimeMs: elapsedSince(startedAt)
+        },
+        gate: summarizeGate(results),
+        results
+    };
 }
 
 export {
@@ -409,8 +461,11 @@ export {
     comparisonScore,
     evaluateResult,
     maximumCasesPerOcrSession,
+    maximumOcrWorkers,
     rankPrintCandidates,
+    resolveOcrWorkerCount,
     runRegression,
+    shardCases,
     summarize,
     summarizeGate
 };
@@ -420,8 +475,11 @@ export default {
     comparisonScore,
     evaluateResult,
     maximumCasesPerOcrSession,
+    maximumOcrWorkers,
     rankPrintCandidates,
+    resolveOcrWorkerCount,
     runRegression,
+    shardCases,
     summarize,
     summarizeGate
 };

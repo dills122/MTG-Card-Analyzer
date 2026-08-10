@@ -7,7 +7,10 @@ import { QUALITY_LEVELS, loadManifest, validateManifest } from "../../src/regres
 import { formatBenchmarkReport } from "../../src/regression/report.mjs";
 import {
     maximumCasesPerOcrSession,
+    maximumOcrWorkers,
+    resolveOcrWorkerCount,
     runRegression,
+    shardCases,
     summarize,
     summarizeGate
 } from "../../src/regression/regression-runner.mjs";
@@ -29,6 +32,34 @@ async function listRelativeFiles(directory, relativeDirectory = "") {
 }
 
 describe("Regression framework::", () => {
+    it("validates and deterministically shards the requested OCR worker count", () => {
+        const fixtures = Array.from({ length: 7 }, (_, index) => ({ id: `case-${index}` }));
+        const shards = shardCases(fixtures, 3);
+
+        assert.equal(resolveOcrWorkerCount(undefined), 1);
+        assert.equal(resolveOcrWorkerCount(maximumOcrWorkers), maximumOcrWorkers);
+        assert.throws(() => resolveOcrWorkerCount(0), "must be an integer from 1 to 3");
+        assert.throws(() => resolveOcrWorkerCount(1.5), "must be an integer from 1 to 3");
+        assert.deepEqual(
+            shards.map((shard) => shard.map(({ fixture, index }) => [fixture.id, index])),
+            [
+                [
+                    ["case-0", 0],
+                    ["case-3", 3],
+                    ["case-6", 6]
+                ],
+                [
+                    ["case-1", 1],
+                    ["case-4", 4]
+                ],
+                [
+                    ["case-2", 2],
+                    ["case-5", 5]
+                ]
+            ]
+        );
+    });
+
     it("loads labeled fixtures for every supported quality level", async () => {
         const manifest = await loadManifest(manifestPath);
         assert.sameMembers(
@@ -428,6 +459,180 @@ describe("Regression framework::", () => {
             Array(maximumCasesPerOcrSession).fill(sessions[0])
         );
         assert.equal(receivedSessions.at(-1), sessions[1]);
+        assert.deepEqual(
+            sessions.map((session) => session.terminateCalls),
+            [1, 1]
+        );
+    });
+
+    it("runs independent OCR shards concurrently and restores manifest result order", async () => {
+        const manifest = {
+            path: "/fixtures/manifest.json",
+            catalog: [
+                {
+                    name: "Pacifism",
+                    set: "BBD",
+                    collectorNumber: "101",
+                    referenceImagePath: "/fixtures/reference.jpg"
+                }
+            ],
+            cases: Array.from({ length: 6 }, (_, index) => ({
+                id: `case-${index}`,
+                image: `case-${index}.jpg`,
+                imagePath: `/fixtures/case-${index}.jpg`,
+                quality: "clean-scan",
+                expected: { name: "Pacifism", set: "BBD", collectorNumber: "101" }
+            }))
+        };
+        const sessions = [];
+        const assignments = [];
+        let activeExtractions = 0;
+        let maximumActiveExtractions = 0;
+
+        const report = await runRegression(manifest, {
+            workers: 3,
+            dependencies: {
+                ImageProcessor: {
+                    create: ({ path: imagePath, ocrOptions }) => ({
+                        extract: (callback) => {
+                            assignments.push([imagePath, ocrOptions.session.id]);
+                            activeExtractions += 1;
+                            maximumActiveExtractions = Math.max(
+                                maximumActiveExtractions,
+                                activeExtractions
+                            );
+                            setTimeout(() => {
+                                activeExtractions -= 1;
+                                callback(null, {
+                                    cleanText: "PACIFISM",
+                                    dirtyText: "Pacifism",
+                                    confidence: 99,
+                                    bestVariant: { region: "name-core" }
+                                });
+                            }, 10);
+                        }
+                    })
+                },
+                MatchName: matchNameModule,
+                Hash: {
+                    hashImage: (_imagePath, callback) => callback(null, "fresh-hash"),
+                    compareHash: () => ({
+                        twoBitMatches: 1,
+                        fourBitMatches: 1,
+                        stringCompare: 1
+                    })
+                },
+                materializeFixture: async (fixture) => fixture.imagePath,
+                createOcrSession: async () => {
+                    const session = {
+                        id: sessions.length,
+                        terminateCalls: 0,
+                        async terminate() {
+                            this.terminateCalls += 1;
+                        }
+                    };
+                    sessions.push(session);
+                    return session;
+                }
+            }
+        });
+
+        assert.equal(maximumActiveExtractions, 3);
+        assert.deepEqual(
+            report.results.map((result) => result.id),
+            manifest.cases.map((fixture) => fixture.id)
+        );
+        assert.sameDeepMembers(assignments, [
+            ["/fixtures/case-0.jpg", 0],
+            ["/fixtures/case-1.jpg", 1],
+            ["/fixtures/case-2.jpg", 2],
+            ["/fixtures/case-3.jpg", 0],
+            ["/fixtures/case-4.jpg", 1],
+            ["/fixtures/case-5.jpg", 2]
+        ]);
+        assert.deepEqual(
+            sessions.map((session) => session.terminateCalls),
+            [1, 1, 1]
+        );
+        assert.equal(report.isolation.ocrWorkers, 3);
+        assert.equal(
+            report.isolation.ocrWorkerLifecycle,
+            "3 parallel shards; each shared for at most 40 cases; adaptive state reset per crop"
+        );
+        assert.isAtLeast(report.summary.wallRuntimeMs, 20);
+    });
+
+    it("waits for parallel shard cleanup before reporting an OCR session startup failure", async () => {
+        const manifest = {
+            path: "/fixtures/manifest.json",
+            catalog: [
+                {
+                    name: "Pacifism",
+                    set: "BBD",
+                    collectorNumber: "101",
+                    referenceImagePath: "/fixtures/reference.jpg"
+                }
+            ],
+            cases: Array.from({ length: 3 }, (_, index) => ({
+                id: `case-${index}`,
+                image: `case-${index}.jpg`,
+                imagePath: `/fixtures/case-${index}.jpg`,
+                quality: "clean-scan",
+                expected: { name: "Pacifism", set: "BBD", collectorNumber: "101" }
+            }))
+        };
+        const sessions = [];
+        let createSessionCalls = 0;
+        let error;
+
+        try {
+            await runRegression(manifest, {
+                workers: 3,
+                dependencies: {
+                    ImageProcessor: {
+                        create: () => ({
+                            extract: (callback) =>
+                                callback(null, {
+                                    cleanText: "PACIFISM",
+                                    dirtyText: "Pacifism",
+                                    confidence: 99,
+                                    bestVariant: { region: "name-core" }
+                                })
+                        })
+                    },
+                    MatchName: matchNameModule,
+                    Hash: {
+                        hashImage: (_imagePath, callback) => callback(null, "fresh-hash"),
+                        compareHash: () => ({
+                            twoBitMatches: 1,
+                            fourBitMatches: 1,
+                            stringCompare: 1
+                        })
+                    },
+                    materializeFixture: async (fixture) => fixture.imagePath,
+                    createOcrSession: async () => {
+                        createSessionCalls += 1;
+                        if (createSessionCalls === 2) {
+                            throw new Error("session startup failed");
+                        }
+                        const session = {
+                            terminateCalls: 0,
+                            async terminate() {
+                                this.terminateCalls += 1;
+                            }
+                        };
+                        sessions.push(session);
+                        return session;
+                    }
+                }
+            });
+        } catch (caught) {
+            error = caught;
+        }
+
+        assert.instanceOf(error, Error);
+        assert.equal(error.message, "session startup failed");
+        assert.lengthOf(sessions, 2);
         assert.deepEqual(
             sessions.map((session) => session.terminateCalls),
             [1, 1]

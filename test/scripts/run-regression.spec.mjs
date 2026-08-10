@@ -1,7 +1,25 @@
 import { assert } from "chai";
-import { buildProgram, main } from "../../scripts/run-regression.mjs";
+import {
+    buildProgram,
+    defaultWorkers,
+    main,
+    parseWorkerCount
+} from "../../scripts/run-regression.mjs";
 
 describe("run-regression CLI::", () => {
+    it("uses a bounded parallel worker default and accepts an explicit worker count", () => {
+        const defaults = buildProgram().parse(["node", "run-regression.mjs"]).opts();
+        const explicit = buildProgram()
+            .parse(["node", "run-regression.mjs", "--workers", "3"])
+            .opts();
+
+        assert.equal(defaults.workers, defaultWorkers);
+        assert.equal(explicit.workers, 3);
+        assert.throws(() => parseWorkerCount("0"), "must be an integer from 1 to 3");
+        assert.throws(() => parseWorkerCount("4"), "must be an integer from 1 to 3");
+        assert.throws(() => parseWorkerCount("2.5"), "must be an integer from 1 to 3");
+    });
+
     it("parses an explicit OCR candidate manifest and candidate ID", () => {
         const options = buildProgram()
             .parse([
@@ -62,6 +80,7 @@ describe("run-regression CLI::", () => {
 
         assert.strictEqual(result, report);
         assert.strictEqual(receivedOptions.ocrModel, selectedCandidate);
+        assert.equal(receivedOptions.workers, defaultWorkers);
         assert.include(lines, "OCR model: official-eng-fast");
         assert.include(
             lines,

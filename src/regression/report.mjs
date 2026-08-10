@@ -38,6 +38,7 @@ function formatBenchmarkReport(report) {
         `- Undersized-input fixtures: ${report.summary.undersizedInputs || 0}`,
         `- Fixtures containing CHANGE_ME: ${report.pending?.placeholderCases || 0}`,
         `- Total runtime: ${report.summary.totalRuntimeMs} ms`,
+        `- Wall runtime: ${report.summary.wallRuntimeMs ?? report.summary.totalRuntimeMs} ms`,
         `- Mean runtime: ${report.summary.meanRuntimeMs} ms`,
         `- P95 runtime: ${report.summary.p95RuntimeMs} ms`,
         "",
