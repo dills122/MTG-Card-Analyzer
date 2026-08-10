@@ -1,0 +1,15 @@
+{
+    "scannedAt": "2026-08-09",
+    "fontStack": "Space Grotesk display, Inter body, JetBrains Mono code",
+    "palette": "Hallmark OKLCH tokens in tokens.css",
+    "motion": "motion-cut",
+    "spacing": "Hallmark 4-point semantic scale in tokens.css",
+    "framework": "Astro 5 static site alongside the Node.js ESM CLI",
+    "sources": ["package.json", "Readme.md", "tokens.css", "src/styles/site.css"],
+    "preserve": [
+        "existing CLI package contracts",
+        "local-first product positioning",
+        "Workbench structure and responsive layout"
+    ],
+    "introduce": ["single warm cream theme", "burnished terracotta accent"]
+}

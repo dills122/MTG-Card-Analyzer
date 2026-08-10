@@ -1,0 +1,625 @@
+---
+import platinumAngel from "../../test-images/PlatinumAngel.jpg";
+import "../styles/site.css";
+
+const repositoryUrl = "https://github.com/dills122/MTG-Card-Analyzer";
+const baseUrl = import.meta.env.BASE_URL;
+const installCommand =
+    "npm install --global https://github.com/dills122/MTG-Card-Analyzer/releases/latest/download/mtg-card-analyzer-0.2.0.tgz";
+
+const paletteItems = [
+    { href: "#how-it-works", label: "How it works", meta: "OCR → names → print" },
+    { href: "#scan-anatomy", label: "Scan anatomy", meta: "Crop → prepare → compare" },
+    { href: "#boundaries", label: "Operating boundaries", meta: "Local data and input limits" },
+    { href: "#install", label: "Install the CLI", meta: "Node 20+ · GitHub release" },
+    { href: "#open-directions", label: "Open directions", meta: "Work tracked in GitHub" },
+    { href: repositoryUrl, label: "Read the source", meta: "MIT licensed · GitHub" }
+];
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        <meta
+            name="description"
+            content="See how MTG Card Analyzer identifies Magic: The Gathering cards with OCR, fuzzy name matching, and image hashes."
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <title>MTG Card Analyzer — local-first card identification</title>
+    </head>
+    <body>
+        <a class="skip-link" href="#main">Skip to project tour</a>
+
+        <header class="site-nav">
+            <div class="nav-inner">
+                <a class="wordmark" href="#top" aria-label="MTG Card Analyzer, back to top">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 3.5h10v14H7z"></path>
+                        <path d="M4 6.5h3v14h10v-3"></path>
+                    </svg>
+                    <span>MTG / ANALYZER</span>
+                </a>
+
+                <nav class="nav-links" aria-label="Project tour">
+                    <a href="#how-it-works">Pipeline</a>
+                    <a href="#scan-anatomy">Anatomy</a>
+                    <a href="#boundaries">Boundaries</a>
+                    <a href="#open-directions">Next</a>
+                </nav>
+
+                <div class="nav-actions">
+                    <button
+                        class="icon-control search-trigger interactive"
+                        id="palette-trigger"
+                        type="button"
+                        aria-label="Open project navigation"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="10.5" cy="10.5" r="5.75"></circle>
+                            <path d="m15 15 4 4"></path>
+                        </svg>
+                        <span class="search-label">Jump to…</span>
+                        <kbd>⌘K</kbd>
+                    </button>
+
+                    <a
+                        class="source-link interactive"
+                        href={repositoryUrl}
+                        aria-label="Open the MTG Card Analyzer repository on GitHub"
+                    >
+                        Source
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M7 17 17 7M9 7h8v8"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <dialog class="command-palette" id="command-palette" aria-labelledby="palette-title">
+            <div class="palette-field">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="10.5" cy="10.5" r="5.75"></circle>
+                    <path d="m15 15 4 4"></path>
+                </svg>
+                <label class="visually-hidden" for="palette-search" id="palette-title">
+                    Search project sections
+                </label>
+                <input
+                    id="palette-search"
+                    type="search"
+                    placeholder="Search the project tour"
+                    autocomplete="off"
+                    aria-controls="palette-results"
+                    aria-activedescendant="palette-item-0"
+                />
+                <form method="dialog">
+                    <button class="palette-close interactive" type="submit" aria-label="Close search">
+                        Esc
+                    </button>
+                </form>
+            </div>
+            <p class="palette-status" id="palette-status" aria-live="polite">6 destinations</p>
+            <div class="palette-results" id="palette-results" role="listbox">
+                {
+                    paletteItems.map((item, index) => (
+                        <a
+                            class:list={["palette-item", { "is-active": index === 0 }]}
+                            href={item.href}
+                            id={`palette-item-${index}`}
+                            role="option"
+                            aria-selected={index === 0 ? "true" : "false"}
+                            data-label={`${item.label} ${item.meta}`.toLowerCase()}
+                        >
+                            <span>{item.label}</span>
+                            <small>{item.meta}</small>
+                        </a>
+                    ))
+                }
+            </div>
+            <div class="palette-hints" aria-hidden="true">
+                <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+                <span><kbd>↵</kbd> open</span>
+            </div>
+        </dialog>
+
+        <main id="main">
+            <section class="hero" id="top" aria-labelledby="hero-title">
+                <div class="hero-copy hero-enter">
+                    <p class="version-line">
+                        <span class="signal-dot" aria-hidden="true"></span>
+                        Local-first CLI · v0.2.0
+                    </p>
+                    <h1 id="hero-title">Identify the card. Keep the evidence.</h1>
+                    <p class="hero-lede">
+                        Give the CLI a Magic card image. It reads the title, tolerates noisy OCR,
+                        resolves the likely name, and checks the printing by image hash.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button-primary interactive" href="#how-it-works">
+                            Inspect the pipeline
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M5 12h14M14 7l5 5-5 5"></path>
+                            </svg>
+                        </a>
+                        <a class="text-link interactive" href="#install">Run it locally</a>
+                    </div>
+                    <p class="hero-note">
+                        Scans are dry runs by default. Collection writes require two explicit opt-ins.
+                    </p>
+                </div>
+
+                <figure class="scan-bench hero-enter">
+                    <div class="card-input">
+                        <img
+                            src={platinumAngel.src}
+                            width="672"
+                            height="936"
+                            alt="Platinum Angel card image used by the project’s clean-scan regression fixture"
+                            fetchpriority="high"
+                        />
+                        <figcaption>
+                            <span>INPUT / JPEG</span>
+                            <span>672 × 936</span>
+                        </figcaption>
+                    </div>
+                    <div class="terminal-specimen">
+                        <p class="terminal-command">
+                            <span aria-hidden="true">$</span>
+                            mtg-card-analyzer scan ./PlatinumAngel.jpg
+                        </p>
+                        <pre aria-label="Example scan output"><code><span class="terminal-muted">INFO</span>  Reading card name
+<span class="terminal-muted">INFO</span>  Name candidates (1):
+      1. Platinum Angel (100%)
+
+<span class="terminal-strong">Scan results</span>
+
+1. Platinum Angel
+   Sets: Commander 2016</code></pre>
+                        <div class="terminal-meta">
+                            <span><span class="status-mark" aria-hidden="true">✓</span> Name resolved</span>
+                            <span>C16 · 214</span>
+                        </div>
+                    </div>
+                </figure>
+            </section>
+
+            <section class="pipeline-section" id="how-it-works" aria-labelledby="pipeline-title">
+                <div class="section-heading section-heading-inverse">
+                    <h2 id="pipeline-title">A scan is a sequence of bounded decisions.</h2>
+                    <p>
+                        Ordinary cards take the short path. Harder images progressively unlock more
+                        crops and transforms, so expensive OCR work stays exceptional.
+                    </p>
+                </div>
+
+                <ol class="pipeline-list">
+                    <li>
+                        <span class="step-index">01</span>
+                        <div>
+                            <h3>Verify the image</h3>
+                            <p>Check the signature, decoded dimensions, format, and configured limits before processing.</p>
+                        </div>
+                        <span class="step-artifact">JPEG · PNG · GIF · BMP</span>
+                    </li>
+                    <li>
+                        <span class="step-index">02</span>
+                        <div>
+                            <h3>Read likely title regions</h3>
+                            <p>Crop, normalize, scale, threshold, invert, or rotate only the bounded regions that need it.</p>
+                        </div>
+                        <span class="step-artifact">Tesseract OCR</span>
+                    </li>
+                    <li>
+                        <span class="step-index">03</span>
+                        <div>
+                            <h3>Resolve the name</h3>
+                            <p>Compare plausible OCR fragments with a local card-name index and rank fuzzy matches.</p>
+                        </div>
+                        <span class="step-artifact">Local index</span>
+                    </li>
+                    <li>
+                        <span class="step-index">04</span>
+                        <div>
+                            <h3>Check the printing</h3>
+                            <p>Rank candidate printings with cached or downloaded image hashes, then report what is known.</p>
+                        </div>
+                        <span class="step-artifact">Perceptual hash</span>
+                    </li>
+                </ol>
+            </section>
+
+            <section class="anatomy-section" id="scan-anatomy" aria-labelledby="anatomy-title">
+                <div class="section-heading anatomy-heading">
+                    <h2 id="anatomy-title">What the analyzer actually sees.</h2>
+                    <p>
+                        The first pass is narrow and cheap. Wider, softer, and rotated title bands
+                        only enter when earlier evidence cannot clear the name policy. Print matching
+                        then compares images prepared in the same hash mode.
+                    </p>
+                </div>
+
+                <div class="anatomy-layout">
+                    <figure class="crop-inspector">
+                        <div class="crop-stage">
+                            <img
+                                src={platinumAngel.src}
+                                width="672"
+                                height="936"
+                                alt="Platinum Angel scan annotated with the analyzer’s title and set-symbol crop regions"
+                                loading="lazy"
+                            />
+                            <span class="crop-box crop-box-title" data-pin="A" aria-hidden="true"></span>
+                            <span class="crop-box crop-box-symbol" data-pin="B" aria-hidden="true"></span>
+                        </div>
+                        <figcaption class="crop-legend">
+                            <div>
+                                <span class="annotation-pin" aria-hidden="true">A</span>
+                                <p><strong>Title core</strong> 8% left · 5% top · 78% wide · 6.5% tall</p>
+                            </div>
+                            <div>
+                                <span class="annotation-pin" aria-hidden="true">B</span>
+                                <p><strong>Set symbol</strong> 78% left · 53.5% top · 13% wide · 10% tall</p>
+                            </div>
+                        </figcaption>
+                    </figure>
+
+                    <div class="evidence-ledger">
+                        <article class="evidence-step">
+                            <div class="evidence-step-head">
+                                <span>01 / Crop</span>
+                                <code>name-core</code>
+                            </div>
+                            <h3>Start where a card name should be.</h3>
+                            <div class="crop-sample" aria-label="Visual preview of the title crop">
+                                <img src={platinumAngel.src} width="672" height="936" alt="" loading="lazy" />
+                            </div>
+                            <p>
+                                Four title templates progress from the core line to a 97%-wide top band.
+                                The normal pass stops as soon as the evidence is strong enough.
+                            </p>
+                        </article>
+
+                        <article class="evidence-step">
+                            <div class="evidence-step-head">
+                                <span>02 / Prepare</span>
+                                <code>hard profile</code>
+                            </div>
+                            <h3>Turn artwork noise into OCR contrast.</h3>
+                            <div class="crop-sample crop-sample-processed" aria-label="Visual proxy for the OCR preprocessing profile">
+                                <img src={platinumAngel.src} width="672" height="936" alt="" loading="lazy" />
+                                <span>VISUAL PROXY</span>
+                            </div>
+                            <p>
+                                Grayscale, normalize, tune contrast and brightness, blur, scale, apply
+                                Otsu thresholding, then invert dark crops when needed. Soft and rotated
+                                variants are fallbacks, not the default workload.
+                            </p>
+                        </article>
+
+                        <article class="evidence-step">
+                            <div class="evidence-step-head">
+                                <span>03 / Resolve</span>
+                                <code>title score</code>
+                            </div>
+                            <h3>Rank the words, not just the edit distance.</h3>
+                            <p class="score-formula">
+                                <span><strong>0.6</strong> fuzzy name</span>
+                                <span><strong>0.3</strong> token coverage</span>
+                                <span><strong>0.1</strong> first token</span>
+                            </p>
+                            <div class="policy-line">
+                                <span>≥ 0.95 high confidence</span>
+                                <span>≥ 0.70 candidate floor</span>
+                            </div>
+                        </article>
+
+                        <article class="evidence-step evidence-step-hash">
+                            <div class="evidence-step-head">
+                                <span>04 / Compare</span>
+                                <code>16 × 16 pHash</code>
+                            </div>
+                            <h3>Ask whether the printing looks like its candidate.</h3>
+                            <p>
+                                Full-card compares to full-card; set-symbol compares to the same crop.
+                                Each perceptual hash is checked three ways against reviewed thresholds.
+                            </p>
+                            <dl class="hash-thresholds">
+                                <div>
+                                    <dt>Local cache</dt>
+                                    <dd><span>2-bit ≥ 92%</span><span>4-bit ≥ 85%</span><span>text ≥ 92%</span></dd>
+                                </div>
+                                <div>
+                                    <dt>Remote candidate</dt>
+                                    <dd><span>2-bit ≥ 75%</span><span>4-bit ≥ 70%</span><span>text ≥ 75%</span></dd>
+                                </div>
+                            </dl>
+                            <p class="fallback-note">
+                                If the set-symbol crop is too flat (standard deviation below 10) or
+                                cannot be prepared, the analyzer falls back to full-card hashing rather
+                                than comparing noise.
+                            </p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="boundaries-section" id="boundaries" aria-labelledby="boundaries-title">
+                <div class="section-heading">
+                    <h2 id="boundaries-title">Local-first does not mean hand-wavy.</h2>
+                    <p>
+                        The project names its limits, keeps persistence optional, and leaves uncertain
+                        printings visible instead of silently treating them as confirmed.
+                    </p>
+                </div>
+
+                <div class="boundary-layout">
+                    <div class="boundary-statement">
+                        <p class="boundary-big">Your scans, caches, history, and collection data stay on your machine by default.</p>
+                        <p>
+                            Scryfall is used for the initial name seed and candidate printing lookup.
+                            The normal workflow does not require MySQL or a hosted service.
+                        </p>
+                    </div>
+
+                    <dl class="spec-list">
+                        <div>
+                            <dt>Input ceiling</dt>
+                            <dd>32 MiB · 12,000 px per axis · 40 MP decoded</dd>
+                        </div>
+                        <div>
+                            <dt>OCR floor</dt>
+                            <dd>360 × 500 px, with bounded recovery for near-sized sources</dd>
+                        </div>
+                        <div>
+                            <dt>Default write mode</dt>
+                            <dd>Dry run; print candidates without changing the collection</dd>
+                        </div>
+                        <div>
+                            <dt>Persistence</dt>
+                            <dd>Local NeDB by default; legacy MySQL/RDS remains optional</dd>
+                        </div>
+                    </dl>
+                </div>
+            </section>
+
+            <section class="proof-section" aria-labelledby="proof-title">
+                <div class="proof-title-wrap">
+                    <h2 id="proof-title">Quality is a fixture, not a feeling.</h2>
+                    <p>
+                        OCR and matching changes run against a committed, offline corpus. Expectations
+                        are reviewed evidence; they are not rewritten to make a regression green.
+                    </p>
+                </div>
+                <div class="proof-figures">
+                    <div>
+                        <strong>158</strong>
+                        <span>enabled offline regression cases</span>
+                    </div>
+                    <div>
+                        <strong>151</strong>
+                        <span>blocking expectations</span>
+                    </div>
+                    <div>
+                        <strong>0</strong>
+                        <span>live API calls in the regression gate</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="install-section" id="install" aria-labelledby="install-title">
+                <div class="section-heading install-heading">
+                    <h2 id="install-title">Three commands to a first scan.</h2>
+                    <p>Node 20 or newer. The release archive installs the CLI and bundled English OCR model.</p>
+                </div>
+
+                <div class="quickstart-shell">
+                    <div class="quickstart-topline">
+                        <span>QUICK START / SHELL</span>
+                        <button
+                            class="copy-button interactive"
+                            id="copy-install"
+                            type="button"
+                            data-copy={installCommand}
+                            data-state="default"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="8" y="8" width="10" height="11" rx="1"></rect>
+                                <path d="M16 8V5H5v11h3"></path>
+                            </svg>
+                            <span>Copy install</span>
+                        </button>
+                    </div>
+                    <pre><code><span class="terminal-muted">$</span> {installCommand}
+<span class="terminal-muted">$</span> mtg-card-analyzer names seed
+<span class="terminal-muted">$</span> mtg-card-analyzer scan ./path/to/card.jpg</code></pre>
+                </div>
+                <p class="install-footnote">
+                    The project is distributed from GitHub Releases, not the npm registry.
+                    <a class="text-link interactive" href={`${repositoryUrl}/blob/master/docs/LOCAL_DEV.md`}>
+                        Read local development setup
+                    </a>
+                </p>
+            </section>
+
+            <section class="directions-section" id="open-directions" aria-labelledby="directions-title">
+                <div class="section-heading directions-heading">
+                    <h2 id="directions-title">Open directions, tracked in public.</h2>
+                    <p>
+                        These are active issue-tracker directions, not release promises. Each one starts
+                        with a specific recognition or workflow gap.
+                    </p>
+                </div>
+
+                <div class="direction-list">
+                    <article>
+                        <div class="direction-meta">
+                            <span>Recognition</span>
+                            <a class="issue-link interactive" href={`${repositoryUrl}/issues/157`}>Issue #157</a>
+                        </div>
+                        <h3>A dedicated vintage-frame OCR profile</h3>
+                        <p>
+                            Add vintage-specific title regions and preprocessing while keeping modern-card
+                            fixtures green and the generic fallback intact.
+                        </p>
+                    </article>
+                    <article>
+                        <div class="direction-meta">
+                            <span>Print matching</span>
+                            <a class="issue-link interactive" href={`${repositoryUrl}/issues/50`}>Issue #50</a>
+                        </div>
+                        <h3>Use art and flavor regions for close calls</h3>
+                        <p>
+                            Compare more of the card image when the primary match is close, with a reviewed
+                            threshold for when the extra work begins.
+                        </p>
+                    </article>
+                    <article>
+                        <div class="direction-meta">
+                            <span>Workflow</span>
+                            <a class="issue-link interactive" href={`${repositoryUrl}/issues/29`}>Issue #29</a>
+                        </div>
+                        <h3>Scan a directory, not just one file</h3>
+                        <p>
+                            Add a bounded multi-card processor that walks image files through the existing
+                            single-card pipeline.
+                        </p>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p class="footer-statement">
+                For people who read both rules text and stack traces.
+            </p>
+            <div class="footer-meta">
+                <a class="wordmark" href="#top">MTG / ANALYZER</a>
+                <div>
+                    <a class="footer-link interactive" href={repositoryUrl}>GitHub source</a>
+                    <a class="footer-link interactive" href={`${repositoryUrl}/blob/master/LICENSE`}>MIT license</a>
+                    <span>Built with Astro</span>
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            const palette = document.querySelector("#command-palette");
+            const paletteTrigger = document.querySelector("#palette-trigger");
+            const paletteSearch = document.querySelector("#palette-search");
+            const paletteStatus = document.querySelector("#palette-status");
+            const main = document.querySelector("main");
+            const footer = document.querySelector("footer");
+            const allPaletteItems = Array.from(document.querySelectorAll(".palette-item"));
+            let visiblePaletteItems = allPaletteItems;
+            let activeIndex = 0;
+
+            function setPaletteActive(index) {
+                if (!visiblePaletteItems.length) return;
+                activeIndex = (index + visiblePaletteItems.length) % visiblePaletteItems.length;
+                allPaletteItems.forEach((item) => {
+                    item.classList.remove("is-active");
+                    item.setAttribute("aria-selected", "false");
+                });
+                const active = visiblePaletteItems[activeIndex];
+                active.classList.add("is-active");
+                active.setAttribute("aria-selected", "true");
+                paletteSearch?.setAttribute("aria-activedescendant", active.id);
+            }
+
+            function openPalette() {
+                if (!(palette instanceof HTMLDialogElement)) return;
+                palette.showModal();
+                if (main instanceof HTMLElement) main.inert = true;
+                if (footer instanceof HTMLElement) footer.inert = true;
+                requestAnimationFrame(() => paletteSearch?.focus());
+            }
+
+            function closePalette() {
+                if (!(palette instanceof HTMLDialogElement) || !palette.open) return;
+                palette.close();
+            }
+
+            paletteTrigger?.addEventListener("click", openPalette);
+            document.addEventListener("keydown", (event) => {
+                if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+                    event.preventDefault();
+                    palette?.hasAttribute("open") ? closePalette() : openPalette();
+                }
+            });
+
+            palette?.addEventListener("close", () => {
+                if (main instanceof HTMLElement) main.inert = false;
+                if (footer instanceof HTMLElement) footer.inert = false;
+                paletteSearch.value = "";
+                allPaletteItems.forEach((item) => (item.hidden = false));
+                visiblePaletteItems = allPaletteItems;
+                setPaletteActive(0);
+                paletteTrigger?.focus();
+            });
+
+            palette?.addEventListener("click", (event) => {
+                if (event.target === palette) closePalette();
+            });
+
+            paletteSearch?.addEventListener("input", () => {
+                const query = paletteSearch.value.trim().toLowerCase();
+                allPaletteItems.forEach((item) => {
+                    item.hidden = !item.dataset.label.includes(query);
+                });
+                visiblePaletteItems = allPaletteItems.filter((item) => !item.hidden);
+                paletteStatus.textContent = `${visiblePaletteItems.length} ${
+                    visiblePaletteItems.length === 1 ? "destination" : "destinations"
+                }`;
+                setPaletteActive(0);
+            });
+
+            paletteSearch?.addEventListener("keydown", (event) => {
+                if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    setPaletteActive(activeIndex + 1);
+                }
+                if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    setPaletteActive(activeIndex - 1);
+                }
+                if (event.key === "Enter" && visiblePaletteItems.length) {
+                    event.preventDefault();
+                    visiblePaletteItems[activeIndex].click();
+                }
+            });
+
+            allPaletteItems.forEach((item) => item.addEventListener("click", closePalette));
+
+            const copyButton = document.querySelector("#copy-install");
+            copyButton?.addEventListener("click", async () => {
+                const label = copyButton.querySelector("span");
+                copyButton.dataset.state = "loading";
+                label.textContent = "Copying";
+                try {
+                    await navigator.clipboard.writeText(copyButton.dataset.copy || "");
+                    copyButton.dataset.state = "success";
+                    label.textContent = "Copied";
+                } catch {
+                    copyButton.dataset.state = "error";
+                    label.textContent = "Copy failed";
+                }
+                window.setTimeout(() => {
+                    copyButton.dataset.state = "default";
+                    label.textContent = "Copy install";
+                }, 2500);
+            });
+        </script>
+    </body>
+</html>

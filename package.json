@@ -57,6 +57,9 @@
     "scripts": {
         "ai:check": "node scripts/setup-ai-context.mjs --check",
         "ai:setup": "node scripts/setup-ai-context.mjs",
+        "site:dev": "astro dev",
+        "site:build": "astro build",
+        "site:preview": "astro preview",
         "test": "mocha \"./test/**/*.spec.mjs\"",
         "test:package": "node scripts/package-smoke.mjs",
         "test:regression": "node scripts/run-regression.mjs",
@@ -136,6 +139,7 @@
     "devDependencies": {
         "@eslint/js": "^9.39.4",
         "@types/node": "^25.9.1",
+        "astro": "^5.18.2",
         "c8": "^12.0.0",
         "chai": "^6.2.2",
         "eslint": "^10.8.0",
