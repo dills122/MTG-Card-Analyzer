@@ -137,6 +137,29 @@ class MatcherProcessor {
     }
 
     async _processMultiSetMatchesAsync() {
+        const initialHashMode = this.hashMode || "full-card";
+        try {
+            const initialMatches = await this._compareCurrentHashesAsync();
+            if (initialMatches.length > 0 || initialHashMode !== "set-symbol") {
+                return initialMatches;
+            }
+            this.logger.info(
+                `Set-symbol comparison was inconclusive for "${this.name}"; retrying full card`
+            );
+        } catch (error) {
+            if (initialHashMode !== "set-symbol") {
+                throw error;
+            }
+            this.logger.error(
+                `Set-symbol comparison failed for "${this.name}"; retrying full card`
+            );
+        }
+
+        await this._hashFromPathAsync(this.filePath);
+        return this._compareCurrentHashesAsync();
+    }
+
+    async _compareCurrentHashesAsync() {
         const processHashes = this.dependencies.processHashes.create({
             name: this.name,
             cards: this.cards,

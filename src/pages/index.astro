@@ -328,27 +328,28 @@ const paletteItems = [
                         <article class="evidence-step evidence-step-hash">
                             <div class="evidence-step-head">
                                 <span>04 / Compare</span>
-                                <code>16 × 16 pHash</code>
+                                <code>256-bit PDQ</code>
                             </div>
                             <h3>Ask whether the printing looks like its candidate.</h3>
                             <p>
                                 Full-card compares to full-card; set-symbol compares to the same crop.
-                                Each perceptual hash is checked three ways against reviewed thresholds.
+                                Hamming distance and fingerprint quality are checked against explicit,
+                                benchmarked policy.
                             </p>
                             <dl class="hash-thresholds">
                                 <div>
-                                    <dt>Local cache</dt>
-                                    <dd><span>2-bit ≥ 92%</span><span>4-bit ≥ 85%</span><span>text ≥ 92%</span></dd>
+                                    <dt>Confirmation</dt>
+                                    <dd><span>distance ≤ 31</span><span>quality ≥ 50</span></dd>
                                 </div>
                                 <div>
-                                    <dt>Remote candidate</dt>
-                                    <dd><span>2-bit ≥ 75%</span><span>4-bit ≥ 70%</span><span>text ≥ 75%</span></dd>
+                                    <dt>Closest fallback</dt>
+                                    <dd><span>similarity ≥ 75%</span><span>within 3% of top</span></dd>
                                 </div>
                             </dl>
                             <p class="fallback-note">
                                 If the set-symbol crop is too flat (standard deviation below 10) or
-                                cannot be prepared, the analyzer falls back to full-card hashing rather
-                                than comparing noise.
+                                its comparison is inconclusive, the analyzer retries full-card
+                                fingerprints rather than comparing noise or forcing a weak guess.
                             </p>
                         </article>
                     </div>

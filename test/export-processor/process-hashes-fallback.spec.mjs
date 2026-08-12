@@ -23,9 +23,10 @@ describe("ProcessHashes fallback behavior", () => {
         const compareHashStub = sandbox.stub().returns({
             comparable: true,
             matches: false,
-            similarity: 0.65,
+            eligible: true,
+            similarity: 0.8,
             minQuality: 100,
-            distance: 90
+            distance: 51
         });
 
         const hasher = ProcessHashesModule.create({
@@ -57,4 +58,54 @@ describe("ProcessHashes fallback behavior", () => {
         assert.isAtLeast(matches.length, 1);
         assert.isAtMost(matches.length, 2);
     });
+
+    for (const example of [
+        {
+            name: "similarity is below the calibrated floor",
+            comparison: {
+                comparable: true,
+                matches: false,
+                eligible: true,
+                similarity: 0.74,
+                minQuality: 100,
+                distance: 67
+            }
+        },
+        {
+            name: "PDQ quality is ineligible",
+            comparison: {
+                comparable: true,
+                matches: false,
+                eligible: false,
+                similarity: 0.99,
+                minQuality: 10,
+                distance: 2
+            }
+        }
+    ]) {
+        it(`withholds fallback candidates when ${example.name}`, async () => {
+            const hasher = ProcessHashesModule.create({
+                cards: [{ image_uris: { normal: "a" }, set_name: "A" }],
+                localHash: "local",
+                name: "Test",
+                allowRemoteBestGuess: true,
+                dependencies: {
+                    Hash: {
+                        hashImage: sandbox.stub().callsArgWith(1, null, "remote"),
+                        compareHash: sandbox.stub().returns(example.comparison)
+                    },
+                    CardHashes: {
+                        getByCardName: sandbox.stub().resolves([]),
+                        upsert: sandbox.stub().returns()
+                    }
+                },
+                logger: {
+                    info: sandbox.stub(),
+                    error: sandbox.stub()
+                }
+            });
+
+            assert.deepEqual(await hasher.compareRemoteImages(), []);
+        });
+    }
 });

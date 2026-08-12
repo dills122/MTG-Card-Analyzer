@@ -237,7 +237,7 @@ describe("Integration::", () => {
             );
         });
 
-        it("Should fall back to full remote hash when remote set-symbol hashing fails", async () => {
+        it("requests a full-card retry when remote set-symbol hashing fails", async () => {
             stubs.hashImageStub = sandbox.stub(Hash, "hashImage").callsArgWith(1, null, FAKE_HASH);
             let hasher = ProcessHashes.create({
                 cards: [
@@ -261,10 +261,15 @@ describe("Integration::", () => {
                 .stub(hasher, "_hashRemoteSetSymbol")
                 .rejects(new Error("crop failed"));
 
-            await hasher.compareRemoteImages();
+            let caughtError;
+            try {
+                await hasher.compareRemoteImages();
+            } catch (error) {
+                caughtError = error;
+            }
             assert.isTrue(stubs.symbolStub.calledOnce);
-            assert.isTrue(stubs.hashImageStub.calledOnce);
-            assert.equal(stubs.hashImageStub.firstCall.args[0], "http://www.fake.url/img");
+            assert.equal(caughtError.message, "crop failed");
+            assert.isFalse(stubs.hashImageStub.called);
         });
 
         it("awaits remote set-symbol directory cleanup", async () => {
@@ -388,7 +393,7 @@ describe("Integration::", () => {
             assert.isTrue(readStub.calledOnceWithExactly(fixturePath, undefined));
         });
 
-        it("Should fall back to full remote hash when set-symbol crop is low confidence", async () => {
+        it("requests a full-card retry when the remote set-symbol crop is low confidence", async () => {
             const fixturePath = path.resolve(
                 "test-images/regression/scryfall/fin-570-vivi-ornitier-25ef2d44.jpg"
             );
@@ -416,10 +421,15 @@ describe("Integration::", () => {
                 reason: "flat region (stdDev 1 < 10)"
             });
 
-            await hasher.compareRemoteImages();
+            let caughtError;
+            try {
+                await hasher.compareRemoteImages();
+            } catch (error) {
+                caughtError = error;
+            }
             assert.isTrue(stubs.cropStub.calledOnce);
-            assert.isTrue(stubs.hashImageStub.calledOnce);
-            assert.equal(stubs.hashImageStub.firstCall.args[0], fixturePath);
+            assert.match(caughtError.message, /Set symbol crop is low confidence/);
+            assert.isFalse(stubs.hashImageStub.called);
         });
     });
 });
