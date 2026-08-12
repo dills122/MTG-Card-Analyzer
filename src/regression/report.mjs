@@ -37,6 +37,7 @@ function formatBenchmarkReport(report) {
         `- Disabled fixtures: ${report.pending?.cases || 0}`,
         `- Undersized-input fixtures: ${report.summary.undersizedInputs || 0}`,
         `- Fixtures containing CHANGE_ME: ${report.pending?.placeholderCases || 0}`,
+        `- Exact-print fixtures: ${report.summary.exactPrints?.verified || 0}/${report.summary.exactPrints?.total || 0} verified`,
         `- Total runtime: ${report.summary.totalRuntimeMs} ms`,
         `- Wall runtime: ${report.summary.wallRuntimeMs ?? report.summary.totalRuntimeMs} ms`,
         `- Mean runtime: ${report.summary.meanRuntimeMs} ms`,
@@ -56,7 +57,7 @@ function formatBenchmarkReport(report) {
         "",
         "## Fixture results",
         "",
-        "| Fixture | Quality | OCR output | Name match | Name candidates | Print candidates | Set / collector | Print score | Set verified | Runtime | Result |",
+        "| Fixture | Quality | OCR output | Name match | Name candidates | Print candidates | Set / collector | Print score | Exact print verified | Runtime | Result |",
         "| --- | --- | --- | --- | ---: | ---: | --- | ---: | --- | ---: | --- |"
     );
 
@@ -78,7 +79,7 @@ function formatBenchmarkReport(report) {
                 nameMatch ? Math.round(nameMatch.percentage * 10000) / 100 : 0
             }%) | ${result.nameCandidateCount} | ${result.printCandidateCount} | ${markdownCell(
                 selectedCard ? `${selectedCard.set} #${selectedCard.collectorNumber}` : "—"
-            )} | ${result.selectedPrint ? Math.round(result.selectedPrint.score * 10000) / 100 : 0}% | ${result.setVerified ? "yes" : "no"} | ${result.runtimeMs} ms | ${resultLabel} |`
+            )} | ${result.selectedPrint ? Math.round(result.selectedPrint.score * 10000) / 100 : 0}% | ${(result.exactPrintVerified ?? result.setVerified) ? "yes" : "no"} | ${result.runtimeMs} ms | ${resultLabel} |`
         );
     });
 

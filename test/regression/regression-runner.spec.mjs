@@ -98,6 +98,7 @@ describe("Regression framework::", () => {
                     name: "Pacifism",
                     set: "BBD",
                     collectorNumber: "101",
+                    scryfallId: "bbd-101",
                     referenceImage: "pacifism.jpg"
                 }
             ],
@@ -122,14 +123,16 @@ describe("Regression framework::", () => {
                     name: "Pacifism",
                     set: "BBD",
                     collectorNumber: "101",
+                    scryfallId: "bbd-101",
                     typeLine: "Enchantment — Aura",
                     colors: ["W"],
                     referenceImagePath: "/fixtures/reference.jpg"
                 },
                 {
                     name: "Pacifism",
-                    set: "M20",
-                    collectorNumber: "32",
+                    set: "BBD",
+                    collectorNumber: "301",
+                    scryfallId: "bbd-301",
                     referenceImagePath: "/fixtures/alternative.jpg"
                 },
                 {
@@ -151,6 +154,7 @@ describe("Regression framework::", () => {
                         name: "Pacifism",
                         set: "BBD",
                         collectorNumber: "101",
+                        scryfallId: "bbd-101",
                         minNameScore: 0.7,
                         maxPrintCandidates: 2,
                         metadata: { typeLine: "Enchantment — Aura", colors: ["W"] }
@@ -224,7 +228,10 @@ describe("Regression framework::", () => {
         assert.equal(report.results[0].nameCandidateCount, 1);
         assert.equal(report.results[0].printCandidateCount, 2);
         assert.equal(report.results[0].selectedPrint.card.set, "BBD");
+        assert.equal(report.results[0].selectedPrint.card.scryfallId, "bbd-101");
+        assert.isTrue(report.results[0].exactPrintVerified);
         assert.isTrue(report.results[0].setVerified);
+        assert.deepEqual(report.summary.exactPrints, { total: 1, verified: 1 });
         assert.deepEqual(report.results[0].failures, []);
     });
 
@@ -689,7 +696,7 @@ describe("Regression framework::", () => {
         assert.include(markdown, "OCR output");
         assert.include(markdown, "Name candidates");
         assert.include(markdown, "Print candidates");
-        assert.include(markdown, "Set verified");
+        assert.include(markdown, "Exact print verified");
         assert.include(markdown, "OCR returned no normalized text");
         assert.include(markdown, "CI gate: PASS");
         assert.include(markdown, "NON-BLOCKING FAIL");

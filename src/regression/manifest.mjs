@@ -30,6 +30,9 @@ function validateExpected(expected, label) {
     requireString(expected.name, `${label}.expected.name`);
     requireString(expected.set, `${label}.expected.set`);
     requireString(expected.collectorNumber, `${label}.expected.collectorNumber`);
+    if (expected.scryfallId !== undefined) {
+        requireString(expected.scryfallId, `${label}.expected.scryfallId`);
+    }
 }
 
 function validateManifest(rawManifest, manifestPath) {
@@ -53,6 +56,9 @@ function validateManifest(rawManifest, manifestPath) {
         requireString(card.name, `${label}.name`);
         requireString(card.set, `${label}.set`);
         requireString(card.collectorNumber, `${label}.collectorNumber`);
+        if (card.scryfallId !== undefined) {
+            requireString(card.scryfallId, `${label}.scryfallId`);
+        }
         return {
             ...card,
             referenceImagePath: resolveFixturePath(

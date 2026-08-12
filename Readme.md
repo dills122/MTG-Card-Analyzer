@@ -108,12 +108,13 @@ Run `mtg-card-analyzer --help` for the command list or see the
    unambiguous individual face names resolve back to their canonical compound card name.
 4. Failed title matches progressively try soft/inverted title variants, rotated title bands, and
    finally supplemental rules text, avoiding the extra OCR work for ordinary successful scans.
-5. Candidate printings come from Scryfall and are ranked with cached or downloaded PDQ
-   fingerprints. A high-confidence set-symbol result wins; an inconclusive symbol comparison is
-   retried with the full card instead of forcing a weak print guess.
+5. Candidate printings come from every page of the Scryfall print search and retain exact print IDs,
+   set codes, collector numbers, and treatment metadata while cached or downloaded PDQ fingerprints
+   rank them. A high-confidence set-symbol result wins; an inconclusive symbol comparison is retried
+   with the full card instead of forcing a weak print guess.
 6. Results are printed and, only when enabled, a single confirmed printing is written to the
-   collection backend. A resolved name with multiple possible sets is saved to needs-attention
-   instead of being treated as confirmed.
+   collection backend. A lone API candidate is not confirmation; unverified or multiple exact-print
+   candidates are saved to needs-attention instead.
 
 The scan promise includes local cache/log completion and removal of its bounded OCR temporary
 directory, so the CLI does not exit while those writes or cleanup operations are still pending.
@@ -129,17 +130,18 @@ local-first rather than fully offline.
 
 ## Documentation
 
-| If you want to...                                                | Read...                                                      |
-| ---------------------------------------------------------------- | ------------------------------------------------------------ |
-| Install the project or fix a local setup problem                 | [Local development setup](docs/LOCAL_DEV.md)                 |
-| Look up commands, flags, logging, migration, or collection edits | [CLI reference](docs/cli-reference.md)                       |
-| Change settings or understand local database files               | [Configuration and local data](docs/configuration.md)        |
-| Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                         |
-| Review production dependency and image-input security controls   | [Dependency security](docs/dependency-security.md)           |
-| Review the Blockhash-versus-PDQ benchmark and selection          | [Fingerprint benchmark](docs/image-fingerprint-benchmark.md) |
-| Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)             |
-| Build a reviewed custom OCR fine-tuning corpus                   | [OCR training data](docs/ocr-training-data.md)               |
-| Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                              |
+| If you want to...                                                | Read...                                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- |
+| Install the project or fix a local setup problem                 | [Local development setup](docs/LOCAL_DEV.md)                  |
+| Look up commands, flags, logging, migration, or collection edits | [CLI reference](docs/cli-reference.md)                        |
+| Change settings or understand local database files               | [Configuration and local data](docs/configuration.md)         |
+| Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                          |
+| Review the exact-print and variant-detection research direction  | [Card detection spike](docs/card-detection-research-spike.md) |
+| Review production dependency and image-input security controls   | [Dependency security](docs/dependency-security.md)            |
+| Review the Blockhash-versus-PDQ benchmark and selection          | [Fingerprint benchmark](docs/image-fingerprint-benchmark.md)  |
+| Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)              |
+| Build a reviewed custom OCR fine-tuning corpus                   | [OCR training data](docs/ocr-training-data.md)                |
+| Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                               |
 
 The default NeDB backend is the recommended path. A legacy MySQL/RDS adapter remains available for
 existing users; its setup and migration instructions live in the

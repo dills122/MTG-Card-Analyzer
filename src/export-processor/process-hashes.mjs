@@ -7,6 +7,7 @@ import imageHashing from "../image-hashing/index.mjs";
 import imageProcessing from "../image-processing/index.mjs";
 import FileIO from "../file-io.mjs";
 import { round, orderBy, omit } from "../util.mjs";
+import { normalizePrintCandidate } from "../matcher/print-candidate.mjs";
 
 const config = {
     remoteBestGuess: {
@@ -74,7 +75,16 @@ class ProcessHashes {
             if (compareResults.matches) {
                 matches.push(
                     Object.assign(compareResults, {
-                        setName: dbHash.setName
+                        ...normalizePrintCandidate(dbHash),
+                        setName: dbHash.setName,
+                        hashMode,
+                        matchKind:
+                            hashMode === "full-card"
+                                ? "cache-full-card-hash"
+                                : "cache-set-symbol-hash",
+                        // Legacy cache rows identify only a set name. They remain useful hints,
+                        // but cannot prove an exact printing until refreshed with a print ID.
+                        verified: Boolean(dbHash.printId) && hashMode === "full-card"
                     })
                 );
             }
@@ -95,10 +105,10 @@ class ProcessHashes {
             `Comparing ${this.cards.length} Scryfall ${imageLabel} for "${this.name}" (${this.hashMode})`
         );
         const cards = this.cards.map((card) => {
-            const images = card.image_uris || {};
+            const printing = normalizePrintCandidate(card);
             return {
-                imgUrl: images.normal || images.large,
-                setName: card.set_name
+                imgUrl: printing.imageUrl,
+                printing
             };
         });
         const comparisonResultsList = [];
@@ -111,20 +121,23 @@ class ProcessHashes {
                         tempDirectory
                     );
                     return {
-                        setName: card.setName,
+                        printing: card.printing,
                         remoteImageHash
                     };
                 })
             );
-            for (const { setName, remoteImageHash } of hashResults) {
+            for (const { printing, remoteImageHash } of hashResults) {
+                if (!remoteImageHash) {
+                    continue;
+                }
                 try {
-                    await this._insertCardHash(setName, remoteImageHash);
+                    await this._insertCardHash(printing, remoteImageHash);
                 } catch (err) {
                     // Hashes are a reusable cache, not collection truth. Wait for the
                     // attempted write so process exit cannot drop it, but keep a cache
                     // failure from failing an otherwise valid scan.
                     this.logger.error(
-                        `Card-hash cache write failed for "${this.name}" (${setName}): ${
+                        `Card-hash cache write failed for "${this.name}" (${printing.setName}): ${
                             err?.message || String(err)
                         }`
                     );
@@ -136,7 +149,14 @@ class ProcessHashes {
                 if (comparisonResults.comparable) {
                     comparisonResultsList.push(
                         Object.assign(comparisonResults, {
-                            setName
+                            ...printing,
+                            hashMode: this.hashMode,
+                            matchKind:
+                                this.hashMode === "full-card"
+                                    ? "remote-full-card-hash"
+                                    : "remote-set-symbol-hash",
+                            // A set symbol can verify a set, not a collector-number variant.
+                            verified: this.hashMode === "full-card"
                         })
                     );
                 }
@@ -173,7 +193,11 @@ class ProcessHashes {
                             config.remoteBestGuess.maxSimilarityDeltaFromTop
                     )
                     .slice(0, config.remoteBestGuess.maxCandidates)
-                    .map((match) => omit(match, ["confidenceScore"]));
+                    .map((match) => ({
+                        ...omit(match, ["confidenceScore"]),
+                        matchKind: "remote-image-best-guess",
+                        verified: false
+                    }));
                 this.logger.info(
                     `Using closest image matches for "${this.name}": ${bestMatches
                         .map((match) => match.setName)
@@ -257,13 +281,19 @@ class ProcessHashes {
         });
     }
 
-    async _insertCardHash(setName, hash) {
-        // isFoil/isPromo/cardUrl aren't tracked through the matcher pipeline yet, so they're
-        // left for the store's own defaults (false/"") -- same as before this was fixed to use
-        // the store's real field names instead of a PascalCase fallback chain.
+    async _insertCardHash(printing, hash) {
+        const candidate = normalizePrintCandidate(printing);
         return this.dependencies.CardHashes.upsert({
             cardName: this.name,
-            setName,
+            printId: candidate.printId,
+            oracleId: candidate.oracleId,
+            setCode: candidate.setCode,
+            setName: candidate.setName,
+            collectorNumber: candidate.collectorNumber,
+            language: candidate.language,
+            illustrationId: candidate.illustrationId,
+            cardUrl: candidate.imageUrl,
+            scryfallUri: candidate.scryfallUri,
             cardHash: hash,
             hashMode: this.hashMode
         });

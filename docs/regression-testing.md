@@ -201,7 +201,8 @@ Edit `test/regression/fixtures/manifest.json`. Paths are relative to the manifes
 manifest has two lists:
 
 - `catalog` is the fixed offline print catalog. Each print needs `name`, `set`,
-  `collectorNumber`, and `referenceImage`. Any extra card fields may be asserted through
+  `collectorNumber`, and `referenceImage`. Add `scryfallId` for exact-print fixtures; same-name,
+  same-set variants remain separate catalog entries. Any extra card fields may be asserted through
   `expected.metadata`.
 - `cases` labels an input image and its expected result. Case IDs must be unique.
 
@@ -228,6 +229,7 @@ Minimal example:
             "name": "Pacifism",
             "set": "BBD",
             "collectorNumber": "101",
+            "scryfallId": "reviewed-scryfall-print-id",
             "typeLine": "Enchantment — Aura",
             "referenceImage": "../../../test-images/Pacifism.jpg"
         }
@@ -241,6 +243,7 @@ Minimal example:
                 "name": "Pacifism",
                 "set": "BBD",
                 "collectorNumber": "101",
+                "scryfallId": "reviewed-scryfall-print-id",
                 "minNameScore": 0.7,
                 "maxNameCandidates": 5,
                 "maxPrintCandidates": 1,
@@ -256,10 +259,11 @@ Minimal example:
 }
 ```
 
-Only `name`, `set`, and `collectorNumber` are required inside `expected`. Optional thresholds
-let the suite catch candidate explosions, confidence changes, metadata regressions, and large
-runtime regressions without requiring an exact OCR string. Print selection uses normalized PDQ
-Hamming similarity and defaults to a minimum score of 0.75.
+Only `name`, `set`, and `collectorNumber` are required inside `expected`; together they define the
+reviewed printing for the exact-print metric. When `scryfallId` is present, the selected catalog entry
+must match it as well. Optional thresholds let the suite catch candidate explosions, confidence
+changes, metadata regressions, and large runtime regressions without requiring an exact OCR string.
+Print selection uses normalized PDQ Hamming similarity and defaults to a minimum score of 0.75.
 
 ## Quality labels and transformations
 

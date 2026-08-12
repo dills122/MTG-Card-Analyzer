@@ -6,6 +6,7 @@ import exportProcessor from "../export-processor/index.mjs";
 import imageHashing from "../image-hashing/index.mjs";
 import imageProcessing from "../image-processing/index.mjs";
 import FileIO from "../file-io.mjs";
+import { normalizePrintCandidate, printIdentityKey } from "./print-candidate.mjs";
 
 const defaultDependencies = Object.freeze({
     searchPrintings: scryfallApi.Search.searchList,
@@ -69,14 +70,15 @@ class MatcherProcessor {
 
         if (totalCards === 1) {
             const single = this.cards[0] || {};
-            const setName = single.set_name ?? "";
+            const printing = normalizePrintCandidate(single);
             this.matchResultDetails = [
                 {
-                    setName,
-                    scryfallUri: single.scryfall_uri || single.uri || ""
+                    ...printing,
+                    matchKind: "catalog-candidate-only",
+                    verified: false
                 }
             ];
-            return setName ? [setName] : [];
+            return printing.setName ? [printing.setName] : [];
         }
 
         await this._hashLocalCardAsync();
@@ -188,47 +190,60 @@ class MatcherProcessor {
             .compareRemoteImages()
             .then((results) => this._processHashResults(results));
         const [db, remote] = await Promise.all([dbPromise, remotePromise]);
-        const mergedResults = [...new Set((db || []).concat(remote || []))];
-        this.matchResults = mergedResults;
-        this.matchResultDetails = this._buildMatchDetails(mergedResults);
-        this.logger.info(`Print matches for "${this.name}": ${mergedResults.join(", ") || "none"}`);
-        return mergedResults;
+        const mergedDetails = this._mergeMatchDetails((db || []).concat(remote || []));
+        const setNames = [
+            ...new Set(mergedDetails.map((detail) => detail.setName).filter(Boolean))
+        ];
+        this.matchResults = mergedDetails;
+        this.matchResultDetails = mergedDetails;
+        this.logger.info(`Print matches for "${this.name}": ${setNames.join(", ") || "none"}`);
+        return setNames;
     }
 
-    _buildMatchDetails(setNames = []) {
-        const cardBySet = new Map();
-        (this.cards || []).forEach((card) => {
-            const setName = card.set_name ?? "";
-            if (!setName || cardBySet.has(setName)) {
-                return;
+    _mergeMatchDetails(details = []) {
+        const byPrint = new Map();
+        details.forEach((detail) => {
+            const key = printIdentityKey(detail);
+            const existing = byPrint.get(key);
+            if (!existing || (!existing.verified && detail.verified)) {
+                byPrint.set(key, detail);
             }
-            cardBySet.set(setName, {
-                setName,
-                scryfallUri: card.scryfall_uri || card.uri || ""
-            });
         });
-
-        return setNames.map((setName) => {
-            const matchDetail = cardBySet.get(setName);
-            return (
-                matchDetail || {
-                    setName,
-                    scryfallUri: ""
-                }
-            );
-        });
+        return [...byPrint.values()];
     }
 
     _processHashResults(hashResults) {
         if (!hashResults || hashResults.length === 0) {
-            return []; // No set to return
+            return [];
         }
-
-        if (hashResults.length > 1) {
-            return hashResults.map((result) => result.setName);
-        }
-        const matchObject = hashResults[0] || {};
-        return [matchObject.setName ?? ""];
+        return hashResults.map((result) => {
+            const printing = normalizePrintCandidate(result);
+            return {
+                ...printing,
+                comparison: {
+                    comparable: Boolean(result.comparable),
+                    algorithm: String(result.algorithm || ""),
+                    similarity: Number(result.similarity) || 0,
+                    distance: Number.isFinite(result.distance) ? Number(result.distance) : null,
+                    bitLength: Number(result.bitLength) || 0,
+                    leftQuality: Number.isFinite(result.leftQuality)
+                        ? Number(result.leftQuality)
+                        : null,
+                    rightQuality: Number.isFinite(result.rightQuality)
+                        ? Number(result.rightQuality)
+                        : null,
+                    minQuality: Number.isFinite(result.minQuality)
+                        ? Number(result.minQuality)
+                        : null,
+                    eligible: result.eligible !== false,
+                    matches: Boolean(result.matches),
+                    reason: String(result.reason || "")
+                },
+                hashMode: result.hashMode || this.hashMode || "full-card",
+                matchKind: result.matchKind || "legacy-set-hash",
+                verified: Boolean(result.verified)
+            };
+        });
     }
 }
 

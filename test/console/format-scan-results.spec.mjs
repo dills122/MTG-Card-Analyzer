@@ -36,4 +36,33 @@ describe("formatScanResults", () => {
     it("handles an empty result list", () => {
         assert.equal(formatScanResults([]), "No scan results.");
     });
+
+    it("distinguishes exact variants from the same set without exposing URLs", () => {
+        const output = formatScanResults([
+            {
+                name: "Example",
+                sets: ["Final Fantasy"],
+                printings: [
+                    {
+                        printId: "fin-1",
+                        setCode: "FIN",
+                        collectorNumber: "1",
+                        verified: true,
+                        scryfallUri: "https://scryfall.com/card/fin/1/example"
+                    },
+                    {
+                        printId: "fin-301",
+                        setCode: "FIN",
+                        collectorNumber: "301",
+                        verified: false,
+                        scryfallUri: "https://scryfall.com/card/fin/301/example"
+                    }
+                ]
+            }
+        ]);
+
+        assert.include(output, "Printings: FIN #1 (verified), FIN #301 (unverified)");
+        assert.notInclude(output, "scryfall.com");
+        assert.notInclude(output, "printId");
+    });
 });

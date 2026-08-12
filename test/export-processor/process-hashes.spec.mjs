@@ -178,8 +178,11 @@ describe("Integration::", () => {
 
             assert.isFalse(settled);
             finishWrite();
-            await comparison;
+            const matches = await comparison;
             assert.isTrue(settled);
+            assert.lengthOf(matches, 1);
+            assert.isTrue(matches[0].verified);
+            assert.equal(matches[0].matchKind, "remote-full-card-hash");
         });
 
         it("Should return no results for compareRemoteHashes", async () => {
@@ -211,6 +214,13 @@ describe("Integration::", () => {
             let hasher = ProcessHashes.create({
                 cards: [
                     {
+                        id: "print-set-a-1",
+                        oracle_id: "oracle-test",
+                        set: "set",
+                        collector_number: "1",
+                        lang: "en",
+                        illustration_id: "art-test",
+                        scryfall_uri: "https://scryfall.com/card/set/1/test",
                         image_uris: {
                             normal: "http://www.fake.url/img"
                         },
@@ -227,7 +237,15 @@ describe("Integration::", () => {
             assert.isTrue(stubs.insertEntityStub.calledOnce);
             assert.deepEqual(stubs.insertEntityStub.firstCall.args[0], {
                 cardName: "Test",
+                printId: "print-set-a-1",
+                oracleId: "oracle-test",
+                setCode: "SET",
                 setName: "SET_A",
+                collectorNumber: "1",
+                language: "en",
+                illustrationId: "art-test",
+                cardUrl: "http://www.fake.url/img",
+                scryfallUri: "https://scryfall.com/card/set/1/test",
                 cardHash: FAKE_HASH,
                 hashMode: "full-card"
             });
@@ -304,8 +322,11 @@ describe("Integration::", () => {
 
             assert.isFalse(settled);
             finishCleanup();
-            await comparison;
+            const matches = await comparison;
             assert.isTrue(settled);
+            assert.lengthOf(matches, 1);
+            assert.isFalse(matches[0].verified);
+            assert.equal(matches[0].matchKind, "remote-set-symbol-hash");
         });
 
         it("does not mask a remote hash error when cleanup also fails", async () => {

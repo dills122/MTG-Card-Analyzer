@@ -64,8 +64,14 @@ The persistence tier stores collection and needs-attention records. `storageAdap
 Collection persistence is off by default. A scan writes only when both `queryingEnabled` and
 `collectionEnabled` are true. Scanning the same unambiguous card again increments its quantity;
 explicit collection commands can correct or remove an entry. “Unambiguous” means exactly one card
-name and exactly one printing set. Multiple possible sets are written to needs-attention rather
-than selecting the first set as confirmed collection data.
+name and one image-verified exact printing. Exact print IDs, set codes, and collector numbers remain
+distinct through matching even when variants share a set name. A lone Scryfall result, a closest-image
+best guess, a set-symbol-only match, or multiple possible printings is written to needs-attention
+rather than confirmed.
+
+The hash cache keys refreshed rows by Scryfall print ID (falling back to set code, collector number,
+and language) plus hash mode and hash. Legacy set-only rows remain usable as unverified hints; they
+cannot confirm an exact printing.
 
 The processor owns one bounded OCR work directory per scan and removes it in a `finally` path on
 success and failure. Set-symbol hashing follows the same ownership rule for its local and remote

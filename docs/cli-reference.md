@@ -65,14 +65,16 @@ the check.
 needs-attention records only when both resolve to `true`. Without both, the full identification
 pipeline still runs and prints its results.
 
-Confirmed collection data requires exactly one matched card name and one matched printing set. If
-the name is clear but multiple sets remain possible, the scan writes one needs-attention record
-containing all candidate sets (when both persistence opt-ins are enabled). Dry runs and scans with
+Confirmed collection data requires exactly one matched card name and one image-verified exact
+printing. A lone Scryfall search result is only an unverified candidate. If multiple variants share a
+set, the match only verifies a set symbol, or any candidate otherwise remains unverified, the scan
+writes a needs-attention record containing set-code and collector-number labels (when both persistence
+opt-ins are enabled). Dry runs and scans with
 collection tracking disabled continue to print the candidates without persistence writes.
 
 Pretty logging is enabled by default. It keeps pipeline detail visible with compact, aligned level
-labels, emits one OCR progress heartbeat per crop, and prints final card/set candidates without
-internal verification objects:
+labels, emits one OCR progress heartbeat per crop, and prints final card, set, and exact-print
+candidate summaries without internal URLs or comparison objects:
 
 ```text
 INFO  Reading card name
@@ -84,12 +86,13 @@ Scan results
 
 1. Pacifism
    Sets: Core Set 2020
+   Printings: M20 #32 (verified)
 ```
 
 Interactive terminals receive colored level labels; redirected output remains color-free. Use
-`--no-pretty` when another tool needs unadorned log messages. Full match verification details stay
-available through the local operations log and `--debug` instead of being dumped into routine scan
-output.
+`--no-pretty` when another tool needs unadorned log messages. Full comparison metrics and Scryfall
+links stay available through the local operations log and `--debug` instead of being dumped into
+routine scan output.
 
 ## Inspect scan activity
 

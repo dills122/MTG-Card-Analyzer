@@ -146,6 +146,14 @@ function evaluateResult(fixture, result) {
             }`
         );
     }
+    if (
+        expected.scryfallId &&
+        String(selectedCard?.scryfallId || "") !== String(expected.scryfallId)
+    ) {
+        failures.push(
+            `Scryfall print ID: expected ${expected.scryfallId}, received ${selectedCard?.scryfallId || "no match"}`
+        );
+    }
     if ((result.selectedPrint?.score || 0) < minPrintScore) {
         failures.push(
             `print score: expected at least ${minPrintScore}, received ${result.selectedPrint?.score || 0}`
@@ -219,17 +227,24 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
             nameCandidateCount: nameMatches.length,
             printCandidateCount: printCandidates.length,
             selectedPrint: rankedPrints[0] || null,
+            exactPrintVerified: false,
             setVerified: false,
             timings,
             runtimeMs: elapsedSince(startedAt),
             failures: [],
             passed: false
         };
-        result.setVerified =
+        result.exactPrintVerified =
             normalized(result.selectedPrint?.card?.set) === normalized(fixture.expected.set) &&
             String(result.selectedPrint?.card?.collectorNumber || "") ===
                 String(fixture.expected.collectorNumber) &&
+            (!fixture.expected.scryfallId ||
+                String(result.selectedPrint?.card?.scryfallId || "") ===
+                    String(fixture.expected.scryfallId)) &&
             result.selectedPrint.score >= (fixture.expected.minPrintScore ?? 0.75);
+        // Backward-compatible report field for existing consumers. Exact print verification
+        // additionally checks Scryfall ID whenever a fixture supplies one.
+        result.setVerified = result.exactPrintVerified;
         result.failures = evaluateResult(fixture, result);
         result.passed = result.failures.length === 0;
         return result;
@@ -252,6 +267,7 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
             nameCandidateCount: 0,
             printCandidateCount: 0,
             selectedPrint: null,
+            exactPrintVerified: false,
             setVerified: false,
             timings,
             runtimeMs: elapsedSince(startedAt),
@@ -279,6 +295,10 @@ function summarize(results) {
             ];
         })
     );
+    // Every reviewed fixture identifies a printing by set + collector number. A supplied
+    // Scryfall ID strengthens that identity check, but is not required for the fixture to
+    // contribute to the exact-print metric.
+    const exactPrintResults = results;
     return {
         total: results.length,
         passed,
@@ -294,6 +314,10 @@ function summarize(results) {
               ) / 100
             : 0,
         p95RuntimeMs: runtimes[percentileIndex] || 0,
+        exactPrints: {
+            total: exactPrintResults.length,
+            verified: exactPrintResults.filter((result) => result.exactPrintVerified).length
+        },
         byQuality
     };
 }

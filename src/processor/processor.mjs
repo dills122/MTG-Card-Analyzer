@@ -12,6 +12,7 @@ import storage from "../storage/index.mjs";
 import { resolveCardName } from "./name-resolver.mjs";
 import { formatScanResults } from "../console/format-scan-results.mjs";
 import { round } from "../util.mjs";
+import { formatPrintLabel } from "../matcher/print-candidate.mjs";
 
 // Native fs.readFile + Buffer in place of image-to-base64.
 async function base64EncodeImage(imagePath) {
@@ -112,6 +113,7 @@ class ProcessorClass {
                         ? {
                               name: result.name,
                               sets: result.sets,
+                              printings: result.printings,
                               setVerificationLinks: result.setVerificationLinks
                           }
                         : { name: result.name, sets: result.sets }
@@ -217,8 +219,11 @@ class ProcessorClass {
             this.printResults();
             return;
         }
+        const selectedResult = this.matcherResults[0];
         const hasConfirmedPrinting =
-            this.matcherResults.length === 1 && this.matcherResults[0].sets.length === 1;
+            this.matcherResults.length === 1 &&
+            selectedResult.printings.length === 1 &&
+            selectedResult.printings[0].verified === true;
         if (hasConfirmedPrinting) {
             this.decision = "collection";
             await this.CreateCollectionsRecordAsync(this.matcherResults[0]);
@@ -245,10 +250,14 @@ class ProcessorClass {
             logger: this.logger
         });
         const results = await matchProcessor.executeAsync();
+        const printings = matchProcessor.matchResultDetails || [];
         return {
             name: match.name,
             sets: results,
-            setVerificationLinks: matchProcessor.matchResultDetails || []
+            printings,
+            // Retained for debug-log compatibility. New code should use `printings`, which
+            // preserves exact print IDs and collector numbers rather than only verification URLs.
+            setVerificationLinks: printings
         };
     }
 
@@ -259,7 +268,10 @@ class ProcessorClass {
             cardName: record.name,
             extractedText: this.nameExtractionResults.cleanText,
             dirtyExtractedText: this.nameExtractionResults.dirtyText,
-            possibleSets: record.sets.join(","),
+            possibleSets:
+                record.printings.length > 0
+                    ? record.printings.map(formatPrintLabel).join(",")
+                    : record.sets.join(","),
             nameImage: name64Image
         });
         await needsAttenionModel.insert();
@@ -267,13 +279,28 @@ class ProcessorClass {
 
     async CreateCollectionsRecordAsync(record) {
         this.logger.info(`Saving "${record.name}" to collection`);
-        const set = record.sets[0];
-        let additionalInfo;
-        try {
-            additionalInfo = await this.dependencies.cardSearch.searchByNameExact(record.name, "");
-        } catch (err) {
-            this.logger.error(err);
-            throw err;
+        const printing = record.printings[0];
+        const set = printing.setName || record.sets[0];
+        let additionalInfo = {
+            tcgplayer_id: printing.tcgplayerId,
+            image_uris: { normal: printing.imageUrl },
+            prices: { usd: printing.priceUsd },
+            type_line: printing.typeLine
+        };
+        if (
+            !additionalInfo.tcgplayer_id ||
+            !additionalInfo.image_uris.normal ||
+            !additionalInfo.type_line
+        ) {
+            try {
+                additionalInfo = await this.dependencies.cardSearch.searchByNameExact(
+                    record.name,
+                    ""
+                );
+            } catch (err) {
+                this.logger.error(err);
+                throw err;
+            }
         }
         // delta defaults to 1 (this scan found one more copy) -- the persistence layer
         // (nedb or rds, whichever is selected) owns adding that to whatever quantity
