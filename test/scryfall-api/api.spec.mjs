@@ -24,7 +24,7 @@ describe("Scryfall Api::", () => {
         const json = {
             object: "list",
             total_cards: 445,
-            has_more: true,
+            has_more: false,
             next_page:
                 "https://api.scryfall.com/cards/search?format=json&include_extras=false&include_multilingual=false&order=cmc&page=2&q=c%3Ared+pow%3D3&unique=cards",
             data: [{}]
@@ -60,6 +60,53 @@ describe("Scryfall Api::", () => {
             assert.strictEqual(cards.length, 1);
             assert.deepStrictEqual(cards[0], {});
             assert.deepStrictEqual(cards, json.data);
+        });
+
+        it("searchList preserves exact print candidates across pages", async () => {
+            requestStub.onFirstCall().resolves(
+                JSON.stringify({
+                    object: "list",
+                    has_more: true,
+                    next_page: "https://api.scryfall.com/cards/search?page=2&q=name%3AFake",
+                    data: [{ id: "print-1" }]
+                })
+            );
+            requestStub.onSecondCall().resolves(
+                JSON.stringify({
+                    object: "list",
+                    has_more: false,
+                    data: [{ id: "print-2" }]
+                })
+            );
+
+            const cards = await api.searchList("Fake Name");
+
+            assert.isTrue(requestStub.calledTwice);
+            assert.deepEqual(
+                cards.map((card) => card.id),
+                ["print-1", "print-2"]
+            );
+            assert.equal(
+                requestStub.secondCall.args[0].uri,
+                "https://api.scryfall.com/cards/search?page=2&q=name%3AFake"
+            );
+        });
+
+        it("rejects pagination URLs outside the Scryfall API origin", async () => {
+            requestStub.resolves(
+                JSON.stringify({
+                    object: "list",
+                    has_more: true,
+                    next_page: "https://example.test/stolen",
+                    data: [{ id: "print-1" }]
+                })
+            );
+
+            const cards = await api.searchList("Fake Name");
+
+            assert.deepEqual(cards, []);
+            assert.isTrue(requestStub.calledOnce);
+            assert.isTrue(logger.error.calledOnce);
         });
 
         it("searchByNameExact returns empty object when request fails", async () => {

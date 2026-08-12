@@ -47,7 +47,7 @@ describe("db-local::card-hash-cache", () => {
             cardUrl: "https://example.test/card.jpg",
             hashMode: "full-card"
         });
-        assert.equal(hashes[0].lookupKey, "Pacifism::Core Set 2020::1::0::abc123");
+        assert.equal(hashes[0].lookupKey, "Pacifism::Core Set 2020::::en::1::0::full-card::abc123");
         assert.instanceOf(hashes[0].createdAt, Date);
         assert.instanceOf(hashes[0].updatedAt, Date);
     });
@@ -64,6 +64,35 @@ describe("db-local::card-hash-cache", () => {
         const [hash] = await cache.getHashes("Pacifism");
 
         assert.equal(hash.hashMode, "set-symbol");
+    });
+
+    it("addresses same-set variants by exact print identity", async () => {
+        const cache = await freshCache();
+
+        await cache.insertEntity({
+            cardName: "Example",
+            setName: "Final Fantasy",
+            setCode: "FIN",
+            collectorNumber: "1",
+            printId: "fin-1",
+            cardHash: "samehash"
+        });
+        await cache.insertEntity({
+            cardName: "Example",
+            setName: "Final Fantasy",
+            setCode: "FIN",
+            collectorNumber: "301",
+            printId: "fin-301",
+            cardHash: "samehash"
+        });
+
+        const hashes = await cache.getHashes("Example");
+        assert.lengthOf(hashes, 2);
+        assert.sameMembers(
+            hashes.map((hash) => hash.printId),
+            ["fin-1", "fin-301"]
+        );
+        assert.notEqual(hashes[0].lookupKey, hashes[1].lookupKey);
     });
 
     it("upserts the same printing/hash instead of duplicating it", async () => {

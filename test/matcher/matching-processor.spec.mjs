@@ -28,10 +28,13 @@ describe("MatcherProcessor::", () => {
         sandbox.restore();
     });
 
-    it("returns normalized set details when only one search result exists", (done) => {
+    it("returns one unverified exact-print candidate when only one search result exists", async () => {
         const info = sandbox.stub();
         const expectedCard = {
+            id: "print-m20-1",
+            set: "m20",
             set_name: "M20",
+            collector_number: "1",
             scryfall_uri: "https://scryfall.com/card/m20/1/example"
         };
         const searchStub = sandbox.stub(dependencies, "searchPrintings").resolves([expectedCard]);
@@ -42,23 +45,25 @@ describe("MatcherProcessor::", () => {
             logger: { info, error: sandbox.stub() }
         });
 
-        processor.execute((err, result) => {
-            assert.isNull(err);
-            assert.isTrue(searchStub.calledOnce);
-            assert.isTrue(hashStub.notCalled);
-            assert.deepEqual(result, ["M20"]);
-            assert.deepEqual(processor.matchResultDetails, [
-                {
-                    setName: "M20",
-                    scryfallUri: "https://scryfall.com/card/m20/1/example"
-                }
-            ]);
-            assert.deepEqual(
-                info.getCalls().map((call) => call.args[0]),
-                ['Searching Scryfall for "Pacifism"', 'Scryfall returned 1 printing for "Pacifism"']
-            );
-            done();
+        const result = await processor.executeAsync();
+
+        assert.isTrue(searchStub.calledOnce);
+        assert.isTrue(hashStub.notCalled);
+        assert.deepEqual(result, ["M20"]);
+        assert.lengthOf(processor.matchResultDetails, 1);
+        assert.include(processor.matchResultDetails[0], {
+            printId: "print-m20-1",
+            setCode: "M20",
+            setName: "M20",
+            collectorNumber: "1",
+            scryfallUri: "https://scryfall.com/card/m20/1/example",
+            matchKind: "catalog-candidate-only",
+            verified: false
         });
+        assert.deepEqual(
+            info.getCalls().map((call) => call.args[0]),
+            ['Searching Scryfall for "Pacifism"', 'Scryfall returned 1 printing for "Pacifism"']
+        );
     });
 
     it("errors when search results are not an array", (done) => {
@@ -83,19 +88,47 @@ describe("MatcherProcessor::", () => {
         });
     });
 
-    it("merges DB + remote set matches for multi-result searches", (done) => {
+    it("merges DB + remote exact-print matches for multi-result searches", async () => {
         const processHashesInstance = {
-            compareDbHashes: () => Promise.resolve([{ setName: "M20" }]),
-            compareRemoteImages: () => Promise.resolve([{ setName: "M21" }, { setName: "M20" }])
+            compareDbHashes: () =>
+                Promise.resolve([
+                    { printId: "m20-1", setCode: "M20", setName: "M20", verified: true }
+                ]),
+            compareRemoteImages: () =>
+                Promise.resolve([
+                    {
+                        printId: "m21-1",
+                        setCode: "M21",
+                        setName: "M21",
+                        verified: true,
+                        comparable: true,
+                        algorithm: "pdq-v1",
+                        similarity: 0.96,
+                        distance: 10,
+                        bitLength: 256,
+                        leftQuality: 100,
+                        rightQuality: 98,
+                        minQuality: 98,
+                        eligible: true,
+                        matches: true
+                    },
+                    { printId: "m20-1", setCode: "M20", setName: "M20", verified: true }
+                ])
         };
 
         const searchStub = sandbox.stub(dependencies, "searchPrintings").resolves([
             {
+                id: "m20-1",
+                set: "m20",
+                collector_number: "1",
                 set_name: "M20",
                 image_uris: { normal: "https://example.com/m20.jpg" },
                 scryfall_uri: "https://scryfall.com/card/m20/1/example"
             },
             {
+                id: "m21-1",
+                set: "m21",
+                collector_number: "1",
                 set_name: "M21",
                 image_uris: { normal: "https://example.com/m21.jpg" },
                 scryfall_uri: "https://scryfall.com/card/m21/1/example"
@@ -116,18 +149,74 @@ describe("MatcherProcessor::", () => {
             filePath: "/tmp/pacifism.jpg"
         });
 
-        processor.execute((err, result) => {
-            assert.isNull(err);
-            assert.isTrue(searchStub.calledOnce);
-            assert.isTrue(hashStub.calledOnce);
-            assert.isTrue(processHashesStub.calledOnce);
-            assert.sameMembers(result, ["M20", "M21"]);
-            assert.sameDeepMembers(processor.matchResultDetails, [
-                { setName: "M20", scryfallUri: "https://scryfall.com/card/m20/1/example" },
-                { setName: "M21", scryfallUri: "https://scryfall.com/card/m21/1/example" }
-            ]);
-            done();
-        });
+        const result = await processor.executeAsync();
+
+        assert.isTrue(searchStub.calledOnce);
+        assert.isTrue(hashStub.calledOnce);
+        assert.isTrue(processHashesStub.calledOnce);
+        assert.sameMembers(result, ["M20", "M21"]);
+        assert.sameMembers(
+            processor.matchResultDetails.map((printing) => printing.printId),
+            ["m20-1", "m21-1"]
+        );
+        assert.isTrue(processor.matchResultDetails.every((printing) => printing.verified));
+        assert.deepInclude(
+            processor.matchResultDetails.find((printing) => printing.printId === "m21-1")
+                .comparison,
+            {
+                comparable: true,
+                algorithm: "pdq-v1",
+                similarity: 0.96,
+                distance: 10,
+                bitLength: 256,
+                minQuality: 98,
+                eligible: true,
+                matches: true
+            }
+        );
+    });
+
+    it("preserves two verified variants from the same set", async () => {
+        const processHashesInstance = {
+            compareDbHashes: sandbox.stub().resolves([]),
+            compareRemoteImages: sandbox.stub().resolves([
+                {
+                    printId: "fin-1",
+                    setCode: "FIN",
+                    setName: "Final Fantasy",
+                    collectorNumber: "1",
+                    verified: true
+                },
+                {
+                    printId: "fin-301",
+                    setCode: "FIN",
+                    setName: "Final Fantasy",
+                    collectorNumber: "301",
+                    verified: true
+                }
+            ])
+        };
+        sandbox.stub(dependencies, "searchPrintings").resolves([
+            { id: "fin-1", set: "fin", set_name: "Final Fantasy", collector_number: "1" },
+            {
+                id: "fin-301",
+                set: "fin",
+                set_name: "Final Fantasy",
+                collector_number: "301"
+            }
+        ]);
+        sandbox.stub(dependencies, "hashImage").resolves("FAKE_LOCAL_HASH");
+        sandbox.stub(dependencies, "createDirectory").rejects(new Error("no temp dir"));
+        sandbox.stub(dependencies.processHashes, "create").returns(processHashesInstance);
+        const processor = create({ name: "Example", filePath: "/tmp/example.jpg" });
+
+        const result = await processor.executeAsync();
+
+        assert.deepEqual(result, ["Final Fantasy"]);
+        assert.sameMembers(
+            processor.matchResultDetails.map((printing) => printing.printId),
+            ["fin-1", "fin-301"]
+        );
     });
 
     it("still uses local hash cache lookup when querying is disabled", (done) => {

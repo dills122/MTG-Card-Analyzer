@@ -26,7 +26,18 @@ describe("Integration::", () => {
         sandbox = sinon.createSandbox();
         ImageProcessorInstance = { extract() {} };
         MatchNameInstance = { match() {} };
-        MatchProcessorInstance = { executeAsync() {}, matchResultDetails: [] };
+        MatchProcessorInstance = {
+            executeAsync() {},
+            matchResultDetails: [
+                {
+                    printId: "spa-1",
+                    setCode: "SPA",
+                    setName: COLLECTION_NAME,
+                    collectorNumber: "1",
+                    verified: true
+                }
+            ]
+        };
         stubs.ImageProcessorCreateStub = sandbox.stub().returns(ImageProcessorInstance);
         ImageProcessorInstance.extract = new Function();
         stubs.ImageProcessorExtractStub = sandbox
@@ -292,6 +303,22 @@ describe("Integration::", () => {
 
         it("routes one name with multiple possible sets to needs attention", async () => {
             stubs.MatchProcessorExecuteStub.resolves([COLLECTION_NAME, COLLECTION_NAME_TWO]);
+            MatchProcessorInstance.matchResultDetails = [
+                {
+                    printId: "spa-1",
+                    setCode: "SPA",
+                    setName: COLLECTION_NAME,
+                    collectorNumber: "1",
+                    verified: true
+                },
+                {
+                    printId: "spa2-1",
+                    setCode: "SPA2",
+                    setName: COLLECTION_NAME_TWO,
+                    collectorNumber: "1",
+                    verified: true
+                }
+            ];
             const processorInstance = createProcessor({
                 filePath: FAKE_PATH,
                 queryingEnabled: true,
@@ -306,12 +333,51 @@ describe("Integration::", () => {
             assert.isTrue(stubs.NeedsAttentionInsertStub.calledOnce);
             assert.deepInclude(stubs.NeedsAttentionCreateStub.firstCall.args[0], {
                 cardName: "Pacifism",
-                possibleSets: `${COLLECTION_NAME},${COLLECTION_NAME_TWO}`
+                possibleSets: "SPA #1,SPA2 #1"
             });
+        });
+
+        it("routes an unverified single API candidate to needs attention", async () => {
+            MatchProcessorInstance.matchResultDetails = [
+                {
+                    printId: "spa-1",
+                    setCode: "SPA",
+                    setName: COLLECTION_NAME,
+                    collectorNumber: "1",
+                    verified: false
+                }
+            ];
+            const processorInstance = createProcessor({
+                filePath: FAKE_PATH,
+                queryingEnabled: true,
+                collectionEnabled: true
+            });
+
+            await processorInstance.execute();
+
+            assert.equal(processorInstance.decision, "needs-attention");
+            assert.isFalse(stubs.CollectionInsertStub.called);
+            assert.isTrue(stubs.NeedsAttentionInsertStub.calledOnce);
         });
 
         it("keeps an ambiguous printing result non-persistent during a dry run", async () => {
             stubs.MatchProcessorExecuteStub.resolves([COLLECTION_NAME, COLLECTION_NAME_TWO]);
+            MatchProcessorInstance.matchResultDetails = [
+                {
+                    printId: "spa-1",
+                    setCode: "SPA",
+                    setName: COLLECTION_NAME,
+                    collectorNumber: "1",
+                    verified: true
+                },
+                {
+                    printId: "spa2-1",
+                    setCode: "SPA2",
+                    setName: COLLECTION_NAME_TWO,
+                    collectorNumber: "1",
+                    verified: true
+                }
+            ];
             const processorInstance = createProcessor({
                 filePath: FAKE_PATH,
                 queryingEnabled: false,
@@ -361,7 +427,9 @@ describe("Integration::", () => {
             await processorInstance.execute();
 
             assert.isTrue(
-                output.calledOnceWithExactly("Scan results\n\n1. Pacifism\n   Sets: SPA")
+                output.calledOnceWithExactly(
+                    "Scan results\n\n1. Pacifism\n   Sets: SPA\n   Printings: SPA #1 (verified)"
+                )
             );
         });
 
@@ -488,7 +556,12 @@ describe("Integration::", () => {
                 assert.isArray(loggedRecord.matcherResults);
                 assert.isNotEmpty(loggedRecord.matcherResults);
                 loggedRecord.matcherResults.forEach((result) => {
-                    assert.hasAllKeys(result, ["name", "sets", "setVerificationLinks"]);
+                    assert.hasAllKeys(result, [
+                        "name",
+                        "sets",
+                        "printings",
+                        "setVerificationLinks"
+                    ]);
                 });
                 return done(err);
             });

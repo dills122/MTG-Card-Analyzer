@@ -21,7 +21,13 @@ function toLookupKey(record) {
     const cardHash = String(record.cardHash || "").trim();
     const isFoil = Boolean(record.isFoil);
     const isPromo = Boolean(record.isPromo);
-    return `${cardName}::${setName}::${isFoil ? 1 : 0}::${isPromo ? 1 : 0}::${cardHash}`;
+    const printId = String(record.printId || "").trim();
+    const setCode = String(record.setCode || "").trim();
+    const collectorNumber = String(record.collectorNumber || "").trim();
+    const language = String(record.language || "en").trim();
+    const hashMode = String(record.hashMode || "full-card").trim();
+    const printIdentity = printId || `${setCode}:${collectorNumber}:${language}`;
+    return `${cardName}::${setName}::${printIdentity}::${isFoil ? 1 : 0}::${isPromo ? 1 : 0}::${hashMode}::${cardHash}`;
 }
 
 // Every current writer (back-filler.mjs, process-hashes.mjs) sends fully camelCase fields, but
@@ -33,11 +39,18 @@ function normalizeRecord(record = {}) {
     const cardHash = record.cardHash || record.CardHash || "";
     const isFoil = Boolean(record.isFoil || record.IsFoil);
     const isPromo = Boolean(record.isPromo || record.IsPromo);
-    const cardUrl = record.cardUrl || record.CardUrl || "";
+    const cardUrl = record.cardUrl || record.CardUrl || record.imageUrl || "";
     // Defaults to "full-card" for writers/legacy rows that predate this field -- matches
     // back-filler.mjs's real behavior (always full-card, never cropped) and process-hashes.mjs's
     // own joi default, so an untagged on-disk row is classified correctly with no migration.
     const hashMode = record.hashMode || record.HashMode || "full-card";
+    const printId = record.printId || record.PrintId || "";
+    const oracleId = record.oracleId || record.OracleId || "";
+    const setCode = record.setCode || record.SetCode || "";
+    const collectorNumber = record.collectorNumber || record.CollectorNumber || "";
+    const language = record.language || record.Language || "en";
+    const illustrationId = record.illustrationId || record.IllustrationId || "";
+    const scryfallUri = record.scryfallUri || record.ScryfallUri || "";
     const normalized = {
         cardName: String(cardName).trim(),
         setName: String(setName).trim(),
@@ -46,6 +59,13 @@ function normalizeRecord(record = {}) {
         isPromo,
         cardUrl: String(cardUrl).trim(),
         hashMode: String(hashMode).trim(),
+        printId: String(printId).trim(),
+        oracleId: String(oracleId).trim(),
+        setCode: String(setCode).trim().toUpperCase(),
+        collectorNumber: String(collectorNumber).trim(),
+        language: String(language).trim().toLowerCase(),
+        illustrationId: String(illustrationId).trim(),
+        scryfallUri: String(scryfallUri).trim(),
         updatedAt: new Date()
     };
     normalized.lookupKey = toLookupKey(normalized);

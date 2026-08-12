@@ -57,6 +57,8 @@ describe("ProcessHashes fallback behavior", () => {
         assert.isTrue(hashImageStub.calledTwice);
         assert.isAtLeast(matches.length, 1);
         assert.isAtMost(matches.length, 2);
+        assert.isTrue(matches.every((match) => match.verified === false));
+        assert.isTrue(matches.every((match) => match.matchKind === "remote-image-best-guess"));
     });
 
     for (const example of [
