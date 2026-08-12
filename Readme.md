@@ -30,7 +30,7 @@ before decoding it; TIFF, ICNS, JXL, HEIF, and other container formats are rejec
 
 You need:
 
-- [Node.js](https://nodejs.org/) 20 or newer
+- [Node.js](https://nodejs.org/) 22.14 or newer
 - npm and a network connection for the GitHub release, its dependencies, and the initial Scryfall
   card-name seed
 
@@ -127,16 +127,17 @@ local-first rather than fully offline.
 
 ## Documentation
 
-| If you want to...                                                | Read...                                               |
-| ---------------------------------------------------------------- | ----------------------------------------------------- |
-| Install the project or fix a local setup problem                 | [Local development setup](docs/LOCAL_DEV.md)          |
-| Look up commands, flags, logging, migration, or collection edits | [CLI reference](docs/cli-reference.md)                |
-| Change settings or understand local database files               | [Configuration and local data](docs/configuration.md) |
-| Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                  |
-| Review production dependency and image-input security controls   | [Dependency security](docs/dependency-security.md)    |
-| Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)      |
-| Build a reviewed custom OCR fine-tuning corpus                   | [OCR training data](docs/ocr-training-data.md)        |
-| Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                       |
+| If you want to...                                                | Read...                                                      |
+| ---------------------------------------------------------------- | ------------------------------------------------------------ |
+| Install the project or fix a local setup problem                 | [Local development setup](docs/LOCAL_DEV.md)                 |
+| Look up commands, flags, logging, migration, or collection edits | [CLI reference](docs/cli-reference.md)                       |
+| Change settings or understand local database files               | [Configuration and local data](docs/configuration.md)        |
+| Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                         |
+| Review production dependency and image-input security controls   | [Dependency security](docs/dependency-security.md)           |
+| Review the Blockhash-versus-PDQ benchmark and selection          | [Fingerprint benchmark](docs/image-fingerprint-benchmark.md) |
+| Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)             |
+| Build a reviewed custom OCR fine-tuning corpus                   | [OCR training data](docs/ocr-training-data.md)               |
+| Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                              |
 
 The default NeDB backend is the recommended path. A legacy MySQL/RDS adapter remains available for
 existing users; its setup and migration instructions live in the
@@ -159,8 +160,8 @@ pnpm test:regression
 ```
 
 The unit suite is deterministic, ignores machine-local configuration and credentials, and does not
-require live Scryfall or MySQL access. CI runs the fast/unit gate on both Node 20 and Node 22 while
-running the expensive cold-cache OCR regression once on Node 22. See
+require live Scryfall or MySQL access. CI runs the fast/unit/coverage gate and the separate
+cold-cache OCR regression on Node 22. See
 [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## License

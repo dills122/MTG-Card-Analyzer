@@ -98,8 +98,8 @@ node scripts/verify-env.mjs  # is the environment actually usable
 ```
 
 `pnpm check` is the standard local gate and remains deterministic after setup creates
-`mtg.config.json` and `secure.config.cjs`. CI runs the fast/unit gate on Node 20 and Node 22,
-collects coverage on Node 22, and runs a single separate Node 22 `pnpm test:regression` job; see
+`mtg.config.json` and `secure.config.cjs`. CI runs the fast/unit/coverage gate and a separate
+Node 22 `pnpm test:regression` job; see
 [CONTRIBUTING.md](../CONTRIBUTING.md#before-opening-a-pr) for the exact sequence.
 
 ## Troubleshooting

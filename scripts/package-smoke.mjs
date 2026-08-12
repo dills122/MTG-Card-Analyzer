@@ -51,6 +51,7 @@ try {
         "Readme.md",
         "docs/cli-reference.md",
         "docs/configuration.md",
+        "docs/image-fingerprint-benchmark.md",
         "eng.traineddata",
         "index.mjs",
         "mtg.config.example.json",

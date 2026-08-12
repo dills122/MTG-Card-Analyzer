@@ -4,19 +4,26 @@ import { createHashing } from "../../src/image-hashing/hash-image.mjs";
 
 describe("Hashing::", () => {
     const url = "https://img.scryfall.com/cards/normal/en/shm/53.jpg?1517813031";
-    const fakeHash = "0773063f063f36070e070a070f378e7f1f000fff0fff020103f00ffb0f810ff0";
+    const fakeFingerprint = {
+        schemaVersion: 1,
+        algorithm: "pdq-v1",
+        encoding: "hex",
+        hash: "0773063f063f36070e070a070f378e7f1f000fff0fff020103f00ffb0f810ff0",
+        bitLength: 256,
+        quality: 100
+    };
     let Hashing;
-    let imageHashStub;
+    let fingerprintImageStub;
     let loadImageInputStub;
     describe("ImageHashing::", () => {
         beforeEach(() => {
-            imageHashStub = sinon.stub().callsArgWith(3, null, fakeHash);
+            fingerprintImageStub = sinon.stub().resolves(fakeFingerprint);
             loadImageInputStub = sinon.stub().resolves({
                 buffer: Buffer.from("validated image"),
                 dimensions: { width: 10, height: 10, format: "jpeg" }
             });
             Hashing = createHashing({
-                imageHash: imageHashStub,
+                fingerprintImage: fingerprintImageStub,
                 loadImageInput: loadImageInputStub
             });
         });
@@ -28,10 +35,11 @@ describe("Hashing::", () => {
             Hashing.hashImage(url, (error, hash) => {
                 assert.isNull(error);
                 assert.isString(hash);
-                assert.isTrue(imageHashStub.calledOnce, "Image Hash called");
+                assert.equal(JSON.parse(hash).algorithm, "pdq-v1");
+                assert.isTrue(fingerprintImageStub.calledOnce, "Image fingerprint called");
                 assert.isTrue(
                     consoleLogStub.calledOnceWithExactly(
-                        "INFO  Hashing image: img.scryfall.com/53.jpg"
+                        "INFO  Fingerprinting image: img.scryfall.com/53.jpg (PDQ v1)"
                     )
                 );
                 done();
@@ -43,7 +51,7 @@ describe("Hashing::", () => {
             Hashing.hashImage("", (error, hash) => {
                 assert.deepEqual(error, {});
                 assert.isUndefined(hash);
-                assert.isFalse(imageHashStub.called, "Image Hash not called");
+                assert.isFalse(fingerprintImageStub.called, "Image fingerprint not called");
                 done();
             });
         });
@@ -58,7 +66,9 @@ describe("Hashing::", () => {
                 assert.match(error.message, /remote URL is invalid/);
                 assert.isUndefined(hash);
                 assert.isTrue(
-                    consoleLogStub.calledOnceWithExactly("INFO  Hashing image: invalid URL")
+                    consoleLogStub.calledOnceWithExactly(
+                        "INFO  Fingerprinting image: invalid URL (PDQ v1)"
+                    )
                 );
                 done();
             });
@@ -77,12 +87,11 @@ describe("Hashing::", () => {
             const consoleLogStub = sinon.stub(console, "log");
             let hashComparisonResults = Hashing.compareHash(hashOne, hashTwo);
             assert.isObject(hashComparisonResults);
-            assert.equal(hashComparisonResults.twoBitMatches, 1);
-            assert.equal(hashComparisonResults.fourBitMatches, 1);
-            assert.equal(hashComparisonResults.stringCompare, 1);
+            assert.equal(hashComparisonResults.similarity, 1);
+            assert.equal(hashComparisonResults.distance, 0);
             assert.isTrue(
                 consoleLogStub.calledOnceWithExactly(
-                    "INFO  Hash similarity: 2-bit 100%, 4-bit 100%, text 100%"
+                    "INFO  Fingerprint similarity: 100% (distance 0/256, minimum quality n/a)"
                 )
             );
             done();

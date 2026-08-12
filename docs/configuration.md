@@ -121,6 +121,10 @@ the hash cache should live somewhere else.
 Disabling the local cache turns off the image-hash cache and operations log. It does not disable
 the card-name index, which is required for matching and has no remote fallback.
 
+Image fingerprints are stored as versioned records. Legacy raw Blockhash values remain readable
+but are not comparable with the current PDQ records; the next remote comparison refreshes those
+cache entries without requiring a manual database migration.
+
 The card-name seeder stores a normalized key beside each canonical name. Rerunning it is
 idempotent: catalog entries are validated with the matching normalization contract, duplicate and
 invalid legacy rows are removed, and remaining names are upserted. `diagnostics` reports the

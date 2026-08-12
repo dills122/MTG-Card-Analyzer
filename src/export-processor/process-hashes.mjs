@@ -9,19 +9,9 @@ import FileIO from "../file-io.mjs";
 import { round, orderBy, omit } from "../util.mjs";
 
 const config = {
-    remoteMatch: {
-        twoBit: 0.75,
-        fourBit: 0.7,
-        stringCompare: 0.75
-    },
     remoteBestGuess: {
         maxCandidates: 3,
         minScoreDeltaFromTop: 0.03
-    },
-    dbMatch: {
-        twoBit: 0.92,
-        fourBit: 0.85,
-        stringCompare: 0.92
     }
 };
 
@@ -80,11 +70,7 @@ class ProcessHashes {
                 this.localHash,
                 dbHash.cardHash
             );
-            const isMatch =
-                compareResults.twoBitMatches >= config.dbMatch.twoBit &&
-                compareResults.fourBitMatches >= config.dbMatch.fourBit &&
-                compareResults.stringCompare >= config.dbMatch.stringCompare;
-            if (isMatch) {
+            if (compareResults.matches) {
                 matches.push(
                     Object.assign(compareResults, {
                         setName: dbHash.setName
@@ -146,7 +132,7 @@ class ProcessHashes {
                     this.localHash,
                     remoteImageHash
                 );
-                if (Object.keys(comparisonResults).length > 0) {
+                if (comparisonResults.comparable) {
                     comparisonResultsList.push(
                         Object.assign(comparisonResults, {
                             setName
@@ -157,14 +143,7 @@ class ProcessHashes {
         } finally {
             await done();
         }
-        const matchValues = config.remoteMatch;
-        let bestMatches = comparisonResultsList.filter((match) => {
-            return (
-                match.twoBitMatches >= matchValues.twoBit &&
-                match.fourBitMatches >= matchValues.fourBit &&
-                match.stringCompare >= matchValues.stringCompare
-            );
-        });
+        let bestMatches = comparisonResultsList.filter((match) => match.matches);
         if (
             this.allowRemoteBestGuess &&
             bestMatches.length === 0 &&
@@ -173,15 +152,10 @@ class ProcessHashes {
             const sortedByScore = orderBy(
                 comparisonResultsList.map((match) => ({
                     ...match,
-                    confidenceScore: round(
-                        match.stringCompare * 0.5 +
-                            match.twoBitMatches * 0.3 +
-                            match.fourBitMatches * 0.2,
-                        4
-                    )
+                    confidenceScore: round(match.similarity, 4)
                 })),
-                ["confidenceScore", "stringCompare", "twoBitMatches", "fourBitMatches"],
-                ["desc", "desc", "desc", "desc"]
+                ["confidenceScore", "minQuality", "distance"],
+                ["desc", "desc", "asc"]
             );
             const topScore = sortedByScore[0].confidenceScore;
             bestMatches = sortedByScore

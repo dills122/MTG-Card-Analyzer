@@ -4,7 +4,7 @@ import { readImage } from "./util.mjs";
 import { round, clamp } from "../util.mjs";
 
 // Reusable region registry -- the shared "layer" every crop spot plugs into. setSymbol feeds the
-// image-hash path; name/type/rules-name/default feed OCR (region templates, one or more crop
+// image-fingerprint path; name/type/rules-name/default feed OCR (region templates, one or more crop
 // candidates per type -- ocr-preprocessing.mjs runs each through its own pixel preprocessing and
 // picks the best result after real OCR scoring, so these carry no confidence heuristic here).
 const regions = {
@@ -153,7 +153,7 @@ function computeSourceUpscaleFactor(dimensions) {
 
 /**
  * OCR-specific sizing gate (GitHub issue #156). Unlike assertSourceSizeOk's hard cutoff --
- * used for set-symbol image-hash crops, where a soft/undersized crop actively hurts hash
+ * used for set-symbol image-fingerprint crops, where a soft/undersized crop actively hurts hash
  * comparison -- every OCR crop is upscaled to a fixed minimum width by padAndScale
  * (see binarize.mjs) regardless of source resolution. So a source that's merely somewhat
  * under the standard minimum can still reach OCR instead of being rejected outright; only a
@@ -235,7 +235,7 @@ function cropSetSymbolFromImage(img) {
 
 /**
  * Crop the set-symbol region from a file on disk and write it to a temp file, for callers that
- * need a file path (e.g. the promisified image-hash lib). Throws on undersized source images and
+ * need a file path. Throws on undersized source images and
  * on low-confidence crops -- both cases should fall back to full-card hashing at the call site.
  */
 async function writeSetSymbolSnippet(imgPath, directory) {

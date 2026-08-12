@@ -40,10 +40,10 @@ function run(cmd, cmdArgs, opts = {}) {
 }
 
 function checkNodeVersion() {
-    const major = Number(process.versions.node.split(".")[0]);
-    if (major < 20) {
+    const [major, minor] = process.versions.node.split(".").map(Number);
+    if (major < 22 || (major === 22 && minor < 14)) {
         console.warn(
-            `  ⚠ Node ${process.versions.node} detected -- this project targets Node >=20. Things may not work.`
+            `  ⚠ Node ${process.versions.node} detected -- this project targets Node >=22.14. Things may not work.`
         );
         return false;
     }
