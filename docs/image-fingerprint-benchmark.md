@@ -8,6 +8,9 @@ ranking, not to make a universal claim about perceptual-hash quality.
 
 ```bash
 pnpm benchmark:fingerprints
+
+# Re-run only the selected production mode while tuning application policy
+pnpm benchmark:fingerprints --mode pdq-v1-normalized
 ```
 
 The command is offline and deterministic apart from runtime measurements. It uses the enabled
@@ -54,8 +57,32 @@ isolated algorithm microbenchmark.
 
 Use normalized PDQ v1 as the production default. Store the full versioned fingerprint record and
 compare it using Hamming distance plus the package's explicit starting policy (`maxDistance: 31`,
-`minQuality: 50`). When no candidate satisfies that conservative policy, the existing bounded
-closest-candidate fallback may still rank comparable PDQ records.
+`minQuality: 50`).
+
+The application-specific fallback is deliberately weaker than confirmation but no longer
+unbounded. It requires both fingerprints to satisfy the quality policy and the closest candidate
+to have at least 0.75 similarity. Candidates within 0.03 of the top score remain visible, up to
+three results. When a set-symbol pass produces no candidate at that floor, the matcher retries the
+original full-card image against full-card references rather than accepting a weak symbol guess.
+
+## Application-policy calibration
+
+A PDQ-only rerun on 2026-08-12 evaluated the conservative confirmation policy and the bounded
+application fallback independently. “Correct” means that the selected cohort contained the exact
+printing; “incorrect” means that a cohort was accepted without it.
+
+| Input scope | Policy                    | Accepted | Correct | Incorrect | Abstained |
+| ----------- | ------------------------- | -------: | ------: | --------: | --------: |
+| Full card   | PDQ starting policy       |  243/272 |     243 |         0 |        29 |
+| Full card   | 0.75 application fallback |  272/272 |     272 |         0 |         0 |
+| Set symbol  | PDQ starting policy       |    19/32 |      19 |         0 |        13 |
+| Set symbol  | 0.75 application fallback |    24/32 |      24 |         0 |         8 |
+
+The two wrong set-symbol rankings were cropped variants with top similarities of 0.4922 and
+0.5625. The 0.75 floor therefore withheld both. Every transformed full-card query ranked the
+correct print first and cleared the fallback floor, which supports the full-card retry for this
+application pipeline. This is evidence for the current reviewed corpus, not a universal PDQ
+threshold.
 
 Legacy raw Blockhash values are recognized as historical records but are intentionally
 non-comparable with PDQ. A scan that encounters only legacy cache rows falls through to the remote

@@ -11,7 +11,8 @@ import { round, orderBy, omit } from "../util.mjs";
 const config = {
     remoteBestGuess: {
         maxCandidates: 3,
-        minScoreDeltaFromTop: 0.03
+        minSimilarity: 0.75,
+        maxSimilarityDeltaFromTop: 0.03
     }
 };
 
@@ -150,27 +151,39 @@ class ProcessHashes {
             comparisonResultsList.length > 0
         ) {
             const sortedByScore = orderBy(
-                comparisonResultsList.map((match) => ({
-                    ...match,
-                    confidenceScore: round(match.similarity, 4)
-                })),
+                comparisonResultsList
+                    .filter(
+                        (match) =>
+                            match.eligible !== false &&
+                            match.similarity >= config.remoteBestGuess.minSimilarity
+                    )
+                    .map((match) => ({
+                        ...match,
+                        confidenceScore: round(match.similarity, 4)
+                    })),
                 ["confidenceScore", "minQuality", "distance"],
                 ["desc", "desc", "asc"]
             );
-            const topScore = sortedByScore[0].confidenceScore;
-            bestMatches = sortedByScore
-                .filter(
-                    (match) =>
-                        topScore - match.confidenceScore <=
-                        config.remoteBestGuess.minScoreDeltaFromTop
-                )
-                .slice(0, config.remoteBestGuess.maxCandidates)
-                .map((match) => omit(match, ["confidenceScore"]));
-            this.logger.info(
-                `Using closest image matches for "${this.name}": ${bestMatches
-                    .map((match) => match.setName)
-                    .join(", ")}`
-            );
+            if (sortedByScore.length > 0) {
+                const topScore = sortedByScore[0].confidenceScore;
+                bestMatches = sortedByScore
+                    .filter(
+                        (match) =>
+                            topScore - match.confidenceScore <=
+                            config.remoteBestGuess.maxSimilarityDeltaFromTop
+                    )
+                    .slice(0, config.remoteBestGuess.maxCandidates)
+                    .map((match) => omit(match, ["confidenceScore"]));
+                this.logger.info(
+                    `Using closest image matches for "${this.name}": ${bestMatches
+                        .map((match) => match.setName)
+                        .join(", ")}`
+                );
+            } else {
+                this.logger.info(
+                    `Closest image matches for "${this.name}" were below the quality or similarity floor`
+                );
+            }
         }
         this.logger.info(`Scryfall image matches for "${this.name}": ${bestMatches.length}`);
         return bestMatches;
@@ -206,11 +219,11 @@ class ProcessHashes {
         }
         try {
             return await this._hashRemoteSetSymbol(url, tempDirectory);
-        } catch {
+        } catch (error) {
             this.logger.error(
-                `Remote set-symbol hash failed for "${this.name}"; using full card image`
+                `Remote set-symbol hash failed for "${this.name}"; full-card retry required`
             );
-            return this._hashImage(url);
+            throw error;
         }
     }
 

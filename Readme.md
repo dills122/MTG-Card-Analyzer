@@ -108,7 +108,9 @@ Run `mtg-card-analyzer --help` for the command list or see the
    unambiguous individual face names resolve back to their canonical compound card name.
 4. Failed title matches progressively try soft/inverted title variants, rotated title bands, and
    finally supplemental rules text, avoiding the extra OCR work for ordinary successful scans.
-5. Candidate printings come from Scryfall and are ranked with cached or downloaded image hashes.
+5. Candidate printings come from Scryfall and are ranked with cached or downloaded PDQ
+   fingerprints. A high-confidence set-symbol result wins; an inconclusive symbol comparison is
+   retried with the full card instead of forcing a weak print guess.
 6. Results are printed and, only when enabled, a single confirmed printing is written to the
    collection backend. A resolved name with multiple possible sets is saved to needs-attention
    instead of being treated as confirmed.

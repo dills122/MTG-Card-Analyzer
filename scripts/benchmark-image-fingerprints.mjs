@@ -9,7 +9,8 @@ import {
     compareFingerprints,
     decodeImage,
     fingerprintImage,
-    fingerprintPixels
+    fingerprintPixels,
+    PDQ_STARTING_POLICY
 } from "image-fingerprint/node";
 import { readImage } from "../src/image-processing/util.mjs";
 import { cropSetSymbolFromImage } from "../src/image-processing/smart-crop.mjs";
@@ -19,6 +20,23 @@ import { loadManifest } from "../src/regression/manifest.mjs";
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDirectory, "..");
 const manifestPath = path.join(repositoryRoot, "test/regression/fixtures/manifest.json");
+
+const APPLICATION_POLICIES = Object.freeze([
+    {
+        id: "pdq-starting-policy",
+        minSimilarity: 1 - PDQ_STARTING_POLICY.maxDistance / 256,
+        minQuality: PDQ_STARTING_POLICY.minQuality,
+        maxCandidates: 3,
+        maxSimilarityDeltaFromTop: 0.03
+    },
+    {
+        id: "application-fallback-0.75",
+        minSimilarity: 0.75,
+        minQuality: PDQ_STARTING_POLICY.minQuality,
+        maxCandidates: 3,
+        maxSimilarityDeltaFromTop: 0.03
+    }
+]);
 
 const MODES = [
     {
@@ -80,7 +98,10 @@ function score(left, right) {
     if (!comparison.comparable) {
         throw new Error(`Unexpected incompatible fingerprints: ${comparison.reason}`);
     }
-    return 1 - comparison.normalizedDistance;
+    return {
+        similarity: 1 - comparison.normalizedDistance,
+        distance: comparison.distance
+    };
 }
 
 function round(value, digits = 4) {
@@ -149,6 +170,41 @@ function summarize(rows) {
     };
 }
 
+function evaluateApplicationPolicy(rows, policy) {
+    const results = rows.map((row) => {
+        const qualityEligible =
+            row.queryQuality === undefined ||
+            (row.queryQuality >= policy.minQuality && row.topQuality >= policy.minQuality);
+        const scoreEligible = row.topSimilarity >= policy.minSimilarity;
+        const selected = qualityEligible && scoreEligible ? row.candidatesWithinDelta : [];
+        return {
+            selected,
+            correct: selected.includes(row.card),
+            ambiguous: selected.length > 1
+        };
+    });
+    const accepted = results.filter((result) => result.selected.length > 0);
+    const correct = accepted.filter((result) => result.correct);
+    return {
+        policy,
+        total: rows.length,
+        accepted: accepted.length,
+        abstained: rows.length - accepted.length,
+        correct: correct.length,
+        incorrect: accepted.length - correct.length,
+        ambiguous: accepted.filter((result) => result.ambiguous).length,
+        precision: round(correct.length / (accepted.length || 1)),
+        recall: round(correct.length / rows.length)
+    };
+}
+
+function applicationCalibration(rows, mode) {
+    if (mode.id !== "pdq-v1-normalized") {
+        return undefined;
+    }
+    return APPLICATION_POLICIES.map((policy) => evaluateApplicationPolicy(rows, policy));
+}
+
 async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory) {
     const startedAt = performance.now();
     const referenceFingerprints = new Map();
@@ -164,10 +220,8 @@ async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory
             const ranking = cards
                 .map((candidate) => ({
                     card: candidate,
-                    similarity: score(
-                        queryFingerprint,
-                        referenceFingerprints.get(identity(candidate))
-                    )
+                    fingerprint: referenceFingerprints.get(identity(candidate)),
+                    ...score(queryFingerprint, referenceFingerprints.get(identity(candidate)))
                 }))
                 .sort((left, right) => right.similarity - left.similarity);
             const expectedId = identity(card);
@@ -178,6 +232,7 @@ async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory
             const closestNegativeSimilarity = ranking.find(
                 (entry) => identity(entry.card) !== expectedId
             ).similarity;
+            const topSimilarity = ranking[0].similarity;
             fullCardRows.push({
                 card: expectedId,
                 variant: variant[0],
@@ -185,7 +240,18 @@ async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory
                 positiveSimilarity,
                 closestNegativeSimilarity,
                 margin: positiveSimilarity - closestNegativeSimilarity,
-                quality: queryFingerprint.quality
+                quality: queryFingerprint.quality,
+                queryQuality: queryFingerprint.quality,
+                topQuality: ranking[0].fingerprint.quality,
+                topSimilarity,
+                candidatesWithinDelta: ranking
+                    .filter(
+                        (entry) =>
+                            topSimilarity - entry.similarity <=
+                            APPLICATION_POLICIES[0].maxSimilarityDeltaFromTop
+                    )
+                    .slice(0, APPLICATION_POLICIES[0].maxCandidates)
+                    .map((entry) => identity(entry.card))
             });
         }
     }
@@ -213,10 +279,8 @@ async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory
                 const ranking = group
                     .map((candidate) => ({
                         card: candidate,
-                        similarity: score(
-                            queryFingerprint,
-                            referenceSymbols.get(identity(candidate))
-                        )
+                        fingerprint: referenceSymbols.get(identity(candidate)),
+                        ...score(queryFingerprint, referenceSymbols.get(identity(candidate)))
                     }))
                     .sort((left, right) => right.similarity - left.similarity);
                 const expectedId = identity(card);
@@ -227,6 +291,7 @@ async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory
                 const closestNegativeSimilarity = ranking.find(
                     (entry) => identity(entry.card) !== expectedId
                 ).similarity;
+                const topSimilarity = ranking[0].similarity;
                 setSymbolRows.push({
                     card: expectedId,
                     variant: variant[0],
@@ -234,7 +299,18 @@ async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory
                     positiveSimilarity,
                     closestNegativeSimilarity,
                     margin: positiveSimilarity - closestNegativeSimilarity,
-                    quality: queryFingerprint.quality
+                    quality: queryFingerprint.quality,
+                    queryQuality: queryFingerprint.quality,
+                    topQuality: ranking[0].fingerprint.quality,
+                    topSimilarity,
+                    candidatesWithinDelta: ranking
+                        .filter(
+                            (entry) =>
+                                topSimilarity - entry.similarity <=
+                                APPLICATION_POLICIES[0].maxSimilarityDeltaFromTop
+                        )
+                        .slice(0, APPLICATION_POLICIES[0].maxCandidates)
+                        .map((entry) => identity(entry.card))
                 });
             }
         }
@@ -245,6 +321,10 @@ async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory
         runtimeMs: round(performance.now() - startedAt, 2),
         fullCard: summarize(fullCardRows),
         setSymbol: summarize(setSymbolRows),
+        applicationCalibration: {
+            fullCard: applicationCalibration(fullCardRows, mode),
+            setSymbol: applicationCalibration(setSymbolRows, mode)
+        },
         failures: {
             fullCard: fullCardRows.filter((row) => row.rank !== 1).slice(0, 20),
             setSymbol: setSymbolRows.filter((row) => row.rank !== 1).slice(0, 20)
@@ -252,7 +332,24 @@ async function benchmarkMode(mode, cards, queryCards, duplicateGroups, directory
     };
 }
 
+function selectedModes(arguments_) {
+    const modeIndex = arguments_.indexOf("--mode");
+    if (modeIndex === -1) {
+        return MODES;
+    }
+    const modeId = arguments_[modeIndex + 1];
+    if (!modeId || modeId.startsWith("--")) {
+        throw new Error("--mode requires a benchmark mode id");
+    }
+    const mode = MODES.find((candidate) => candidate.id === modeId);
+    if (!mode) {
+        throw new Error(`Unknown benchmark mode: ${modeId}`);
+    }
+    return [mode];
+}
+
 async function main() {
+    const modes = selectedModes(process.argv.slice(2));
     const manifest = await loadManifest(manifestPath);
     const cards = manifest.catalog.filter((card) => card.enabled !== false);
     const duplicateGroups = Object.values(Object.groupBy(cards, (card) => card.name)).filter(
@@ -278,7 +375,7 @@ async function main() {
     const directory = await mkdtemp(path.join(os.tmpdir(), "mtg-fingerprint-benchmark-"));
     try {
         const results = [];
-        for (const mode of MODES) {
+        for (const mode of modes) {
             console.error(`Benchmarking ${mode.id}...`);
             results.push(await benchmarkMode(mode, cards, queryCards, duplicateGroups, directory));
         }

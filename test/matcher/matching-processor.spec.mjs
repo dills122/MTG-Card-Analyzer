@@ -223,6 +223,90 @@ describe("MatcherProcessor::", () => {
         });
     });
 
+    it("retries with full-card fingerprints when set-symbol matching is inconclusive", async () => {
+        const setSymbolHasher = {
+            compareDbHashes: sandbox.stub().resolves([]),
+            compareRemoteImages: sandbox.stub().resolves([])
+        };
+        const fullCardHasher = {
+            compareDbHashes: sandbox.stub().resolves([]),
+            compareRemoteImages: sandbox.stub().resolves([{ setName: "M21" }])
+        };
+        sandbox.stub(dependencies, "searchPrintings").resolves([
+            { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } },
+            { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
+        ]);
+        const hashStub = sandbox
+            .stub(dependencies, "hashImage")
+            .onFirstCall()
+            .resolves("SET_SYMBOL_HASH")
+            .onSecondCall()
+            .resolves("FULL_CARD_HASH");
+        sandbox.stub(dependencies, "createDirectory").resolves("/tmp/set-symbol-dir");
+        sandbox
+            .stub(dependencies, "writeSetSymbolSnippet")
+            .resolves("/tmp/set-symbol-dir/set-symbol.png");
+        sandbox.stub(dependencies, "cleanUpFiles").resolves();
+        const processHashesStub = sandbox
+            .stub(dependencies.processHashes, "create")
+            .onFirstCall()
+            .returns(setSymbolHasher)
+            .onSecondCall()
+            .returns(fullCardHasher);
+
+        const result = await create({
+            name: "Pacifism",
+            filePath: "/tmp/pacifism.jpg",
+            logger: { info: sandbox.stub(), error: sandbox.stub() }
+        }).executeAsync();
+
+        assert.deepEqual(result, ["M21"]);
+        assert.isTrue(hashStub.calledTwice);
+        assert.equal(hashStub.secondCall.args[0], "/tmp/pacifism.jpg");
+        assert.equal(processHashesStub.firstCall.args[0].hashMode, "set-symbol");
+        assert.equal(processHashesStub.secondCall.args[0].hashMode, "full-card");
+        assert.equal(processHashesStub.secondCall.args[0].localHash, "FULL_CARD_HASH");
+    });
+
+    it("retries with full-card fingerprints when remote set-symbol comparison fails", async () => {
+        const setSymbolError = new Error("remote symbol crop failed");
+        const setSymbolHasher = {
+            compareDbHashes: sandbox.stub().resolves([]),
+            compareRemoteImages: sandbox.stub().rejects(setSymbolError)
+        };
+        const fullCardHasher = {
+            compareDbHashes: sandbox.stub().resolves([]),
+            compareRemoteImages: sandbox.stub().resolves([{ setName: "M21" }])
+        };
+        sandbox.stub(dependencies, "searchPrintings").resolves([
+            { set_name: "M21", image_uris: { normal: "https://example.com/m21.jpg" } },
+            { set_name: "M20", image_uris: { normal: "https://example.com/m20.jpg" } }
+        ]);
+        sandbox.stub(dependencies, "hashImage").resolves("HASH");
+        sandbox.stub(dependencies, "createDirectory").resolves("/tmp/set-symbol-dir");
+        sandbox
+            .stub(dependencies, "writeSetSymbolSnippet")
+            .resolves("/tmp/set-symbol-dir/set-symbol.png");
+        sandbox.stub(dependencies, "cleanUpFiles").resolves();
+        sandbox
+            .stub(dependencies.processHashes, "create")
+            .onFirstCall()
+            .returns(setSymbolHasher)
+            .onSecondCall()
+            .returns(fullCardHasher);
+        const error = sandbox.stub();
+
+        const result = await create({
+            name: "Pacifism",
+            filePath: "/tmp/pacifism.jpg",
+            logger: { info: sandbox.stub(), error }
+        }).executeAsync();
+
+        assert.deepEqual(result, ["M21"]);
+        assert.isTrue(error.calledWithMatch(sinon.match(/retrying full card/)));
+        assert.isTrue(fullCardHasher.compareRemoteImages.calledOnce);
+    });
+
     it("awaits local set-symbol cleanup before comparing hashes", async () => {
         const processHashesInstance = {
             compareDbHashes: sandbox.stub().resolves([]),
