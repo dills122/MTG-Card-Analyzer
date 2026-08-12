@@ -1,6 +1,6 @@
 {
     "name": "mtg-card-analyzer",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "private": true,
     "description": "Local-first CLI for identifying Magic: The Gathering cards from images",
     "type": "module",

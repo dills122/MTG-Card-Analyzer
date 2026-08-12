@@ -35,7 +35,7 @@ You need:
   card-name seed
 
 ```bash
-npm install --global https://github.com/dills122/MTG-Card-Analyzer/releases/latest/download/mtg-card-analyzer-0.2.0.tgz
+npm install --global https://github.com/dills122/MTG-Card-Analyzer/releases/latest/download/mtg-card-analyzer-0.2.1.tgz
 mtg-card-analyzer names seed
 mtg-card-analyzer scan ./path/to/card.jpg
 ```
