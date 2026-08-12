@@ -79,6 +79,11 @@ Releases are published on GitHub with the `npm pack` archive attached; this proj
 to the npm registry. Creating the release tag and publishing its archive remain explicit maintainer
 steps after the release commit has passed its gates.
 
+Each release-preparation change must add reviewed, versioned notes at
+`docs/releases/<version>.md`. Replace the generic Release Drafter body with those notes before
+publishing. Cover user-visible behavior, upgrade and compatibility guidance, benchmark or test
+evidence for matching changes, every included pull request, and the full comparison link.
+
 Type checking is being introduced incrementally for this ESM JavaScript codebase. The strict
 checked-module list lives in `tsconfig.checked.json`; add a touched production module there once its
 JSDoc contracts pass `pnpm typecheck`.
