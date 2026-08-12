@@ -187,11 +187,7 @@ describe("Regression framework::", () => {
                 callback(null, imagePath.includes("alternative") ? "bbbb" : "aaaa"),
             compareHash: (left, right) => {
                 const score = left === right ? 1 : 0;
-                return {
-                    twoBitMatches: score,
-                    fourBitMatches: score,
-                    stringCompare: score
-                };
+                return { similarity: score };
             }
         };
 
@@ -257,7 +253,7 @@ describe("Regression framework::", () => {
                 hashCalls.push(imagePath);
                 callback(null, "fresh-hash");
             },
-            compareHash: () => ({ twoBitMatches: 1, fourBitMatches: 1, stringCompare: 1 })
+            compareHash: () => ({ similarity: 1 })
         };
 
         const report = await runRegression(manifest, {
@@ -352,11 +348,7 @@ describe("Regression framework::", () => {
                 MatchName: matchNameModule,
                 Hash: {
                     hashImage: (_imagePath, callback) => callback(null, "fresh-hash"),
-                    compareHash: () => ({
-                        twoBitMatches: 1,
-                        fourBitMatches: 1,
-                        stringCompare: 1
-                    })
+                    compareHash: () => ({ similarity: 1 })
                 },
                 materializeFixture: async (fixture) => fixture.imagePath,
                 createOcrSession: async (options) => {
@@ -432,11 +424,7 @@ describe("Regression framework::", () => {
                 MatchName: matchNameModule,
                 Hash: {
                     hashImage: (_imagePath, callback) => callback(null, "fresh-hash"),
-                    compareHash: () => ({
-                        twoBitMatches: 1,
-                        fourBitMatches: 1,
-                        stringCompare: 1
-                    })
+                    compareHash: () => ({ similarity: 1 })
                 },
                 materializeFixture: async (fixture) => fixture.imagePath,
                 createOcrSession: async () => {

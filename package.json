@@ -17,6 +17,7 @@
         "LICENSE",
         "docs/cli-reference.md",
         "docs/configuration.md",
+        "docs/image-fingerprint-benchmark.md",
         "src/config/",
         "src/console/",
         "src/db-local/",
@@ -51,7 +52,7 @@
     },
     "packageManager": "pnpm@10.13.1",
     "engines": {
-        "node": ">=20.0.0",
+        "node": ">=22.14.0",
         "pnpm": ">=8.0.0"
     },
     "scripts": {
@@ -63,6 +64,7 @@
         "test": "mocha \"./test/**/*.spec.mjs\"",
         "test:package": "node scripts/package-smoke.mjs",
         "test:regression": "node scripts/run-regression.mjs",
+        "benchmark:fingerprints": "node scripts/benchmark-image-fingerprints.mjs",
         "regression:compare": "node scripts/compare-ocr-models.mjs",
         "training:data:check": "node scripts/validate-ocr-training-data.mjs",
         "training:review:promote": "node scripts/promote-ocr-training-review.mjs",
@@ -128,7 +130,7 @@
         "clean-text-utils": "^1.3.0",
         "commander": "^15.0.0",
         "fuzzyset.js": "1.0.7",
-        "image-hash": "^7.0.1",
+        "image-fingerprint": "^0.1.1",
         "jimp": "1.6.1",
         "joi": "^18.2.3",
         "lodash": "^4.18.1",

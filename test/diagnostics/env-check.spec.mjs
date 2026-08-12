@@ -100,11 +100,11 @@ describe("diagnostics::env-check", () => {
         });
     });
 
-    it("checks Node version against the >=20 floor", async () => {
+    it("checks Node version against the >=22.14 floor", async () => {
         const result = await runCheck();
         const nodeCheck = result.checks.find((check) => check.label.startsWith("Node "));
         assert.exists(nodeCheck);
-        assert.equal(nodeCheck.status, "pass", "this test suite itself requires Node >=20");
+        assert.equal(nodeCheck.status, "pass", "this test suite itself requires Node >=22.14");
     });
 
     it("checks the pinned official LSTM English model used at runtime", async () => {

@@ -29,6 +29,9 @@ also depends on a separately seeded NeDB database. The regression runner therefo
 names from the fixture catalog and compares against local reference images. This exercises
 the same OCR, fuzzy matcher, and hash implementation while keeping the input corpus fixed.
 
+For the standalone Blockhash-versus-PDQ retrieval comparison and the production-mode decision,
+see [Image fingerprint mode benchmark](image-fingerprint-benchmark.md).
+
 <!-- markdownlint-disable MD013 -->
 
 Every regression case is evaluated with cold application state. Image hashes are recomputed for
@@ -255,8 +258,8 @@ Minimal example:
 
 Only `name`, `set`, and `collectorNumber` are required inside `expected`. Optional thresholds
 let the suite catch candidate explosions, confidence changes, metadata regressions, and large
-runtime regressions without requiring an exact OCR string. Print selection uses a weighted
-score over the production hash metrics and defaults to a minimum score of 0.75.
+runtime regressions without requiring an exact OCR string. Print selection uses normalized PDQ
+Hamming similarity and defaults to a minimum score of 0.75.
 
 ## Quality labels and transformations
 
@@ -397,9 +400,9 @@ the regression suite repeatable and independent of API availability or Scryfall 
 
 Each case records the raw and normalized OCR text promoted from the title candidate that produced
 the selected name match, Tesseract confidence and region, fuzzy name matches, name-candidate count,
-print-candidate count, the selected print, its three hash
-comparison metrics, set/collector verification, failures, per-stage timing, and total runtime.
-The summary includes pass rate, the blocking CI-gate result, non-blocking failure counts,
+print-candidate count, the selected print, its PDQ similarity, Hamming distance, bit length, and
+input quality, set/collector verification, failures, per-stage timing, and total runtime. The
+summary includes pass rate, the blocking CI-gate result, non-blocking failure counts,
 disabled and placeholder fixture counts, totals by quality, total/mean runtime, and p95 runtime.
 
 ## Pull request gate

@@ -4,7 +4,7 @@ Thanks for looking at MTG Card Analyzer. This doc covers how to set up, work on,
 
 ## Setup
 
-- Node >= 20 (CI tests the supported floor on Node 20 and the primary runtime on Node 22)
+- Node >= 22.14 (CI uses Node 22)
 - [pnpm](https://pnpm.io/) >= 8: `corepack enable` or `npm i -g pnpm`
 - Clone and run the setup script:
 
@@ -61,9 +61,8 @@ pnpm test:regression
 sequence. The OCR regression run is especially important for changes to image preprocessing,
 OCR, fuzzy matching, hashing, or print selection.
 
-CI runs `check:fast` and the unit suite on Node 20 and Node 22. Coverage is collected on Node 22,
-and the cold-cache OCR regression remains a single Node 22 job so the compatibility matrix does not
-multiply the expensive benchmark.
+CI runs `check:fast`, the coverage-enforced unit suite, and the cold-cache OCR regression on
+Node 22.
 
 Distribution changes must also inspect and execute the packed artifact:
 

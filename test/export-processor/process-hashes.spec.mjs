@@ -12,9 +12,20 @@ const { ProcessHashes } = exportProcessor;
 const CardHashes = storage.hashes;
 const { Hash } = imageHashing;
 
-const FAKE_HASH = "THISISANEXAMPLEOFAFAKEHASHEEEEEE";
-const CLOSE_DIFF_HASH = "THISISANEXAMPLEOFAFAKAHASHEEEEEE";
-const FAR_DIFF_HASH = "THISISANEXAMPLEOFAHASHAADDEEDD";
+function pdq(hash) {
+    return JSON.stringify({
+        schemaVersion: 1,
+        algorithm: "pdq-v1",
+        encoding: "hex",
+        hash,
+        bitLength: 256,
+        quality: 100
+    });
+}
+
+const FAKE_HASH = pdq("0".repeat(64));
+const CLOSE_DIFF_HASH = pdq(`${"0".repeat(63)}1`);
+const FAR_DIFF_HASH = pdq("f".repeat(64));
 const FAKE_SET = "FAKESET";
 
 const FakeCards = [

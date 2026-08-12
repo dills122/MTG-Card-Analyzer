@@ -108,11 +108,11 @@ async function runEnvironmentCheck({ withMysql = false } = {}, dependencies = {}
         }
     }
 
-    const nodeMajor = Number(process.versions.node.split(".")[0]);
-    if (nodeMajor >= 20) {
+    const [nodeMajor, nodeMinor] = process.versions.node.split(".").map(Number);
+    if (nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 14)) {
         record(`Node ${process.versions.node}`, "pass");
     } else {
-        record(`Node ${process.versions.node} -- this project targets Node >=20`, "fail");
+        record(`Node ${process.versions.node} -- this project targets Node >=22.14`, "fail");
     }
 
     const ocrModelCheck = checkDefaultOcrModel();

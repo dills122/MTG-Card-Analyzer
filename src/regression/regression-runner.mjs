@@ -55,14 +55,7 @@ function hashImage(imagePath, dependencies) {
 }
 
 function comparisonScore(comparison) {
-    return (
-        Math.round(
-            (comparison.stringCompare * 0.5 +
-                comparison.twoBitMatches * 0.3 +
-                comparison.fourBitMatches * 0.2) *
-                10000
-        ) / 10000
-    );
+    return Math.round(comparison.similarity * 10000) / 10000;
 }
 
 async function rankPrintCandidates(imagePath, cards, dependencies) {

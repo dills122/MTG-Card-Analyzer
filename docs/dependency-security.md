@@ -33,10 +33,11 @@ Remote set-symbol images additionally require HTTPS on `cards.scryfall.io` or
 after 15 seconds, and stream at most 16 MiB. These controls prevent cross-origin forwarding of the
 Scryfall request headers and bound work even when `Content-Length` is absent or false.
 
-Perceptual hashing receives only the already-validated buffer form, so `image-hash` cannot reopen a
-user-controlled path or perform its own unbounded fetch. Direct library users should use
-`imageProcessing.util.readImage` or `readImageInput` before handing image data to any lower-level
-decoder.
+Perceptual hashing receives only the already-validated buffer form, so `image-fingerprint` cannot
+reopen a user-controlled path or perform its own unbounded fetch. Production fingerprints use the
+versioned PDQ v1 record and the library's explicit Hamming-distance and quality policy. Direct
+library users should use `imageProcessing.util.readImage` or `readImageInput` before handing image
+data to any lower-level decoder.
 
 ## Residual risk
 

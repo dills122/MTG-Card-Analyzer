@@ -21,9 +21,11 @@ describe("ProcessHashes fallback behavior", () => {
             .onSecondCall()
             .callsArgWith(1, null, "hash2");
         const compareHashStub = sandbox.stub().returns({
-            twoBitMatches: 0.6,
-            fourBitMatches: 0.5,
-            stringCompare: 0.65
+            comparable: true,
+            matches: false,
+            similarity: 0.65,
+            minQuality: 100,
+            distance: 90
         });
 
         const hasher = ProcessHashesModule.create({
