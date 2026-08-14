@@ -3144,6 +3144,246 @@
             "style": "showcase",
             "referenceImage": "../../../test-images/regression/scryfall/eoe-284-susur-secundi-void-altar-f6bb05de.jpg",
             "apiUrl": "https://scryfall.com/card/eoe/284/susur-secundi-void-altar?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "12459e80-2878-4a76-b45a-478ee3b0f7a4",
+            "name": "Scavenging Ghoul",
+            "set": "2ED",
+            "setName": "Unlimited Edition",
+            "collectorNumber": "127",
+            "typeLine": "Creature — Zombie",
+            "rarity": "uncommon",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/2ed-127-scavenging-ghoul-12459e80.jpg",
+            "apiUrl": "https://scryfall.com/card/2ed/127/scavenging-ghoul?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "fbbf1a9c-8b94-4ee7-92db-65b531149990",
+            "name": "Blood Lust",
+            "set": "LEG",
+            "setName": "Legends",
+            "collectorNumber": "135",
+            "typeLine": "Instant",
+            "rarity": "uncommon",
+            "colors": ["R"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/leg-135-blood-lust-fbbf1a9c.jpg",
+            "apiUrl": "https://scryfall.com/card/leg/135/blood-lust?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "6f75946b-1690-43cc-993c-d4e451a1a41c",
+            "name": "Sorrow's Path",
+            "set": "DRK",
+            "setName": "The Dark",
+            "collectorNumber": "119",
+            "typeLine": "Land",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/drk-119-sorrow-s-path-6f75946b.jpg",
+            "apiUrl": "https://scryfall.com/card/drk/119/sorrows-path?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "6456ee12-7c09-434e-9028-613506ef7ff6",
+            "name": "Royal Herbalist",
+            "set": "ALL",
+            "setName": "Alliances",
+            "collectorNumber": "15b",
+            "typeLine": "Creature — Human Cleric",
+            "rarity": "common",
+            "colors": ["W"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/all-15b-royal-herbalist-6456ee12.jpg",
+            "apiUrl": "https://scryfall.com/card/all/15b/royal-herbalist?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "5e61fbcd-b673-4d1d-bc38-a791a56a9aac",
+            "name": "Psychotic Episode",
+            "set": "TSP",
+            "setName": "Time Spiral",
+            "collectorNumber": "126",
+            "typeLine": "Sorcery",
+            "rarity": "common",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/tsp-126-psychotic-episode-5e61fbcd.jpg",
+            "apiUrl": "https://scryfall.com/card/tsp/126/psychotic-episode?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "effb7761-98a8-4cb8-883a-ddcb91d30c08",
+            "name": "Moonglove Winnower",
+            "set": "LRW",
+            "setName": "Lorwyn",
+            "collectorNumber": "126",
+            "typeLine": "Creature — Elf Rogue",
+            "rarity": "common",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/lrw-126-moonglove-winnower-effb7761.jpg",
+            "apiUrl": "https://scryfall.com/card/lrw/126/moonglove-winnower?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "4ebd9027-5b48-42c0-9533-afe50bb101e6",
+            "name": "Forest",
+            "set": "NPH",
+            "setName": "New Phyrexia",
+            "collectorNumber": "175",
+            "typeLine": "Basic Land — Forest",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/nph-175-forest-4ebd9027.jpg",
+            "apiUrl": "https://scryfall.com/card/nph/175/forest?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "35a65437-430a-42ef-854f-6e66f8e1a04a",
+            "name": "Vault of the Archangel",
+            "set": "DKA",
+            "setName": "Dark Ascension",
+            "collectorNumber": "158",
+            "typeLine": "Land",
+            "rarity": "rare",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/dka-158-vault-of-the-archangel-35a65437.jpg",
+            "apiUrl": "https://scryfall.com/card/dka/158/vault-of-the-archangel?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "2e349af5-3f25-46d3-908e-83b2f6028b95",
+            "name": "Heraldic Banner",
+            "set": "ELD",
+            "setName": "Throne of Eldraine",
+            "collectorNumber": "222",
+            "typeLine": "Artifact",
+            "rarity": "uncommon",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/eld-222-heraldic-banner-2e349af5.jpg",
+            "apiUrl": "https://scryfall.com/card/eld/222/heraldic-banner?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "51fdeeb7-9868-4fc2-9c53-806244cd5488",
+            "name": "Snapdax, Apex of the Hunt",
+            "set": "IKO",
+            "setName": "Ikoria: Lair of Behemoths",
+            "collectorNumber": "209",
+            "typeLine": "Legendary Creature — Dinosaur Cat Nightmare",
+            "rarity": "mythic",
+            "colors": ["W", "B", "R"],
+            "layout": "mutate",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/iko-209-snapdax-apex-of-the-hunt-51fdeeb7.jpg",
+            "apiUrl": "https://scryfall.com/card/iko/209/snapdax-apex-of-the-hunt?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "b33b6922-2584-43e1-98d4-e722e7c9393c",
+            "name": "Turntimber Ascetic",
+            "set": "ZNR",
+            "setName": "Zendikar Rising",
+            "collectorNumber": "214",
+            "typeLine": "Creature — Giant Cleric",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/znr-214-turntimber-ascetic-b33b6922.jpg",
+            "apiUrl": "https://scryfall.com/card/znr/214/turntimber-ascetic?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "72405607-a60e-42af-b523-64008d3f89b9",
+            "name": "Minsc, Beloved Ranger",
+            "set": "AFR",
+            "setName": "Adventures in the Forgotten Realms",
+            "collectorNumber": "227",
+            "typeLine": "Legendary Creature — Human Ranger",
+            "rarity": "mythic",
+            "colors": ["W", "R", "G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/afr-227-minsc-beloved-ranger-72405607.jpg",
+            "apiUrl": "https://scryfall.com/card/afr/227/minsc-beloved-ranger?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "a18088e7-9bad-40d1-af40-d9a65847d1cd",
+            "name": "Pick-a-Beeble",
+            "set": "UNF",
+            "setName": "Unfinity",
+            "collectorNumber": "223f",
+            "typeLine": "Artifact — Attraction",
+            "rarity": "common",
+            "colors": [],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/unf-223f-pick-a-beeble-a18088e7.jpg",
+            "apiUrl": "https://scryfall.com/card/unf/223f/pick-a-beeble?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "7836bd5e-9df3-4f24-adce-ca7028fea78f",
+            "name": "Sinew Dancer",
+            "set": "ONE",
+            "setName": "Phyrexia: All Will Be One",
+            "collectorNumber": "286",
+            "typeLine": "Creature — Phyrexian Soldier",
+            "rarity": "common",
+            "colors": ["W"],
+            "layout": "normal",
+            "style": "showcase",
+            "referenceImage": "../../../test-images/regression/scryfall/one-286-sinew-dancer-7836bd5e.jpg",
+            "apiUrl": "https://scryfall.com/card/one/286/sinew-dancer?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "16e20076-5d24-4c59-b707-6d20e121032f",
+            "name": "Vengeant Earth",
+            "set": "MOM",
+            "setName": "March of the Machine",
+            "collectorNumber": "212",
+            "typeLine": "Instant",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/mom-212-vengeant-earth-16e20076.jpg",
+            "apiUrl": "https://scryfall.com/card/mom/212/vengeant-earth?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "70c75aa7-e2f9-4a69-8086-c982019ca714",
+            "name": "Sovereign Okinec Ahau",
+            "set": "LCI",
+            "setName": "The Lost Caverns of Ixalan",
+            "collectorNumber": "240",
+            "typeLine": "Legendary Creature — Cat Noble",
+            "rarity": "mythic",
+            "colors": ["W", "G"],
+            "layout": "normal",
+            "style": "normal",
+            "referenceImage": "../../../test-images/regression/scryfall/lci-240-sovereign-okinec-ahau-70c75aa7.jpg",
+            "apiUrl": "https://scryfall.com/card/lci/240/sovereign-okinec-ahau?utm_source=api"
         }
     ],
     "cases": [
@@ -7977,6 +8217,358 @@
                     "colors": [],
                     "layout": "normal",
                     "style": "showcase"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "2ed-127-scavenging-ghoul-12459e80-scryfall",
+            "image": "../../../test-images/regression/scryfall/2ed-127-scavenging-ghoul-12459e80.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Scavenging Ghoul",
+                "set": "2ED",
+                "collectorNumber": "127",
+                "metadata": {
+                    "typeLine": "Creature — Zombie",
+                    "rarity": "uncommon",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "leg-135-blood-lust-fbbf1a9c-scryfall",
+            "image": "../../../test-images/regression/scryfall/leg-135-blood-lust-fbbf1a9c.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Blood Lust",
+                "set": "LEG",
+                "collectorNumber": "135",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "uncommon",
+                    "colors": ["R"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "drk-119-sorrow-s-path-6f75946b-scryfall",
+            "image": "../../../test-images/regression/scryfall/drk-119-sorrow-s-path-6f75946b.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Sorrow's Path",
+                "set": "DRK",
+                "collectorNumber": "119",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "all-15b-royal-herbalist-6456ee12-scryfall",
+            "image": "../../../test-images/regression/scryfall/all-15b-royal-herbalist-6456ee12.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Royal Herbalist",
+                "set": "ALL",
+                "collectorNumber": "15b",
+                "metadata": {
+                    "typeLine": "Creature — Human Cleric",
+                    "rarity": "common",
+                    "colors": ["W"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "tsp-126-psychotic-episode-5e61fbcd-scryfall",
+            "image": "../../../test-images/regression/scryfall/tsp-126-psychotic-episode-5e61fbcd.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Psychotic Episode",
+                "set": "TSP",
+                "collectorNumber": "126",
+                "metadata": {
+                    "typeLine": "Sorcery",
+                    "rarity": "common",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "lrw-126-moonglove-winnower-effb7761-scryfall",
+            "image": "../../../test-images/regression/scryfall/lrw-126-moonglove-winnower-effb7761.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Moonglove Winnower",
+                "set": "LRW",
+                "collectorNumber": "126",
+                "metadata": {
+                    "typeLine": "Creature — Elf Rogue",
+                    "rarity": "common",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "nph-175-forest-4ebd9027-scryfall",
+            "image": "../../../test-images/regression/scryfall/nph-175-forest-4ebd9027.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Forest",
+                "set": "NPH",
+                "collectorNumber": "175",
+                "metadata": {
+                    "typeLine": "Basic Land — Forest",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "dka-158-vault-of-the-archangel-35a65437-scryfall",
+            "image": "../../../test-images/regression/scryfall/dka-158-vault-of-the-archangel-35a65437.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Vault of the Archangel",
+                "set": "DKA",
+                "collectorNumber": "158",
+                "metadata": {
+                    "typeLine": "Land",
+                    "rarity": "rare",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "eld-222-heraldic-banner-2e349af5-scryfall",
+            "image": "../../../test-images/regression/scryfall/eld-222-heraldic-banner-2e349af5.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Heraldic Banner",
+                "set": "ELD",
+                "collectorNumber": "222",
+                "metadata": {
+                    "typeLine": "Artifact",
+                    "rarity": "uncommon",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "iko-209-snapdax-apex-of-the-hunt-51fdeeb7-scryfall",
+            "image": "../../../test-images/regression/scryfall/iko-209-snapdax-apex-of-the-hunt-51fdeeb7.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Snapdax, Apex of the Hunt",
+                "set": "IKO",
+                "collectorNumber": "209",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Dinosaur Cat Nightmare",
+                    "rarity": "mythic",
+                    "colors": ["W", "B", "R"],
+                    "layout": "mutate",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "znr-214-turntimber-ascetic-b33b6922-scryfall",
+            "image": "../../../test-images/regression/scryfall/znr-214-turntimber-ascetic-b33b6922.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Turntimber Ascetic",
+                "set": "ZNR",
+                "collectorNumber": "214",
+                "metadata": {
+                    "typeLine": "Creature — Giant Cleric",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "afr-227-minsc-beloved-ranger-72405607-scryfall",
+            "image": "../../../test-images/regression/scryfall/afr-227-minsc-beloved-ranger-72405607.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Minsc, Beloved Ranger",
+                "set": "AFR",
+                "collectorNumber": "227",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Human Ranger",
+                    "rarity": "mythic",
+                    "colors": ["W", "R", "G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "unf-223f-pick-a-beeble-a18088e7-scryfall",
+            "image": "../../../test-images/regression/scryfall/unf-223f-pick-a-beeble-a18088e7.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Pick-a-Beeble",
+                "set": "UNF",
+                "collectorNumber": "223f",
+                "metadata": {
+                    "typeLine": "Artifact — Attraction",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "one-286-sinew-dancer-7836bd5e-scryfall",
+            "image": "../../../test-images/regression/scryfall/one-286-sinew-dancer-7836bd5e.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Sinew Dancer",
+                "set": "ONE",
+                "collectorNumber": "286",
+                "metadata": {
+                    "typeLine": "Creature — Phyrexian Soldier",
+                    "rarity": "common",
+                    "colors": ["W"],
+                    "layout": "normal",
+                    "style": "showcase"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "mom-212-vengeant-earth-16e20076-scryfall",
+            "image": "../../../test-images/regression/scryfall/mom-212-vengeant-earth-16e20076.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Vengeant Earth",
+                "set": "MOM",
+                "collectorNumber": "212",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "normal",
+                    "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 30000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "lci-240-sovereign-okinec-ahau-70c75aa7-scryfall",
+            "image": "../../../test-images/regression/scryfall/lci-240-sovereign-okinec-ahau-70c75aa7.jpg",
+            "quality": "clean-scan",
+            "notes": "Scryfall clean scan visually reviewed for missing-set coverage",
+            "expected": {
+                "name": "Sovereign Okinec Ahau",
+                "set": "LCI",
+                "collectorNumber": "240",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Cat Noble",
+                    "rarity": "mythic",
+                    "colors": ["W", "G"],
+                    "layout": "normal",
+                    "style": "normal"
                 },
                 "minNameScore": 0.7,
                 "maxPrintCandidates": 1,
