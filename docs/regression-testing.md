@@ -144,6 +144,18 @@ from every previously missing release year.
 See [the release-year expansion report](regression-fixture-era-expansion-2026-08.md) for the exact
 set cohorts, deterministic selection policy, and rejected candidates.
 
+### Missing-set frame expansion: 2026-08-14
+
+Sixteen reviewed Scryfall prints add blocking coverage for 16 previously unrepresented sets:
+`2ED`, `LEG`, `DRK`, `ALL`, `TSP`, `LRW`, `NPH`, `DKA`, `ELD`, `IKO`, `ZNR`, `AFR`, `UNF`, `ONE`,
+`MOM`, and `LCI`. All 16 passed the targeted cold-cache gate and verified their exact print. The
+enabled corpus now contains 174 cases from 106 sets.
+
+The cohort deliberately combines vintage title bars, a repeated-name basic land, mutate, an
+Unfinity Attraction, and a manga showcase treatment. See
+[the missing-set expansion report](regression-fixture-missing-set-expansion-2026-08.md) for the
+selection policy, exact cards, and edge-case observations.
+
 ### Pinned upstream bakeoff: 2026-08-08
 
 The first controlled bakeoff kept Tesseract.js at 3.0.3 and ran all 79 enabled fixtures sequentially
