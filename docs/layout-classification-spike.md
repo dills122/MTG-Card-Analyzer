@@ -62,21 +62,46 @@ Scryfall renders and is too small in the vintage and nonstandard cohorts to cali
 
 ### User crop-review evidence
 
-The user-generated export `crop-review-1c9edd67818b9575.json` was inspected read-only and was not
-copied, relabeled, or modified. It contains 70 crop decisions across 20 manually selected cards: 53
-approved, 16 needing attention, and 1 unreviewed. Directional findings are:
+The authoritative user-generated export for dataset `1c9edd67818b9575` was inspected read-only and
+was not copied, relabeled, or modified. It retains all 70 earlier crop decisions and all 10 non-empty
+notes without a status change. The earlier title findings therefore still stand:
 
 - `name:top-band` was rejected in all 4 reviewed examples;
 - `name:name-core` was approved in 9/10 and `name:name-wide` in 4/5; both failures were `vtg-1`;
 - `soft-name:name-wide-soft` was approved in 6/6;
-- set-symbol crops were approved in 13/20 and rejected in 7/20, spanning ordinary, unusual, and
-  vintage examples;
 - notes/tags cite blur, artifacting, excess height, cut-off text, incomplete symbols, and wrong
   regions.
 
-This supports profile-specific extraction and conservative fallback, but it does not estimate class
-accuracy: selection was manual, sparse, and made at the crop level rather than the card-profile level.
-In particular, set-symbol success or failure is not a reliable early class signal.
+The deep set-symbol pass reviewed 151/158 enabled fixtures: 105 approved (69.5%) and 46 needing
+attention (30.5%). The seven missing reviews are `pacifism-poor-lighting`, `pacifism-blur`,
+`pacifism-rotation`, `pacifism-cropping`, `pacifism-low-resolution`, `land-2-pending`, and
+`vtg-3-pending`. Among failures, `wrong-region` appears 25 times and `set-icon-incomplete` 22 times;
+the tags overlap on some cases. The Mending of Dominaria is the one untagged failure. Fifteen approved
+set crops still carry issue tags, mostly extra height/width or off-center, so approval and
+observations are orthogonal labels.
+
+Structural layout correlates much more strongly with failure than broad treatment style:
+
+| Cohort                     | Approved | Reviewed | Approval rate |
+| -------------------------- | -------: | -------: | ------------: |
+| `layout: normal`           |       83 |      111 |         74.8% |
+| `layout: split`            |        0 |        4 |          0.0% |
+| `layout: saga`             |        0 |        3 |          0.0% |
+| `layout: flip`             |        0 |        1 |          0.0% |
+| `layout: planar`           |        0 |        1 |          0.0% |
+| `layout: meld`             |        1 |        2 |         50.0% |
+| `style: normal`            |       67 |       98 |         68.4% |
+| `style: full-art`          |        8 |        9 |         88.9% |
+| `style: extended-art`      |        5 |        7 |         71.4% |
+| `style: showcase`          |        3 |        5 |         60.0% |
+| reviewed vintage set crops |        5 |        6 |         83.3% |
+
+The only reviewed vintage failure is `vtg-2` (`set-icon-incomplete`); `vtg-3` is unreviewed, and two
+approved vintage crops are tagged oversized. This evidence rejects broad “vintage” or
+“full-art/pop-culture” routing for set symbols. It supports detecting structural layout and explicit
+capabilities such as symbol presence, expected anchor, per-face orientation, and crop completeness.
+The review is still evaluation data rather than training truth, and the nonstandard-layout cohorts
+remain small.
 
 ### Cheap-signal exploratory benchmark
 
@@ -205,7 +230,8 @@ Each reviewed record should include:
         "capabilities": {
             "titleTop": "present",
             "collectorBlock": "absent",
-            "conventionalSetSymbol": "present"
+            "conventionalSetSymbol": "present",
+            "setSymbolAnchor": "type-line"
         }
     },
     "labelProvenance": {
@@ -231,6 +257,8 @@ Import review data additively and atomically:
   the original;
 - reject an import whose dataset ID or crop checksum does not match;
 - never reinterpret `approved` as a card-profile label;
+- preserve approval status and issue observations as separate fields, including observations on
+  approved crops;
 - write new records as disabled until a human reviews the visual profile and capabilities;
 - keep proxy labels explicitly marked `proxy` and exclude them from final calibration.
 
@@ -254,7 +282,10 @@ Create a layout benchmark beside, not inside, the existing OCR gate. It must run
 database, OCR cache, or mutable model downloads and produce Markdown plus JSON. Record confusion
 matrices both before and after abstention, per-profile precision/recall/coverage, unknown rate, false
 route rate, boundary failures, capability accuracy, score calibration, runtime, peak analysis pixels,
-and classifier/model hashes.
+and classifier/model hashes. For set-symbol routing, report acceptance and failure tags separately by
+structural layout, orientation, symbol-presence capability, treatment style, vintage visual profile,
+and input quality. Include the seven currently unreviewed crops as missing labels, not implicit passes
+or failures.
 
 Promotion gates:
 
@@ -266,7 +297,8 @@ Promotion gates:
 - **Regression safety:** all existing 151 blocking OCR fixtures remain passing; do not convert a
   failure to non-blocking or refresh an expectation.
 - **Crop evidence:** no newly routed crop regresses an existing approved crop for the same checksum;
-  existing needs-attention observations remain visible.
+  existing needs-attention observations and issue tags on approved crops remain visible. Report wrong
+  region, incomplete symbol, and geometry-quality failures independently.
 - **Determinism:** two runs over identical bytes produce byte-equivalent decisions and summaries
   after timestamps are excluded.
 - **Bounds:** analysis raster at most 256 by 352, at most two nonstandard hypotheses, no first-pass
@@ -327,7 +359,7 @@ Implement only the data and measurement contract:
 2. add a read-only importer for crop-review JSON that preserves status, notes, tags, timestamps, and
    dataset/checksum identity;
 3. extend the crop-review workbench to label visual profile, ambiguity, and capabilities separately
-   from crop quality;
+   from crop quality, including set-symbol presence/anchor and structural orientation;
 4. add an offline benchmark with a deliberately simple geometry baseline and `unknown` thresholds;
 5. report per-class precision/coverage and exact false routes; do not connect the result to
    `prepareOcrVariants` yet.
@@ -354,8 +386,8 @@ cases, source-grouped splits, and real captured photos.
 - `node scripts/benchmark-layout-signals.mjs`: passed offline over 129 unique images; temporary
   materialized transforms were removed. Two runs produced the same output SHA-256,
   `a888872744fc3d428f42d59b03dabf3ab117f8498d4049392ed5ede2bbaef609`.
-- The user crop-review export was only read. Its handoff SHA-256 was
-  `4f1ec3db89a431f16c706d56c6c8918b4df915f540879a87d3d49834b6e3dbf5`.
+- The authoritative user crop-review export was only read. Its handoff SHA-256 was
+  `1b38610aa8f0b58f475cb375254689a373a4ddfd5cc9c4e1b0444d155d10f96d`.
 - No production crop, OCR, matching, configuration, fixture selection, or regression expectation was
   changed by this spike. The OCR regression gate was not rerun because runtime behavior did not
   change.
