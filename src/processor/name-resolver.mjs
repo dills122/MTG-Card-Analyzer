@@ -1,4 +1,19 @@
+import { performance } from "node:perf_hooks";
 import { promisify } from "node:util";
+
+function elapsedSince(startedAt) {
+    return Math.round((performance.now() - startedAt) * 100) / 100;
+}
+
+function roundMs(value) {
+    return Math.round(value * 100) / 100;
+}
+
+async function measure(operation) {
+    const startedAt = performance.now();
+    const value = await operation();
+    return { value, elapsedMs: elapsedSince(startedAt) };
+}
 
 async function extractText({
     filePath,
@@ -40,46 +55,88 @@ async function matchName({
 }
 
 async function resolveCardName(options) {
-    const title = options.titleExtractionResults
-        ? {
-              results: options.titleExtractionResults,
-              imagePath: options.titleExtractionImagePath
-          }
-        : await extractText({ ...options, type: "name" });
+    const timings = {
+        titleOcrMs: 0,
+        initialMatchMs: 0,
+        fallbackTitleOcrMs: 0,
+        fallbackMatchMs: 0,
+        supplementalOcrMs: 0,
+        supplementalMatchMs: 0,
+        totalMatchMs: 0,
+        totalFallbackOcrMs: 0
+    };
+    let title;
+    if (options.titleExtractionResults) {
+        title = {
+            results: options.titleExtractionResults,
+            imagePath: options.titleExtractionImagePath
+        };
+    } else {
+        const measuredTitle = await measure(() => extractText({ ...options, type: "name" }));
+        title = measuredTitle.value;
+        timings.titleOcrMs = measuredTitle.elapsedMs;
+    }
     const titleStages = [title];
     let combinedTitleResults = combineExtractionResults(titleStages);
-    let resolution = await matchName({
-        extractionResults: combinedTitleResults,
-        MatchName: options.MatchName,
-        matchDependencies: options.matchDependencies,
-        logger: options.logger
-    });
+    const measuredInitialMatch = await measure(() =>
+        matchName({
+            extractionResults: combinedTitleResults,
+            MatchName: options.MatchName,
+            matchDependencies: options.matchDependencies,
+            logger: options.logger
+        })
+    );
+    let resolution = measuredInitialMatch.value;
+    timings.initialMatchMs = measuredInitialMatch.elapsedMs;
     let selectedTitle = title;
     let supplemental;
 
     for (const type of ["soft-name", "rotated-name"]) {
         if (resolution.matches.length > 0) break;
-        const fallback = await extractText({ ...options, type });
+        const measuredFallback = await measure(() => extractText({ ...options, type }));
+        const fallback = measuredFallback.value;
+        timings.fallbackTitleOcrMs = roundMs(
+            timings.fallbackTitleOcrMs + measuredFallback.elapsedMs
+        );
         titleStages.push(fallback);
         combinedTitleResults = combineExtractionResults(titleStages);
-        resolution = await matchName({
-            extractionResults: combinedTitleResults,
-            MatchName: options.MatchName,
-            matchDependencies: options.matchDependencies,
-            logger: options.logger
-        });
+        const measuredFallbackMatch = await measure(() =>
+            matchName({
+                extractionResults: combinedTitleResults,
+                MatchName: options.MatchName,
+                matchDependencies: options.matchDependencies,
+                logger: options.logger
+            })
+        );
+        resolution = measuredFallbackMatch.value;
+        timings.fallbackMatchMs = roundMs(
+            timings.fallbackMatchMs + measuredFallbackMatch.elapsedMs
+        );
     }
 
     if (resolution.matches.length === 0) {
-        supplemental = await extractText({ ...options, type: "rules-name" });
-        resolution = await matchName({
-            extractionResults: combinedTitleResults,
-            supplementalText: supplemental.results.dirtyText,
-            MatchName: options.MatchName,
-            matchDependencies: options.matchDependencies,
-            logger: options.logger
-        });
+        const measuredSupplemental = await measure(() =>
+            extractText({ ...options, type: "rules-name" })
+        );
+        supplemental = measuredSupplemental.value;
+        timings.supplementalOcrMs = measuredSupplemental.elapsedMs;
+        const measuredSupplementalMatch = await measure(() =>
+            matchName({
+                extractionResults: combinedTitleResults,
+                supplementalText: supplemental.results.dirtyText,
+                MatchName: options.MatchName,
+                matchDependencies: options.matchDependencies,
+                logger: options.logger
+            })
+        );
+        resolution = measuredSupplementalMatch.value;
+        timings.supplementalMatchMs = measuredSupplementalMatch.elapsedMs;
     }
+
+    timings.totalMatchMs = roundMs(
+        timings.initialMatchMs + timings.fallbackMatchMs + timings.supplementalMatchMs
+    );
+    timings.totalFallbackOcrMs = roundMs(timings.fallbackTitleOcrMs + timings.supplementalOcrMs);
 
     const promoted = promoteMatchedExtraction(titleStages, resolution.matchedText);
     if (promoted) {
@@ -90,7 +147,8 @@ async function resolveCardName(options) {
         extractionResults: selectedTitle.results,
         extractionImagePath: selectedTitle.imagePath,
         matches: resolution.matches,
-        supplementalExtractionResults: supplemental?.results
+        supplementalExtractionResults: supplemental?.results,
+        timings
     };
 }
 

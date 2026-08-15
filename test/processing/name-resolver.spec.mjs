@@ -28,6 +28,11 @@ describe("Name resolver::", () => {
         assert.equal(ImageProcessor.create.firstCall.args[0].type, "name");
         assert.equal(result.matches[0].name, "Pacifism");
         assert.isUndefined(result.supplementalExtractionResults);
+        assert.isAtLeast(result.timings.titleOcrMs, 0);
+        assert.isAtLeast(result.timings.initialMatchMs, 0);
+        assert.equal(result.timings.fallbackTitleOcrMs, 0);
+        assert.equal(result.timings.supplementalOcrMs, 0);
+        assert.equal(result.timings.totalFallbackOcrMs, 0);
     });
 
     it("uses rules-text evidence only after title matching fails", async () => {
@@ -85,6 +90,10 @@ describe("Name resolver::", () => {
         assert.equal(MatchName.create.getCall(3).args[0].supplementalText, rulesResults.dirtyText);
         assert.equal(result.matches[0].name, "Yuna, Hope of Spira");
         assert.equal(result.supplementalExtractionResults, rulesResults);
+        assert.isAtLeast(result.timings.fallbackTitleOcrMs, 0);
+        assert.isAtLeast(result.timings.supplementalOcrMs, 0);
+        assert.isAtLeast(result.timings.totalFallbackOcrMs, 0);
+        assert.isAtLeast(result.timings.totalMatchMs, 0);
     });
 
     it("matches an alternate OCR line and promotes its source region", async () => {

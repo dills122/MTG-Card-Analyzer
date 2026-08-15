@@ -167,8 +167,8 @@ pnpm test:regression
 ```
 
 The unit suite is deterministic, ignores machine-local configuration and credentials, and does not
-require live Scryfall or MySQL access. CI runs the fast/unit/coverage gate and the separate
-cold-cache OCR regression on Node 22. See
+require live Scryfall or MySQL access. CI runs the fast/unit/coverage gate, sharded cold-cache OCR
+correctness checks, and an isolated single-worker OCR performance smoke on Node 22. See
 [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## License
