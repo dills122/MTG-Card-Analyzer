@@ -6,10 +6,15 @@ import matchNameModule from "../../src/fuzzy-matching/match-name.mjs";
 import { QUALITY_LEVELS, loadManifest, validateManifest } from "../../src/regression/manifest.mjs";
 import { formatBenchmarkReport } from "../../src/regression/report.mjs";
 import {
+    evaluateRuntime,
     maximumCasesPerOcrSession,
     maximumOcrWorkers,
+    maximumRegressionShards,
+    resolveRegressionShard,
     resolveOcrWorkerCount,
+    resolveRuntimePolicy,
     runRegression,
+    selectRegressionShard,
     shardCases,
     summarize,
     summarizeGate
@@ -58,6 +63,30 @@ describe("Regression framework::", () => {
                 ]
             ]
         );
+    });
+
+    it("validates runtime policies and deterministic manifest shards", () => {
+        const fixtures = Array.from({ length: 7 }, (_, index) => ({ id: `case-${index}` }));
+
+        assert.equal(resolveRuntimePolicy(undefined), "strict");
+        assert.equal(resolveRuntimePolicy("report-only"), "report-only");
+        assert.throws(() => resolveRuntimePolicy("ignore"), "strict, report-only");
+        assert.deepEqual(resolveRegressionShard({ index: 2, count: 3 }), {
+            index: 2,
+            count: 3
+        });
+        assert.throws(() => resolveRegressionShard({ index: 0, count: 3 }), "1-based index");
+        assert.throws(
+            () => resolveRegressionShard({ index: 1, count: maximumRegressionShards + 1 }),
+            "1-based index"
+        );
+        assert.deepEqual(
+            selectRegressionShard(fixtures, { index: 2, count: 3 }).map(({ id }) => id),
+            ["case-1", "case-4"]
+        );
+        assert.deepEqual(evaluateRuntime({ expected: { maxRuntimeMs: 100 } }, { runtimeMs: 101 }), [
+            "runtime: expected at most 100ms, received 101ms"
+        ]);
     });
 
     it("loads labeled fixtures for every supported quality level", async () => {
@@ -157,6 +186,7 @@ describe("Regression framework::", () => {
                         scryfallId: "bbd-101",
                         minNameScore: 0.7,
                         maxPrintCandidates: 2,
+                        maxRuntimeMs: 0,
                         metadata: { typeLine: "Enchantment — Aura", colors: ["W"] }
                     }
                 },
@@ -195,13 +225,19 @@ describe("Regression framework::", () => {
             }
         };
 
+        const dependencies = {
+            ImageProcessor: fakeImageProcessor,
+            MatchName: matchNameModule,
+            Hash: fakeHash,
+            materializeFixture: async (fixture) => fixture.imagePath
+        };
         const report = await runRegression(manifest, {
-            dependencies: {
-                ImageProcessor: fakeImageProcessor,
-                MatchName: matchNameModule,
-                Hash: fakeHash,
-                materializeFixture: async (fixture) => fixture.imagePath
-            }
+            runtimePolicy: "report-only",
+            dependencies
+        });
+        const strictReport = await runRegression(manifest, {
+            runtimePolicy: "strict",
+            dependencies
         });
 
         assert.equal(report.summary.passed, 1);
@@ -233,6 +269,18 @@ describe("Regression framework::", () => {
         assert.isTrue(report.results[0].setVerified);
         assert.deepEqual(report.summary.exactPrints, { total: 1, verified: 1 });
         assert.deepEqual(report.results[0].failures, []);
+        assert.isTrue(report.results[0].correctnessPassed);
+        assert.isFalse(report.results[0].performancePassed);
+        assert.lengthOf(report.results[0].runtimeFailures, 1);
+        assert.equal(report.correctnessGate.failed, 0);
+        assert.equal(report.performanceGate.failed, 1);
+        assert.equal(report.summary.runtimeViolations, 1);
+        assert.equal(report.runtimePolicy, "report-only");
+        assert.equal(strictReport.gate.failed, 1);
+        assert.include(strictReport.results[0].failures[0], "runtime:");
+        assert.isAtLeast(report.results[0].timings.nameResolutionMs, 0);
+        assert.isAtLeast(report.results[0].timings.nameMatchMs, 0);
+        assert.isAtLeast(report.results[0].timings.fallbackOcrMs, 0);
     });
 
     it("recomputes every image hash for every case without caching", async () => {
@@ -650,8 +698,16 @@ describe("Regression framework::", () => {
                     score: 1
                 },
                 setVerified: true,
+                correctnessPassed: true,
+                performancePassed: true,
+                runtimeFailures: [],
                 failures: [],
-                timings: { ocrMs: 8 }
+                timings: {
+                    ocrMs: 8,
+                    fallbackOcrMs: 2,
+                    nameMatchMs: 1,
+                    nameResolutionMs: 3
+                }
             },
             {
                 id: "blur",
@@ -665,6 +721,9 @@ describe("Regression framework::", () => {
                 printCandidateCount: 0,
                 selectedPrint: null,
                 setVerified: false,
+                correctnessPassed: false,
+                performancePassed: true,
+                runtimeFailures: [],
                 failures: ["OCR returned no normalized text"],
                 timings: { ocrMs: 18 }
             }
@@ -679,6 +738,7 @@ describe("Regression framework::", () => {
                 sha256: "b".repeat(64),
                 sizeBytes: 4_113_088
             },
+            runtimePolicy: "report-only",
             isolation: {
                 applicationPersistence: "disabled",
                 imageHashCache: "disabled",
@@ -686,6 +746,8 @@ describe("Regression framework::", () => {
             },
             summary: summarize(results),
             gate: summarizeGate(results),
+            correctnessGate: summarizeGate(results, "correctnessPassed"),
+            performanceGate: summarizeGate(results, "performancePassed"),
             results
         };
         const markdown = formatBenchmarkReport(report);
@@ -699,6 +761,10 @@ describe("Regression framework::", () => {
         assert.include(markdown, "Exact print verified");
         assert.include(markdown, "OCR returned no normalized text");
         assert.include(markdown, "CI gate: PASS");
+        assert.include(markdown, "Runtime policy: report-only");
+        assert.include(markdown, "Correctness gate: PASS");
+        assert.include(markdown, "Performance gate: PASS");
+        assert.include(markdown, "fallback OCR 2 ms");
         assert.include(markdown, "NON-BLOCKING FAIL");
         assert.include(markdown, "image-hash cache disabled");
         assert.include(markdown, "official-eng-fast");

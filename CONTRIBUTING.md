@@ -57,12 +57,16 @@ pnpm coverage:check
 pnpm test:regression
 ```
 
-`coverage:check` runs the unit suite, so the three commands above are the complete CI-equivalent
-sequence. The OCR regression run is especially important for changes to image preprocessing,
-OCR, fuzzy matching, hashing, or print selection.
+`coverage:check` runs the unit suite. The full local OCR command is stricter
+than the parallel CI correctness shards because it also enforces runtime
+thresholds.
+CI separately enforces those thresholds on a representative single-worker
+performance smoke. The OCR regression run is especially important for changes
+to image preprocessing, OCR, fuzzy matching, hashing, or print selection.
 
-CI runs `check:fast`, the coverage-enforced unit suite, and the cold-cache OCR regression on
-Node 22.
+CI runs `check:fast`, the coverage-enforced unit suite, three cold-cache
+correctness shards, and an isolated OCR performance smoke on Node 22. See
+`docs/regression-testing.md` for the exact runtime policy and sharding behavior.
 
 Distribution changes must also inspect and execute the packed artifact:
 

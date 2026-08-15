@@ -39,7 +39,8 @@ both the fixture and every candidate reference image; the runner has no in-memor
 hash cache. Fixture names are injected before the fuzzy matcher can initialize NeDB. Tesseract
 runs with `cacheMethod: none` and reads the bundled `eng.traineddata`, so it neither reads nor writes
 an OCR cache. The selected cases are distributed deterministically across a bounded pool of one to
-three shards. Each shard owns an initialized Tesseract worker, processes its cases sequentially,
+three worker shards. Each worker shard owns an initialized Tesseract worker, processes its cases
+sequentially,
 and replaces its worker after at most 40 cases. This bounds each Tesseract 3 WASM heap during the
 expanded corpus without loading the OCR engine and language model for every crop. Each worker's
 adaptive recognition state is reset before every crop. OCR results remain independent of earlier
@@ -74,6 +75,12 @@ pnpm test:regression --quality clean-scan --quality low-resolution
 pnpm test:regression --workers 1
 pnpm test:regression --workers 3
 
+# Run one deterministic third of the filtered manifest
+pnpm test:regression --shard 2/3
+
+# Keep runtime threshold violations in the report without failing correctness
+pnpm test:regression --runtime-policy report-only
+
 # Use another manifest or output directory
 pnpm test:regression --manifest ./path/manifest.json --output ./path/reports
 
@@ -93,6 +100,16 @@ of per-case runtimes and elapsed wall runtime so speed comparisons can use the l
 Run multiple fixture IDs or quality groups in one command to reuse the worker pool. Each separate
 command starts a new pool. Use one worker when collecting controlled model-comparison timings; use
 the default bounded parallelism for the ordinary regression gate.
+
+The default `strict` runtime policy preserves the local all-in-one gate: correctness failures and
+per-fixture `maxRuntimeMs` violations both fail blocking fixtures. `--runtime-policy report-only`
+still records every runtime violation, but only correctness affects the command exit code. This is
+useful when several OCR workers share a CI host, where per-case wall time includes scheduler and CPU
+contention. It does not suppress OCR, name, print, metadata, or confidence failures.
+
+`--shard INDEX/COUNT` applies after case and quality filters and selects cases by stable manifest
+order. Shards can therefore run independently and their reports can be compared or combined without
+changing fixture ownership.
 
 The generated `artifacts/regression` directory is ignored by Git.
 
@@ -450,13 +467,24 @@ the regression suite repeatable and independent of API availability or Scryfall 
 Each case records the raw and normalized OCR text promoted from the title candidate that produced
 the selected name match, Tesseract confidence and region, fuzzy name matches, name-candidate count,
 print-candidate count, the selected print, its PDQ similarity, Hamming distance, bit length, and
-input quality, set/collector verification, failures, per-stage timing, and total runtime. The
-summary includes pass rate, the blocking CI-gate result, non-blocking failure counts,
-disabled and placeholder fixture counts, totals by quality, total/mean runtime, and p95 runtime.
+input quality, set/collector verification, separate correctness and runtime failures, per-stage
+timing, and total runtime. Name-matching time contains only matcher work; primary OCR, fallback OCR,
+total name resolution, and print matching are reported separately. The summary includes pass rate,
+the active gate, dedicated correctness and performance gate summaries, runtime violation count,
+non-blocking failure counts, disabled and placeholder fixture counts, totals by quality,
+total/mean runtime, and p95 runtime.
 
 ## Pull request gate
 
-The `regression_job` in `.github/workflows/ci.action.yml` runs the full cold-cache suite for every
-pull request targeting `master` or `main`. It uploads `benchmark.md` and `benchmark.json` as a
-GitHub Actions artifact even when the gate fails. Application persistence, image-hash caching,
-and OCR caching remain disabled in CI exactly as they are locally.
+The CI workflow runs the full cold-cache correctness corpus as three independent manifest shards
+for every pull request targeting `master` or `main`. Each shard uses two OCR workers and the
+`report-only` runtime policy, so all correctness expectations remain blocking without treating
+shared-runner CPU contention as a performance regression. A separate single-worker performance
+smoke runs representative standard, full-art, and rotated/fallback-heavy fixtures with the strict
+runtime policy. This makes threshold failures comparable between runs while keeping a bounded
+slowdown signal.
+
+Every correctness shard and the performance smoke upload their own `benchmark.md` and
+`benchmark.json` artifacts even when a gate fails. Application persistence, image-hash caching,
+and OCR caching remain disabled in CI exactly as they are locally. The aggregate
+`Cold-cache OCR regression` job retains the existing stable required-check name.

@@ -1,8 +1,11 @@
 import { assert } from "chai";
 import {
     buildProgram,
+    defaultRuntimePolicy,
     defaultWorkers,
     main,
+    parseRuntimePolicy,
+    parseShard,
     parseWorkerCount
 } from "../../scripts/run-regression.mjs";
 
@@ -18,6 +21,28 @@ describe("run-regression CLI::", () => {
         assert.throws(() => parseWorkerCount("0"), "must be an integer from 1 to 3");
         assert.throws(() => parseWorkerCount("4"), "must be an integer from 1 to 3");
         assert.throws(() => parseWorkerCount("2.5"), "must be an integer from 1 to 3");
+    });
+
+    it("parses runtime policy and deterministic manifest shards", () => {
+        const defaults = buildProgram().parse(["node", "run-regression.mjs"]).opts();
+        const explicit = buildProgram()
+            .parse([
+                "node",
+                "run-regression.mjs",
+                "--runtime-policy",
+                "report-only",
+                "--shard",
+                "2/3"
+            ])
+            .opts();
+
+        assert.equal(defaults.runtimePolicy, defaultRuntimePolicy);
+        assert.equal(explicit.runtimePolicy, "report-only");
+        assert.deepEqual(explicit.shard, { index: 2, count: 3 });
+        assert.throws(() => parseRuntimePolicy("ignore"), "strict");
+        assert.throws(() => parseShard("0/3"), "1-based index");
+        assert.throws(() => parseShard("4/3"), "1-based index");
+        assert.throws(() => parseShard("2-of-3"), "INDEX/COUNT");
     });
 
     it("parses an explicit OCR candidate manifest and candidate ID", () => {
@@ -47,6 +72,9 @@ describe("run-regression CLI::", () => {
         const report = {
             summary: { passed: 1, total: 1, passRate: 100 },
             gate: { passed: 1, total: 1, failed: 0, nonBlocking: 0, nonBlockingFailed: 0 },
+            performanceGate: { passed: 1, total: 1, failed: 0 },
+            runtimePolicy: "strict",
+            selection: { matchedCases: 1, selectedCases: 1, shard: null },
             isolation: {
                 ocrWorkerLifecycle:
                     "shared sequentially for at most 40 cases; adaptive state reset per crop"
@@ -81,6 +109,7 @@ describe("run-regression CLI::", () => {
         assert.strictEqual(result, report);
         assert.strictEqual(receivedOptions.ocrModel, selectedCandidate);
         assert.equal(receivedOptions.workers, defaultWorkers);
+        assert.equal(receivedOptions.runtimePolicy, defaultRuntimePolicy);
         assert.include(lines, "OCR model: official-eng-fast");
         assert.include(
             lines,

@@ -28,11 +28,21 @@ function formatBenchmarkReport(report) {
         "",
         `Isolation: application persistence ${report.isolation?.applicationPersistence || "unknown"}; image-hash cache ${report.isolation?.imageHashCache || "unknown"}; OCR cache ${report.isolation?.ocrCache || "unknown"}`,
         "",
+        `Runtime policy: ${report.runtimePolicy || "strict"}`,
+        ...(report.selection?.shard
+            ? [
+                  "",
+                  `Manifest shard: ${report.selection.shard.index}/${report.selection.shard.count} (${report.selection.selectedCases}/${report.selection.matchedCases} matching fixtures)`
+              ]
+            : []),
+        "",
         "## Summary",
         "",
         `- Passed: ${report.summary.passed}/${report.summary.total} (${report.summary.passRate}%)`,
         `- Failed: ${report.summary.failed}`,
         `- CI gate: ${report.gate?.failed === 0 ? "PASS" : "FAIL"} (${report.gate?.passed || 0}/${report.gate?.total || 0} blocking fixtures passed)`,
+        `- Correctness gate: ${(report.correctnessGate || report.gate)?.failed === 0 ? "PASS" : "FAIL"} (${(report.correctnessGate || report.gate)?.passed || 0}/${(report.correctnessGate || report.gate)?.total || 0} blocking fixtures passed)`,
+        `- Performance gate: ${report.performanceGate?.failed === 0 ? "PASS" : "FAIL"} (${report.summary.runtimeViolations || 0} total threshold violations)`,
         `- Non-blocking fixtures: ${report.gate?.nonBlocking || 0} (${report.gate?.nonBlockingFailed || 0} failed)`,
         `- Disabled fixtures: ${report.pending?.cases || 0}`,
         `- Undersized-input fixtures: ${report.summary.undersizedInputs || 0}`,
@@ -65,7 +75,9 @@ function formatBenchmarkReport(report) {
         const nameMatch = result.nameMatches[0];
         const selectedCard = result.selectedPrint?.card;
         const resultLabel = result.passed
-            ? "PASS"
+            ? result.runtimeFailures?.length
+                ? `PASS WITH RUNTIME WARNING: ${result.runtimeFailures.map(markdownCell).join("; ")}`
+                : "PASS"
             : `${result.blocking === false ? "NON-BLOCKING FAIL" : "FAIL"}: ${result.failures
                   .map(markdownCell)
                   .join("; ")}`;
@@ -86,11 +98,11 @@ function formatBenchmarkReport(report) {
     lines.push("", "## Stage timings", "");
     report.results.forEach((result) => {
         lines.push(
-            `- ${markdownCell(result.id)}: fixture ${result.timings.fixtureMs || 0} ms; OCR ${
+            `- ${markdownCell(result.id)}: fixture ${result.timings.fixtureMs || 0} ms; primary OCR ${
                 result.timings.ocrMs || 0
-            } ms; name matching ${result.timings.nameMatchMs || 0} ms; print matching ${
-                result.timings.printMatchMs || 0
-            } ms.`
+            } ms; fallback OCR ${result.timings.fallbackOcrMs || 0} ms; name matching ${
+                result.timings.nameMatchMs || 0
+            } ms; total name resolution ${result.timings.nameResolutionMs || result.timings.nameMatchMs || 0} ms; print matching ${result.timings.printMatchMs || 0} ms.`
         );
     });
 

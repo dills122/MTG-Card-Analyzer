@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Command, InvalidArgumentError } from "commander";
 import { loadOcrModelManifest } from "../src/regression/ocr-model-candidate.mjs";
 import { QUALITY_LEVELS, loadManifest } from "../src/regression/manifest.mjs";
-import { runRegression } from "../src/regression/regression-runner.mjs";
+import { maximumRegressionShards, runRegression } from "../src/regression/regression-runner.mjs";
 import { writeBenchmarkReport } from "../src/regression/report.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -18,6 +18,7 @@ const defaultOcrModelManifest = path.join(
 );
 const defaultOcrModel = "bundled-eng-control";
 const defaultWorkers = 3;
+const defaultRuntimePolicy = "strict";
 
 function collect(value, previous) {
     return previous.concat(value);
@@ -28,6 +29,25 @@ function parseWorkerCount(value) {
         throw new InvalidArgumentError("must be an integer from 1 to 3");
     }
     return Number(value);
+}
+
+function parseRuntimePolicy(value) {
+    if (!["strict", "report-only"].includes(value)) {
+        throw new InvalidArgumentError('must be either "strict" or "report-only"');
+    }
+    return value;
+}
+
+function parseShard(value) {
+    const match = /^(\d+)\/(\d+)$/.exec(value);
+    const index = Number(match?.[1]);
+    const count = Number(match?.[2]);
+    if (!match || count < 1 || count > maximumRegressionShards || index < 1 || index > count) {
+        throw new InvalidArgumentError(
+            `must use INDEX/COUNT with a 1-based index and count 1-${maximumRegressionShards}`
+        );
+    }
+    return { index, count };
 }
 
 function buildProgram() {
@@ -48,6 +68,13 @@ function buildProgram() {
             parseWorkerCount,
             defaultWorkers
         )
+        .option(
+            "--runtime-policy <policy>",
+            "runtime threshold handling: strict or report-only",
+            parseRuntimePolicy,
+            defaultRuntimePolicy
+        )
+        .option("--shard <index/count>", "run one deterministic manifest shard", parseShard)
         .option("-c, --case <id>", "run a fixture id (repeatable)", collect, [])
         .option(
             "-q, --quality <level>",
@@ -84,7 +111,9 @@ async function main(argv = process.argv, overrides = {}) {
         caseIds: options.case,
         qualities: options.quality,
         ocrModel,
-        workers: options.workers
+        workers: options.workers,
+        runtimePolicy: options.runtimePolicy,
+        shard: options.shard
     });
     const paths = await writeBenchmarkReportFn(report, options.output);
     writeLine(`OCR model: ${ocrModel.id}`);
@@ -94,6 +123,14 @@ async function main(argv = process.argv, overrides = {}) {
     writeLine(
         `CI gate: ${report.gate.passed}/${report.gate.total} blocking fixtures passed; ${report.gate.nonBlockingFailed}/${report.gate.nonBlocking} non-blocking fixtures failed`
     );
+    writeLine(
+        `Runtime policy: ${report.runtimePolicy}; ${report.performanceGate.failed} blocking runtime violation(s)`
+    );
+    if (report.selection.shard) {
+        writeLine(
+            `Manifest shard: ${report.selection.shard.index}/${report.selection.shard.count} (${report.selection.selectedCases}/${report.selection.matchedCases} matching fixtures)`
+        );
+    }
     writeLine("Application persistence, image-hash cache, and OCR cache: disabled");
     writeLine(`Tesseract worker: ${report.isolation.ocrWorkerLifecycle}`);
     writeLine(`Wall runtime: ${report.summary.wallRuntimeMs} ms`);
@@ -122,4 +159,12 @@ if (isDirectRun) {
     });
 }
 
-export { buildProgram, defaultWorkers, main, parseWorkerCount };
+export {
+    buildProgram,
+    defaultRuntimePolicy,
+    defaultWorkers,
+    main,
+    parseRuntimePolicy,
+    parseShard,
+    parseWorkerCount
+};
