@@ -8,6 +8,7 @@ import {
     regions,
     getRegionTemplates,
     cropRegion,
+    cropTextRegion,
     computeGreyscaleStdDev,
     assessConfidence,
     assertOcrSourceSizeOk,
@@ -41,6 +42,14 @@ async function checkerboardImage(width, height) {
         }
     }
     return img;
+}
+
+function fillRectangle(img, left, top, width, height, color) {
+    for (let y = top; y < top + height; y++) {
+        for (let x = left; x < left + width; x++) {
+            img.setPixelColor(color, x, y);
+        }
+    }
 }
 
 describe("Smart crop::", () => {
@@ -103,16 +112,71 @@ describe("Smart crop::", () => {
             assert.property(result, "lowConfidence");
         });
 
-        it("crops a real card fixture to the expected proportions", async () => {
+        it("centers a real set icon in a bounded square crop with padding", async () => {
             const baseImage = await Jimp.read(FIXTURE_PATH);
-            const { width, height } = baseImage.bitmap;
+            const { image, region, searchRegion, contentDetected, lowConfidence } =
+                cropSetSymbolFromImage(baseImage);
 
-            const { image, region } = cropSetSymbolFromImage(baseImage);
-
-            assert.approximately(region.width / width, regions.setSymbol.widthPercent, 0.01);
-            assert.approximately(region.height / height, regions.setSymbol.heightPercent, 0.01);
+            assert.isTrue(contentDetected);
+            assert.isFalse(lowConfidence);
+            assert.equal(region.width, region.height);
+            assert.isBelow(region.width * region.height, searchRegion.width * searchRegion.height);
+            assert.isAtLeast(region.left, 0);
+            assert.isAtMost(region.left + region.width, baseImage.bitmap.width);
+            assert.isAtLeast(region.top, 0);
+            assert.isAtMost(region.top + region.height, baseImage.bitmap.height);
             assert.equal(image.bitmap.width, region.width);
             assert.equal(image.bitmap.height, region.height);
+        });
+
+        it("keeps an off-center symbol whole with buffer on every side", () => {
+            const img = new Jimp({ width: 600, height: 800, color: 0xb8b8b8ff });
+            const search = cropRegion(img, regions.setSymbolSearch).region;
+            fillRectangle(img, search.left, search.top + 15, search.width, 2, 0x202020ff);
+            fillRectangle(
+                img,
+                search.left,
+                search.top + search.height - 16,
+                search.width,
+                2,
+                0x202020ff
+            );
+            const icon = {
+                left: search.left + 80,
+                top: search.top + 38,
+                width: 30,
+                height: 34
+            };
+            fillRectangle(img, icon.left, icon.top, icon.width, icon.height, 0x151515ff);
+            fillRectangle(
+                img,
+                icon.left + 5,
+                icon.top + 5,
+                icon.width - 10,
+                icon.height - 10,
+                0xe07020ff
+            );
+
+            const result = cropSetSymbolFromImage(img);
+
+            assert.isTrue(result.contentDetected);
+            assert.isFalse(result.lowConfidence);
+            assert.isBelow(result.region.left, icon.left);
+            assert.isBelow(result.region.top, icon.top);
+            assert.isAbove(result.region.left + result.region.width, icon.left + icon.width);
+            assert.isAbove(result.region.top + result.region.height, icon.top + icon.height);
+            assert.equal(result.region.width, result.region.height);
+            assert.isBelow(result.region.width, search.width / 2);
+        });
+
+        it("marks an ambiguous symbol search as low confidence", () => {
+            const img = new Jimp({ width: 600, height: 800, color: 0x808080ff });
+
+            const result = cropSetSymbolFromImage(img);
+
+            assert.isFalse(result.contentDetected);
+            assert.isTrue(result.lowConfidence);
+            assert.match(result.reason, /edges were not detected/);
         });
     });
 
@@ -147,6 +211,91 @@ describe("Smart crop::", () => {
             );
             assert.equal(image.bitmap.width, region.width);
             assert.equal(image.bitmap.height, region.height);
+        });
+
+        it("trims an oversized text window while preserving every glyph and padding", () => {
+            const img = new Jimp({ width: 400, height: 120, color: 0xd8d8d8ff });
+            const glyphs = [90, 112, 138, 165, 205, 230].map((left) => ({
+                left,
+                top: 42,
+                width: 12,
+                height: 30
+            }));
+            glyphs.forEach((glyph) =>
+                fillRectangle(img, glyph.left, glyph.top, glyph.width, glyph.height, 0x101010ff)
+            );
+
+            const result = cropTextRegion(img, {
+                leftPercent: 0,
+                topPercent: 0,
+                widthPercent: 1,
+                heightPercent: 1
+            });
+            const lastGlyph = glyphs[glyphs.length - 1];
+
+            assert.isTrue(result.contentDetected);
+            assert.isBelow(result.region.width, img.bitmap.width / 2);
+            assert.isBelow(result.region.height, img.bitmap.height / 2);
+            assert.isBelow(result.region.left, glyphs[0].left);
+            assert.isBelow(result.region.top, glyphs[0].top);
+            assert.isAbove(
+                result.region.left + result.region.width,
+                lastGlyph.left + lastGlyph.width
+            );
+            assert.isAbove(
+                result.region.top + result.region.height,
+                lastGlyph.top + lastGlyph.height
+            );
+        });
+
+        it("falls back to the template when no text edges are detectable", () => {
+            const img = new Jimp({ width: 400, height: 120, color: 0xd8d8d8ff });
+            const template = {
+                leftPercent: 0.1,
+                topPercent: 0.2,
+                widthPercent: 0.8,
+                heightPercent: 0.5
+            };
+
+            const result = cropTextRegion(img, template);
+            const expected = cropRegion(img, template);
+
+            assert.isFalse(result.contentDetected);
+            assert.deepEqual(result.region, expected.region);
+        });
+
+        it("preserves the full template for multi-line OCR blocks", () => {
+            const img = new Jimp({ width: 400, height: 120, color: 0xd8d8d8ff });
+            fillRectangle(img, 90, 20, 120, 20, 0x101010ff);
+            fillRectangle(img, 150, 75, 140, 20, 0x101010ff);
+            const template = {
+                leftPercent: 0,
+                topPercent: 0,
+                widthPercent: 1,
+                heightPercent: 1,
+                psm: "block"
+            };
+
+            const result = cropTextRegion(img, template);
+
+            assert.isFalse(result.contentDetected);
+            assert.deepEqual(result.region, { left: 0, top: 0, width: 400, height: 120 });
+        });
+
+        it("preserves the template when detected text touches its search boundary", () => {
+            const img = new Jimp({ width: 400, height: 120, color: 0xd8d8d8ff });
+            fillRectangle(img, 0, 0, 180, 30, 0x101010ff);
+
+            const result = cropTextRegion(img, {
+                leftPercent: 0,
+                topPercent: 0,
+                widthPercent: 1,
+                heightPercent: 1,
+                psm: "line"
+            });
+
+            assert.isFalse(result.contentDetected);
+            assert.deepEqual(result.region, { left: 0, top: 0, width: 400, height: 120 });
         });
     });
 

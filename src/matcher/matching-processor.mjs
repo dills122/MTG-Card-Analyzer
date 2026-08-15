@@ -110,7 +110,7 @@ class MatcherProcessor {
             );
             this.setSymbolImagePath = setSymbolPath;
             const hash = await this.dependencies.hashImage(setSymbolPath);
-            this.hashMode = "set-symbol";
+            this.hashMode = imageProcessing.smartCrop.setSymbolHashMode;
             this.localHash = hash;
         } finally {
             await this._cleanupSetSymbolDirectoryAsync();
@@ -142,14 +142,17 @@ class MatcherProcessor {
         const initialHashMode = this.hashMode || "full-card";
         try {
             const initialMatches = await this._compareCurrentHashesAsync();
-            if (initialMatches.length > 0 || initialHashMode !== "set-symbol") {
+            if (
+                initialMatches.length > 0 ||
+                initialHashMode !== imageProcessing.smartCrop.setSymbolHashMode
+            ) {
                 return initialMatches;
             }
             this.logger.info(
                 `Set-symbol comparison was inconclusive for "${this.name}"; retrying full card`
             );
         } catch (error) {
-            if (initialHashMode !== "set-symbol") {
+            if (initialHashMode !== imageProcessing.smartCrop.setSymbolHashMode) {
                 throw error;
             }
             this.logger.error(

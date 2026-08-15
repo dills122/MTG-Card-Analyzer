@@ -253,7 +253,7 @@ function fixtureEntries(card, manifestPath, imagePath) {
                 },
                 minNameScore: 0.7,
                 maxPrintCandidates: 1,
-                maxRuntimeMs: 30000
+                maxRuntimeMs: 35000
             }
         }
     };

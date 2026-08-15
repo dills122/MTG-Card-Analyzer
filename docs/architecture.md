@@ -9,7 +9,8 @@ matching and an optional legacy MySQL backend.
 1. `index.mjs` parses the command and resolves configuration.
 2. `src/image-processing/` reads the local file once into a capped buffer, allowlists its magic
    signature, validates dimensions and decoded pixels, and only then passes those same bytes to
-   Jimp to produce bounded hard title crops.
+   Jimp. A bounded edge-analysis image refines expected title windows around detected text while
+   preserving padding; ambiguous analysis falls back to the original percentage window.
 3. `src/image-analysis/` runs Tesseract with each crop's declared segmentation mode and preserves
    plausible region and line candidates.
 4. `src/fuzzy-matching/` ranks all title candidates from the local card-name index and maps
@@ -23,6 +24,11 @@ matching and an optional legacy MySQL backend.
 
 The image, network, filesystem, and database boundaries remain outside the pure name-normalization
 and matching decisions so those decisions can be tested deterministically.
+
+Set-symbol extraction searches a bounded area around the expected type-line position. Local color
+contrast finds compact symbol-like components, long frame rules are suppressed, and the selected
+icon is centered in a square crop with padding. If no credible component is found, set-symbol
+hashing is marked low-confidence so matching can use the existing full-card fallback.
 
 Local image input is capped at 32 MiB, 12,000 pixels per axis, and 40 megapixels. JPEG decoding also
 uses a 256 MiB decoder allocation ceiling. Remote set-symbol images are limited to the approved
@@ -71,7 +77,8 @@ rather than confirmed.
 
 The hash cache keys refreshed rows by Scryfall print ID (falling back to set code, collector number,
 and language) plus hash mode and hash. Legacy set-only rows remain usable as unverified hints; they
-cannot confirm an exact printing.
+cannot confirm an exact printing. Set-symbol hash modes include a crop-algorithm version, so a crop
+geometry change skips incompatible cached fingerprints and refreshes them through the remote path.
 
 The processor owns one bounded OCR work directory per scan and removes it in a `finally` path on
 success and failure. Set-symbol hashing follows the same ownership rule for its local and remote

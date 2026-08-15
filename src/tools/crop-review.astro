@@ -1,0 +1,626 @@
+---
+// This page is registered only by the local development integration in astro.config.mjs.
+import "../styles/crop-review.css";
+
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
+        <title>Crop review · MTG Card Analyzer</title>
+    </head>
+    <body>
+        <header class="review-header">
+            <div>
+                <p class="eyebrow">LOCAL TEST TOOL</p>
+                <h1>Crop review</h1>
+            </div>
+            <div class="header-actions">
+                <button id="import-button" type="button">Import review</button>
+                <input id="import-file" type="file" accept="application/json" hidden />
+                <button id="export-button" class="primary" type="button">Export review JSON</button>
+            </div>
+        </header>
+
+        <main class="review-shell" id="review-app" aria-live="polite">
+            <section class="loading-state" id="loading-state">
+                <h2>Loading generated crops…</h2>
+                <p>If generation has not run yet, use <code>pnpm crop-review:generate</code>.</p>
+            </section>
+
+            <aside class="fixture-sidebar" id="fixture-sidebar" hidden>
+                <div class="summary-grid" id="summary-grid"></div>
+                <label class="field-label" for="fixture-search">Find fixture</label>
+                <input id="fixture-search" type="search" placeholder="Card, ID, set…" />
+                <div class="filter-row">
+                    <label>
+                        <span>Status</span>
+                        <select id="status-filter">
+                            <option value="all">All</option>
+                            <option value="needs-attention">Needs attention</option>
+                            <option value="partial">In progress</option>
+                            <option value="approved">Approved</option>
+                            <option value="unreviewed">Unreviewed</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Quality</span>
+                        <select id="quality-filter"><option value="all">All</option></select>
+                    </label>
+                </div>
+                <p class="fixture-count" id="fixture-count"></p>
+                <ol class="fixture-list" id="fixture-list"></ol>
+            </aside>
+
+            <section class="fixture-workspace" id="fixture-workspace" hidden>
+                <nav class="fixture-nav" aria-label="Fixture navigation">
+                    <button id="previous-fixture" type="button" aria-label="Previous fixture">←</button>
+                    <div>
+                        <p id="fixture-position"></p>
+                        <h2 id="fixture-title"></h2>
+                        <p id="fixture-meta"></p>
+                    </div>
+                    <button id="next-fixture" type="button" aria-label="Next fixture">→</button>
+                </nav>
+
+                <div class="workspace-grid">
+                    <section class="source-panel" aria-labelledby="source-heading">
+                        <div class="panel-heading">
+                            <h3 id="source-heading">Fixture source</h3>
+                            <span id="source-size"></span>
+                        </div>
+                        <div class="source-stage" id="source-stage">
+                            <img id="source-image" alt="" />
+                            <div class="crop-overlay" id="crop-overlay" hidden></div>
+                        </div>
+                        <dl class="source-details" id="source-details"></dl>
+                        <div class="fixture-errors" id="fixture-errors" hidden></div>
+                    </section>
+
+                    <section class="crops-panel" aria-labelledby="crops-heading">
+                        <div class="panel-heading crop-toolbar">
+                            <div>
+                                <h3 id="crops-heading">Production crops</h3>
+                                <p id="crop-progress"></p>
+                            </div>
+                            <div class="crop-actions">
+                                <label>
+                                    <span class="visually-hidden">Crop type</span>
+                                    <select id="region-filter"><option value="all">All crop types</option></select>
+                                </label>
+                                <button id="approve-visible" type="button">Approve visible</button>
+                            </div>
+                        </div>
+                        <div class="crop-grid" id="crop-grid"></div>
+                    </section>
+                </div>
+            </section>
+        </main>
+
+        <template id="crop-template">
+            <article class="crop-card">
+                <button class="crop-image-button" type="button">
+                    <img alt="" loading="lazy" />
+                </button>
+                <div class="crop-card-body">
+                    <div class="crop-labels">
+                        <strong></strong>
+                        <span></span>
+                    </div>
+                    <div class="decision-buttons" role="group" aria-label="Crop decision">
+                        <button class="mark-good" type="button">Good</button>
+                        <button class="mark-attention" type="button">Needs attention</button>
+                    </div>
+                    <fieldset class="observation-field">
+                        <legend>Observations</legend>
+                        <div class="observation-chips"></div>
+                    </fieldset>
+                    <p class="legacy-note" hidden>
+                        <strong>Previous note</strong>
+                        <span></span>
+                    </p>
+                    <p class="crop-diagnostic"></p>
+                </div>
+            </article>
+        </template>
+
+        <script define:vars={{ baseUrl }}>
+            const dataUrl = `${baseUrl}crop-review/generated/review-data.json`;
+            const observationOptions = Object.freeze([
+                { id: "clear-text", label: "Clear text", tone: "positive" },
+                { id: "has-artifacting", label: "Has artifacting", tone: "issue" },
+                { id: "text-blurry", label: "Text blurry", tone: "issue" },
+                {
+                    id: "too-much-height",
+                    label: "Too much height (extra space)",
+                    tone: "issue"
+                },
+                {
+                    id: "too-much-width",
+                    label: "Too much width (extra space)",
+                    tone: "issue"
+                },
+                { id: "cutting-text-off", label: "Cutting text off", tone: "issue" },
+                { id: "off-center", label: "Off-center", tone: "issue" },
+                { id: "low-contrast", label: "Low contrast", tone: "issue" },
+                { id: "frame-included", label: "Background/frame included", tone: "issue" },
+                { id: "buffer-too-tight", label: "Buffer too tight", tone: "issue" },
+                { id: "wrong-region", label: "Wrong region", tone: "issue" },
+                { id: "set-icon-incomplete", label: "Set icon incomplete", tone: "issue" }
+            ]);
+            const elements = Object.fromEntries(
+                [
+                    "loading-state",
+                    "fixture-sidebar",
+                    "fixture-workspace",
+                    "summary-grid",
+                    "fixture-search",
+                    "status-filter",
+                    "quality-filter",
+                    "fixture-count",
+                    "fixture-list",
+                    "previous-fixture",
+                    "next-fixture",
+                    "fixture-position",
+                    "fixture-title",
+                    "fixture-meta",
+                    "source-size",
+                    "source-stage",
+                    "source-image",
+                    "source-details",
+                    "crop-overlay",
+                    "fixture-errors",
+                    "crop-progress",
+                    "region-filter",
+                    "approve-visible",
+                    "crop-grid",
+                    "crop-template",
+                    "import-button",
+                    "import-file",
+                    "export-button"
+                ].map((id) => [id, document.getElementById(id)])
+            );
+
+            let dataset;
+            let reviews = { version: 1, entries: {} };
+            let activeCaseId;
+            let activeCropId;
+
+            function assetUrl(src) {
+                return `${baseUrl}${src}`;
+            }
+
+            function storageKey() {
+                return `mtg-crop-review:v1:${dataset.datasetId}`;
+            }
+
+            function loadReviews() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(storageKey()));
+                    if (saved?.version === 1 && saved.entries) reviews = saved;
+                } catch {
+                    reviews = { version: 1, entries: {} };
+                }
+            }
+
+            function saveReviews() {
+                localStorage.setItem(storageKey(), JSON.stringify(reviews));
+            }
+
+            function cropReview(caseId, cropId) {
+                return (
+                    reviews.entries[caseId]?.crops?.[cropId] || {
+                        status: "unreviewed",
+                        note: "",
+                        tags: []
+                    }
+                );
+            }
+
+            function observationTags(review) {
+                return Array.isArray(review.tags)
+                    ? review.tags.filter((tag) => typeof tag === "string")
+                    : [];
+            }
+
+            function updateObservationTag(caseId, cropId, tag, selected) {
+                const current = cropReview(caseId, cropId);
+                const tags = new Set(observationTags(current));
+                if (selected) tags.add(tag);
+                else tags.delete(tag);
+                reviews.entries[caseId] ||= { crops: {} };
+                reviews.entries[caseId].crops[cropId] = {
+                    ...current,
+                    tags: [...tags],
+                    updatedAt: new Date().toISOString()
+                };
+                saveReviews();
+            }
+
+            function updateCropReview(caseId, cropId, patch) {
+                reviews.entries[caseId] ||= { crops: {} };
+                reviews.entries[caseId].crops[cropId] = {
+                    ...cropReview(caseId, cropId),
+                    ...patch,
+                    updatedAt: new Date().toISOString()
+                };
+                saveReviews();
+                renderAll();
+            }
+
+            function caseStatus(fixture) {
+                const statuses = fixture.crops.map((crop) => cropReview(fixture.id, crop.id).status);
+                if (statuses.includes("needs-attention")) return "needs-attention";
+                if (statuses.length > 0 && statuses.every((status) => status === "approved")) {
+                    return "approved";
+                }
+                if (statuses.some((status) => status === "approved")) return "partial";
+                return "unreviewed";
+            }
+
+            function filteredCases() {
+                const query = elements["fixture-search"].value.trim().toLowerCase();
+                const status = elements["status-filter"].value;
+                const quality = elements["quality-filter"].value;
+                return dataset.cases.filter((fixture) => {
+                    const haystack = [
+                        fixture.id,
+                        fixture.expected.name,
+                        fixture.expected.set,
+                        fixture.expected.collectorNumber
+                    ]
+                        .join(" ")
+                        .toLowerCase();
+                    return (
+                        (!query || haystack.includes(query)) &&
+                        (status === "all" || caseStatus(fixture) === status) &&
+                        (quality === "all" || fixture.quality === quality)
+                    );
+                });
+            }
+
+            function statusLabel(status) {
+                return {
+                    approved: "Approved",
+                    "needs-attention": "Needs attention",
+                    partial: "In progress",
+                    unreviewed: "Unreviewed"
+                }[status];
+            }
+
+            function renderSummary() {
+                const counts = { approved: 0, "needs-attention": 0, partial: 0, unreviewed: 0 };
+                dataset.cases.forEach((fixture) => (counts[caseStatus(fixture)] += 1));
+                elements["summary-grid"].innerHTML = [
+                    [dataset.cases.length, "Fixtures"],
+                    [counts["needs-attention"], "Flagged"],
+                    [counts.approved, "Approved"],
+                    [counts.unreviewed + counts.partial, "Remaining"]
+                ]
+                    .map(([value, label]) => `<div><strong>${value}</strong><span>${label}</span></div>`)
+                    .join("");
+            }
+
+            function renderFixtureList() {
+                const fixtures = filteredCases();
+                elements["fixture-count"].textContent = `${fixtures.length} of ${dataset.cases.length} fixtures`;
+                elements["fixture-list"].replaceChildren(
+                    ...fixtures.map((fixture) => {
+                        const item = document.createElement("li");
+                        const button = document.createElement("button");
+                        const status = caseStatus(fixture);
+                        const name = document.createElement("strong");
+                        const id = document.createElement("small");
+                        const dot = document.createElement("i");
+                        button.type = "button";
+                        item.className = fixture.id === activeCaseId ? "is-active" : "";
+                        button.setAttribute(
+                            "aria-label",
+                            `${fixture.expected.name}, ${fixture.id}, ${statusLabel(status)}`
+                        );
+                        name.textContent = fixture.expected.name;
+                        id.textContent = fixture.id;
+                        dot.className = `status-dot ${status}`;
+                        dot.title = statusLabel(status);
+                        button.append(name, dot);
+                        button.addEventListener("click", () => {
+                            activeCaseId = fixture.id;
+                            activeCropId = undefined;
+                            renderAll();
+                        });
+                        item.append(button, id);
+                        return item;
+                    })
+                );
+            }
+
+            function activeFixture() {
+                return dataset.cases.find((fixture) => fixture.id === activeCaseId) || dataset.cases[0];
+            }
+
+            function visibleCrops(fixture) {
+                const type = elements["region-filter"].value;
+                return fixture.crops.filter((crop) => type === "all" || crop.type === type);
+            }
+
+            function showOverlay(crop, fixture) {
+                const region = crop?.sourceRegion;
+                if (!region) {
+                    elements["crop-overlay"].hidden = true;
+                    return;
+                }
+                Object.assign(elements["crop-overlay"].style, {
+                    left: `${(region.left / fixture.source.width) * 100}%`,
+                    top: `${(region.top / fixture.source.height) * 100}%`,
+                    width: `${(region.width / fixture.source.width) * 100}%`,
+                    height: `${(region.height / fixture.source.height) * 100}%`
+                });
+                elements["crop-overlay"].hidden = false;
+            }
+
+            function renderCropCard(fixture, crop) {
+                const fragment = elements["crop-template"].content.cloneNode(true);
+                const card = fragment.querySelector(".crop-card");
+                const imageButton = fragment.querySelector(".crop-image-button");
+                const image = fragment.querySelector("img");
+                const labels = fragment.querySelector(".crop-labels");
+                const goodButton = fragment.querySelector(".mark-good");
+                const attentionButton = fragment.querySelector(".mark-attention");
+                const observationChips = fragment.querySelector(".observation-chips");
+                const legacyNote = fragment.querySelector(".legacy-note");
+                const diagnostic = fragment.querySelector(".crop-diagnostic");
+                const review = cropReview(fixture.id, crop.id);
+                card.dataset.status = review.status;
+                card.classList.toggle("is-selected", crop.id === activeCropId);
+                image.src = assetUrl(crop.src);
+                image.alt = `${fixture.expected.name} ${crop.region} crop`;
+                labels.querySelector("strong").textContent = crop.region;
+                labels.querySelector("span").textContent = crop.psm ? `${crop.type} · ${crop.psm}` : crop.type;
+                goodButton.setAttribute("aria-pressed", review.status === "approved");
+                attentionButton.setAttribute("aria-pressed", review.status === "needs-attention");
+                const selectedTags = new Set(observationTags(review));
+                observationChips.replaceChildren(
+                    ...observationOptions.map((option) => {
+                        const chip = document.createElement("button");
+                        chip.type = "button";
+                        chip.className = "observation-chip";
+                        chip.dataset.tone = option.tone;
+                        chip.textContent = option.label;
+                        chip.setAttribute("aria-pressed", selectedTags.has(option.id));
+                        chip.addEventListener("click", () => {
+                            const selected = chip.getAttribute("aria-pressed") !== "true";
+                            chip.setAttribute("aria-pressed", selected);
+                            updateObservationTag(fixture.id, crop.id, option.id, selected);
+                        });
+                        return chip;
+                    })
+                );
+                const previousNote = typeof review.note === "string" ? review.note.trim() : "";
+                legacyNote.hidden = previousNote.length === 0;
+                legacyNote.querySelector("span").textContent = previousNote;
+                const diagnostics = [];
+                if (crop.contentDetected) diagnostics.push("content-refined");
+                if (crop.lowConfidence) diagnostics.push("low confidence");
+                if (crop.sourceUpscaled) diagnostics.push(`${crop.sourceUpscaleFactor.toFixed(2)}× source upscale`);
+                if (crop.reason) diagnostics.push(crop.reason);
+                diagnostic.textContent = diagnostics.join(" · ") || "template crop";
+                imageButton.addEventListener("click", () => {
+                    activeCropId = crop.id;
+                    renderWorkspace();
+                });
+                goodButton.addEventListener("click", () =>
+                    updateCropReview(fixture.id, crop.id, {
+                        status: review.status === "approved" ? "unreviewed" : "approved"
+                    })
+                );
+                attentionButton.addEventListener("click", () =>
+                    updateCropReview(fixture.id, crop.id, {
+                        status: review.status === "needs-attention" ? "unreviewed" : "needs-attention"
+                    })
+                );
+                return fragment;
+            }
+
+            function renderWorkspace() {
+                const fixture = activeFixture();
+                activeCaseId = fixture.id;
+                const navigationFixtures = filteredCases();
+                const position = navigationFixtures.findIndex((item) => item.id === fixture.id);
+                const crops = visibleCrops(fixture);
+                if (!activeCropId || !fixture.crops.some((crop) => crop.id === activeCropId)) {
+                    activeCropId = crops[0]?.id;
+                }
+                const selectedCrop = fixture.crops.find((crop) => crop.id === activeCropId);
+                elements["fixture-position"].textContent =
+                    position === -1
+                        ? `FIXTURE ${dataset.cases.findIndex((item) => item.id === fixture.id) + 1} / ${dataset.cases.length}`
+                        : `FIXTURE ${position + 1} / ${navigationFixtures.length}`;
+                elements["fixture-title"].textContent = fixture.expected.name;
+                elements["fixture-meta"].textContent = `${fixture.id} · ${fixture.quality} · ${fixture.expected.set} #${fixture.expected.collectorNumber}`;
+                elements["source-size"].textContent = `${fixture.source.width} × ${fixture.source.height}`;
+                elements["source-image"].src = assetUrl(fixture.source.src);
+                elements["source-image"].alt = `${fixture.expected.name} regression fixture`;
+                showOverlay(selectedCrop, fixture);
+                const details = [
+                    ["Expected type", fixture.expected.typeLine || "Not specified", false],
+                    [
+                        "Transform",
+                        Object.keys(fixture.transform).length
+                            ? JSON.stringify(fixture.transform)
+                            : "none",
+                        true
+                    ],
+                    ["Gate", fixture.blocking ? "Blocking" : "Non-blocking", false]
+                ].map(([term, value, isCode]) => {
+                    const row = document.createElement("div");
+                    const dt = document.createElement("dt");
+                    const dd = document.createElement("dd");
+                    const content = document.createElement(isCode ? "code" : "span");
+                    dt.textContent = term;
+                    content.textContent = value;
+                    dd.append(content);
+                    row.append(dt, dd);
+                    return row;
+                });
+                elements["source-details"].replaceChildren(...details);
+                elements["fixture-errors"].hidden = fixture.errors.length === 0;
+                elements["fixture-errors"].replaceChildren(
+                    ...fixture.errors.map((error) => {
+                        const message = document.createElement("p");
+                        const type = document.createElement("strong");
+                        type.textContent = error.type;
+                        message.append(type, `: ${error.message}`);
+                        return message;
+                    })
+                );
+                const reviewed = fixture.crops.filter(
+                    (crop) => cropReview(fixture.id, crop.id).status !== "unreviewed"
+                ).length;
+                elements["crop-progress"].textContent = `${reviewed} / ${fixture.crops.length} reviewed`;
+                elements["crop-grid"].replaceChildren(
+                    ...crops.map((crop) => renderCropCard(fixture, crop))
+                );
+                elements["previous-fixture"].disabled =
+                    navigationFixtures.length === 0 || position === 0;
+                elements["next-fixture"].disabled =
+                    navigationFixtures.length === 0 || position === navigationFixtures.length - 1;
+            }
+
+            function renderAll() {
+                renderSummary();
+                renderFixtureList();
+                renderWorkspace();
+            }
+
+            function moveFixture(direction) {
+                const fixtures = filteredCases();
+                const index = fixtures.findIndex((fixture) => fixture.id === activeCaseId);
+                const nextIndex =
+                    index === -1 ? (direction > 0 ? 0 : fixtures.length - 1) : index + direction;
+                const next = fixtures[nextIndex];
+                if (!next) return;
+                activeCaseId = next.id;
+                activeCropId = undefined;
+                renderAll();
+            }
+
+            function exportReviews() {
+                const report = {
+                    version: 1,
+                    datasetId: dataset.datasetId,
+                    sourceManifest: dataset.sourceManifest,
+                    generatedAt: dataset.generatedAt,
+                    exportedAt: new Date().toISOString(),
+                    entries: reviews.entries
+                };
+                const blob = new Blob([`${JSON.stringify(report, null, 2)}\n`], {
+                    type: "application/json"
+                });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `crop-review-${dataset.datasetId}.json`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+
+            async function importReviews(file) {
+                const imported = JSON.parse(await file.text());
+                if (imported.version !== 1 || imported.datasetId !== dataset.datasetId || !imported.entries) {
+                    throw new Error("Review JSON does not match this generated crop dataset");
+                }
+                reviews = { version: 1, entries: imported.entries };
+                saveReviews();
+                renderAll();
+            }
+
+            async function initialize() {
+                try {
+                    const response = await fetch(dataUrl, { cache: "no-store" });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    dataset = await response.json();
+                    loadReviews();
+                    activeCaseId = dataset.cases[0]?.id;
+                    if (!activeCaseId) throw new Error("The generated dataset contains no fixtures");
+                    [...new Set(dataset.cases.map((fixture) => fixture.quality))]
+                        .sort()
+                        .forEach((quality) => elements["quality-filter"].add(new Option(quality, quality)));
+                    dataset.cropTypes.forEach((type) =>
+                        elements["region-filter"].add(new Option(type, type))
+                    );
+                    elements["loading-state"].hidden = true;
+                    elements["fixture-sidebar"].hidden = false;
+                    elements["fixture-workspace"].hidden = false;
+                    renderAll();
+                } catch (error) {
+                    elements["loading-state"].classList.add("is-error");
+                    const heading = document.createElement("h2");
+                    const instruction = document.createElement("p");
+                    const command = document.createElement("code");
+                    const detail = document.createElement("pre");
+                    heading.textContent = "Crop data is unavailable";
+                    command.textContent = "pnpm crop-review:generate";
+                    instruction.append("Run ", command, ", then reload this page.");
+                    detail.textContent = error.message;
+                    elements["loading-state"].replaceChildren(heading, instruction, detail);
+                }
+            }
+
+            elements["fixture-search"].addEventListener("input", renderFixtureList);
+            elements["status-filter"].addEventListener("change", renderFixtureList);
+            elements["quality-filter"].addEventListener("change", renderFixtureList);
+            elements["region-filter"].addEventListener("change", () => {
+                activeCropId = undefined;
+                renderWorkspace();
+            });
+            elements["previous-fixture"].addEventListener("click", () => moveFixture(-1));
+            elements["next-fixture"].addEventListener("click", () => moveFixture(1));
+            elements["approve-visible"].addEventListener("click", () => {
+                const fixture = activeFixture();
+                visibleCrops(fixture).forEach((crop) => {
+                    reviews.entries[fixture.id] ||= { crops: {} };
+                    reviews.entries[fixture.id].crops[crop.id] = {
+                        ...cropReview(fixture.id, crop.id),
+                        status: "approved",
+                        updatedAt: new Date().toISOString()
+                    };
+                });
+                saveReviews();
+                renderAll();
+            });
+            elements["export-button"].addEventListener("click", exportReviews);
+            elements["import-button"].addEventListener("click", () => elements["import-file"].click());
+            elements["import-file"].addEventListener("change", async (event) => {
+                try {
+                    if (event.target.files[0]) await importReviews(event.target.files[0]);
+                } catch (error) {
+                    window.alert(error.message);
+                } finally {
+                    event.target.value = "";
+                }
+            });
+            document.addEventListener("keydown", (event) => {
+                if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
+                if (event.altKey || event.ctrlKey || event.metaKey) return;
+                if (["ArrowRight", "ArrowLeft"].includes(event.key)) event.preventDefault();
+                if (event.key === "ArrowRight" || event.key.toLowerCase() === "j") moveFixture(1);
+                if (event.key === "ArrowLeft" || event.key.toLowerCase() === "k") moveFixture(-1);
+                const fixture = activeFixture();
+                const crop = fixture?.crops.find((candidate) => candidate.id === activeCropId);
+                if (!crop) return;
+                if (event.key.toLowerCase() === "g") {
+                    updateCropReview(fixture.id, crop.id, { status: "approved" });
+                }
+                if (event.key.toLowerCase() === "f") {
+                    updateCropReview(fixture.id, crop.id, { status: "needs-attention" });
+                }
+            });
+
+            initialize();
+        </script>
+    </body>
+</html>

@@ -1,5 +1,14 @@
 [
     {
+        "date": "2026-08-15",
+        "macrostructure": "Catalogue",
+        "theme": "Coral",
+        "enrichment": "none",
+        "nav": "N9 Edge-aligned action bar",
+        "footer": "none (internal tool)",
+        "brief": "Internal crop QA route for approving, flagging, annotating, and exporting regression crop reviews"
+    },
+    {
         "date": "2026-08-09",
         "macrostructure": "Workbench",
         "theme": "Coral",

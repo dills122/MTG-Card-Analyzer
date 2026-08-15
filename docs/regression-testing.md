@@ -96,6 +96,39 @@ the default bounded parallelism for the ordinary regression gate.
 
 The generated `artifacts/regression` directory is ignored by Git.
 
+## Review crop geometry visually
+
+Use the local crop-review workbench when refining OCR or set-symbol crop boundaries. It applies
+each regression fixture's deterministic transform and generates every production crop type without
+running OCR, Scryfall, a database, or any network request:
+
+```bash
+# Generate all enabled regression fixtures, then start the local Astro site
+pnpm crop-review
+
+# Or generate a smaller batch before running `pnpm site:dev`
+pnpm crop-review:generate --case pacifism-clean-scan --case platinum-angel-clean-scan
+pnpm crop-review:generate --quality cropping --region name --region set-symbol
+```
+
+Open `/crop-review/` in the local site. Select a crop to show its exact source-image bounds, mark
+individual crops as **Good** or **Needs attention**, and select every applicable observation chip.
+Progress is stored in the browser for that generated dataset. Existing free-text notes from earlier
+reviews remain preserved and visible. Use **Export review JSON** to share or retain the decisions;
+the same file can be imported into another browser viewing the identical dataset.
+
+The reviewer is intentionally local-only. Astro registers `/crop-review/` during the development
+server started by `pnpm crop-review`, but excludes it from `pnpm site:build` and the GitHub Pages
+route. Its generated source images and crops remain ignored by Git, and the Pages workflow fails
+closed if any `dist/crop-review` content is present in its clean build artifact.
+
+Generation replaces `public/crop-review/generated/`, which is ignored by Git. Review decisions are
+keyed to checksums of the generated crops: regenerating identical crops retains the active review,
+while changed crop pixels receive a fresh dataset identity so stale approvals are not reused. The
+default command generates all enabled fixtures and every fallback crop, so use repeatable `--case`,
+`--quality`, or `--region` filters for faster focused iterations. Add `--include-disabled` when
+inspecting pending fixtures.
+
 ## OCR model candidates
 
 The default run loads `test/regression/ocr-models/manifest.json` and verifies the bundled control
@@ -261,7 +294,7 @@ Minimal example:
                 "maxPrintCandidates": 1,
                 "minPrintScore": 0.75,
                 "minOcrConfidence": 50,
-                "maxRuntimeMs": 30000,
+                "maxRuntimeMs": 35000,
                 "metadata": {
                     "typeLine": "Enchantment — Aura"
                 }
