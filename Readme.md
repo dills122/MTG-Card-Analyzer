@@ -130,18 +130,19 @@ local-first rather than fully offline.
 
 ## Documentation
 
-| If you want to...                                                | Read...                                                       |
-| ---------------------------------------------------------------- | ------------------------------------------------------------- |
-| Install the project or fix a local setup problem                 | [Local development setup](docs/LOCAL_DEV.md)                  |
-| Look up commands, flags, logging, migration, or collection edits | [CLI reference](docs/cli-reference.md)                        |
-| Change settings or understand local database files               | [Configuration and local data](docs/configuration.md)         |
-| Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                          |
-| Review the exact-print and variant-detection research direction  | [Card detection spike](docs/card-detection-research-spike.md) |
-| Review production dependency and image-input security controls   | [Dependency security](docs/dependency-security.md)            |
-| Review the Blockhash-versus-PDQ benchmark and selection          | [Fingerprint benchmark](docs/image-fingerprint-benchmark.md)  |
-| Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)              |
-| Build a reviewed custom OCR fine-tuning corpus                   | [OCR training data](docs/ocr-training-data.md)                |
-| Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                               |
+| If you want to...                                                | Read...                                                            |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Install the project or fix a local setup problem                 | [Local development setup](docs/LOCAL_DEV.md)                       |
+| Look up commands, flags, logging, migration, or collection edits | [CLI reference](docs/cli-reference.md)                             |
+| Change settings or understand local database files               | [Configuration and local data](docs/configuration.md)              |
+| Understand the scan pipeline and module boundaries               | [Architecture](docs/architecture.md)                               |
+| Review the exact-print and variant-detection research direction  | [Card detection spike](docs/card-detection-research-spike.md)      |
+| Review precision-first visual layout routing and abstention      | [Layout classification spike](docs/layout-classification-spike.md) |
+| Review production dependency and image-input security controls   | [Dependency security](docs/dependency-security.md)                 |
+| Review the Blockhash-versus-PDQ benchmark and selection          | [Fingerprint benchmark](docs/image-fingerprint-benchmark.md)       |
+| Add or evaluate OCR and matching fixtures                        | [Regression testing](docs/regression-testing.md)                   |
+| Build a reviewed custom OCR fine-tuning corpus                   | [OCR training data](docs/ocr-training-data.md)                     |
+| Prepare a change or pull request                                 | [Contributing](CONTRIBUTING.md)                                    |
 
 The default NeDB backend is the recommended path. A legacy MySQL/RDS adapter remains available for
 existing users; its setup and migration instructions live in the
