@@ -102,7 +102,8 @@ Run `mtg-card-analyzer --help` for the command list or see the
 
 ## How matching works
 
-1. The image is validated and likely title regions are cropped and enhanced.
+1. The image is validated, likely title regions are refined around detected text with padding, and
+   the resulting crops are enhanced. Ambiguous edge detection keeps the established bounded crop.
 2. Tesseract extracts bounded title candidates with the segmentation mode declared by each crop.
 3. All plausible OCR regions and lines are fuzzy-matched against the local card-name index;
    unambiguous individual face names resolve back to their canonical compound card name.
@@ -110,8 +111,9 @@ Run `mtg-card-analyzer --help` for the command list or see the
    finally supplemental rules text, avoiding the extra OCR work for ordinary successful scans.
 5. Candidate printings come from every page of the Scryfall print search and retain exact print IDs,
    set codes, collector numbers, and treatment metadata while cached or downloaded PDQ fingerprints
-   rank them. A high-confidence set-symbol result wins; an inconclusive symbol comparison is retried
-   with the full card instead of forcing a weak print guess.
+   rank them. Set-symbol crops search the type-line neighborhood, isolate the icon from frame rules,
+   and retain an even buffer. A high-confidence result wins; an inconclusive symbol comparison is
+   retried with the full card instead of forcing a weak print guess.
 6. Results are printed and, only when enabled, a single confirmed printing is written to the
    collection backend. A lone API candidate is not confirmation; unverified or multiple exact-print
    candidates are saved to needs-attention instead.

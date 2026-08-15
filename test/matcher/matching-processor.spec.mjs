@@ -352,7 +352,7 @@ describe("MatcherProcessor::", () => {
         assert.deepEqual(result, ["M21"]);
         assert.isTrue(hashStub.calledTwice);
         assert.equal(hashStub.secondCall.args[0], "/tmp/pacifism.jpg");
-        assert.equal(processHashesStub.firstCall.args[0].hashMode, "set-symbol");
+        assert.equal(processHashesStub.firstCall.args[0].hashMode, "set-symbol-content-v1");
         assert.equal(processHashesStub.secondCall.args[0].hashMode, "full-card");
         assert.equal(processHashesStub.secondCall.args[0].localHash, "FULL_CARD_HASH");
     });

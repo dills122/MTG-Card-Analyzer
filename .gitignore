@@ -32,6 +32,10 @@ lib-cov/
 # Generated OCR regression reports
 artifacts/regression/
 
+# Generated local crop-review site assets
+public/crop-review/generated/
+public/crop-review/generated.tmp-*/
+
 # Local OCR training review crops (unreviewed and potentially rights-restricted)
 artifacts/training-review/
 

@@ -61,6 +61,8 @@
         "site:dev": "astro dev",
         "site:build": "astro build",
         "site:preview": "astro preview",
+        "crop-review": "pnpm crop-review:generate && astro dev",
+        "crop-review:generate": "node scripts/generate-crop-review.mjs",
         "test": "mocha \"./test/**/*.spec.mjs\"",
         "test:package": "node scripts/package-smoke.mjs",
         "test:regression": "node scripts/run-regression.mjs",

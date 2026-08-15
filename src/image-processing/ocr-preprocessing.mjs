@@ -122,7 +122,7 @@ async function buildRotatedNameVariants(baseImage, options = {}) {
 }
 
 async function cropAndPreprocess(baseImage, template, options = {}) {
-    const { image: cropped } = smartCrop.cropRegion(baseImage, template);
+    const { image: cropped } = smartCrop.cropTextRegion(baseImage, template);
     if (template.mode === "soft-inverted") {
         return buildSoftOcrImage(cropped, true);
     }

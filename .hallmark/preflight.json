@@ -4,12 +4,29 @@
     "palette": "Hallmark OKLCH tokens in tokens.css",
     "motion": "motion-cut",
     "spacing": "Hallmark 4-point semantic scale in tokens.css",
-    "framework": "Astro 5 static site alongside the Node.js ESM CLI",
-    "sources": ["package.json", "Readme.md", "tokens.css", "src/styles/site.css"],
+    "framework": "Astro 7 static site alongside the Node.js ESM CLI",
+    "sources": [
+        "package.json",
+        "Readme.md",
+        "tokens.css",
+        "src/styles/site.css",
+        "src/tools/crop-review.astro"
+    ],
     "preserve": [
         "existing CLI package contracts",
         "local-first product positioning",
-        "Workbench structure and responsive layout"
+        "Workbench structure and responsive layout",
+        "existing public project tour"
     ],
-    "introduce": ["single warm cream theme", "burnished terracotta accent"]
+    "introduce": [
+        "single warm cream theme",
+        "burnished terracotta accent",
+        "internal evidence-browser route for crop QA"
+    ],
+    "cropReview": {
+        "audience": "maintainers and contributors",
+        "primaryUse": "inspect, approve, flag, annotate, and export crop-review results",
+        "tone": "dense utilitarian workbench",
+        "publicFacing": false
+    }
 }

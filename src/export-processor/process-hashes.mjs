@@ -17,6 +17,12 @@ const config = {
     }
 };
 
+const setSymbolHashModes = new Set(["set-symbol", imageProcessing.smartCrop.setSymbolHashMode]);
+
+function isSetSymbolHashMode(hashMode) {
+    return setSymbolHashModes.has(hashMode);
+}
+
 const defaultDependencies = {
     CardHashes: storage.hashes,
     Hash: imageHashing.Hash,
@@ -33,7 +39,11 @@ const schema = joi.object().keys({
     queryingEnabled: joi.boolean().optional().default(false),
     ignoreNoDbMatch: joi.boolean().optional().default(false),
     allowRemoteBestGuess: joi.boolean().optional().default(false),
-    hashMode: joi.string().optional().valid("full-card", "set-symbol").default("full-card")
+    hashMode: joi
+        .string()
+        .optional()
+        .valid("full-card", ...setSymbolHashModes)
+        .default("full-card")
 });
 
 class ProcessHashes {
@@ -214,7 +224,7 @@ class ProcessHashes {
     }
 
     async _withRemoteHashDirectory() {
-        if (this.hashMode !== "set-symbol") {
+        if (!isSetSymbolHashMode(this.hashMode)) {
             return {
                 tempDirectory: "",
                 done: () => {}
@@ -238,7 +248,7 @@ class ProcessHashes {
     }
 
     async _hashRemoteForComparison(url, tempDirectory) {
-        if (this.hashMode !== "set-symbol") {
+        if (!isSetSymbolHashMode(this.hashMode)) {
             return this._hashImage(url);
         }
         try {
