@@ -75,26 +75,42 @@ notes without a status change. The earlier title findings therefore still stand:
 The deep set-symbol pass reviewed 151/158 enabled fixtures: 105 approved (69.5%) and 46 needing
 attention (30.5%). The seven missing reviews are `pacifism-poor-lighting`, `pacifism-blur`,
 `pacifism-rotation`, `pacifism-cropping`, `pacifism-low-resolution`, `land-2-pending`, and
-`vtg-3-pending`. Among failures, `wrong-region` appears 25 times and `set-icon-incomplete` 22 times;
-the tags overlap on some cases. The Mending of Dominaria is the one untagged failure. Fifteen approved
-set crops still carry issue tags, mostly extra height/width or off-center, so approval and
-observations are orthogonal labels.
+`vtg-3-pending`. Missingness is not random: five of the seven are degraded transformations of the
+same Pacifism source. The 69.5% reviewed approval rate therefore describes the reviewed, mostly clean
+corpus and must not be generalized to runtime photo/degradation performance. Among failures,
+`wrong-region` appears 25 times and `set-icon-incomplete` 22 times; the tags overlap on four cases.
+The Mending of Dominaria is the one untagged failure. Fifteen approved set crops still carry issue
+tags, mostly extra height/width or off-center, so approval and observations are orthogonal labels.
 
 Structural layout correlates much more strongly with failure than broad treatment style:
 
-| Cohort                     | Approved | Reviewed | Approval rate |
-| -------------------------- | -------: | -------: | ------------: |
-| `layout: normal`           |       83 |      111 |         74.8% |
-| `layout: split`            |        0 |        4 |          0.0% |
-| `layout: saga`             |        0 |        3 |          0.0% |
-| `layout: flip`             |        0 |        1 |          0.0% |
-| `layout: planar`           |        0 |        1 |          0.0% |
-| `layout: meld`             |        1 |        2 |         50.0% |
-| `style: normal`            |       67 |       98 |         68.4% |
-| `style: full-art`          |        8 |        9 |         88.9% |
-| `style: extended-art`      |        5 |        7 |         71.4% |
-| `style: showcase`          |        3 |        5 |         60.0% |
-| reviewed vintage set crops |        5 |        6 |         83.3% |
+| Layout cohort | Approved | Reviewed | Approval rate |
+| ------------- | -------: | -------: | ------------: |
+| `normal`      |       83 |      111 |         74.8% |
+| `split`       |        0 |        4 |          0.0% |
+| `saga`        |        0 |        3 |          0.0% |
+| `flip`        |        0 |        1 |          0.0% |
+| `planar`      |        0 |        1 |          0.0% |
+| `meld`        |        1 |        2 |         50.0% |
+| unspecified   |       21 |       29 |         72.4% |
+| **Total**     |  **105** |  **151** |     **69.5%** |
+
+| Style cohort   | Approved | Reviewed | Approval rate |
+| -------------- | -------: | -------: | ------------: |
+| `normal`       |       67 |       98 |         68.4% |
+| `full-art`     |        8 |        9 |         88.9% |
+| `extended-art` |        5 |        7 |         71.4% |
+| `showcase`     |        3 |        5 |         60.0% |
+| `borderless`   |        1 |        2 |         50.0% |
+| `textless`     |        0 |        1 |          0.0% |
+| unspecified    |       21 |       29 |         72.4% |
+| **Total**      |  **105** |  **151** |     **69.5%** |
+
+Specified non-normal structural layouts were approved in only 1/11 cases (9.1%), versus 83/111
+normal layouts (74.8%). By contrast, specified non-normal styles were approved in 17/24 cases
+(70.8%), essentially the same as `style: normal` at 67/98 (68.4%). Even `layout: normal` still failed
+in 28/111 cases, so layout is a routing capability rather than proof that a fixed crop will succeed.
+Symbol presence, anchor, and crop completeness remain necessary within the normal-layout cohort.
 
 The only reviewed vintage failure is `vtg-2` (`set-icon-incomplete`); `vtg-3` is unreviewed, and two
 approved vintage crops are tagged oversized. This evidence rejects broad “vintage” or
@@ -285,7 +301,9 @@ route rate, boundary failures, capability accuracy, score calibration, runtime, 
 and classifier/model hashes. For set-symbol routing, report acceptance and failure tags separately by
 structural layout, orientation, symbol-presence capability, treatment style, vintage visual profile,
 and input quality. Include the seven currently unreviewed crops as missing labels, not implicit passes
-or failures.
+or failures. Report label completeness by source group and quality before any acceptance rate; do not
+use the current aggregate set-symbol approval rate as a promotion metric while the degraded Pacifism
+cohort remains mostly unreviewed.
 
 Promotion gates:
 
