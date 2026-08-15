@@ -177,6 +177,31 @@ function evaluateRuntime(fixture, result) {
     return [];
 }
 
+function isExactPrintVerified(fixture, selectedPrint) {
+    if (!selectedPrint?.card) return false;
+    return (
+        normalized(selectedPrint.card.set) === normalized(fixture.expected.set) &&
+        String(selectedPrint.card.collectorNumber || "") ===
+            String(fixture.expected.collectorNumber) &&
+        (!fixture.expected.scryfallId ||
+            String(selectedPrint.card.scryfallId || "") === String(fixture.expected.scryfallId)) &&
+        selectedPrint.score >= (fixture.expected.minPrintScore ?? 0.75)
+    );
+}
+
+function finalizeResult(fixture, result, runtimePolicy, correctnessFailures) {
+    result.correctnessFailures = correctnessFailures || evaluateResult(fixture, result);
+    result.runtimeFailures = evaluateRuntime(fixture, result);
+    result.correctnessPassed = result.correctnessFailures.length === 0;
+    result.performancePassed = result.runtimeFailures.length === 0;
+    result.failures = [
+        ...result.correctnessFailures,
+        ...(runtimePolicy === "strict" ? result.runtimeFailures : [])
+    ];
+    result.passed = result.failures.length === 0;
+    return result;
+}
+
 async function analyzeFixture(fixture, manifest, context, dependencies) {
     const startedAt = performance.now();
     const timings = {};
@@ -251,64 +276,46 @@ async function analyzeFixture(fixture, manifest, context, dependencies) {
             failures: [],
             passed: false
         };
-        result.exactPrintVerified =
-            normalized(result.selectedPrint?.card?.set) === normalized(fixture.expected.set) &&
-            String(result.selectedPrint?.card?.collectorNumber || "") ===
-                String(fixture.expected.collectorNumber) &&
-            (!fixture.expected.scryfallId ||
-                String(result.selectedPrint?.card?.scryfallId || "") ===
-                    String(fixture.expected.scryfallId)) &&
-            result.selectedPrint.score >= (fixture.expected.minPrintScore ?? 0.75);
+        result.exactPrintVerified = isExactPrintVerified(fixture, result.selectedPrint);
         // Backward-compatible report field for existing consumers. Exact print verification
         // additionally checks Scryfall ID whenever a fixture supplies one.
         result.setVerified = result.exactPrintVerified;
-        result.correctnessFailures = evaluateResult(fixture, result);
-        result.runtimeFailures = evaluateRuntime(fixture, result);
-        result.correctnessPassed = result.correctnessFailures.length === 0;
-        result.performancePassed = result.runtimeFailures.length === 0;
-        result.failures = [
-            ...result.correctnessFailures,
-            ...(context.runtimePolicy === "strict" ? result.runtimeFailures : [])
-        ];
-        result.passed = result.failures.length === 0;
-        return result;
+        return finalizeResult(fixture, result, context.runtimePolicy);
     } catch (err) {
-        const result = {
-            id: fixture.id,
-            quality: fixture.quality,
-            blocking: fixture.blocking !== false,
-            sourceImage: fixture.image,
-            expected: fixture.expected,
-            ocr: {
-                cleanText: "",
-                dirtyText: "",
-                confidence: 0,
-                variant: "",
-                upscaled: false,
-                upscaleFactor: 1
+        return finalizeResult(
+            fixture,
+            {
+                id: fixture.id,
+                quality: fixture.quality,
+                blocking: fixture.blocking !== false,
+                sourceImage: fixture.image,
+                expected: fixture.expected,
+                ocr: {
+                    cleanText: "",
+                    dirtyText: "",
+                    confidence: 0,
+                    variant: "",
+                    upscaled: false,
+                    upscaleFactor: 1
+                },
+                nameMatches: [],
+                nameCandidateCount: 0,
+                printCandidateCount: 0,
+                selectedPrint: null,
+                exactPrintVerified: false,
+                setVerified: false,
+                timings,
+                runtimeMs: elapsedSince(startedAt),
+                correctnessFailures: [err?.message || String(err)],
+                runtimeFailures: [],
+                correctnessPassed: false,
+                performancePassed: false,
+                failures: [],
+                passed: false
             },
-            nameMatches: [],
-            nameCandidateCount: 0,
-            printCandidateCount: 0,
-            selectedPrint: null,
-            exactPrintVerified: false,
-            setVerified: false,
-            timings,
-            runtimeMs: elapsedSince(startedAt),
-            correctnessFailures: [err?.message || String(err)],
-            runtimeFailures: [],
-            correctnessPassed: false,
-            performancePassed: false,
-            failures: [],
-            passed: false
-        };
-        result.runtimeFailures = evaluateRuntime(fixture, result);
-        result.performancePassed = result.runtimeFailures.length === 0;
-        result.failures = [
-            ...result.correctnessFailures,
-            ...(context.runtimePolicy === "strict" ? result.runtimeFailures : [])
-        ];
-        return result;
+            context.runtimePolicy,
+            [err?.message || String(err)]
+        );
     } finally {
         await rm(directory, { recursive: true, force: true });
     }
