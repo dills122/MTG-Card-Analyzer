@@ -474,7 +474,8 @@ describe("Scryfall regression fixture importer", () => {
             assert.deepInclude(manifest.cases[1].expected, {
                 name: "Fresh Card",
                 set: "FIN",
-                collectorNumber: "42"
+                collectorNumber: "42",
+                maxRuntimeMs: 35000
             });
             assert.deepEqual(manifest.cases[1].expected.metadata, {
                 typeLine: "Creature — Test",

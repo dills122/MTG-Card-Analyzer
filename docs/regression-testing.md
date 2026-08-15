@@ -294,7 +294,7 @@ Minimal example:
                 "maxPrintCandidates": 1,
                 "minPrintScore": 0.75,
                 "minOcrConfidence": 50,
-                "maxRuntimeMs": 30000,
+                "maxRuntimeMs": 35000,
                 "metadata": {
                     "typeLine": "Enchantment — Aura"
                 }
