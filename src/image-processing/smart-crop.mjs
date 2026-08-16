@@ -5,7 +5,7 @@ import { round, clamp } from "../util.mjs";
 
 // Crop geometry is part of a fingerprint's meaning. Bump this value whenever set-symbol
 // normalization changes so cached hashes from incompatible crop algorithms are never compared.
-const setSymbolHashMode = "set-symbol-content-v1";
+const setSymbolHashMode = "set-symbol-content-v3";
 
 // Reusable region registry -- the shared "layer" every crop spot plugs into. setSymbol feeds the
 // image-fingerprint path; name/type/rules-name/default feed OCR (region templates, one or more crop
@@ -27,6 +27,13 @@ const regions = {
         topPercent: 0.515,
         widthPercent: 0.24,
         heightPercent: 0.14
+    },
+    // Modern frames place the symbol farther right than the center of the legacy fallback crop.
+    // This point guides candidate ranking only; older frames can still win on component quality,
+    // and the reviewed legacy crop remains unchanged when detection is inconclusive.
+    setSymbolExpectedCenter: {
+        xPercent: 0.88,
+        yPercent: 0.585
     },
     name: [
         {
@@ -469,7 +476,7 @@ function dilateEdges(edges, width, height, radiusX, radiusY) {
     return dilated;
 }
 
-function findEdgeComponents(edgeMap) {
+function findEdgeComponents(edgeMap, options = {}) {
     const { width, height } = edgeMap;
     const edges = edgeMap.edges.slice();
     // A set symbol may overlap a frame rule in the raw search window. Remove only near-continuous
@@ -493,8 +500,8 @@ function findEdgeComponents(edgeMap) {
         edges,
         width,
         height,
-        Math.max(1, round(width * 0.008)),
-        Math.max(1, round(height * 0.008))
+        Math.max(1, round(width * (options.dilationX ?? 0.008))),
+        Math.max(1, round(height * (options.dilationY ?? 0.008)))
     );
     const visited = new Uint8Array(connected.length);
     const components = [];
@@ -542,20 +549,22 @@ function findEdgeComponents(edgeMap) {
  * proximity preference lets older/newer frame offsets move naturally while rejecting type-line
  * rules and unrelated artwork elsewhere in the wider search window.
  */
-function detectSymbolContentBounds(img, expectedCenter = { x: 0.5, y: 0.5 }) {
+function detectSymbolContentBounds(img, expectedCenter = { x: 0.5, y: 0.5 }, options = {}) {
     const edgeMap = buildColorContrastMap(img);
     const { width, height } = edgeMap;
-    const components = findEdgeComponents(edgeMap).filter((component) => {
+    const components = findEdgeComponents(edgeMap, options).filter((component) => {
         const componentWidth = component.right - component.left + 1;
         const componentHeight = component.bottom - component.top + 1;
         const aspectRatio = componentWidth / componentHeight;
         return (
-            componentWidth >= Math.max(6, width * 0.025) &&
-            componentHeight >= Math.max(6, height * 0.025) &&
-            componentWidth <= width * 0.58 &&
-            componentHeight <= height * 0.58 &&
-            aspectRatio >= 0.6 &&
-            aspectRatio <= 1.9
+            componentWidth >=
+                Math.max(options.minimumPixels ?? 6, width * (options.minWidth ?? 0.025)) &&
+            componentHeight >=
+                Math.max(options.minimumPixels ?? 6, height * (options.minHeight ?? 0.025)) &&
+            componentWidth <= width * (options.maxWidth ?? 0.58) &&
+            componentHeight <= height * (options.maxHeight ?? 0.58) &&
+            aspectRatio >= (options.minAspectRatio ?? 0.6) &&
+            aspectRatio <= (options.maxAspectRatio ?? 1.9)
         );
     });
     if (components.length === 0) {
@@ -574,7 +583,14 @@ function detectSymbolContentBounds(img, expectedCenter = { x: 0.5, y: 0.5 }) {
             const proximity = Math.max(0, 1 - distance / 0.42);
             const shape = Math.max(0, 1 - Math.abs(Math.log(componentWidth / componentHeight)));
             const fill = Math.min(1, component.area / (componentWidth * componentHeight * 0.55));
-            return { ...component, rank: proximity * 4 + shape + fill };
+            const scale = Math.min(
+                1,
+                Math.sqrt((componentWidth * componentHeight) / (width * height)) / 0.24
+            );
+            return {
+                ...component,
+                rank: proximity * 4 + shape + fill + scale * (options.scaleWeight ?? 0)
+            };
         })
         .sort((left, right) => right.rank - left.rank);
     const selected = ranked[0];
@@ -582,6 +598,144 @@ function detectSymbolContentBounds(img, expectedCenter = { x: 0.5, y: 0.5 }) {
         return null;
     }
     return scaleBounds(selected, edgeMap, img.bitmap);
+}
+
+function relativeCropGeometry(region, sourceDimensions) {
+    return {
+        centerX: (region.left + region.width / 2) / sourceDimensions.width,
+        centerY: (region.top + region.height / 2) / sourceDimensions.height,
+        width: region.width / sourceDimensions.width,
+        height: region.height / sourceDimensions.height
+    };
+}
+
+function localPixelContrast(data, width, x, y) {
+    const index = (y * width + x) * 4;
+    const right = index + 4;
+    const below = index + width * 4;
+    let difference = 0;
+    for (let channel = 0; channel < 3; channel++) {
+        difference += Math.abs(data[index + channel] - data[right + channel]);
+        difference += Math.abs(data[index + channel] - data[below + channel]);
+    }
+    return difference / 6;
+}
+
+function horizontalContrastBands(img, bandCount = 5) {
+    const { width, height, data } = img.bitmap;
+    const totals = new Array(bandCount).fill(0);
+    const counts = new Array(bandCount).fill(0);
+    for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+            const band = Math.min(bandCount - 1, Math.floor((x * bandCount) / width));
+            totals[band] += localPixelContrast(data, width, x, y);
+            counts[band] += 1;
+        }
+    }
+    return totals.map((total, index) => (counts[index] > 0 ? total / counts[index] : 0));
+}
+
+function boundaryContrast(img, side) {
+    const { width, height, data } = img.bitmap;
+    let total = 0;
+    let count = 0;
+    for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+            const insideBoundary =
+                (side === "left" && x < 4) ||
+                (side === "right" && x > width - 5) ||
+                (side === "bottom" && y > height - 5);
+            if (!insideBoundary) continue;
+            total += localPixelContrast(data, width, x, y);
+            count += 1;
+        }
+    }
+    return count > 0 ? total / count : 0;
+}
+
+function shouldUseModernSetSymbolFallback(result, sourceDimensions) {
+    const geometry = relativeCropGeometry(result.region, sourceDimensions);
+    const contrastBands = horizontalContrastBands(result.image);
+    const leftContrast = boundaryContrast(result.image, "left");
+    const rightContrast = boundaryContrast(result.image, "right");
+    const bottomContrast = boundaryContrast(result.image, "bottom");
+    const clippedFallback =
+        result.lowConfidence &&
+        contrastBands[4] - contrastBands[0] > 10 &&
+        contrastBands[4] >= contrastBands[2] - 1;
+    const implausiblyLeft = !result.lowConfidence && geometry.centerX < 0.84;
+    const tinyOffCenterFragment =
+        !result.lowConfidence &&
+        (geometry.width < 0.055 || geometry.height < 0.04) &&
+        (geometry.centerX < 0.86 || geometry.centerX >= 0.868);
+    const highRightFragment =
+        !result.lowConfidence && geometry.centerY < 0.555 && geometry.centerX > 0.86;
+    const clippedLowSymbol =
+        !result.lowConfidence &&
+        geometry.centerX > 0.88 &&
+        geometry.centerY < 0.58 &&
+        geometry.width < 0.09 &&
+        bottomContrast > 20;
+    const clippedWideLogo =
+        !result.lowConfidence &&
+        geometry.width >= 0.12 &&
+        geometry.width < 0.14 &&
+        leftContrast > 20 &&
+        rightContrast < 20;
+    return (
+        clippedFallback ||
+        implausiblyLeft ||
+        tinyOffCenterFragment ||
+        highRightFragment ||
+        clippedLowSymbol ||
+        clippedWideLogo
+    );
+}
+
+function cropModernSetSymbolFallback(img, searchRegion) {
+    const size = Math.max(1, round(img.bitmap.width * 0.17));
+    const centerX = img.bitmap.width * regions.setSymbolExpectedCenter.xPercent;
+    const centerY = img.bitmap.height * regions.setSymbolExpectedCenter.yPercent;
+    const left = clamp(round(centerX - size / 2), 0, img.bitmap.width - size);
+    const top = clamp(round(centerY - size / 2), 0, img.bitmap.height - size);
+    const region = { left, top, width: size, height: size };
+    return {
+        image: img.clone().crop({ x: left, y: top, w: size, h: size }),
+        region,
+        searchRegion,
+        contentDetected: false
+    };
+}
+
+function shouldRefineSetSymbol(result, sourceDimensions) {
+    const geometry = relativeCropGeometry(result.region, sourceDimensions);
+    // Review evidence separates complete symbols from the common failure modes here: a tiny
+    // fragment, a component left of the modern symbol column, or a visually flat crop.
+    return (
+        result.lowConfidence ||
+        geometry.centerX < 0.86 ||
+        geometry.width < 0.05 ||
+        geometry.height < 0.04
+    );
+}
+
+function isAcceptableRefinedSetSymbol(result, sourceDimensions) {
+    if (result.lowConfidence) return false;
+    const geometry = relativeCropGeometry(result.region, sourceDimensions);
+    // Fail closed around the reviewed modern-frame envelope. Wide core-set logos may start a bit
+    // farther left, but neither candidate family may consume the card edge or neighboring rules.
+    const centeredCandidate = geometry.centerX >= 0.87 && geometry.width >= 0.05;
+    const wideLogoCandidate = geometry.centerX >= 0.85 && geometry.width >= 0.13;
+    return (
+        (centeredCandidate || wideLogoCandidate) &&
+        geometry.centerX <= 0.91 &&
+        geometry.centerX + geometry.width / 2 <= 0.98 &&
+        geometry.centerY >= 0.56 &&
+        geometry.centerY <= 0.61 &&
+        geometry.width <= 0.23 &&
+        geometry.height >= 0.035 &&
+        geometry.height <= 0.17
+    );
 }
 
 function expandBounds(bounds, sourceDimensions, options = {}) {
@@ -730,7 +884,7 @@ function assessConfidence(croppedImg) {
  */
 function cropSetSymbolFromImage(img) {
     const search = cropRegion(img, regions.setSymbolSearch);
-    const expectedCenter = {
+    const legacyExpectedCenter = {
         x:
             (regions.setSymbol.leftPercent +
                 regions.setSymbol.widthPercent / 2 -
@@ -742,10 +896,53 @@ function cropSetSymbolFromImage(img) {
                 regions.setSymbolSearch.topPercent) /
             regions.setSymbolSearch.heightPercent
     };
-    const bounds = detectSymbolContentBounds(search.image, expectedCenter);
-    if (!bounds) {
+    const cropOptions = {
+        paddingX: 0.2,
+        paddingY: 0.2,
+        minimumPadding: 3,
+        square: true
+    };
+    const primaryBounds = detectSymbolContentBounds(search.image, legacyExpectedCenter);
+    let result = primaryBounds
+        ? cropDetectedBounds(img, search.region, primaryBounds, cropOptions)
+        : null;
+    if (result) {
+        result = { ...result, ...assessConfidence(result.image) };
+    }
+
+    if (!result || shouldRefineSetSymbol(result, img.bitmap)) {
+        const modernExpectedCenter = {
+            x:
+                (regions.setSymbolExpectedCenter.xPercent - regions.setSymbolSearch.leftPercent) /
+                regions.setSymbolSearch.widthPercent,
+            y:
+                (regions.setSymbolExpectedCenter.yPercent - regions.setSymbolSearch.topPercent) /
+                regions.setSymbolSearch.heightPercent
+        };
+        const refinedBounds = detectSymbolContentBounds(search.image, modernExpectedCenter, {
+            dilationX: 0.018,
+            dilationY: 0.018,
+            minimumPixels: 8,
+            minWidth: 0.06,
+            minHeight: 0.06,
+            maxWidth: 0.68,
+            maxHeight: 0.68,
+            minAspectRatio: 0.45,
+            maxAspectRatio: 3.2,
+            scaleWeight: 1
+        });
+        if (refinedBounds) {
+            const refined = cropDetectedBounds(img, search.region, refinedBounds, cropOptions);
+            const assessedRefined = { ...refined, ...assessConfidence(refined.image) };
+            if (isAcceptableRefinedSetSymbol(assessedRefined, img.bitmap)) {
+                result = assessedRefined;
+            }
+        }
+    }
+
+    if (!result) {
         const legacy = cropRegion(img, regions.setSymbol);
-        return {
+        result = {
             ...legacy,
             searchRegion: search.region,
             contentDetected: false,
@@ -753,13 +950,15 @@ function cropSetSymbolFromImage(img) {
             reason: "set symbol edges were not detected"
         };
     }
-    const result = cropDetectedBounds(img, search.region, bounds, {
-        paddingX: 0.2,
-        paddingY: 0.2,
-        minimumPadding: 3,
-        square: true
-    });
-    return { ...result, ...assessConfidence(result.image) };
+
+    if (shouldUseModernSetSymbolFallback(result, img.bitmap)) {
+        const modernFallback = cropModernSetSymbolFallback(img, search.region);
+        const confidence = assessConfidence(modernFallback.image);
+        if (!confidence.lowConfidence) {
+            return { ...modernFallback, ...confidence };
+        }
+    }
+    return result;
 }
 
 /**

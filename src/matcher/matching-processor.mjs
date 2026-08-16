@@ -17,6 +17,21 @@ const defaultDependencies = Object.freeze({
     writeSetSymbolSnippet: imageProcessing.smartCrop.writeSetSymbolSnippet
 });
 
+const nonstandardSetSymbolLayouts = new Set(["flip", "meld", "planar", "saga", "split"]);
+
+function nonstandardLayoutSummary(cards = []) {
+    const candidates = cards.map(normalizePrintCandidate);
+    if (
+        candidates.length === 0 ||
+        candidates.some(
+            (candidate) => !candidate.layout || !nonstandardSetSymbolLayouts.has(candidate.layout)
+        )
+    ) {
+        return "";
+    }
+    return [...new Set(candidates.map((candidate) => candidate.layout))].sort().join(", ");
+}
+
 const schema = joi.object().keys({
     name: joi.string().required(),
     filePath: joi.string().required(),
@@ -86,6 +101,14 @@ class MatcherProcessor {
     }
 
     async _hashLocalCardAsync() {
+        const layoutSummary = nonstandardLayoutSummary(this.cards);
+        if (layoutSummary) {
+            this.logger.info(
+                `All printings for "${this.name}" use nonstandard layouts (${layoutSummary}); using full card image`
+            );
+            return this._hashFromPathAsync(this.filePath);
+        }
+
         let directory;
         try {
             directory = await this.dependencies.createDirectory();

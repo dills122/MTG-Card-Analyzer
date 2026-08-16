@@ -29,6 +29,10 @@ Set-symbol extraction searches a bounded area around the expected type-line posi
 contrast finds compact symbol-like components, long frame rules are suppressed, and the selected
 icon is centered in a square crop with padding. If no credible component is found, set-symbol
 hashing is marked low-confidence so matching can use the existing full-card fallback.
+When every Scryfall candidate uses a structurally nonstandard `flip`, `meld`, `planar`, `saga`, or
+`split` layout, matching skips the conventional set-symbol crop and starts with the full-card hash.
+Mixed or unknown candidate layouts remain set-symbol-first so metadata cannot broadly reroute normal
+printings or visual treatments such as full-art, borderless, and showcase cards.
 
 Local image input is capped at 32 MiB, 12,000 pixels per axis, and 40 megapixels. JPEG decoding also
 uses a 256 MiB decoder allocation ceiling. Remote set-symbol images are limited to the approved
