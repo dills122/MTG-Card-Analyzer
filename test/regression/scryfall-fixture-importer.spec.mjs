@@ -20,13 +20,47 @@ describe("Scryfall regression fixture importer", () => {
         it("normalizes repeated and comma-separated set codes", () => {
             assert.deepEqual(normalizeImportOptions({ sets: ["fin, dsk", "FIN"], count: "4" }), {
                 setCodes: ["dsk", "fin"],
+                layouts: [],
+                styles: [],
                 releasedAfter: undefined,
                 releasedBefore: undefined,
                 count: 4,
                 maxPages: 20,
                 balanced: false,
+                face: "front",
                 seed: undefined
             });
+        });
+
+        it("normalizes repeatable layout and treatment filters", () => {
+            assert.deepInclude(
+                normalizeImportOptions({
+                    layouts: ["transform, modal_dfc", "TRANSFORM"],
+                    styles: ["textless", "full-art"],
+                    face: "BACK",
+                    count: 4
+                }),
+                {
+                    layouts: ["modal_dfc", "transform"],
+                    styles: ["full-art", "textless"],
+                    face: "back"
+                }
+            );
+        });
+
+        it("rejects invalid layouts, treatments, and face selections", () => {
+            assert.throws(
+                () => normalizeImportOptions({ layouts: ["not a layout"], count: 1 }),
+                "Invalid Scryfall layout"
+            );
+            assert.throws(
+                () => normalizeImportOptions({ styles: ["foil"], count: 1 }),
+                "Invalid Scryfall style"
+            );
+            assert.throws(
+                () => normalizeImportOptions({ layouts: ["transform"], face: "middle", count: 1 }),
+                "face must be one of"
+            );
         });
 
         it("enables balanced selection explicitly", () => {
@@ -118,6 +152,21 @@ describe("Scryfall regression fixture importer", () => {
         assert.equal(url.searchParams.get("unique"), "prints");
         assert.equal(url.searchParams.get("order"), "released");
         assert.equal(url.searchParams.get("dir"), "desc");
+    });
+
+    it("adds layout and treatment filters to the Scryfall search", () => {
+        const url = new URL(
+            buildCardSearchUrl({
+                setCodes: [],
+                layouts: ["modal_dfc", "transform"],
+                styles: ["full-art", "textless"]
+            })
+        );
+
+        assert.equal(
+            url.searchParams.get("q"),
+            "game:paper lang:en (layout:modal_dfc OR layout:transform) (is:fullart OR is:textless)"
+        );
     });
 
     describe("Scryfall HTTP boundary", () => {
@@ -281,6 +330,44 @@ describe("Scryfall regression fixture importer", () => {
         malformed.image_uris.normal = "not a URL";
 
         assert.isUndefined(normalizeCard(malformed));
+    });
+
+    it("selects a requested face image for double-faced cards", () => {
+        const doubleFaced = card({
+            id: "double-faced",
+            name: "Front // Back",
+            set: "mom",
+            collector: "1",
+            layout: "transform"
+        });
+        delete doubleFaced.image_uris;
+        delete doubleFaced.colors;
+        doubleFaced.card_faces = [
+            {
+                colors: ["U"],
+                image_uris: { normal: "https://cards.scryfall.io/normal/front.jpg" }
+            },
+            {
+                colors: ["R"],
+                image_uris: { normal: "https://cards.scryfall.io/normal/back.jpg" }
+            }
+        ];
+
+        assert.equal(
+            normalizeCard(doubleFaced)?.imageUrl,
+            "https://cards.scryfall.io/normal/front.jpg"
+        );
+        assert.deepInclude(normalizeCard(doubleFaced, "back"), {
+            face: "back",
+            colors: ["R"],
+            imageUrl: "https://cards.scryfall.io/normal/back.jpg"
+        });
+        assert.isUndefined(
+            normalizeCard(
+                card({ id: "single", name: "Single", set: "mom", collector: "2" }),
+                "back"
+            )
+        );
     });
 
     it("skips Scryfall cards with empty required metadata", () => {
@@ -463,6 +550,7 @@ describe("Scryfall regression fixture importer", () => {
                 colors: ["U"],
                 layout: "normal",
                 style: "normal",
+                face: "front",
                 referenceImage: "../test-images/scryfall/fin-42-fresh-card-new-id.jpg"
             });
             assert.deepInclude(manifest.cases[1], {
@@ -475,6 +563,7 @@ describe("Scryfall regression fixture importer", () => {
                 name: "Fresh Card",
                 set: "FIN",
                 collectorNumber: "42",
+                scryfallId: "new-id",
                 maxRuntimeMs: 35000
             });
             assert.deepEqual(manifest.cases[1].expected.metadata, {
@@ -482,7 +571,8 @@ describe("Scryfall regression fixture importer", () => {
                 rarity: "common",
                 colors: ["U"],
                 layout: "normal",
-                style: "normal"
+                style: "normal",
+                face: "front"
             });
         });
 

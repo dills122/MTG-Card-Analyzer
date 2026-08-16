@@ -26,6 +26,19 @@ function buildProgram() {
         )
         .option("--released-after <date>", "include prints released on or after YYYY-MM-DD")
         .option("--released-before <date>", "include prints released on or before YYYY-MM-DD")
+        .option(
+            "--layout <layout>",
+            "Scryfall card layout (repeatable or comma-separated)",
+            collect,
+            []
+        )
+        .option(
+            "--style <style>",
+            "treatment: full-art, borderless, showcase, extended-art, or textless (repeatable)",
+            collect,
+            []
+        )
+        .option("--face <side>", "multi-face image side: front or back", "front")
         .requiredOption("-n, --count <number>", "number of new card-print fixtures")
         .option("-m, --manifest <path>", "target regression manifest", defaultManifest)
         .option(
@@ -54,6 +67,9 @@ async function main(argv = process.argv, overrides = {}) {
         imageDirectory: options.imageDirectory,
         existingManifestPaths: options.existingManifest,
         sets: options.set,
+        layouts: options.layout,
+        styles: options.style,
+        face: options.face,
         releasedAfter: options.releasedAfter,
         releasedBefore: options.releasedBefore,
         count: options.count,
@@ -66,20 +82,22 @@ async function main(argv = process.argv, overrides = {}) {
     writeLine(`${result.dryRun ? "Would import" : "Imported"} ${result.added.length} fixture(s):`);
     for (const card of result.added) {
         const coverage = options.balanced
-            ? ` [${card.colorCategory}; ${card.primaryType}; ${card.layout}; ${card.style}; ${card.rarity}]`
+            ? ` [${card.colorCategory}; ${card.primaryType}; ${card.layout}; ${card.style}; ${card.rarity}; ${card.face}]`
             : "";
         writeLine(`- ${card.set}/${card.collectorNumber} ${card.name}${coverage}`);
     }
     if (options.balanced) {
         const uniqueCount = (key) => new Set(result.added.map((card) => card[key])).size;
         writeLine(
-            `Coverage: sets=${uniqueCount("set")}, color categories=${uniqueCount("colorCategory")}, ` +
+            `Coverage: sets=${uniqueCount("set")}, color categories=${uniqueCount(
+                "colorCategory"
+            )}, ` +
                 `types=${uniqueCount("primaryType")}, layouts=${uniqueCount("layout")}, ` +
                 `styles=${uniqueCount("style")}, rarities=${uniqueCount("rarity")}`
         );
     }
     writeLine(`Excluded existing prints: ${result.excludedExisting}`);
-    writeLine(`Skipped cards without usable front JPEGs: ${result.skippedUnprintable}`);
+    writeLine(`Skipped cards without usable ${options.face} JPEGs: ${result.skippedUnprintable}`);
     if (!result.dryRun) {
         writeLine("Fixtures disabled pending OCR result and threshold review.");
     }

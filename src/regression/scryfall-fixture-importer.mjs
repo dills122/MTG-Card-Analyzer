@@ -15,6 +15,9 @@ const MAX_PAGES = 100;
 const MAX_SEED = 2 ** 32 - 1;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SET_CODE_PATTERN = /^[a-z0-9]{2,6}$/i;
+const LAYOUT_PATTERN = /^[a-z][a-z0-9_]*$/;
+const IMPORT_STYLES = ["full-art", "borderless", "showcase", "extended-art", "textless"];
+const IMPORT_FACES = ["front", "back"];
 
 // mulberry32: small, fast, seedable PRNG. Not cryptographic; only used to pick a
 // random Scryfall result page and shuffle candidates so repeated imports over the
@@ -65,6 +68,36 @@ function normalizeSetCodes(values = []) {
     return [...new Set(setCodes)].sort();
 }
 
+function normalizeLayouts(values = []) {
+    const layouts = values
+        .flatMap((value) => String(value).split(","))
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean);
+
+    for (const layout of layouts) {
+        if (!LAYOUT_PATTERN.test(layout)) {
+            throw new Error(`Invalid Scryfall layout: ${layout}`);
+        }
+    }
+    return [...new Set(layouts)].sort();
+}
+
+function normalizeStyles(values = []) {
+    const styles = values
+        .flatMap((value) => String(value).split(","))
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean);
+
+    for (const style of styles) {
+        if (!IMPORT_STYLES.includes(style)) {
+            throw new Error(
+                `Invalid Scryfall style: ${style}. Expected one of: ${IMPORT_STYLES.join(", ")}`
+            );
+        }
+    }
+    return [...new Set(styles)].sort();
+}
+
 function validateSeed(value) {
     if (value === undefined) return undefined;
     const number = Number(value);
@@ -93,6 +126,11 @@ function validateDate(value, label) {
 
 function normalizeImportOptions(options) {
     const setCodes = normalizeSetCodes(options.sets);
+    const layouts = normalizeLayouts(options.layouts);
+    const styles = normalizeStyles(options.styles);
+    const face = String(options.face ?? "front")
+        .trim()
+        .toLowerCase();
     const releasedAfter = validateDate(options.releasedAfter, "released-after");
     const releasedBefore = validateDate(options.releasedBefore, "released-before");
     const hasDates = Boolean(releasedAfter || releasedBefore);
@@ -100,15 +138,22 @@ function normalizeImportOptions(options) {
     if (setCodes.length > 0 && hasDates) {
         throw new Error("Choose set codes or a release-date range, not both");
     }
-    if (setCodes.length === 0 && !hasDates) {
-        throw new Error("Provide --sets or at least one release-date bound");
+    if (setCodes.length === 0 && !hasDates && layouts.length === 0 && styles.length === 0) {
+        throw new Error(
+            "Provide --sets, a release-date bound, or at least one layout/style filter"
+        );
     }
     if (releasedAfter && releasedBefore && releasedAfter > releasedBefore) {
         throw new Error("released-after must be on or before released-before");
     }
+    if (!IMPORT_FACES.includes(face)) {
+        throw new Error(`face must be one of: ${IMPORT_FACES.join(", ")}`);
+    }
 
     return {
         setCodes,
+        layouts,
+        styles,
         releasedAfter,
         releasedBefore,
         count: parsePositiveInteger(options.count, "count", MAX_COUNT),
@@ -118,6 +163,7 @@ function normalizeImportOptions(options) {
             MAX_PAGES
         ),
         balanced: options.balanced === true,
+        face,
         seed: validateSeed(options.seed)
     };
 }
@@ -153,11 +199,11 @@ function manifestPrintIdentities(manifest) {
     return new Set(manifest.catalog.flatMap(printIdentities));
 }
 
-function hasEnoughNewPrintableCards(cards, existing, count) {
+function hasEnoughNewPrintableCards(cards, existing, count, face = "front") {
     const selected = new Set();
     let total = 0;
     for (const rawCard of cards) {
-        const card = normalizeCard(rawCard);
+        const card = normalizeCard(rawCard, face);
         if (!card) continue;
         const identities = printIdentities(card);
         if (identities.some((identity) => existing.has(identity) || selected.has(identity))) {
@@ -180,7 +226,7 @@ function slugify(value) {
     return slug || "card";
 }
 
-function normalizeCard(card) {
+function normalizeCard(card, face = "front") {
     const requiredStrings = [
         card?.id,
         card?.name,
@@ -196,9 +242,14 @@ function normalizeCard(card) {
     ) {
         return undefined;
     }
-    const imageUrl = imageUrlForCard(card);
+    const imageUrl = imageUrlForCard(card, face);
     if (!imageUrl) return undefined;
-    const coverage = cardCoverage(card);
+    const selectedFace = card.card_faces?.[face === "back" ? 1 : 0];
+    const coverage = cardCoverage({
+        ...card,
+        colors: card.colors ?? selectedFace?.colors,
+        type_line: card.type_line ?? selectedFace?.type_line
+    });
     return {
         id: card.id,
         name: card.name,
@@ -207,6 +258,7 @@ function normalizeCard(card) {
         collectorNumber: card.collector_number,
         ...coverage,
         rarity: typeof card.rarity === "string" ? card.rarity : "unknown",
+        face,
         apiUrl: typeof card.scryfall_uri === "string" ? card.scryfall_uri : card.uri,
         imageUrl
     };
@@ -231,12 +283,15 @@ function fixtureEntries(card, manifestPath, imagePath) {
             colors: card.colors,
             layout: card.layout,
             style: card.style,
+            face: card.face,
             referenceImage: relativeImage,
             apiUrl: card.apiUrl
         },
         fixture: {
             enabled: false,
-            id: `${slugify(card.set)}-${slugify(card.collectorNumber)}-${slugify(card.name)}-${slugify(card.id.slice(0, 8))}-scryfall`,
+            id: `${slugify(card.set)}-${slugify(card.collectorNumber)}-${slugify(
+                card.name
+            )}-${slugify(card.id.slice(0, 8))}${card.face === "back" ? "-back" : ""}-scryfall`,
             image: relativeImage,
             quality: "clean-scan",
             notes: "Imported from Scryfall; review OCR output and thresholds before enabling",
@@ -244,12 +299,14 @@ function fixtureEntries(card, manifestPath, imagePath) {
                 name: card.name,
                 set: card.set,
                 collectorNumber: card.collectorNumber,
+                scryfallId: card.id,
                 metadata: {
                     typeLine: card.typeLine,
                     rarity: card.rarity,
                     colors: card.colors,
                     layout: card.layout,
-                    style: card.style
+                    style: card.style,
+                    face: card.face
                 },
                 minNameScore: 0.7,
                 maxPrintCandidates: 1,
@@ -315,7 +372,7 @@ async function importScryfallFixtures(options, overrides = {}) {
     };
     if (!selection.balanced) {
         fetchOptions.shouldStop = (collectedCards) =>
-            hasEnoughNewPrintableCards(collectedCards, existing, selection.count);
+            hasEnoughNewPrintableCards(collectedCards, existing, selection.count, selection.face);
     }
     let cards = await fetchCardPages(searchUrl, fetchOptions);
 
@@ -324,7 +381,7 @@ async function importScryfallFixtures(options, overrides = {}) {
     const budgetRemains = pagesUsed < selection.maxPages;
     const stillWant = selection.balanced
         ? budgetRemains
-        : !hasEnoughNewPrintableCards(cards, existing, selection.count);
+        : !hasEnoughNewPrintableCards(cards, existing, selection.count, selection.face);
     if (ranOffTheEnd && budgetRemains && stillWant) {
         const priorCards = cards;
         const wrapOptions = {
@@ -337,7 +394,8 @@ async function importScryfallFixtures(options, overrides = {}) {
                 hasEnoughNewPrintableCards(
                     [...priorCards, ...collectedCards],
                     existing,
-                    selection.count
+                    selection.count,
+                    selection.face
                 );
         }
         const wrapped = await fetchCardPages(searchUrl, wrapOptions);
@@ -350,7 +408,7 @@ async function importScryfallFixtures(options, overrides = {}) {
     let skippedUnprintable = 0;
 
     for (const rawCard of cards) {
-        const card = normalizeCard(rawCard);
+        const card = normalizeCard(rawCard, selection.face);
         if (!card) {
             skippedUnprintable += 1;
             continue;
@@ -391,6 +449,7 @@ async function importScryfallFixtures(options, overrides = {}) {
         primaryType: card.primaryType,
         layout: card.layout,
         style: card.style,
+        face: card.face,
         rarity: card.rarity
     }));
     if (options.dryRun) {
@@ -404,7 +463,9 @@ async function importScryfallFixtures(options, overrides = {}) {
     try {
         const prepared = [];
         for (const card of selected) {
-            const filename = `${slugify(card.set)}-${slugify(card.collectorNumber)}-${slugify(card.name)}-${slugify(card.id.slice(0, 8))}.jpg`;
+            const filename = `${slugify(card.set)}-${slugify(card.collectorNumber)}-${slugify(
+                card.name
+            )}-${slugify(card.id.slice(0, 8))}${card.face === "back" ? "-back" : ""}.jpg`;
             const temporaryImage = path.join(temporaryDirectory, filename);
             const finalImage = path.join(imageDirectory, filename);
             if (await fileExists(finalImage)) {
@@ -446,7 +507,9 @@ export {
     manifestPrintIdentities,
     normalizeCard,
     normalizeImportOptions,
+    normalizeLayouts,
     normalizeSetCodes,
+    normalizeStyles,
     printIdentities,
     readManifestJson
 };

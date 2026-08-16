@@ -28,6 +28,19 @@ function buildCardSearchUrl(options) {
         if (options.releasedAfter) filters.push(`date>=${options.releasedAfter}`);
         if (options.releasedBefore) filters.push(`date<=${options.releasedBefore}`);
     }
+    if (options.layouts?.length > 0) {
+        filters.push(`(${options.layouts.map((layout) => `layout:${layout}`).join(" OR ")})`);
+    }
+    if (options.styles?.length > 0) {
+        const styleFilters = {
+            "full-art": "is:fullart",
+            borderless: "border:borderless",
+            showcase: "frame:showcase",
+            "extended-art": "frame:extendedart",
+            textless: "is:textless"
+        };
+        filters.push(`(${options.styles.map((style) => styleFilters[style]).join(" OR ")})`);
+    }
 
     const url = new URL("/cards/search", SCRYFALL_API_ORIGIN);
     url.searchParams.set("q", filters.join(" "));
@@ -50,8 +63,12 @@ function trustedUrl(value, expectedOrigin, label) {
     return url;
 }
 
-function imageUrlForCard(card) {
-    const imageUrl = card?.image_uris?.normal;
+function imageUrlForCard(card, face = "front") {
+    const faceIndex = face === "back" ? 1 : 0;
+    const imageUrl =
+        face === "back"
+            ? card?.card_faces?.[faceIndex]?.image_uris?.normal
+            : card?.image_uris?.normal || card?.card_faces?.[faceIndex]?.image_uris?.normal;
     if (typeof imageUrl !== "string") return undefined;
     let parsed;
     try {
