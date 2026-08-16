@@ -3384,6 +3384,214 @@
             "style": "normal",
             "referenceImage": "../../../test-images/regression/scryfall/lci-240-sovereign-okinec-ahau-70c75aa7.jpg",
             "apiUrl": "https://scryfall.com/card/lci/240/sovereign-okinec-ahau?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "0ee40c4b-2ca3-4cda-bc9e-451455c17adc",
+            "name": "Pyretic Prankster // Glistening Goremonger",
+            "set": "MOM",
+            "setName": "March of the Machine",
+            "collectorNumber": "157",
+            "typeLine": "Creature — Devil // Creature — Phyrexian Devil",
+            "rarity": "common",
+            "colors": ["R"],
+            "layout": "transform",
+            "style": "normal",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/mom-157-pyretic-prankster-glistening-goremonger-0ee40c4b.jpg",
+            "apiUrl": "https://scryfall.com/card/mom/157/pyretic-prankster-glistening-goremonger?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "c0ef6737-8e85-42ca-8ee6-6a34f9462de3",
+            "name": "Invasion of Vryn // Overloaded Mage-Ring",
+            "set": "MOM",
+            "setName": "March of the Machine",
+            "collectorNumber": "64",
+            "typeLine": "Battle — Siege // Artifact",
+            "rarity": "uncommon",
+            "colors": ["U"],
+            "layout": "transform",
+            "style": "normal",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/mom-64-invasion-of-vryn-overloaded-mage-ring-c0ef6737.jpg",
+            "apiUrl": "https://scryfall.com/card/mom/64/invasion-of-vryn-overloaded-mage-ring?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "e4a4a53e-58cb-4c4a-8396-590e41227ef8",
+            "name": "Jin-Gitaxias // The Great Synthesis",
+            "set": "MOM",
+            "setName": "March of the Machine",
+            "collectorNumber": "339",
+            "typeLine": "Legendary Creature — Phyrexian Praetor // Enchantment — Saga",
+            "rarity": "mythic",
+            "colors": ["U"],
+            "layout": "transform",
+            "style": "full-art",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/mom-339-jin-gitaxias-the-great-synthesis-e4a4a53e.jpg",
+            "apiUrl": "https://scryfall.com/card/mom/339/jin-gitaxias-the-great-synthesis?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "90df87c1-59df-4244-8653-15e7f13cdacc",
+            "name": "Turntimber Symbiosis // Turntimber, Serpentine Wood",
+            "set": "ZNR",
+            "setName": "Zendikar Rising",
+            "collectorNumber": "364",
+            "typeLine": "Sorcery // Land",
+            "rarity": "mythic",
+            "colors": ["G"],
+            "layout": "modal_dfc",
+            "style": "extended-art",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/znr-364-turntimber-symbiosis-turntimber-serpentine-wood-90df87c1.jpg",
+            "apiUrl": "https://scryfall.com/card/znr/364/turntimber-symbiosis-turntimber-serpentine-wood?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "c697548f-925b-405e-970a-4e78067d5c8e",
+            "name": "Jorn, God of Winter // Kaldring, the Rimestaff",
+            "set": "KHM",
+            "setName": "Kaldheim",
+            "collectorNumber": "179",
+            "typeLine": "Legendary Snow Creature — God // Legendary Snow Artifact",
+            "rarity": "rare",
+            "colors": ["G"],
+            "layout": "modal_dfc",
+            "style": "normal",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/khm-179-jorn-god-of-winter-kaldring-the-rimestaff-c697548f.jpg",
+            "apiUrl": "https://scryfall.com/card/khm/179/jorn-god-of-winter-kaldring-the-rimestaff?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "8bb62bd5-79e5-4af0-aafd-c1bd53765c67",
+            "name": "Besieged Viking Village",
+            "set": "WHO",
+            "setName": "Doctor Who",
+            "collectorNumber": "570",
+            "typeLine": "Plane — Earth",
+            "rarity": "common",
+            "colors": [],
+            "layout": "planar",
+            "style": "normal",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/who-570-besieged-viking-village-8bb62bd5.jpg",
+            "apiUrl": "https://scryfall.com/card/who/570/besieged-viking-village?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "6140a08a-be62-460a-a85a-5caa3d88bf29",
+            "name": "Nothing Can Stop Me Now",
+            "set": "OARC",
+            "setName": "Archenemy Schemes",
+            "collectorNumber": "33★",
+            "typeLine": "Ongoing Scheme",
+            "rarity": "common",
+            "colors": [],
+            "layout": "scheme",
+            "style": "normal",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/oarc-33-nothing-can-stop-me-now-6140a08a.jpg",
+            "apiUrl": "https://scryfall.com/card/oarc/33%E2%98%85/nothing-can-stop-me-now?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "8a20f78f-32c6-4ba4-8389-1fde32ea42e4",
+            "name": "Curious Pair // Treats to Share",
+            "set": "ELD",
+            "setName": "Throne of Eldraine",
+            "collectorNumber": "296",
+            "typeLine": "Creature — Human Peasant // Sorcery — Adventure",
+            "rarity": "common",
+            "colors": ["G"],
+            "layout": "adventure",
+            "style": "showcase",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/eld-296-curious-pair-treats-to-share-8a20f78f.jpg",
+            "apiUrl": "https://scryfall.com/card/eld/296/curious-pair-treats-to-share?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "9cf54062-7b5b-4e46-ae1e-fab7e419a9fa",
+            "name": "Scavenger Regent // Exude Toxin // Scavenger Regent",
+            "set": "TDM",
+            "setName": "Tarkir: Dragonstorm",
+            "collectorNumber": "379",
+            "typeLine": "Creature — Dragon",
+            "rarity": "rare",
+            "colors": ["B"],
+            "layout": "reversible_card",
+            "style": "full-art",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/tdm-379-scavenger-regent-exude-toxin-scavenger-regent-9cf54062.jpg",
+            "apiUrl": "https://scryfall.com/card/tdm/379/scavenger-regent-exude-toxin-scavenger-regent?utm_source=api"
+        },
+        {
+            "enabled": false,
+            "scryfallId": "2f68b4de-271b-415f-ad8f-104981bb12ab",
+            "name": "Tevesh Szat, Doom of Fools",
+            "set": "CMR",
+            "setName": "Commander Legends",
+            "collectorNumber": "512",
+            "typeLine": "Legendary Planeswalker — Szat",
+            "rarity": "mythic",
+            "colors": ["B"],
+            "layout": "normal",
+            "style": "full-art",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/cmr-512-tevesh-szat-doom-of-fools-2f68b4de.jpg",
+            "apiUrl": "https://scryfall.com/card/cmr/512/tevesh-szat-doom-of-fools?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "876b7a46-02ca-4c67-90d6-96b2de5e26b4",
+            "name": "Pouncing Shoreshark",
+            "set": "PLST",
+            "setName": "The List",
+            "collectorNumber": "IKO-285",
+            "typeLine": "Creature — Shark Beast",
+            "rarity": "uncommon",
+            "colors": ["U"],
+            "layout": "mutate",
+            "style": "showcase",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/plst-iko-285-pouncing-shoreshark-876b7a46.jpg",
+            "apiUrl": "https://scryfall.com/card/plst/IKO-285/pouncing-shoreshark?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "ff204024-20a5-4bb9-82b6-f6b4337efd60",
+            "name": "Lightning Bolt",
+            "set": "PF19",
+            "setName": "MagicFest 2019",
+            "collectorNumber": "1",
+            "typeLine": "Instant",
+            "rarity": "rare",
+            "colors": ["R"],
+            "layout": "normal",
+            "style": "textless",
+            "face": "front",
+            "referenceImage": "../../../test-images/regression/scryfall/pf19-1-lightning-bolt-ff204024.jpg",
+            "apiUrl": "https://scryfall.com/card/pf19/1/lightning-bolt?utm_source=api"
+        },
+        {
+            "enabled": true,
+            "scryfallId": "a622635e-482d-4621-8874-3945af74e9ca",
+            "name": "Village Watch // Village Reavers",
+            "set": "MID",
+            "setName": "Innistrad: Midnight Hunt",
+            "collectorNumber": "297",
+            "typeLine": "Creature — Human Werewolf // Creature — Werewolf",
+            "rarity": "uncommon",
+            "colors": ["R"],
+            "layout": "transform",
+            "style": "showcase",
+            "face": "back",
+            "referenceImage": "../../../test-images/regression/scryfall/mid-297-village-watch-village-reavers-a622635e-back.jpg",
+            "apiUrl": "https://scryfall.com/card/mid/297/village-watch-village-reavers?utm_source=api"
         }
     ],
     "cases": [
@@ -8569,6 +8777,318 @@
                     "colors": ["W", "G"],
                     "layout": "normal",
                     "style": "normal"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "mom-157-pyretic-prankster-glistening-goremonger-0ee40c4b-scryfall",
+            "image": "../../../test-images/regression/scryfall/mom-157-pyretic-prankster-glistening-goremonger-0ee40c4b.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Pyretic Prankster // Glistening Goremonger",
+                "set": "MOM",
+                "collectorNumber": "157",
+                "scryfallId": "0ee40c4b-2ca3-4cda-bc9e-451455c17adc",
+                "metadata": {
+                    "typeLine": "Creature — Devil // Creature — Phyrexian Devil",
+                    "rarity": "common",
+                    "colors": ["R"],
+                    "layout": "transform",
+                    "style": "normal",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "mom-64-invasion-of-vryn-overloaded-mage-ring-c0ef6737-scryfall",
+            "image": "../../../test-images/regression/scryfall/mom-64-invasion-of-vryn-overloaded-mage-ring-c0ef6737.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Invasion of Vryn // Overloaded Mage-Ring",
+                "set": "MOM",
+                "collectorNumber": "64",
+                "scryfallId": "c0ef6737-8e85-42ca-8ee6-6a34f9462de3",
+                "metadata": {
+                    "typeLine": "Battle — Siege // Artifact",
+                    "rarity": "uncommon",
+                    "colors": ["U"],
+                    "layout": "transform",
+                    "style": "normal",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "mom-339-jin-gitaxias-the-great-synthesis-e4a4a53e-scryfall",
+            "image": "../../../test-images/regression/scryfall/mom-339-jin-gitaxias-the-great-synthesis-e4a4a53e.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Jin-Gitaxias // The Great Synthesis",
+                "set": "MOM",
+                "collectorNumber": "339",
+                "scryfallId": "e4a4a53e-58cb-4c4a-8396-590e41227ef8",
+                "metadata": {
+                    "typeLine": "Legendary Creature — Phyrexian Praetor // Enchantment — Saga",
+                    "rarity": "mythic",
+                    "colors": ["U"],
+                    "layout": "transform",
+                    "style": "full-art",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "znr-364-turntimber-symbiosis-turntimber-serpentine-wood-90df87c1-scryfall",
+            "image": "../../../test-images/regression/scryfall/znr-364-turntimber-symbiosis-turntimber-serpentine-wood-90df87c1.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Turntimber Symbiosis // Turntimber, Serpentine Wood",
+                "set": "ZNR",
+                "collectorNumber": "364",
+                "scryfallId": "90df87c1-59df-4244-8653-15e7f13cdacc",
+                "metadata": {
+                    "typeLine": "Sorcery // Land",
+                    "rarity": "mythic",
+                    "colors": ["G"],
+                    "layout": "modal_dfc",
+                    "style": "extended-art",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "khm-179-jorn-god-of-winter-kaldring-the-rimestaff-c697548f-scryfall",
+            "image": "../../../test-images/regression/scryfall/khm-179-jorn-god-of-winter-kaldring-the-rimestaff-c697548f.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Jorn, God of Winter // Kaldring, the Rimestaff",
+                "set": "KHM",
+                "collectorNumber": "179",
+                "scryfallId": "c697548f-925b-405e-970a-4e78067d5c8e",
+                "metadata": {
+                    "typeLine": "Legendary Snow Creature — God // Legendary Snow Artifact",
+                    "rarity": "rare",
+                    "colors": ["G"],
+                    "layout": "modal_dfc",
+                    "style": "normal",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "who-570-besieged-viking-village-8bb62bd5-scryfall",
+            "image": "../../../test-images/regression/scryfall/who-570-besieged-viking-village-8bb62bd5.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Besieged Viking Village",
+                "set": "WHO",
+                "collectorNumber": "570",
+                "scryfallId": "8bb62bd5-79e5-4af0-aafd-c1bd53765c67",
+                "metadata": {
+                    "typeLine": "Plane — Earth",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "planar",
+                    "style": "normal",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "oarc-33-nothing-can-stop-me-now-6140a08a-scryfall",
+            "image": "../../../test-images/regression/scryfall/oarc-33-nothing-can-stop-me-now-6140a08a.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Nothing Can Stop Me Now",
+                "set": "OARC",
+                "collectorNumber": "33★",
+                "scryfallId": "6140a08a-be62-460a-a85a-5caa3d88bf29",
+                "metadata": {
+                    "typeLine": "Ongoing Scheme",
+                    "rarity": "common",
+                    "colors": [],
+                    "layout": "scheme",
+                    "style": "normal",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "eld-296-curious-pair-treats-to-share-8a20f78f-scryfall",
+            "image": "../../../test-images/regression/scryfall/eld-296-curious-pair-treats-to-share-8a20f78f.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Curious Pair // Treats to Share",
+                "set": "ELD",
+                "collectorNumber": "296",
+                "scryfallId": "8a20f78f-32c6-4ba4-8389-1fde32ea42e4",
+                "metadata": {
+                    "typeLine": "Creature — Human Peasant // Sorcery — Adventure",
+                    "rarity": "common",
+                    "colors": ["G"],
+                    "layout": "adventure",
+                    "style": "showcase",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "tdm-379-scavenger-regent-exude-toxin-scavenger-regent-9cf54062-scryfall",
+            "image": "../../../test-images/regression/scryfall/tdm-379-scavenger-regent-exude-toxin-scavenger-regent-9cf54062.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Scavenger Regent // Exude Toxin // Scavenger Regent",
+                "set": "TDM",
+                "collectorNumber": "379",
+                "scryfallId": "9cf54062-7b5b-4e46-ae1e-fab7e419a9fa",
+                "metadata": {
+                    "typeLine": "Creature — Dragon",
+                    "rarity": "rare",
+                    "colors": ["B"],
+                    "layout": "reversible_card",
+                    "style": "full-art",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": false,
+            "id": "cmr-512-tevesh-szat-doom-of-fools-2f68b4de-scryfall",
+            "image": "../../../test-images/regression/scryfall/cmr-512-tevesh-szat-doom-of-fools-2f68b4de.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; disabled after OCR returned no normalized title text",
+            "expected": {
+                "name": "Tevesh Szat, Doom of Fools",
+                "set": "CMR",
+                "collectorNumber": "512",
+                "scryfallId": "2f68b4de-271b-415f-ad8f-104981bb12ab",
+                "metadata": {
+                    "typeLine": "Legendary Planeswalker — Szat",
+                    "rarity": "mythic",
+                    "colors": ["B"],
+                    "layout": "normal",
+                    "style": "full-art",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "plst-iko-285-pouncing-shoreshark-876b7a46-scryfall",
+            "image": "../../../test-images/regression/scryfall/plst-iko-285-pouncing-shoreshark-876b7a46.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Pouncing Shoreshark",
+                "set": "PLST",
+                "collectorNumber": "IKO-285",
+                "scryfallId": "876b7a46-02ca-4c67-90d6-96b2de5e26b4",
+                "metadata": {
+                    "typeLine": "Creature — Shark Beast",
+                    "rarity": "uncommon",
+                    "colors": ["U"],
+                    "layout": "mutate",
+                    "style": "showcase",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "pf19-1-lightning-bolt-ff204024-scryfall",
+            "image": "../../../test-images/regression/scryfall/pf19-1-lightning-bolt-ff204024.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Lightning Bolt",
+                "set": "PF19",
+                "collectorNumber": "1",
+                "scryfallId": "ff204024-20a5-4bb9-82b6-f6b4337efd60",
+                "metadata": {
+                    "typeLine": "Instant",
+                    "rarity": "rare",
+                    "colors": ["R"],
+                    "layout": "normal",
+                    "style": "textless",
+                    "face": "front"
+                },
+                "minNameScore": 0.7,
+                "maxPrintCandidates": 1,
+                "maxRuntimeMs": 35000
+            }
+        },
+        {
+            "enabled": true,
+            "id": "mid-297-village-watch-village-reavers-a622635e-back-scryfall",
+            "image": "../../../test-images/regression/scryfall/mid-297-village-watch-village-reavers-a622635e-back.jpg",
+            "quality": "clean-scan",
+            "notes": "Reviewed edge-layout cohort; passed cold-cache OCR, compound-name, and exact-print gates",
+            "expected": {
+                "name": "Village Watch // Village Reavers",
+                "set": "MID",
+                "collectorNumber": "297",
+                "scryfallId": "a622635e-482d-4621-8874-3945af74e9ca",
+                "metadata": {
+                    "typeLine": "Creature — Human Werewolf // Creature — Werewolf",
+                    "rarity": "uncommon",
+                    "colors": ["R"],
+                    "layout": "transform",
+                    "style": "showcase",
+                    "face": "back"
                 },
                 "minNameScore": 0.7,
                 "maxPrintCandidates": 1,

@@ -206,6 +206,17 @@ Unfinity Attraction, and a manga showcase treatment. See
 [the missing-set expansion report](regression-fixture-missing-set-expansion-2026-08.md) for the
 selection policy, exact cards, and edge-case observations.
 
+### Edge-layout expansion: 2026-08-16
+
+Twelve reviewed Scryfall prints add blocking coverage for transform, modal double-faced,
+Adventure, reversible, Plane, Scheme, full-art, showcase, mutate, and textless layouts. The cohort
+includes a rotated Battle title and a true back-face input. A thirteenth full-art planeswalker
+remains disabled because it produced no normalized OCR text; its expectation was not weakened.
+
+The enabled corpus now contains 186 cases. See
+[the edge-layout expansion report](regression-fixture-edge-layout-expansion-2026-08.md) for the
+reproducible importer seeds, selected cards, and targeted results.
+
 ### Pinned upstream bakeoff: 2026-08-08
 
 The first controlled bakeoff kept Tesseract.js at 3.0.3 and ran all 79 enabled fixtures sequentially
@@ -371,8 +382,8 @@ become available.
 
 ### Import clean scans from Scryfall
 
-Use the importer to select recent card prints, download Scryfall's normal front JPEG, and append
-matching catalog and clean-scan case entries:
+Use the importer to select card prints, download a Scryfall JPEG, and append matching catalog and
+clean-scan case entries:
 
 ```bash
 # Preview newest prints from several sets without writing files
@@ -391,6 +402,19 @@ pnpm fixtures:import \
     --released-before 2025-06-30 \
     --count 10
 
+# Select only unusual layouts; repeated values are ORed within the layout filter
+pnpm fixtures:import \
+    --layout transform \
+    --layout modal_dfc \
+    --layout adventure \
+    --count 8 \
+    --balanced \
+    --dry-run
+
+# Select unusual treatments, or use the back image of a double-faced card
+pnpm fixtures:import --style full-art --style textless --count 4 --dry-run
+pnpm fixtures:import --set mid --layout transform --face back --count 2 --dry-run
+
 # Exclude prints tracked by another regression manifest too
 pnpm fixtures:import \
     --set fin \
@@ -401,8 +425,12 @@ pnpm fixtures:import \
 pnpm fixtures:import --set fin --set dsk --count 6 --seed 20260808 --dry-run
 ```
 
-Choose either one or more `--set` values or release-date bounds. Set values may be repeated or
-comma-separated. Results use unique printings ordered newest-first within each fetched result page,
+Choose set values, release-date bounds, layout filters, treatment filters, or a bounded combination.
+Set, layout, and treatment values may be repeated or comma-separated. Repeated values are ORed
+within their category; categories are ANDed together. Supported treatment values are `full-art`,
+`borderless`, `showcase`, `extended-art`, and `textless`. `--face back` selects the second image of
+a multi-face print and skips cards without one; the default is `front`. Results use unique printings
+ordered newest-first within each fetched result page,
 but each run lands on a random page of the full result set (wrapping back to page one if the random
 start runs off the end) and shuffles the candidate pool before selecting. This is deliberate: a wide
 `--set` list or release-date range can span thousands of prints, and always starting at page one
@@ -418,8 +446,9 @@ name already selected in that run.
 The target manifest's catalog is always used as the existing-card list; each repeatable
 `--existing-manifest` adds another catalog to that exclusion set. Prints match by Scryfall ID when
 available and by set plus collector number, so older manifest entries without an ID are still
-excluded. New catalog and expected-metadata entries retain the selected card's colors, layout, and
-derived treatment style so the coverage intent remains visible after import.
+excluded. New catalog and expectations retain the exact Scryfall ID, selected face, card colors,
+layout, and derived treatment style so the coverage intent and print identity remain visible after
+import.
 
 The command writes images under `test-images/regression/scryfall/` and atomically updates
 `test/regression/fixtures/manifest.json`. Imported catalog and case entries are disabled to preserve
@@ -436,9 +465,9 @@ The importer accepts at most 100 cards per run, follows at most 20 result pages 
 randomly chosen start page, spaces API page requests by 125 ms, and rejects oversized or non-JPEG
 downloads. Newest-first mode stops as soon as enough unused printable cards are found; balanced mode
 reads the bounded result pool before choosing. Use `--max-pages` only when a selection contains many
-already tracked or multi-face prints, or when a small `--set` list needs a wider search window to
-wrap all the way around. Scryfall asks API clients to stay below 10 requests per second and to send
-identifying request headers; see their
+already tracked or face-incompatible prints, or when a small `--set` list needs a wider search
+window to wrap all the way around. Scryfall asks API clients to stay below 10 requests per second and
+to send identifying request headers; see their
 [API access guidance](https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17).
 
 ### Add a captured image manually
