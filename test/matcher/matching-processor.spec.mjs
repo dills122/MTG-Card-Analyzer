@@ -312,6 +312,70 @@ describe("MatcherProcessor::", () => {
         });
     });
 
+    it("uses the full card when all candidate printings have nonstandard layouts", async () => {
+        const processHashesInstance = {
+            compareDbHashes: sandbox.stub().resolves([]),
+            compareRemoteImages: sandbox.stub().resolves([{ setName: "DSK" }])
+        };
+        sandbox.stub(dependencies, "searchPrintings").resolves([
+            { set_name: "DSK", layout: "split" },
+            { set_name: "DSK Promos", layout: "split" }
+        ]);
+        const hashStub = sandbox.stub(dependencies, "hashImage").resolves("FULL_CARD_HASH");
+        const createDirectoryStub = sandbox.stub(dependencies, "createDirectory");
+        const cropStub = sandbox.stub(dependencies, "writeSetSymbolSnippet");
+        const processHashesStub = sandbox
+            .stub(dependencies.processHashes, "create")
+            .returns(processHashesInstance);
+        const info = sandbox.stub();
+
+        const result = await create({
+            name: "Underwater Tunnel // Slimy Aquarium",
+            filePath: "/tmp/room.jpg",
+            logger: { info, error: sandbox.stub() }
+        }).executeAsync();
+
+        assert.deepEqual(result, ["DSK"]);
+        assert.isTrue(hashStub.calledOnceWithExactly("/tmp/room.jpg"));
+        assert.isTrue(createDirectoryStub.notCalled);
+        assert.isTrue(cropStub.notCalled);
+        assert.equal(processHashesStub.firstCall.args[0].hashMode, "full-card");
+        assert.isTrue(info.calledWithMatch(sinon.match(/nonstandard layouts \(split\)/)));
+    });
+
+    it("keeps set-symbol hashing when candidate layouts do not all support full-card routing", async () => {
+        const processHashesInstance = {
+            compareDbHashes: sandbox.stub().resolves([]),
+            compareRemoteImages: sandbox.stub().resolves([{ setName: "MIX" }])
+        };
+        sandbox.stub(dependencies, "searchPrintings").resolves([
+            { set_name: "MIX", layout: "normal" },
+            { set_name: "MIX Promos", layout: "split" }
+        ]);
+        const hashStub = sandbox.stub(dependencies, "hashImage").resolves("SET_SYMBOL_HASH");
+        const createDirectoryStub = sandbox
+            .stub(dependencies, "createDirectory")
+            .resolves("/tmp/set-symbol-dir");
+        const cropStub = sandbox
+            .stub(dependencies, "writeSetSymbolSnippet")
+            .resolves("/tmp/set-symbol-dir/set-symbol.png");
+        sandbox.stub(dependencies, "cleanUpFiles").resolves();
+        const processHashesStub = sandbox
+            .stub(dependencies.processHashes, "create")
+            .returns(processHashesInstance);
+
+        const result = await create({
+            name: "Mixed Layout Example",
+            filePath: "/tmp/mixed.jpg"
+        }).executeAsync();
+
+        assert.deepEqual(result, ["MIX"]);
+        assert.isTrue(createDirectoryStub.calledOnce);
+        assert.isTrue(cropStub.calledOnce);
+        assert.isTrue(hashStub.calledOnceWithExactly("/tmp/set-symbol-dir/set-symbol.png"));
+        assert.equal(processHashesStub.firstCall.args[0].hashMode, "set-symbol-content-v3");
+    });
+
     it("retries with full-card fingerprints when set-symbol matching is inconclusive", async () => {
         const setSymbolHasher = {
             compareDbHashes: sandbox.stub().resolves([]),
@@ -352,7 +416,7 @@ describe("MatcherProcessor::", () => {
         assert.deepEqual(result, ["M21"]);
         assert.isTrue(hashStub.calledTwice);
         assert.equal(hashStub.secondCall.args[0], "/tmp/pacifism.jpg");
-        assert.equal(processHashesStub.firstCall.args[0].hashMode, "set-symbol-content-v1");
+        assert.equal(processHashesStub.firstCall.args[0].hashMode, "set-symbol-content-v3");
         assert.equal(processHashesStub.secondCall.args[0].hashMode, "full-card");
         assert.equal(processHashesStub.secondCall.args[0].localHash, "FULL_CARD_HASH");
     });

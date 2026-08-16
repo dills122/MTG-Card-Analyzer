@@ -169,6 +169,83 @@ describe("Smart crop::", () => {
             assert.isBelow(result.region.width, search.width / 2);
         });
 
+        it("prefers a full modern symbol over a small legacy-center distractor", () => {
+            const img = new Jimp({ width: 600, height: 800, color: 0xb8b8b8ff });
+            const search = cropRegion(img, regions.setSymbolSearch).region;
+            const distractor = {
+                left: search.left + 66,
+                top: search.top + 51,
+                width: 9,
+                height: 10
+            };
+            fillRectangle(
+                img,
+                distractor.left,
+                distractor.top,
+                distractor.width,
+                distractor.height,
+                0x151515ff
+            );
+            const icon = {
+                left: search.left + 88,
+                top: search.top + 40,
+                width: 34,
+                height: 32
+            };
+            fillRectangle(img, icon.left, icon.top, 15, icon.height, 0x151515ff);
+            fillRectangle(img, icon.left + 19, icon.top, 15, icon.height, 0x151515ff);
+
+            const result = cropSetSymbolFromImage(img);
+
+            assert.isTrue(result.contentDetected);
+            assert.isFalse(result.lowConfidence);
+            assert.isBelow(result.region.left, icon.left);
+            assert.isAbove(result.region.left + result.region.width, icon.left + icon.width);
+            assert.isBelow(result.region.top, icon.top);
+            assert.isAbove(result.region.top + result.region.height, icon.top + icon.height);
+            assert.isAtLeast(result.region.left, distractor.left + distractor.width);
+        });
+
+        it("joins a wide multipart set logo into one crop", () => {
+            const img = new Jimp({ width: 600, height: 800, color: 0xd0d0d0ff });
+            const search = cropRegion(img, regions.setSymbolSearch).region;
+            const logo = {
+                left: search.left + 82,
+                top: search.top + 43,
+                width: 32,
+                height: 26
+            };
+            fillRectangle(img, logo.left, logo.top, 14, logo.height, 0x202020ff);
+            fillRectangle(img, logo.left + 18, logo.top, 14, logo.height, 0x202020ff);
+
+            const result = cropSetSymbolFromImage(img);
+
+            assert.isTrue(result.contentDetected);
+            assert.isFalse(result.lowConfidence);
+            assert.isBelow(result.region.left, logo.left);
+            assert.isAbove(result.region.left + result.region.width, logo.left + logo.width);
+            assert.isBelow(result.region.top, logo.top);
+            assert.isAbove(result.region.top + result.region.height, logo.top + logo.height);
+        });
+
+        it("uses a bounded modern fallback when detection selects a far-left fragment", () => {
+            const img = new Jimp({ width: 600, height: 800, color: 0xc8c8c8ff });
+            const search = cropRegion(img, regions.setSymbolSearch).region;
+            fillRectangle(img, search.left + 26, search.top + 43, 10, 10, 0x202020ff);
+            // The very wide mark is intentionally outside the component aspect-ratio limits. It
+            // still gives the reviewed fallback enough contrast to be a useful fingerprint crop.
+            fillRectangle(img, 498, 463, 60, 10, 0x151515ff);
+
+            const result = cropSetSymbolFromImage(img);
+
+            assert.isFalse(result.contentDetected);
+            assert.isFalse(result.lowConfidence);
+            assert.equal(result.region.width, 102);
+            assert.equal(result.region.height, 102);
+            assert.closeTo(result.region.left + result.region.width / 2, 600 * 0.88, 1);
+            assert.closeTo(result.region.top + result.region.height / 2, 800 * 0.585, 1);
+        });
+
         it("marks an ambiguous symbol search as low confidence", () => {
             const img = new Jimp({ width: 600, height: 800, color: 0x808080ff });
 
