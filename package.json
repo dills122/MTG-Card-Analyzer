@@ -154,7 +154,7 @@
         "mocha": "^11.8.0",
         "prettier": "^3.9.6",
         "sinon": "^21.1.2",
-        "typescript": "^5.9.3"
+        "typescript": "^7.0.2"
     },
     "pnpm": {
         "overrides": {
