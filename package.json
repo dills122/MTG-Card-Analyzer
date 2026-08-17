@@ -153,7 +153,7 @@
         "lint-staged": "^17.3.0",
         "mocha": "^11.8.0",
         "prettier": "^3.9.6",
-        "sinon": "^21.1.2",
+        "sinon": "^22.1.0",
         "typescript": "^7.0.2"
     },
     "pnpm": {
