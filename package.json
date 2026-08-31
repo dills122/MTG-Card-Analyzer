@@ -134,7 +134,7 @@
         "fuzzyset.js": "1.0.7",
         "image-fingerprint": "^0.1.1",
         "jimp": "1.6.1",
-        "joi": "^18.2.3",
+        "joi": "^18.2.5",
         "lodash": "^4.18.1",
         "mysql2": "^3.16.0",
         "string-similarity": "^4.0.4",
