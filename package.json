@@ -146,7 +146,7 @@
         "astro": "^7.3.3",
         "c8": "^12.0.0",
         "chai": "^6.3.0",
-        "eslint": "^10.12.0",
+        "eslint": "^10.14.0",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.12.0",
         "lefthook": "^2.1.14",
