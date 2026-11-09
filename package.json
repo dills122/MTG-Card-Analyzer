@@ -152,7 +152,7 @@
         "lefthook": "^2.1.14",
         "lint-staged": "^17.5.1",
         "mocha": "^11.8.0",
-        "prettier": "^3.9.6",
+        "prettier": "^3.9.10",
         "sinon": "^22.1.0",
         "typescript": "^7.0.2"
     },
