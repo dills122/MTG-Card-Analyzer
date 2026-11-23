@@ -151,7 +151,7 @@
         "globals": "^17.14.0",
         "lefthook": "^2.2.2",
         "lint-staged": "^17.5.1",
-        "mocha": "^11.8.0",
+        "mocha": "^12.0.3",
         "prettier": "^3.9.10",
         "sinon": "^22.1.0",
         "typescript": "^7.0.2"
