@@ -130,7 +130,7 @@
     "dependencies": {
         "@dills1220/nedb": "^2.0.0",
         "clean-text-utils": "^1.3.0",
-        "commander": "^15.0.0",
+        "commander": "^15.1.0",
         "fuzzyset.js": "1.0.7",
         "image-fingerprint": "^0.1.1",
         "jimp": "1.6.1",
